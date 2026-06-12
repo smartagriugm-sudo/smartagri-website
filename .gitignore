@@ -3,6 +3,7 @@ web/node_modules/
 web/.output/
 web/.nitro/
 web/.tanstack/
+web/.vercel/
 web/dist/
 
 # Env & local
