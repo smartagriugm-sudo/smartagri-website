@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, createLink } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
+
+const MotionLink = createLink(motion.a);
 import { accent, body, display } from "../lib/fonts";
 import { PUBLICATIONS } from "../lib/publications";
 import PageHero from "../components/PageHero";
@@ -52,11 +54,10 @@ function PublicationsPage() {
                 <div className="flex flex-col gap-4">
                   {PUBLICATIONS.filter((pub) => pub.year === year).map(
                     (pub, i) => (
-                      <motion.a
+                      <MotionLink
                         key={pub.title}
-                        href={pub.link || "#"}
-                        target={pub.link ? "_blank" : undefined}
-                        rel={pub.link ? "noreferrer" : undefined}
+                        to="/publications/$slug"
+                        params={{ slug: pub.slug }}
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, amount: 0.2 }}
@@ -82,7 +83,7 @@ function PublicationsPage() {
                           </span>
                         </span>
                         <ArrowUpRight className="shrink-0 w-6 h-6 text-[#0B6477] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                      </motion.a>
+                      </MotionLink>
                     ),
                   )}
                 </div>

@@ -160,4 +160,20 @@ collections:
         label: DOI / URL
         widget: string
         required: false
-        hint: "Contoh: https://doi.org/10.1016/..."
+        hint: >-
+          Contoh: https://doi.org/10.1016/... — tanggal terbit, volume,
+          halaman, penerbit, dan jumlah sitasi diambil OTOMATIS dari DOI ini
+          (via Crossref) di halaman detail publikasi.
+      - name: abstract
+        label: Abstract
+        widget: text
+        required: false
+        hint: >-
+          Abstrak/deskripsi publikasi — tampil di halaman detail. Disarankan
+          diisi manual karena banyak penerbit tidak menyetor abstrak ke
+          Crossref.
+      - name: cover
+        label: Cover image
+        widget: image
+        required: false
+        hint: "Opsional — figure/gambar utama paper untuk halaman detail."

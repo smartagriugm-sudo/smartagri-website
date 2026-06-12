@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
-import { Link } from "@tanstack/react-router";
+import { Link, createLink } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import { PUBLICATIONS } from "../lib/publications";
+
+const MotionLink = createLink(motion.a);
 
 const publications = PUBLICATIONS.slice(0, 3);
 
@@ -18,11 +20,10 @@ export default function Publications() {
         </h2>
         <div className="max-w-[900px] mx-auto flex flex-col gap-4">
           {publications.map((pub, i) => (
-            <motion.a
+            <MotionLink
               key={pub.title}
-              href={pub.link || "#"}
-              target={pub.link ? "_blank" : undefined}
-              rel={pub.link ? "noreferrer" : undefined}
+              to="/publications/$slug"
+              params={{ slug: pub.slug }}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
@@ -50,7 +51,7 @@ export default function Publications() {
                 </span>
               </span>
               <ArrowUpRight className="shrink-0 w-6 h-6 text-[#0B6477] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </motion.a>
+            </MotionLink>
           ))}
         </div>
         <motion.div
