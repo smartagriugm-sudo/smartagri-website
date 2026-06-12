@@ -224,13 +224,15 @@ function ContactUsPage() {
               className="flex flex-col gap-6"
             >
               <div className="rounded-3xl overflow-hidden border border-[#0B6477]/10 bg-white flex-1 min-h-[320px] relative">
-                {/* Faculty of Agricultural Technology UGM — 7°46'07.0"S 110°22'47.5"E */}
+                {/* Google Maps embed (keyless) — Faculty of Agricultural
+                    Technology UGM, 7°46'07.0"S 110°22'47.5"E */}
                 <iframe
                   title="smartagri location map"
-                  src="https://www.openstreetmap.org/export/embed.html?bbox=110.3679%2C-7.7766%2C110.3919%2C-7.7606&layer=mapnik&marker=-7.768611%2C110.379861"
+                  src="https://www.google.com/maps?q=-7.768611,110.379861&z=16&output=embed"
                   className="w-full h-full min-h-[320px] border-0"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
                 />
                 <a
                   href="https://www.google.com/maps/search/?api=1&query=-7.768611%2C110.379861"
