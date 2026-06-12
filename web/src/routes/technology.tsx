@@ -22,15 +22,27 @@ export const Route = createFileRoute("/technology")({
   }),
 });
 
-// Node positions on a circle, in percent of the map container.
-const RADIUS = 41;
-function nodePosition(index: number, total: number) {
-  const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
-  return {
-    x: 50 + RADIUS * Math.cos(angle),
-    y: 50 + RADIUS * Math.sin(angle),
-  };
-}
+// Node positions on two concentric rings, in percent of the map container.
+// Ring 1 (inner) = data & intelligence; ring 2 (outer) = sensing & actuation.
+const RING_RADIUS: Record<1 | 2, number> = { 1: 25, 2: 42 };
+
+const POSITIONS: Record<string, { x: number; y: number }> = (() => {
+  const positions: Record<string, { x: number; y: number }> = {};
+  ([1, 2] as const).forEach((ring) => {
+    const ringTechs = TECHNOLOGIES.filter((tech) => tech.ring === ring);
+    const radius = RING_RADIUS[ring];
+    ringTechs.forEach((tech, i) => {
+      // Offset the inner ring half a step so labels don't stack vertically
+      const offset = ring === 1 ? Math.PI / ringTechs.length : 0;
+      const angle = (i / ringTechs.length) * Math.PI * 2 - Math.PI / 2 + offset;
+      positions[tech.id] = {
+        x: 50 + radius * Math.cos(angle),
+        y: 50 + radius * Math.sin(angle),
+      };
+    });
+  });
+  return positions;
+})();
 
 function TechMap({
   active,
@@ -39,17 +51,16 @@ function TechMap({
   active: Technology;
   onSelect: (tech: Technology) => void;
 }) {
-  const total = TECHNOLOGIES.length;
-  const activeIndex = TECHNOLOGIES.findIndex((tech) => tech.id === active.id);
-  const from = nodePosition(activeIndex, total);
+  const from = POSITIONS[active.id];
 
   return (
     <div className="relative aspect-square w-full select-none">
-      {/* dashed orbit guide */}
-      <div className="absolute inset-[9%] rounded-full border border-dashed border-[#0B6477]/15" />
+      {/* dashed orbit guides for both rings */}
+      <div className="absolute inset-[8%] rounded-full border border-dashed border-[#0B6477]/15" />
+      <div className="absolute inset-[25%] rounded-full border border-dashed border-[#0B6477]/15" />
 
       <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-base sm:text-xl font-semibold text-neutral-900 tracking-[-0.02em]"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-sm sm:text-lg font-semibold text-neutral-900 tracking-[-0.02em]"
         style={display}
       >
         Core
@@ -65,11 +76,8 @@ function TechMap({
       >
         <AnimatePresence mode="popLayout">
           {active.related.map((relatedId, i) => {
-            const targetIndex = TECHNOLOGIES.findIndex(
-              (tech) => tech.id === relatedId,
-            );
-            if (targetIndex < 0) return null;
-            const to = nodePosition(targetIndex, total);
+            const to = POSITIONS[relatedId];
+            if (!to) return null;
             return (
               <motion.path
                 key={`${active.id}-${relatedId}`}
@@ -92,8 +100,8 @@ function TechMap({
       </svg>
 
       {/* technology nodes */}
-      {TECHNOLOGIES.map((tech, i) => {
-        const { x, y } = nodePosition(i, total);
+      {TECHNOLOGIES.map((tech) => {
+        const { x, y } = POSITIONS[tech.id];
         const isActive = tech.id === active.id;
         const isRelated = active.related.includes(tech.id);
         return (
@@ -277,6 +285,22 @@ function TechnologyPage() {
               className="rounded-3xl bg-white border border-[#0B6477]/10 p-6 sm:p-10"
             >
               <TechMap active={active} onSelect={setActive} />
+              <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2">
+                <div
+                  className="flex items-center gap-2 text-xs sm:text-sm font-normal text-neutral-500"
+                  style={body}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#0B6477]" />
+                  Inner ring — data &amp; intelligence
+                </div>
+                <div
+                  className="flex items-center gap-2 text-xs sm:text-sm font-normal text-neutral-500"
+                  style={body}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full border-2 border-[#14919B] bg-white" />
+                  Outer ring — field sensing &amp; actuation
+                </div>
+              </div>
             </motion.div>
             <motion.aside
               initial={{ opacity: 0, y: 24 }}

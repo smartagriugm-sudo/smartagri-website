@@ -18,6 +18,8 @@ export type Technology = {
   id: string;
   label: string;
   icon: LucideIcon;
+  /** Map ring: 1 = inner (data & intelligence), 2 = outer (sensing & actuation) */
+  ring: 1 | 2;
   /** One-line bold summary shown at the top of the detail panel */
   tagline: string;
   description: string;
@@ -35,6 +37,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "iot",
     label: "IoT Sensor Networks",
     icon: RadioTower,
+    ring: 2,
     tagline:
       "Low-cost, low-power sensors that stream live field data, hour by hour.",
     description:
@@ -56,6 +59,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "uav",
     label: "UAV Platforms",
     icon: Plane,
+    ring: 2,
     tagline: "Drones that map, scout, and treat fields from above.",
     description:
       "Fixed-wing and VTOL platforms flying programmed missions over fields and estates. A twenty-minute flight produces imagery that would take days to gather on foot — the eyes of our precision agriculture work.",
@@ -76,6 +80,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "multispectral",
     label: "Multispectral Imaging",
     icon: Camera,
+    ring: 2,
     tagline: "Seeing crop stress days before the human eye can.",
     description:
       "Cameras that capture near-infrared and red-edge bands alongside visible light. Healthy vegetation reflects these bands strongly, so stress, disease, and nutrient problems show up in the data long before symptoms are visible.",
@@ -96,6 +101,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "hyperspectral",
     label: "Hyperspectral Sensing",
     icon: Rainbow,
+    ring: 2,
     tagline: "Hundreds of spectral bands for lab-grade plant analysis.",
     description:
       "Where multispectral sees a handful of bands, hyperspectral sees hundreds — enough to estimate chlorophyll, nutrient status, and physiological responses non-destructively, from plant factories to field samples.",
@@ -112,6 +118,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "vision",
     label: "Computer Vision",
     icon: Eye,
+    ring: 1,
     tagline: "Models that read leaves, count fruit, and flag disease.",
     description:
       "Deep-learning vision models trained on field imagery to detect blight, rust, and pest damage, count plants and fruit, and grade produce — turning ordinary cameras into expert scouts that never tire.",
@@ -132,6 +139,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "ml",
     label: "Machine Learning & AI",
     icon: BrainCircuit,
+    ring: 1,
     tagline: "Turning seasons of field data into predictions farmers can act on.",
     description:
       "From yield forecasting to irrigation scheduling, machine-learning models sit at the heart of smartagri. They fuse sensor streams, imagery, and weather data into early warnings and recommendations tuned to local conditions.",
@@ -148,6 +156,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "eis",
     label: "EIS Plant Sensing",
     icon: Activity,
+    ring: 2,
     tagline: "Reading plant physiology through electrical impedance.",
     description:
       "Electrical impedance spectroscopy passes tiny signals through plant tissue to estimate chlorophyll and physiological status without harming the plant — a smartagri research specialty published in international journals.",
@@ -164,6 +173,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "climate-control",
     label: "Climate Control Systems",
     icon: ThermometerSun,
+    ring: 2,
     tagline: "Closed-loop control that keeps growing environments ideal.",
     description:
       "Controllers that regulate temperature, humidity, and vapor pressure deficit (VPD) in greenhouses and plant factories. Our VPD-control research showed how tightly managed environments translate directly into growth and yield.",
@@ -180,6 +190,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "irrigation",
     label: "Smart Irrigation Control",
     icon: Droplets,
+    ring: 2,
     tagline: "Water delivered exactly when and where crops ask for it.",
     description:
       "Sensor-driven valves and pumps that irrigate on plant demand instead of fixed timers — from drip systems and sprinklers to modernized canal networks — cutting water use while protecting yield.",
@@ -196,6 +207,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "geospatial",
     label: "Geospatial Analytics",
     icon: MapIcon,
+    ring: 1,
     tagline: "Every measurement on the map, every decision per plot.",
     description:
       "Stitching drone orthomosaics, satellite imagery, and sensor locations into per-plot maps. Geospatial analysis turns scattered measurements into zone maps that guide scouting, treatment, and planning.",
@@ -216,6 +228,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "weather",
     label: "Weather & Climate Modeling",
     icon: CloudSun,
+    ring: 1,
     tagline: "Seasonal outlooks tuned to smallholder decisions.",
     description:
       "Downscaled forecasts and seasonal climate outlooks built with partners like BMKG, answering the questions farmers actually ask: what to plant, when to plant, and how to hedge a late monsoon.",
@@ -232,6 +245,7 @@ export const TECHNOLOGIES: Technology[] = [
     id: "dss",
     label: "Decision Support Systems",
     icon: LayoutDashboard,
+    ring: 1,
     tagline: "Dashboards that end in a decision, not a dataset.",
     description:
       "The layer farmers and cooperatives actually touch: dashboards and advisories that fuse everything above into plain recommendations — which plot to scout first, when to irrigate, what to expect at harvest.",
