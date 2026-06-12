@@ -62,7 +62,10 @@ collections:
           Isi artikel lengkap. Sisipkan gambar lewat tombol image di posisi
           mana pun. Atur penempatan lewat teks alt gambar: "Keterangan|left"
           (rata kiri, teks mengalir di kanan), "Keterangan|right" (rata kanan),
-          atau tanpa tambahan untuk lebar penuh.
+          atau tanpa tambahan untuk lebar penuh. Galeri sejajar: tulis 2+
+          gambar dalam SATU baris yang sama (mode markdown), contoh
+          "![](/a.jpg) ![](/b.jpg) ![](/c.jpg)" — otomatis tampil
+          berdampingan, maksimal 3 per baris lalu menyambung ke baris baru.
 
   - name: publications
     label: Publications

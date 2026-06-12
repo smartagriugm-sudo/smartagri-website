@@ -36,6 +36,56 @@ function ArticleImage(props: { src?: string; alt?: string }) {
   return <img src={props.src} alt={caption} className={cls} />;
 }
 
+type HastNode = {
+  type?: string;
+  tagName?: string;
+  value?: string;
+  properties?: { src?: string; alt?: string };
+  children?: HastNode[];
+};
+
+// Two or more images written on the same line render as a side-by-side
+// gallery row (3 per row max, wrapping to the next line):
+//   ![](/brand/uploads/a.jpg) ![](/brand/uploads/b.jpg) ![](/brand/uploads/c.jpg)
+function ArticleParagraph({
+  node,
+  children,
+}: {
+  node?: HastNode;
+  children?: React.ReactNode;
+}) {
+  const kids = node?.children ?? [];
+  const images = kids.filter((kid) => kid.tagName === "img");
+  const onlyImages =
+    images.length >= 2 &&
+    kids.every(
+      (kid) =>
+        kid.tagName === "img" ||
+        kid.tagName === "br" ||
+        (kid.type === "text" && !(kid.value ?? "").trim()),
+    );
+
+  if (onlyImages) {
+    const columns = Math.min(images.length, 3);
+    return (
+      <div
+        className="grid gap-4 my-6"
+        style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+      >
+        {images.map((img, i) => (
+          <img
+            key={i}
+            src={img.properties?.src}
+            alt={(img.properties?.alt ?? "").split("|")[0]}
+            className="w-full h-auto rounded-xl !my-0"
+          />
+        ))}
+      </div>
+    );
+  }
+  return <p>{children}</p>;
+}
+
 function NoteDetailPage() {
   const note = Route.useLoaderData();
 
@@ -117,7 +167,7 @@ function NoteDetailPage() {
               {note.body ? (
                 <Markdown
                   remarkPlugins={[remarkGfm]}
-                  components={{ img: ArticleImage }}
+                  components={{ img: ArticleImage, p: ArticleParagraph }}
                 >
                   {note.body}
                 </Markdown>
