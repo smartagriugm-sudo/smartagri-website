@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TechnologyRouteImport } from './routes/technology'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PublicationsRouteImport } from './routes/publications'
 import { Route as ImpactRouteImport } from './routes/impact'
@@ -19,6 +20,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
 
+const TechnologyRoute = TechnologyRouteImport.update({
+  id: '/technology',
+  path: '/technology',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResearchRoute = ResearchRouteImport.update({
   id: '/research',
   path: '/research',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/technology': typeof TechnologyRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/publications/$slug': typeof PublicationsSlugRoute
 }
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/technology': typeof TechnologyRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/publications/$slug': typeof PublicationsSlugRoute
 }
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/technology': typeof TechnologyRoute
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
   '/publications_/$slug': typeof PublicationsSlugRoute
 }
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/publications'
     | '/research'
+    | '/technology'
     | '/field-notes/$slug'
     | '/publications/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/publications'
     | '/research'
+    | '/technology'
     | '/field-notes/$slug'
     | '/publications/$slug'
   id:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/publications'
     | '/research'
+    | '/technology'
     | '/field-notes_/$slug'
     | '/publications_/$slug'
   fileRoutesById: FileRoutesById
@@ -143,12 +155,20 @@ export interface RootRouteChildren {
   ImpactRoute: typeof ImpactRoute
   PublicationsRoute: typeof PublicationsRoute
   ResearchRoute: typeof ResearchRoute
+  TechnologyRoute: typeof TechnologyRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   PublicationsSlugRoute: typeof PublicationsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/technology': {
+      id: '/technology'
+      path: '/technology'
+      fullPath: '/technology'
+      preLoaderRoute: typeof TechnologyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/research': {
       id: '/research'
       path: '/research'
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImpactRoute: ImpactRoute,
   PublicationsRoute: PublicationsRoute,
   ResearchRoute: ResearchRoute,
+  TechnologyRoute: TechnologyRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   PublicationsSlugRoute: PublicationsSlugRoute,
 }

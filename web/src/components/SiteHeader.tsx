@@ -7,6 +7,7 @@ import { body } from "../lib/fonts";
 
 const navLinks = [
   { label: "Research", to: "/research" },
+  { label: "Technology", to: "/technology" },
   { label: "Impact", to: "/impact" },
   { label: "Publications", to: "/publications" },
   { label: "Field Notes", to: "/field-notes" },
