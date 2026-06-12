@@ -18,6 +18,22 @@ logo_url: /brand/icon-color.svg
 media_folder: web/public/brand/uploads
 public_folder: /brand/uploads
 
+# Setiap gambar yang di-upload lewat CMS otomatis dikonversi ke WebP
+# (maks 2048px, kualitas 85) sebelum disimpan — menjaga repo tetap kecil
+# dan halaman cepat dimuat. File lama bisa dikompres manual dengan
+# `node scripts/optimize-uploads.mjs` di folder web/.
+media_libraries:
+  default:
+    config:
+      transformations:
+        raster_image:
+          format: webp
+          quality: 85
+          width: 2048
+          height: 2048
+        svg:
+          optimize: true
+
 collections:
   - name: field-notes
     label: Field Notes

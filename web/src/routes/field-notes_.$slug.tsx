@@ -33,7 +33,15 @@ function ArticleImage(props: { src?: string; alt?: string }) {
       : align === "right"
         ? "sm:float-right sm:w-1/2 sm:ml-6 my-2 rounded-2xl"
         : "w-full rounded-2xl";
-  return <img src={props.src} alt={caption} className={cls} />;
+  return (
+    <img
+      src={props.src}
+      alt={caption}
+      loading="lazy"
+      decoding="async"
+      className={cls}
+    />
+  );
 }
 
 type HastNode = {
@@ -77,6 +85,8 @@ function ArticleParagraph({
             key={i}
             src={img.properties?.src}
             alt={(img.properties?.alt ?? "").split("|")[0]}
+            loading="lazy"
+            decoding="async"
             className="w-full h-auto rounded-xl !my-0"
           />
         ))}
