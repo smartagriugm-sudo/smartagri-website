@@ -8,9 +8,9 @@
 
 backend:
   name: github
-  repo: TODO-GANTI/smartagri-website # TODO: owner/nama-repo GitHub
+  repo: smartagriugm-sudo/smartagri-website
   branch: main
-  base_url: https://TODO-GANTI.workers.dev # TODO: URL sveltia-cms-auth worker
+  base_url: https://TODO-GANTI.workers.dev # TODO: URL sveltia-cms-auth worker (Langkah 3 di SETUP-ADMIN-CMS.md)
 
 site_url: https://smartagri.id
 logo_url: /brand/icon-color.svg
