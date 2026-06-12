@@ -225,17 +225,17 @@ function ContactUsPage() {
             >
               <div className="rounded-3xl overflow-hidden border border-[#0B6477]/10 bg-white flex-1 min-h-[320px] relative">
                 {/* Google Maps embed (keyless) — Faculty of Agricultural
-                    Technology UGM, 7°46'07.0"S 110°22'47.5"E */}
+                    Technology UGM (-7.7687041, 110.3806344) */}
                 <iframe
                   title="smartagri location map"
-                  src="https://www.google.com/maps?q=-7.768611,110.379861&z=16&output=embed"
+                  src="https://www.google.com/maps?q=-7.7687041,110.3806344&z=17&output=embed"
                   className="w-full h-full min-h-[320px] border-0"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   allowFullScreen
                 />
                 <a
-                  href="https://www.google.com/maps/search/?api=1&query=-7.768611%2C110.379861"
+                  href="https://www.google.com/maps/search/?api=1&query=-7.7687041%2C110.3806344"
                   target="_blank"
                   rel="noreferrer"
                   className="absolute bottom-3 right-3 rounded-full bg-[#08313A]/85 backdrop-blur px-4 py-2 text-sm font-medium text-white hover:bg-[#08313A] transition-colors"
