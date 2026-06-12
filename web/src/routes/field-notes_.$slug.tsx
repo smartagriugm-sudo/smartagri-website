@@ -146,9 +146,9 @@ function NoteDetailPage() {
               <ArrowLeft className="w-4 h-4" />
               All field notes
             </Link>
-            <div className="flex items-center gap-3 mb-5">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-5">
               <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${categoryChip[note.category]}`}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${categoryChip(note.category)}`}
                 style={body}
               >
                 {note.category}
@@ -156,6 +156,17 @@ function NoteDetailPage() {
               <span className="text-sm font-normal text-neutral-400" style={body}>
                 {note.date}
               </span>
+              {note.author && (
+                <span
+                  className="text-sm font-normal text-neutral-400"
+                  style={body}
+                >
+                  · By{" "}
+                  <span className="font-medium text-neutral-600">
+                    {note.author}
+                  </span>
+                </span>
+              )}
             </div>
             <h1
               className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900 mb-8"
@@ -185,6 +196,25 @@ function NoteDetailPage() {
                 <p>{note.excerpt}</p>
               )}
             </div>
+            {note.tags && note.tags.length > 0 && (
+              <div className="mt-10 pt-6 border-t border-neutral-200 flex flex-wrap items-center gap-2">
+                <span
+                  className="text-sm font-medium text-neutral-400 mr-1"
+                  style={body}
+                >
+                  Tags:
+                </span>
+                {note.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-[#0B6477]/25 px-3 py-1 text-sm font-normal text-[#0B6477]"
+                    style={body}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </motion.div>
         </div>
       </article>

@@ -51,7 +51,24 @@ collections:
       - name: category
         label: Category
         widget: select
-        options: [News, Research, Knowledge, Events]
+        default: News
+        options:
+          - News
+          - Research
+          - Knowledge
+          - Events
+          - Collaboration Research
+          - Conference
+          - Achievement
+          - Field Activity
+          - Guest Lecture
+          - Information
+          - Public Lecture
+          - Publication
+          - Student Exchange
+          - Uncategorized
+          - Visiting Research
+          - Workshop Training
       - name: date
         label: Date
         widget: datetime
@@ -61,6 +78,35 @@ collections:
       - name: title
         label: Title
         widget: string
+      - name: author
+        label: Author
+        widget: string
+        required: false
+        hint: "Nama penulis, mis. Fahmi Arsyad — tampil di bawah judul artikel."
+      - name: tags
+        label: Tags
+        widget: select
+        multiple: true
+        required: false
+        hint: "Pilih satu atau beberapa tag topik (opsional) — tampil di akhir artikel."
+        options:
+          - Smart Farming
+          - Precision Agriculture
+          - IoT & Sensors
+          - Drone & UAV
+          - AI & Machine Learning
+          - Remote Sensing
+          - Irrigation
+          - Greenhouse & Indoor Farming
+          - Data Science
+          - Sustainability
+          - SDGs
+          - Student Activity
+          - International Collaboration
+          - Industry Partnership
+          - Community & Farmers
+          - Award
+          - UGM
       - name: excerpt
         label: Excerpt
         widget: text

@@ -1,13 +1,24 @@
-export type NoteCategory = "News" | "Research" | "Knowledge" | "Events";
-
-export const NOTE_FILTERS = [
-  "All",
+// All Field Note categories selectable in the /admin CMS (keep in sync with
+// public/admin/config.yml).
+export const NOTE_CATEGORIES = [
   "News",
   "Research",
   "Knowledge",
   "Events",
+  "Collaboration Research",
+  "Conference",
+  "Achievement",
+  "Field Activity",
+  "Guest Lecture",
+  "Information",
+  "Public Lecture",
+  "Publication",
+  "Student Exchange",
+  "Uncategorized",
+  "Visiting Research",
+  "Workshop Training",
 ] as const;
-export type NoteFilter = (typeof NOTE_FILTERS)[number];
+export type NoteCategory = (typeof NOTE_CATEGORIES)[number];
 
 export type Note = {
   /** URL slug, derived from the content filename */
@@ -17,18 +28,28 @@ export type Note = {
   date: string;
   title: string;
   excerpt: string;
-  /** Optional cover image path (e.g. /brand/uploads/foo.jpg) */
+  /** Optional author name shown on the article page */
+  author?: string;
+  /** Optional topic tags shown on the article page */
+  tags?: string[];
+  /** Optional cover image path (e.g. /brand/uploads/foo.webp) */
   cover?: string;
   /** Optional article body in Markdown (edited via the /admin CMS) */
   body?: string;
 };
 
-export const categoryChip: Record<NoteCategory, string> = {
-  News: "bg-[#14919B] text-white",
-  Research: "bg-[#0B6477] text-white",
-  Knowledge: "bg-[#45DFB1] text-[#0B2A22]",
-  Events: "bg-[#80ED99] text-[#0B2A22]",
-};
+// Chip colors cycle through the brand palette per category.
+const chipStyles = [
+  "bg-[#0B6477] text-white",
+  "bg-[#14919B] text-white",
+  "bg-[#45DFB1] text-[#0B2A22]",
+  "bg-[#80ED99] text-[#0B2A22]",
+];
+
+export function categoryChip(category: string): string {
+  const index = NOTE_CATEGORIES.indexOf(category as NoteCategory);
+  return chipStyles[(index < 0 ? 0 : index) % chipStyles.length];
+}
 
 // Placeholder cover art for notes without a photo — cycle brand gradients.
 export const covers = [
@@ -44,6 +65,8 @@ type NoteFile = {
   date: string;
   title: string;
   excerpt: string;
+  author?: string;
+  tags?: string[];
   cover?: string;
   body?: string;
 };
@@ -72,3 +95,13 @@ export const notes: Note[] = Object.entries(noteFiles)
 export function findNote(slug: string): Note | undefined {
   return notes.find((note) => note.slug === slug);
 }
+
+// Filter pills only list categories that actually have articles, so the
+// filter row stays compact however many categories the CMS offers.
+export const NOTE_FILTERS: string[] = [
+  "All",
+  ...NOTE_CATEGORIES.filter((category) =>
+    notes.some((note) => note.category === category),
+  ),
+];
+export type NoteFilter = string;

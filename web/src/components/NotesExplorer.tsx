@@ -55,7 +55,7 @@ function Meta({ note }: { note: Note }) {
   return (
     <div className="flex items-center gap-3">
       <span
-        className={`rounded-full px-3 py-1 text-xs font-semibold ${categoryChip[note.category]}`}
+        className={`rounded-full px-3 py-1 text-xs font-semibold ${categoryChip(note.category)}`}
         style={body}
       >
         {note.category}
