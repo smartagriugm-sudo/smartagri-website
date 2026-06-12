@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "smartagri-dev",
+      "runtimeExecutable": "D:\\College\\Smart Agriculture Research Center\\Branding Smartagri\\Landing Page SmartAgri\\web\\dev.cmd",
+      "runtimeArgs": [],
+      "port": 3000
+    }
+  ]
+}

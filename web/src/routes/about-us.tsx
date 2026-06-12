@@ -1,0 +1,319 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import {
+  BrainCircuit,
+  HeartHandshake,
+  Mail,
+  MapPin,
+  Phone,
+  RadioTower,
+  Sprout,
+} from "lucide-react";
+import { accent, body, display, serif } from "../lib/fonts";
+import PageHero from "../components/PageHero";
+import SiteHeader from "../components/SiteHeader";
+import Footer from "../components/Footer";
+
+export const Route = createFileRoute("/about-us")({
+  component: AboutUsPage,
+  head: () => ({
+    meta: [
+      {
+        title: "About Us — smartagri",
+      },
+      {
+        name: "description",
+        content:
+          "Who we are: the mission, expertise, and people behind the Smart Agriculture Research Center.",
+      },
+    ],
+  }),
+});
+
+const expertise = [
+  {
+    icon: BrainCircuit,
+    title: "AI & Machine Learning",
+    desc: "Computer vision for disease detection, yield forecasting models, and decision-support systems that learn from every season.",
+    lead: "Dr. Dimas Nugroho",
+  },
+  {
+    icon: RadioTower,
+    title: "IoT Sensing Systems",
+    desc: "Low-cost, low-power sensor networks — soil probes, weather stations, and LoRa backhaul that survive real field conditions.",
+    lead: "Dr. Ayu Lestari",
+  },
+  {
+    icon: Sprout,
+    title: "Agronomy & Field Science",
+    desc: "Trial design, soil science, and crop physiology that keep our technology honest about what actually helps plants grow.",
+    lead: "Dr. Siti Rahmawati",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Extension & Partnerships",
+    desc: "Co-design with farmer cooperatives, training programs, and the feedback loops that turn research into daily practice.",
+    lead: "Maya Kusuma, M.Sc",
+  },
+];
+
+// Placeholder team — replace names, roles, and photos with the real roster.
+const team = [
+  { name: "Dr. Siti Rahmawati", role: "Center Director · Agronomy" },
+  { name: "Dr. Dimas Nugroho", role: "AI & Machine Learning Lead" },
+  { name: "Dr. Ayu Lestari", role: "IoT Sensing Systems Lead" },
+  { name: "Dr. Bagas Pratama", role: "Remote Sensing & Drones" },
+  { name: "Dr. Rina Santoso", role: "Climate Analytics" },
+  { name: "Sigit Wibowo, M.Eng", role: "Data & Platform Engineering" },
+  { name: "Maya Kusuma, M.Sc", role: "Extension & Farmer Partnerships" },
+  { name: "Fajar Hidayat", role: "Research Assistant · Field Operations" },
+];
+
+const avatarGradients = [
+  "linear-gradient(135deg, #0B6477 0%, #14919B 100%)",
+  "linear-gradient(135deg, #14919B 0%, #0AD1C8 100%)",
+  "linear-gradient(135deg, #08313A 0%, #0B6477 100%)",
+  "linear-gradient(135deg, #14919B 0%, #45DFB1 100%)",
+];
+
+function initials(name: string) {
+  return name
+    .replace(/^Dr\.\s+/, "")
+    .split(" ")
+    .filter((part) => /^[A-Z]/.test(part))
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("");
+}
+
+function AboutUsPage() {
+  return (
+    <main>
+      <SiteHeader />
+      <section className="bg-[#F3F7F6]">
+        <div className="max-w-[1360px] mx-auto px-6 md:px-12 pt-14 md:pt-20 pb-16 md:pb-20">
+          <PageHero
+            eyebrow="About Us"
+            title={
+              <>
+                The people behind <span style={accent}>smartagri</span>
+              </>
+            }
+            subtitle="We are a research center at Universitas Gadjah Mada that believes the future of farming is grown together — by agronomists, engineers, and farmers like you."
+          />
+          <div className="grid lg:grid-cols-2 gap-6 max-w-[1100px] mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.55, ease: "easeOut" }}
+              className="rounded-3xl bg-[#08313A] p-8 md:p-10 flex flex-col gap-4"
+            >
+              <h2 className="text-2xl md:text-3xl font-medium text-white" style={display}>
+                Our mission
+              </h2>
+              <p
+                className="text-xl md:text-2xl text-white leading-snug"
+                style={serif}
+              >
+                Harness AI, sensing, and agronomy so every farmer — whatever
+                the size of their plot — can grow more with less.
+              </p>
+              <p
+                className="text-base font-normal text-white/70 leading-relaxed"
+                style={body}
+              >
+                Climate volatility, shrinking land, and rising costs hit
+                smallholders first. We build and test the technology that helps
+                them monitor crops, predict yields, and act with confidence.
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ delay: 0.12, duration: 0.55, ease: "easeOut" }}
+              className="rounded-3xl bg-white border border-[#0B6477]/10 p-8 md:p-10 flex flex-col gap-4"
+            >
+              <h2
+                className="text-2xl md:text-3xl font-medium text-neutral-900"
+                style={display}
+              >
+                Rooted in research
+              </h2>
+              <p
+                className="text-base font-normal text-neutral-500 leading-relaxed"
+                style={body}
+              >
+                The Smart Agriculture Research Center is part of the Department
+                of Agricultural and Biosystems Engineering, Faculty of
+                Agricultural Technology, Universitas Gadjah Mada, in
+                Yogyakarta. Our team unites researchers across AI, IoT systems,
+                remote sensing, and agronomy.
+              </p>
+              <p
+                className="text-base font-normal text-neutral-500 leading-relaxed"
+                style={body}
+              >
+                Everything we publish is field-tested with the cooperatives we
+                serve — research is only finished when a farmer can use it.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white">
+        <div className="max-w-[1360px] mx-auto px-6 md:px-12 py-16 md:py-20">
+          <h2
+            className="text-center text-3xl md:text-4xl font-semibold tracking-[-0.025em] text-neutral-900 mb-12"
+            style={display}
+          >
+            What we're <span style={accent}>good at</span>
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6 max-w-[1100px] mx-auto">
+            {expertise.map((area, i) => (
+              <motion.div
+                key={area.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ delay: (i % 2) * 0.12, duration: 0.55, ease: "easeOut" }}
+                className="rounded-3xl bg-[#F3F7F6] p-8 flex flex-col gap-4"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-[#0B6477] flex items-center justify-center">
+                  <area.icon className="w-6 h-6 text-[#45DFB1]" />
+                </div>
+                <h3
+                  className="text-xl md:text-2xl font-medium text-neutral-900"
+                  style={display}
+                >
+                  {area.title}
+                </h3>
+                <p
+                  className="text-sm md:text-base font-normal text-neutral-500 leading-relaxed"
+                  style={body}
+                >
+                  {area.desc}
+                </p>
+                <div className="text-sm font-medium text-[#0B6477]" style={body}>
+                  Lead: {area.lead}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#F3F7F6]">
+        <div className="max-w-[1360px] mx-auto px-6 md:px-12 py-16 md:py-20">
+          <h2
+            className="text-center text-3xl md:text-4xl font-semibold tracking-[-0.025em] text-neutral-900 mb-12"
+            style={display}
+          >
+            Meet the <span style={accent}>team</span>
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-[1100px] mx-auto">
+            {team.map((member, i) => (
+              <motion.div
+                key={member.name}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ delay: (i % 4) * 0.08, duration: 0.5, ease: "easeOut" }}
+                className="rounded-3xl bg-white border border-[#0B6477]/10 p-6 flex flex-col items-center text-center gap-3"
+              >
+                {/* TODO: replace initials avatar with a real portrait photo */}
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center"
+                  style={{ background: avatarGradients[i % avatarGradients.length] }}
+                >
+                  <span
+                    className="text-2xl font-semibold text-white"
+                    style={display}
+                  >
+                    {initials(member.name)}
+                  </span>
+                </div>
+                <div
+                  className="text-base md:text-lg font-medium text-neutral-900 leading-snug"
+                  style={display}
+                >
+                  {member.name}
+                </div>
+                <div
+                  className="text-sm font-normal text-neutral-500"
+                  style={body}
+                >
+                  {member.role}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" className="bg-white">
+        <div className="max-w-[1360px] mx-auto px-6 md:px-12 py-16 md:py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="rounded-3xl bg-[#08313A] p-8 md:p-14 grid lg:grid-cols-2 gap-10 items-center"
+          >
+            <div className="flex flex-col gap-4">
+              <h2
+                className="text-3xl md:text-4xl font-semibold tracking-[-0.025em] text-white leading-[1.1]"
+                style={display}
+              >
+                Work <span style={{ ...accent, color: "#80ED99" }}>with us</span>
+              </h2>
+              <p
+                className="text-base md:text-lg font-normal text-white/75 max-w-[480px]"
+                style={body}
+              >
+                Partner on a research project, pilot smartagri on your fields,
+                or join the team. We answer every message.
+              </p>
+              <a
+                href="/contact-us"
+                className="self-start h-12 px-7 bg-[#45DFB1] rounded-2xl text-[#0B2A22] text-lg font-medium hover:bg-[#80ED99] transition-colors flex items-center"
+                style={body}
+              >
+                Contact us
+              </a>
+            </div>
+            {/* Placeholder contact details — replace with the center's real ones */}
+            <div className="flex flex-col gap-5">
+              <div className="flex items-start gap-4">
+                <MapPin className="w-5 h-5 text-[#45DFB1] mt-1 shrink-0" />
+                <span className="text-base font-normal text-white/80" style={body}>
+                  Jl. Flora Bulaksumur No.1, Kocoran, Caturtunggal, Kec. Depok,
+                  Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281
+                </span>
+              </div>
+              <div className="flex items-start gap-4">
+                <Mail className="w-5 h-5 text-[#45DFB1] mt-1 shrink-0" />
+                <a
+                  href="mailto:hello@smartagri.id"
+                  className="text-base font-normal text-white/80 hover:text-white transition-colors"
+                  style={body}
+                >
+                  hello@smartagri.id
+                </a>
+              </div>
+              <div className="flex items-start gap-4">
+                <Phone className="w-5 h-5 text-[#45DFB1] mt-1 shrink-0" />
+                <span className="text-base font-normal text-white/80" style={body}>
+                  +62 274 000 0000
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+      <Footer />
+    </main>
+  );
+}

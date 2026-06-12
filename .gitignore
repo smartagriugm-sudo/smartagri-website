@@ -1,0 +1,15 @@
+# Dependencies & build output
+web/node_modules/
+web/.output/
+web/.nitro/
+web/.tanstack/
+web/dist/
+
+# Env & local
+*.local
+.env
+.env.*
+
+# OS / editor noise
+Thumbs.db
+.DS_Store

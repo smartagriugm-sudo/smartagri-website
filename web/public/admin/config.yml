@@ -1,0 +1,89 @@
+# Konfigurasi CMS admin smartagri (Sveltia CMS, kompatibel Decap).
+# Admin membuka /admin → login GitHub → mengisi form → Publish →
+# tersimpan sebagai commit → hosting otomatis rebuild & tayang.
+#
+# TODO sebelum bisa dipakai (lihat SETUP-ADMIN-CMS.md di root proyek):
+#   1. Ganti `repo` dengan nama repo GitHub yang sebenarnya (owner/nama-repo).
+#   2. Deploy sveltia-cms-auth (Cloudflare Worker gratis) lalu isi `base_url`.
+
+backend:
+  name: github
+  repo: TODO-GANTI/smartagri-website # TODO: owner/nama-repo GitHub
+  branch: main
+  base_url: https://TODO-GANTI.workers.dev # TODO: URL sveltia-cms-auth worker
+
+site_url: https://smartagri.id
+logo_url: /brand/icon-color.svg
+
+media_folder: web/public/brand/uploads
+public_folder: /brand/uploads
+
+collections:
+  - name: field-notes
+    label: Field Notes
+    label_singular: Field Note
+    folder: web/src/content/notes
+    create: true
+    delete: true
+    extension: json
+    format: json
+    identifier_field: title
+    slug: "{{fields.date}}-{{slug}}"
+    summary: "{{title}} — {{category}}, {{date}}"
+    sortable_fields: [date, title, category]
+    fields:
+      - name: category
+        label: Category
+        widget: select
+        options: [News, Research, Knowledge, Events]
+      - name: date
+        label: Date
+        widget: datetime
+        date_format: "YYYY-MM-DD"
+        time_format: false
+        format: "YYYY-MM-DD"
+      - name: title
+        label: Title
+        widget: string
+      - name: excerpt
+        label: Excerpt
+        widget: text
+        hint: "Ringkasan 2–3 kalimat yang tampil di kartu artikel."
+      - name: cover
+        label: Cover image
+        widget: image
+        required: false
+        hint: "Opsional — landscape ≥800px. Tanpa foto, kartu memakai gradien brand."
+
+  - name: publications
+    label: Publications
+    label_singular: Publication
+    folder: web/src/content/publications
+    create: true
+    delete: true
+    extension: json
+    format: json
+    identifier_field: title
+    slug: "{{fields.year}}-{{slug}}"
+    summary: "{{year}} — {{title}}"
+    sortable_fields: [year, title]
+    fields:
+      - name: year
+        label: Year
+        widget: string
+        hint: "Contoh: 2026"
+      - name: title
+        label: Title
+        widget: string
+      - name: authors
+        label: Authors
+        widget: string
+        hint: "Format: Nama B., Nama C., Nama D."
+      - name: venue
+        label: Journal / venue
+        widget: string
+      - name: link
+        label: DOI / URL
+        widget: string
+        required: false
+        hint: "Contoh: https://doi.org/10.1016/..."
