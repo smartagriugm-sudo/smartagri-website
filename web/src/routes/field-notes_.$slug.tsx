@@ -1,0 +1,134 @@
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { ArrowLeft } from "lucide-react";
+import { body, display } from "../lib/fonts";
+import { categoryChip, findNote } from "../lib/notes";
+import SiteHeader from "../components/SiteHeader";
+import Footer from "../components/Footer";
+
+export const Route = createFileRoute("/field-notes_/$slug")({
+  component: NoteDetailPage,
+  loader: ({ params }) => findNote(params.slug),
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: `${loaderData?.title ?? "Field Notes"} — smartagri` },
+      ...(loaderData?.excerpt
+        ? [{ name: "description", content: loaderData.excerpt }]
+        : []),
+    ],
+  }),
+});
+
+// Writers position images via the alt text in the CMS markdown editor:
+//   ![Caption|left](/brand/uploads/x.jpg)  → floats left, text wraps right
+//   ![Caption|right](/brand/uploads/x.jpg) → floats right, text wraps left
+//   ![Caption](/brand/uploads/x.jpg)       → full column width (default)
+function ArticleImage(props: { src?: string; alt?: string }) {
+  const [caption, align] = (props.alt ?? "").split("|");
+  const cls =
+    align === "left"
+      ? "sm:float-left sm:w-1/2 sm:mr-6 my-2 rounded-2xl"
+      : align === "right"
+        ? "sm:float-right sm:w-1/2 sm:ml-6 my-2 rounded-2xl"
+        : "w-full rounded-2xl";
+  return <img src={props.src} alt={caption} className={cls} />;
+}
+
+function NoteDetailPage() {
+  const note = Route.useLoaderData();
+
+  if (!note) {
+    return (
+      <main>
+        <SiteHeader />
+        <section className="bg-[#F3F7F6]">
+          <div className="max-w-[760px] mx-auto px-6 py-24 text-center flex flex-col items-center gap-4">
+            <h1
+              className="text-3xl md:text-4xl font-semibold text-neutral-900"
+              style={display}
+            >
+              Article not found
+            </h1>
+            <p className="text-neutral-500" style={body}>
+              The note you're looking for doesn't exist or may have been moved.
+            </p>
+            <Link
+              to="/field-notes"
+              className="px-7 py-3 rounded-2xl border border-[#0B6477] text-[#0B6477] font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
+              style={body}
+            >
+              Back to Field Notes
+            </Link>
+          </div>
+        </section>
+        <Footer />
+      </main>
+    );
+  }
+
+  return (
+    <main>
+      <SiteHeader />
+      <article className="bg-white">
+        <div className="max-w-[760px] mx-auto px-6 pt-12 md:pt-16 pb-16 md:pb-24">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+          >
+            <Link
+              to="/field-notes"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#0B6477] hover:underline mb-8"
+              style={body}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              All field notes
+            </Link>
+            <div className="flex items-center gap-3 mb-5">
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${categoryChip[note.category]}`}
+                style={body}
+              >
+                {note.category}
+              </span>
+              <span className="text-sm font-normal text-neutral-400" style={body}>
+                {note.date}
+              </span>
+            </div>
+            <h1
+              className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900 mb-8"
+              style={display}
+            >
+              {note.title}
+            </h1>
+            {note.cover && (
+              <img
+                src={note.cover}
+                alt=""
+                className="w-full max-h-[440px] object-cover rounded-3xl mb-10"
+              />
+            )}
+            <div
+              className="prose prose-neutral prose-lg max-w-none prose-headings:font-semibold prose-headings:tracking-[-0.02em] prose-a:text-[#0B6477] prose-blockquote:border-l-[#14919B] prose-blockquote:text-neutral-600 prose-li:marker:text-[#14919B] [&::after]:content-[''] [&::after]:block [&::after]:clear-both"
+              style={body}
+            >
+              {note.body ? (
+                <Markdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{ img: ArticleImage }}
+                >
+                  {note.body}
+                </Markdown>
+              ) : (
+                <p>{note.excerpt}</p>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </article>
+      <Footer />
+    </main>
+  );
+}

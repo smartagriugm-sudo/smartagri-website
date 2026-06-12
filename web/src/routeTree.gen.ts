@@ -16,6 +16,7 @@ import { Route as FieldNotesRouteImport } from './routes/field-notes'
 import { Route as ContactUsRouteImport } from './routes/contact-us'
 import { Route as AboutUsRouteImport } from './routes/about-us'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
 
 const ResearchRoute = ResearchRouteImport.update({
   id: '/research',
@@ -52,6 +53,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FieldNotesSlugRoute = FieldNotesSlugRouteImport.update({
+  id: '/field-notes_/$slug',
+  path: '/field-notes/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/field-notes/$slug': typeof FieldNotesSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/field-notes/$slug': typeof FieldNotesSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/field-notes_/$slug': typeof FieldNotesSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/publications'
     | '/research'
+    | '/field-notes/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/publications'
     | '/research'
+    | '/field-notes/$slug'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/publications'
     | '/research'
+    | '/field-notes_/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   ImpactRoute: typeof ImpactRoute
   PublicationsRoute: typeof PublicationsRoute
   ResearchRoute: typeof ResearchRoute
+  FieldNotesSlugRoute: typeof FieldNotesSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/field-notes_/$slug': {
+      id: '/field-notes_/$slug'
+      path: '/field-notes/$slug'
+      fullPath: '/field-notes/$slug'
+      preLoaderRoute: typeof FieldNotesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImpactRoute: ImpactRoute,
   PublicationsRoute: PublicationsRoute,
   ResearchRoute: ResearchRoute,
+  FieldNotesSlugRoute: FieldNotesSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

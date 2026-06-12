@@ -10,6 +10,8 @@ export const NOTE_FILTERS = [
 export type NoteFilter = (typeof NOTE_FILTERS)[number];
 
 export type Note = {
+  /** URL slug, derived from the content filename */
+  slug: string;
   category: NoteCategory;
   /** Display date, e.g. "June 2, 2026" */
   date: string;
@@ -17,6 +19,8 @@ export type Note = {
   excerpt: string;
   /** Optional cover image path (e.g. /brand/uploads/foo.jpg) */
   cover?: string;
+  /** Optional article body in Markdown (edited via the /admin CMS) */
+  body?: string;
 };
 
 export const categoryChip: Record<NoteCategory, string> = {
@@ -41,6 +45,7 @@ type NoteFile = {
   title: string;
   excerpt: string;
   cover?: string;
+  body?: string;
 };
 
 const noteFiles = import.meta.glob<NoteFile>("../content/notes/*.json", {
@@ -56,7 +61,14 @@ function formatDate(iso: string) {
   });
 }
 
-export const notes: Note[] = Object.values(noteFiles)
-  .slice()
+export const notes: Note[] = Object.entries(noteFiles)
+  .map(([path, note]) => ({
+    ...note,
+    slug: path.split("/").pop()!.replace(/\.json$/, ""),
+  }))
   .sort((a, b) => b.date.localeCompare(a.date))
   .map((note) => ({ ...note, date: formatDate(note.date) }));
+
+export function findNote(slug: string): Note | undefined {
+  return notes.find((note) => note.slug === slug);
+}

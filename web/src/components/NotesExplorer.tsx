@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "@tanstack/react-router";
+import { Link, createLink } from "@tanstack/react-router";
+
+// Router-typed Link that also accepts framer-motion animation props
+const MotionLink = createLink(motion.a);
 import { ArrowUpRight } from "lucide-react";
 import { A } from "../lib/assets";
 import { body, display } from "../lib/fonts";
@@ -108,9 +111,10 @@ export default function NotesExplorer({
       </div>
 
       {featured && (
-        <motion.a
+        <MotionLink
           key={`featured-${filter}-${featured.title}`}
-          href="#"
+          to="/field-notes/$slug"
+          params={{ slug: featured.slug }}
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -134,14 +138,15 @@ export default function NotesExplorer({
             </span>
             <ReadMore />
           </div>
-        </motion.a>
+        </MotionLink>
       )}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {rest.map((note, i) => (
-          <motion.a
+          <MotionLink
             key={`${filter}-${note.title}`}
-            href="#"
+            to="/field-notes/$slug"
+            params={{ slug: note.slug }}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
@@ -167,7 +172,7 @@ export default function NotesExplorer({
                 <ReadMore />
               </div>
             </div>
-          </motion.a>
+          </MotionLink>
         ))}
       </div>
 

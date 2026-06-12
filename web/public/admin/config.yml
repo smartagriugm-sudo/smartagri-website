@@ -54,6 +54,15 @@ collections:
         widget: image
         required: false
         hint: "Opsional — landscape ≥800px. Tanpa foto, kartu memakai gradien brand."
+      - name: body
+        label: Body
+        widget: markdown
+        required: false
+        hint: >-
+          Isi artikel lengkap. Sisipkan gambar lewat tombol image di posisi
+          mana pun. Atur penempatan lewat teks alt gambar: "Keterangan|left"
+          (rata kiri, teks mengalir di kanan), "Keterangan|right" (rata kanan),
+          atau tanpa tambahan untuk lebar penuh.
 
   - name: publications
     label: Publications
