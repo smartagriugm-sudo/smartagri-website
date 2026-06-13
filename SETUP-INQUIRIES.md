@@ -12,20 +12,24 @@ ke anggota, komentar) dengan 0% perawatan — dan timnya sudah familiar.
 
 ---
 
-## Langkah 1 — Buat spreadsheet
+## Langkah 1 — Import template spreadsheet
 
-1. Buka [sheets.new](https://sheets.new) (login akun Google lembaga).
-2. Beri nama, mis. `smartagri — Inquiries`.
-3. Ganti nama tab sheet pertama (kiri bawah) menjadi persis: `Inquiries`.
-4. Isi baris pertama (header) kolom A–J persis:
-   `Timestamp | ID | Name | Email | Organization | Research Area | Details | Technologies | Question | Status`
-5. (Disarankan) Blok kolom J → menu Data → **Data validation** → kriteria
-   Dropdown: `New, In Review, Replied, Closed` — inilah alat kurasinya.
+Template siap pakai sudah tersedia di root proyek:
+**`smartagri-inquiries-template.xlsx`** — berisi tab `Inquiries` (header,
+dropdown Status berwarna, filter, baris contoh) dan tab `Panduan` (langkah +
+kode Apps Script lengkap).
+
+1. Login [drive.google.com](https://drive.google.com) dengan akun Google
+   lembaga → **New → File upload** → pilih file template tersebut.
+2. Buka file-nya → menu **File → Save as Google Sheets** (agar menjadi
+   spreadsheet asli, bukan sekadar pratinjau xlsx).
+3. Pastikan nama tab pertama tetap persis `Inquiries`.
 
 ## Langkah 2 — Pasang Apps Script
 
 1. Di spreadsheet: menu **Extensions → Apps Script**.
-2. Hapus isi editor, tempel kode ini, lalu Save:
+2. Hapus isi editor, tempel kode ini (sama dengan yang ada di tab `Panduan`
+   template), lalu Save:
 
 ```javascript
 function doPost(e) {
