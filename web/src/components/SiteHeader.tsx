@@ -11,9 +11,20 @@ const navLinks = [
   { label: "Impact", to: "/impact" },
   { label: "Publications", to: "/publications" },
   { label: "Field Notes", to: "/field-notes" },
-  { label: "Exhibition", to: "/exhibition" },
+  // Highlighted: Exhibition is a time-bound annual event, not a permanent page.
+  { label: "Exhibition", to: "/exhibition", highlight: true },
   { label: "About Us", to: "/about-us" },
 ];
+
+// Pulsing "live event" dot shown next to highlighted (event) nav items.
+function LiveDot() {
+  return (
+    <span className="relative flex h-2 w-2" aria-hidden="true">
+      <span className="absolute inline-flex h-full w-full rounded-full bg-[#45DFB1] opacity-75 animate-ping" />
+      <span className="relative inline-flex h-2 w-2 rounded-full bg-[#45DFB1]" />
+    </span>
+  );
+}
 
 // Sticky on every page. `overlay` (landing) starts transparent over the hero
 // video and turns solid once the page is scrolled.
@@ -43,16 +54,28 @@ export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
         </Link>
 
         <nav className="hidden lg:flex items-center gap-5 xl:gap-7">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              to={link.to}
-              className="text-white text-base opacity-90 hover:opacity-100"
-              style={body}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) =>
+            link.highlight ? (
+              <Link
+                key={link.label}
+                to={link.to}
+                className="inline-flex items-center gap-1.5 text-[#45DFB1] text-base font-medium hover:text-[#80ED99] transition-colors"
+                style={body}
+              >
+                {link.label}
+                <LiveDot />
+              </Link>
+            ) : (
+              <Link
+                key={link.label}
+                to={link.to}
+                className="text-white text-base opacity-90 hover:opacity-100"
+                style={body}
+              >
+                {link.label}
+              </Link>
+            ),
+          )}
           <Link
             to="/contact-us"
             className="h-10 px-5 rounded-full bg-[#45DFB1] text-[#0B2A22] font-medium flex items-center hover:bg-[#80ED99] transition-colors"
@@ -87,10 +110,15 @@ export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
                     key={link.label}
                     to={link.to}
                     onClick={() => setMenuOpen(false)}
-                    className="text-white text-base opacity-90 hover:opacity-100"
+                    className={
+                      link.highlight
+                        ? "inline-flex items-center gap-1.5 text-[#45DFB1] text-base font-medium"
+                        : "text-white text-base opacity-90 hover:opacity-100"
+                    }
                     style={body}
                   >
                     {link.label}
+                    {link.highlight && <LiveDot />}
                   </Link>
                 ))}
                 <Link

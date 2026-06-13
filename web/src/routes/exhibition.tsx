@@ -130,7 +130,7 @@ function ExhibitionPage() {
         </div>
       </section>
 
-      {/* Showcase: products & services */}
+      {/* Showcase: services */}
       <section className="bg-white">
         <div className="max-w-[1360px] mx-auto px-6 md:px-12 py-16 md:py-20">
           <div className="mb-12">
@@ -144,7 +144,7 @@ function ExhibitionPage() {
               className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900 max-w-[760px]"
               style={display}
             >
-              Products and services, <span style={accent}>live at our booth</span>
+              The services we offer, <span style={accent}>live at our booth</span>
             </h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -157,20 +157,8 @@ function ExhibitionPage() {
                 transition={{ delay: (i % 3) * 0.1, duration: 0.5, ease: "easeOut" }}
                 className="rounded-3xl bg-[#F3F7F6] p-7 flex flex-col gap-4"
               >
-                <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-[#0B6477] flex items-center justify-center">
-                    <item.icon className="w-6 h-6 text-[#45DFB1]" />
-                  </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      item.kind === "Product"
-                        ? "bg-[#0B6477] text-white"
-                        : "bg-[#45DFB1] text-[#0B2A22]"
-                    }`}
-                    style={body}
-                  >
-                    {item.kind}
-                  </span>
+                <div className="w-12 h-12 rounded-2xl bg-[#0B6477] flex items-center justify-center">
+                  <item.icon className="w-6 h-6 text-[#45DFB1]" />
                 </div>
                 <h3
                   className="text-lg md:text-xl font-medium text-neutral-900 leading-snug"
@@ -284,25 +272,37 @@ function ExhibitionPage() {
               Made possible <span style={accent}>together</span>
             </h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {SPONSORS.map((s, i) => (
-              <motion.div
-                key={s.name}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: (i % 6) * 0.06, duration: 0.45, ease: "easeOut" }}
-                className="rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-28 flex items-center justify-center p-5"
+          {SPONSORS.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {SPONSORS.map((s, i) => (
+                <motion.div
+                  key={s.name}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ delay: (i % 6) * 0.06, duration: 0.45, ease: "easeOut" }}
+                  className="rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-28 flex items-center justify-center p-5"
+                >
+                  <img
+                    src={s.logo}
+                    alt={s.name}
+                    loading="lazy"
+                    className="max-h-14 max-w-full object-contain"
+                  />
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-[#0B6477]/25 bg-[#F3F7F6] p-10 text-center">
+              <p
+                className="text-base md:text-lg font-normal text-neutral-500 max-w-[560px] mx-auto"
+                style={body}
               >
-                <img
-                  src={s.logo}
-                  alt={s.name}
-                  loading="lazy"
-                  className="max-h-14 max-w-full object-contain"
-                />
-              </motion.div>
-            ))}
-          </div>
+                Sponsor and supporter logos will be announced here soon. Want to
+                support smartagri at {EVENT.name}? We would love to hear from you.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

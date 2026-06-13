@@ -13,7 +13,6 @@ import {
   Warehouse,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { partnerLogo } from "./assets";
 
 // Tag used to surface event coverage (news, daily reports, after report) from
 // Field Notes on the exhibition page. Articles tagged with this in /admin
@@ -33,47 +32,40 @@ export const EVENT = {
 };
 
 export type ShowcaseItem = {
-  kind: "Product" | "Service";
   icon: LucideIcon;
   title: string;
   desc: string;
 };
 
-// What visitors can see and try at the booth. TODO: team to confirm the
-// product/service line-up and copy.
+// The services we offer, on show at the booth. TODO: team to confirm the
+// service line-up and copy.
 export const SHOWCASE: ShowcaseItem[] = [
   {
-    kind: "Product",
-    icon: RadioTower,
-    title: "Field Sensor Network",
-    desc: "Low-cost IoT soil moisture, temperature, and weather sensors streaming live field data over LoRa and cellular.",
-  },
-  {
-    kind: "Service",
     icon: Plane,
-    title: "UAV Crop Mapping",
+    title: "UAV Crop Mapping & Survey",
     desc: "Drone multispectral surveys turned into per-plot health maps for scouting, yield estimation, and precision treatment.",
   },
   {
-    kind: "Product",
-    icon: Warehouse,
-    title: "Smart Greenhouse Controller",
-    desc: "Closed-loop climate and irrigation control for greenhouses and plant factories, built on affordable open hardware.",
-  },
-  {
-    kind: "Product",
-    icon: LayoutDashboard,
-    title: "Farm Decision Dashboard",
-    desc: "A web and mobile dashboard that turns sensor, drone, and weather data into plain recommendations farmers can act on.",
-  },
-  {
-    kind: "Service",
     icon: Droplets,
     title: "Irrigation Modernization",
     desc: "Telemetry, hydraulic analysis, and demand-based scheduling for canals and on-farm water networks.",
   },
   {
-    kind: "Service",
+    icon: Warehouse,
+    title: "Smart Greenhouse & Plant Factory",
+    desc: "Design and setup of closed-loop climate and irrigation control for greenhouses and plant factories.",
+  },
+  {
+    icon: RadioTower,
+    title: "IoT Field Monitoring",
+    desc: "Deployment of low-cost soil, climate, and weather sensor networks that stream live field data to your team.",
+  },
+  {
+    icon: LayoutDashboard,
+    title: "Farm Data Platform & Dashboards",
+    desc: "Custom dashboards and data platforms that turn sensor, drone, and weather data into decisions farmers can act on.",
+  },
+  {
     icon: Sprout,
     title: "Agronomy & Data Advisory",
     desc: "Research-backed advisory that pairs agronomy expertise with the center's models, sensing, and analytics.",
@@ -118,19 +110,11 @@ export type Sponsor = {
   logo: string;
 };
 
-// Sponsors and supporting organizations. TODO: confirm the real sponsor list
-// for INAGRITECH 2026; logos below reuse existing partner marks as placeholders.
-export const SPONSORS: Sponsor[] = [
-  { name: "Pertamina Patra Niaga", logo: partnerLogo("pertamina-patra-niaga.png") },
-  { name: "NVIDIA", logo: partnerLogo("nvidia.svg") },
-  {
-    name: "Indosat Ooredoo Hutchison",
-    logo: partnerLogo("indosat-ooredoo-hutchison.png"),
-  },
-  { name: "Wilmar International", logo: partnerLogo("wilmar-international.png") },
-  { name: "BISI International", logo: partnerLogo("bisi-international.png") },
-  { name: "PUAPT UGM", logo: partnerLogo("puapt-ugm.png") },
-];
+// Sponsors and supporting organizations.
+// TODO: add sponsor logos here when confirmed, e.g.
+//   { name: "Sponsor Name", logo: partnerLogo("sponsor-file.png") },
+// While empty, the exhibition page shows a "coming soon" placeholder.
+export const SPONSORS: Sponsor[] = [];
 
 export type ExhibitionDoc = {
   title: string;

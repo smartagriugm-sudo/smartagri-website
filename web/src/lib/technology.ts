@@ -51,7 +51,7 @@ export const TECHNOLOGIES: Technology[] = [
     related: ["irrigation", "climate-control", "eis", "dss", "weather"],
     areas: [
       "Open Field Technology",
-      "Modernization Irrigation",
+      "Irrigation Modernization",
       "Indoor Farming Technology",
     ],
   },
@@ -201,7 +201,7 @@ export const TECHNOLOGIES: Technology[] = [
     ],
     applications: ["Automated scheduling", "Canal telemetry", "Sprinkler control"],
     related: ["iot", "weather", "dss", "climate-control"],
-    areas: ["Modernization Irrigation", "Open Field Technology"],
+    areas: ["Irrigation Modernization", "Open Field Technology"],
   },
   {
     id: "geospatial",
@@ -239,7 +239,7 @@ export const TECHNOLOGIES: Technology[] = [
     ],
     applications: ["Planting calendars", "Drought early warning", "Risk advisories"],
     related: ["ml", "irrigation", "iot", "dss"],
-    areas: ["Open Field Technology", "Modernization Irrigation"],
+    areas: ["Open Field Technology", "Irrigation Modernization"],
   },
   {
     id: "dss",
@@ -259,7 +259,7 @@ export const TECHNOLOGIES: Technology[] = [
     areas: [
       "Agro-Informatics",
       "Smart Estate Technology",
-      "Modernization Irrigation",
+      "Irrigation Modernization",
     ],
   },
 ];

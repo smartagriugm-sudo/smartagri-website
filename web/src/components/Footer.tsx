@@ -3,7 +3,10 @@ import { A } from "../lib/assets";
 import { body } from "../lib/fonts";
 import { RESEARCH_AREAS } from "../lib/research";
 
-const researchLinks = RESEARCH_AREAS.map((area) => area.label);
+const researchLinks = RESEARCH_AREAS.map((area) => ({
+  label: area.label,
+  href: `/research/${area.slug}`,
+}));
 
 const centerLinks = [
   { label: "Research", href: "/research" },
@@ -12,7 +15,6 @@ const centerLinks = [
   { label: "Publications", href: "/publications" },
   { label: "Field Notes", href: "/field-notes" },
   { label: "Exhibition", href: "/exhibition" },
-  { label: "Team", href: "/team" },
   { label: "About Us", href: "/about-us" },
   { label: "Contact", href: "/contact-us" },
 ];
@@ -34,17 +36,15 @@ export default function Footer() {
   return (
     <footer className="bg-[#08313A] text-white">
       <div className="max-w-[1360px] mx-auto px-6 md:px-12 pt-16 pb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr] gap-10 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.4fr_1.3fr] gap-10 lg:gap-8">
           <div>
             <img src={A.logoWhite} alt="smartagri" className="h-8 w-auto" />
             <p
               className="text-white/60 text-sm font-normal leading-relaxed max-w-[300px] mt-4"
               style={body}
             >
-              Smart Agriculture Research Center, Department of Agricultural
-              and Biosystems Engineering, Faculty of Agricultural Technology,
-              Universitas Gadjah Mada. We unite AI, IoT sensing, and agronomy
-              to help farmers grow more sustainably.
+              Smart Agriculture Research Center UGM. We unite AI, IoT sensing,
+              and agronomy to help farmers grow more sustainably.
             </p>
             <div className="flex gap-3 mt-6">
               {socials.map((social) => (
@@ -70,14 +70,14 @@ export default function Footer() {
               Research
             </div>
             <div className="flex flex-col gap-2.5">
-              {researchLinks.map((label) => (
+              {researchLinks.map((link) => (
                 <a
-                  key={label}
-                  href="/research"
+                  key={link.label}
+                  href={link.href}
                   className="text-[15px] font-normal text-white/75 hover:text-white transition-colors"
                   style={body}
                 >
-                  {label}
+                  {link.label}
                 </a>
               ))}
             </div>
@@ -90,7 +90,7 @@ export default function Footer() {
             >
               Center
             </div>
-            <div className="flex flex-col gap-2.5">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
               {centerLinks.map((link) => (
                 <a
                   key={link.label}

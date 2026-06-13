@@ -53,8 +53,8 @@ export const RESEARCH_AREAS: ResearchArea[] = [
     ],
   },
   {
-    slug: "modernization-irrigation",
-    label: "Modernization Irrigation",
+    slug: "irrigation-modernization",
+    label: "Irrigation Modernization",
     icon: Droplets,
     desc: "Modernizing irrigation systems with telemetry, smart gates, and data-driven scheduling for canals and on-farm water networks.",
     overview:

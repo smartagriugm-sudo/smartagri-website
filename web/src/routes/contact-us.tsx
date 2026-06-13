@@ -78,7 +78,7 @@ const AREA_EXTRAS: Record<string, ExtraField[]> = {
     { key: "Crop type", label: "What crop do you grow?", type: "text", placeholder: "e.g. rice, maize, shallots" },
     { key: "Land size", label: "Roughly how large is the land?", type: "text", placeholder: "e.g. 2 ha" },
   ],
-  "Modernization Irrigation": [
+  "Irrigation Modernization": [
     {
       key: "Irrigation type",
       label: "What kind of irrigation system?",
