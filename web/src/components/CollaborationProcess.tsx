@@ -1,29 +1,46 @@
 import { motion } from "framer-motion";
-import { Handshake, PencilRuler, Sprout, TrendingUp } from "lucide-react";
+import {
+  ClipboardList,
+  FileText,
+  FlaskConical,
+  GraduationCap,
+  LineChart,
+  Search,
+} from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 
-// "Our collaboration process" — how a partner goes from first contact to a
-// working, supported deployment. TODO: have the team review the copy.
+// "Our collaboration process" — six steps from first contact to a working,
+// supported deployment, in smartagri's voice. TODO: team to review the copy.
 const steps = [
   {
-    icon: Handshake,
-    title: "Connect",
-    desc: "Tell us about your land, crop, or research question. A short conversation is enough to start.",
+    icon: Search,
+    title: "Inquiry & Assessment",
+    desc: "You reach out and tell us about your land, crop, or challenge. We review your goals and field conditions to see how we can help.",
   },
   {
-    icon: PencilRuler,
-    title: "Co-design",
-    desc: "We scope the problem together and shape an approach that fits your context, scale, and budget.",
+    icon: ClipboardList,
+    title: "Field Scoping & Blueprint",
+    desc: "Our researchers study your context, gather technical requirements, and shape an approach tailored to your crop, climate, and scale.",
   },
   {
-    icon: Sprout,
-    title: "Pilot in the field",
-    desc: "We deploy sensors, drones, or models on your plots and test them under real conditions.",
+    icon: FileText,
+    title: "Proposal & Agreement",
+    desc: "We share a clear plan covering timeline, technology, resources, and key milestones, so everyone knows what to expect.",
   },
   {
-    icon: TrendingUp,
-    title: "Scale & support",
-    desc: "What works is rolled out wider, with training and ongoing support for your team.",
+    icon: FlaskConical,
+    title: "Deployment & Trial",
+    desc: "Our team installs sensors, flies drones, or runs models on your plots, testing under real field conditions with open communication.",
+  },
+  {
+    icon: GraduationCap,
+    title: "Handover & Training",
+    desc: "We hand over the working system with documentation and train your team to run it confidently, season after season.",
+  },
+  {
+    icon: LineChart,
+    title: "Review & Support",
+    desc: "We measure results against your goals and stay on to maintain, support, and keep improving the system over time.",
   },
 ];
 
@@ -46,9 +63,9 @@ export default function CollaborationProcess() {
           </h2>
         </div>
 
-        <div className="relative grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* connecting line behind the steps on desktop */}
-          <div className="hidden lg:block absolute top-7 left-[12.5%] right-[12.5%] h-px bg-[#0B6477]/15" />
+        <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+          {/* connecting line behind the icon row, only when all six sit in one row */}
+          <div className="hidden xl:block absolute top-7 left-[8.33%] right-[8.33%] h-px bg-[#0B6477]/15" />
 
           {steps.map((step, i) => (
             <motion.div
@@ -56,7 +73,7 @@ export default function CollaborationProcess() {
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ delay: i * 0.12, duration: 0.5, ease: "easeOut" }}
+              transition={{ delay: (i % 6) * 0.08, duration: 0.5, ease: "easeOut" }}
               className="relative flex flex-col items-center text-center gap-4"
             >
               <div className="relative w-14 h-14 rounded-2xl bg-[#0B6477] flex items-center justify-center">
@@ -68,14 +85,20 @@ export default function CollaborationProcess() {
                   {i + 1}
                 </span>
               </div>
+              <div
+                className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#14919B]"
+                style={body}
+              >
+                Step {i + 1}
+              </div>
               <h3
-                className="text-lg md:text-xl font-medium text-neutral-900"
+                className="text-base md:text-lg font-medium text-neutral-900 leading-snug -mt-2"
                 style={display}
               >
                 {step.title}
               </h3>
               <p
-                className="text-sm md:text-base font-normal text-neutral-500 leading-relaxed max-w-[260px]"
+                className="text-sm font-normal text-neutral-500 leading-relaxed max-w-[260px]"
                 style={body}
               >
                 {step.desc}
