@@ -147,6 +147,11 @@ export const PARTNERS: Partner[] = [
     logo: partnerLogo("berkah-harmoni-makmur.png"),
     group: "Private Company",
   },
+  {
+    name: "Altera",
+    logo: partnerLogo("altera.svg"),
+    group: "Private Company",
+  },
 
   // Research centers & organizations
   {
