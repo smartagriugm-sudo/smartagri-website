@@ -24,7 +24,9 @@ export default function FieldNotes() {
           News, research updates, practical guides, and stories from the farms
           and labs we work in.
         </p>
-        <NotesExplorer limit={6} showViewAll />
+        {/* 7 = 1 featured + 6 in the grid, so the 3-column grid fills evenly
+            (3 + 3) with no empty slot in the bottom-right corner. */}
+        <NotesExplorer limit={7} showViewAll />
       </div>
     </section>
   );
