@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Greenhouse Workflow Simulator</title>
+  <style>html,body{margin:0;background:#062A32}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></head>
+<body>
+<!-- Smart Greenhouse — combined workflow simulator (Agent / Linear) -->
+<div id="app">
+  <div class="topbar">
+    <div class="left">
+      <div class="brand">Smart Greenhouse &middot; <span>Workflow Simulator</span></div>
+      <div class="viewtoggle">
+        <button class="vbtn active" data-v="agent">Agent</button>
+        <button class="vbtn" data-v="linear">Linear</button>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="prevBtn" class="btn">&#9664;</button>
+      <button id="playBtn" class="btn primary">&#9208; Pause</button>
+      <button id="nextBtn" class="btn">&#9654;</button>
+      <button id="restartBtn" class="btn">&#8634; Restart</button>
+      <div class="speed"><span>Speed</span>
+        <button class="btn sp" data-s="0.5">0.5x</button>
+        <button class="btn sp active" data-s="1">1x</button>
+        <button class="btn sp" data-s="2">2x</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="readout">
+    <div class="sc-title"><span class="sc-no" id="scNo">1/8</span><span id="scTitle">&mdash;</span></div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="stage" id="stage"></div>
+
+  <div class="caption"><div class="step" id="phase">read sensors</div><div id="capText" class="captext">Starting&hellip;</div></div>
+</div>
+
+<template id="tpl-agent">
+    <svg id="wf" viewBox="0 0 1690 1080" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+      <defs>
+        <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="1.1" fill="#2a2c31"/>
+        </pattern>
+        <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="3.2" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <rect x="0" y="0" width="1690" height="1080" fill="#08313A"/>
+      <rect x="0" y="0" width="1690" height="1080" fill="url(#dots)"/>
+
+      <!-- ===== CONNECTORS ===== -->
+      <path id="p_trig_agent" class="wire" d="M186 478 H400"/>
+      <circle cx="186" cy="478" r="3.5" fill="#9a9da3"/><circle cx="400" cy="478" r="3.5" fill="#9a9da3"/>
+      <path id="p_agent_switch" class="wire" d="M640 478 H720"/>
+      <circle cx="640" cy="478" r="3.5" fill="#9a9da3"/>
+
+      <path id="p_sw_cooling" class="wire" d="M830 400 C920 400 910 110 1000 110"/>
+      <path id="p_sw_heating" class="wire" d="M830 430 C920 430 910 250 1000 250"/>
+      <path id="p_sw_lights" class="wire" d="M830 460 C920 460 910 390 1000 390"/>
+      <path id="p_sw_co2" class="wire" d="M830 490 C920 490 910 530 1000 530"/>
+      <path id="p_sw_fert" class="wire" d="M830 520 C920 520 910 670 1000 670"/>
+      <path id="p_sw_maintain" class="wire" d="M830 550 C920 550 910 810 1000 810"/>
+      <path id="p_sw_anomaly" class="wire" d="M830 580 C920 580 910 950 1000 950"/>
+      <g fill="#9a9da3">
+        <circle cx="830" cy="400" r="3.5"/><circle cx="830" cy="430" r="3.5"/><circle cx="830" cy="460" r="3.5"/>
+        <circle cx="830" cy="490" r="3.5"/><circle cx="830" cy="520" r="3.5"/><circle cx="830" cy="550" r="3.5"/><circle cx="830" cy="580" r="3.5"/>
+      </g>
+      <g fill="#8a8d93" font-size="10">
+        <text x="840" y="396">T / VPD high</text><text x="840" y="426">T low</text><text x="840" y="456">light low</text>
+        <text x="840" y="486">CO₂ low</text><text x="840" y="516">substrate off</text><text x="840" y="546">optimal</text><text x="840" y="576">anomaly</text>
+      </g>
+
+      <path id="p_cool_merge" class="wire" d="M1096 110 C1170 110 1160 460 1230 460"/>
+      <path id="p_heat_merge" class="wire" d="M1096 250 C1170 250 1160 460 1230 460"/>
+      <path id="p_lights_merge" class="wire" d="M1096 390 C1170 390 1175 460 1230 460"/>
+      <path id="p_co2_merge" class="wire" d="M1096 530 C1170 530 1175 460 1230 460"/>
+      <path id="p_fert_merge" class="wire" d="M1096 670 C1170 670 1160 460 1230 460"/>
+      <path id="p_maintain_merge" class="wire" d="M1096 810 C1170 810 1160 460 1230 460"/>
+      <g fill="#9a9da3">
+        <circle cx="1096" cy="110" r="3.5"/><circle cx="1096" cy="250" r="3.5"/><circle cx="1096" cy="390" r="3.5"/>
+        <circle cx="1096" cy="530" r="3.5"/><circle cx="1096" cy="670" r="3.5"/><circle cx="1096" cy="810" r="3.5"/>
+      </g>
+
+      <path id="p_merge_log" class="wire" d="M1338 460 H1470"/>
+      <circle cx="1338" cy="460" r="3.5" fill="#9a9da3"/>
+      <path id="p_log_plus" class="wire" d="M1574 460 H1596"/>
+      <circle cx="1574" cy="460" r="3.5" fill="#9a9da3"/>
+
+      <path id="p_safe_alert" class="wire" d="M1096 950 H1230"/>
+      <circle cx="1096" cy="950" r="3.5" fill="#9a9da3"/>
+      <path id="p_safe_log" class="wire" d="M1096 950 C1180 1012 1452 1018 1522 944 C1562 882 1522 600 1522 504"/>
+      <circle cx="1522" cy="504" r="3.5" fill="#9a9da3"/>
+      <text x="1300" y="1035" fill="#8a8d93" font-size="10" text-anchor="middle">log anomaly event</text>
+      <path id="p_alert_plus" class="wire" d="M1338 950 H1356"/>
+      <circle cx="1338" cy="950" r="3.5" fill="#9a9da3"/>
+
+      <!-- dashed sub-connectors -->
+      <path id="d_model" class="wire dash" d="M472 540 C440 600 220 620 158 658"/>
+      <path id="d_memory" class="wire dash" d="M545 540 C545 610 320 620 285 658"/>
+      <path id="d_climate" class="wire dash" d="M600 578 C600 620 470 630 412 658"/>
+      <path id="d_substrate" class="wire dash" d="M600 578 C600 620 545 630 542 658"/>
+      <path id="d_light" class="wire dash" d="M600 578 C600 620 660 630 670 658"/>
+      <path id="d_weather" class="wire dash" d="M600 578 C600 620 790 630 800 658"/>
+
+      <!-- ===== TRIGGER ===== -->
+      <g id="n_trigger" class="node">
+        <polygon points="78,450 64,476 75,476 69,496 90,466 78,466 84,450" fill="#ff5c4d"/>
+        <rect class="card" x="90" y="430" width="96" height="96" rx="18"/>
+        <circle cx="138" cy="478" r="15" fill="none" stroke="#1ec8d8" stroke-width="2.2"/>
+        <line x1="138" y1="478" x2="138" y2="468" stroke="#1ec8d8" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="138" y1="478" x2="147" y2="482" stroke="#1ec8d8" stroke-width="2.2" stroke-linecap="round"/>
+        <text x="138" y="552" class="t1" text-anchor="middle">Schedule Trigger</text>
+        <text x="138" y="570" class="t2" text-anchor="middle">every X min</text>
+      </g>
+
+      <!-- ===== AGENT ===== -->
+      <g id="n_agent" class="node">
+        <rect class="card" x="400" y="420" width="240" height="104" rx="18"/>
+        <rect x="421" y="452" width="32" height="32" rx="5" fill="none" stroke="#e6e7e9" stroke-width="2"/>
+        <rect x="429" y="460" width="16" height="16" rx="2" fill="none" stroke="#45DFB1" stroke-width="1.6"/>
+        <g stroke="#e6e7e9" stroke-width="1.6" stroke-linecap="round">
+          <line x1="429" y1="448" x2="429" y2="452"/><line x1="437" y1="448" x2="437" y2="452"/><line x1="445" y1="448" x2="445" y2="452"/>
+          <line x1="429" y1="484" x2="429" y2="488"/><line x1="437" y1="484" x2="437" y2="488"/><line x1="445" y1="484" x2="445" y2="488"/>
+          <line x1="417" y1="460" x2="421" y2="460"/><line x1="417" y1="468" x2="421" y2="468"/><line x1="417" y1="476" x2="421" y2="476"/>
+          <line x1="453" y1="460" x2="457" y2="460"/><line x1="453" y1="468" x2="457" y2="468"/><line x1="453" y1="476" x2="457" y2="476"/>
+        </g>
+        <text x="472" y="466" class="t1b">Greenhouse Agent</text>
+        <text x="472" y="486" class="t2">Control Agent</text>
+        <text x="472" y="540" class="port" text-anchor="middle">Model<tspan fill="#ff5c4d">*</tspan></text>
+        <text x="545" y="540" class="port" text-anchor="middle">Memory</text>
+        <text x="600" y="540" class="port" text-anchor="middle">Tools</text>
+        <rect x="590" y="556" width="20" height="20" rx="5" fill="#2b2d31" stroke="#5b5e66" stroke-width="1.4"/>
+        <line x1="600" y1="561" x2="600" y2="571" stroke="#9a9da3" stroke-width="1.4"/><line x1="595" y1="566" x2="605" y2="566" stroke="#9a9da3" stroke-width="1.4"/>
+      </g>
+
+      <!-- ===== SWITCH ===== -->
+      <g id="n_switch" class="node">
+        <rect class="card" x="720" y="370" width="110" height="220" rx="18"/>
+        <g stroke="#5fb37a" stroke-width="2.2" fill="none" stroke-linecap="round">
+          <line x1="748" y1="480" x2="766" y2="480"/><path d="M766 480 L792 462"/><path d="M766 480 L792 480"/><path d="M766 480 L792 498"/>
+        </g>
+        <g fill="#5fb37a"><polygon points="792,458 800,462 792,466"/><polygon points="792,476 800,480 792,484"/><polygon points="792,494 800,498 792,502"/></g>
+        <text x="775" y="612" class="t1" text-anchor="middle">Switch</text>
+        <text x="775" y="630" class="t2" text-anchor="middle">Evaluate vs Setpoint</text>
+      </g>
+
+      <!-- ===== SUB-NODES ===== -->
+      <g id="n_model" class="node">
+        <circle class="card" cx="150" cy="690" r="34"/>
+        <path d="M150 674 l4 11 11 4 -11 4 -4 11 -4 -11 -11 -4 11 -4 z" fill="#a78bfa"/>
+        <text x="150" y="744" class="t3" text-anchor="middle">Decision Model</text><text x="150" y="760" class="t2" text-anchor="middle">Fuzzy + AI</text>
+      </g>
+      <g id="n_memory" class="node">
+        <circle class="card" cx="280" cy="690" r="34"/>
+        <ellipse cx="280" cy="679" rx="13" ry="4.5" fill="none" stroke="#4a9ad6" stroke-width="2"/>
+        <path d="M267 679 v18 a13 4.5 0 0 0 26 0 v-18" fill="none" stroke="#4a9ad6" stroke-width="2"/>
+        <path d="M267 688 a13 4.5 0 0 0 26 0" fill="none" stroke="#4a9ad6" stroke-width="2"/>
+        <text x="280" y="744" class="t3" text-anchor="middle">Time-series DB</text><text x="280" y="760" class="t2" text-anchor="middle">setpoints</text>
+      </g>
+      <g id="n_climate" class="node">
+        <circle class="card" cx="410" cy="690" r="34"/>
+        <rect x="406" y="676" width="8" height="19" rx="4" fill="none" stroke="#ff6b6b" stroke-width="2"/>
+        <circle cx="410" cy="699" r="6" fill="#ff6b6b"/><rect x="409" y="682" width="2" height="15" fill="#ff6b6b"/>
+        <text x="410" y="744" class="t3" text-anchor="middle">Climate Sensor</text><text x="410" y="760" class="t2" text-anchor="middle">T/RH/CO₂</text>
+      </g>
+      <g id="n_substrate" class="node">
+        <circle class="card" cx="540" cy="690" r="34"/>
+        <path d="M540 674 C547 686 551 691 551 696 a11 11 0 0 1 -22 0 c0 -5 4 -10 11 -22 z" fill="none" stroke="#4ec0e9" stroke-width="2"/>
+        <text x="540" y="744" class="t3" text-anchor="middle">Substrate Sensor</text><text x="540" y="760" class="t2" text-anchor="middle">moist/EC/pH</text>
+      </g>
+      <g id="n_light" class="node">
+        <circle class="card" cx="670" cy="690" r="34"/>
+        <circle cx="670" cy="688" r="8" fill="none" stroke="#f5c542" stroke-width="2"/>
+        <g stroke="#f5c542" stroke-width="1.8" stroke-linecap="round">
+          <line x1="670" y1="675" x2="670" y2="672"/><line x1="670" y1="704" x2="670" y2="701"/><line x1="657" y1="688" x2="654" y2="688"/><line x1="686" y1="688" x2="683" y2="688"/>
+          <line x1="661" y1="679" x2="659" y2="677"/><line x1="679" y1="679" x2="681" y2="677"/><line x1="661" y1="697" x2="659" y2="699"/><line x1="679" y1="697" x2="681" y2="699"/>
+        </g>
+        <text x="670" y="744" class="t3" text-anchor="middle">Light Sensor</text><text x="670" y="760" class="t2" text-anchor="middle">PPFD/DLI</text>
+      </g>
+      <g id="n_weather" class="node">
+        <circle class="card" cx="800" cy="690" r="34"/>
+        <path d="M791 695 a6 6 0 0 1 -1 -12 a8 8 0 0 1 15 -3 a7 7 0 0 1 5 15 z" fill="none" stroke="#9aa0a6" stroke-width="2"/>
+        <text x="800" y="744" class="t3" text-anchor="middle">Weather Station</text><text x="800" y="760" class="t2" text-anchor="middle">outdoor</text>
+      </g>
+
+      <!-- ===== ACTION NODES ===== -->
+      <g id="n_cooling" class="node">
+        <rect class="card" x="1000" y="70" width="96" height="80" rx="18"/>
+        <g stroke="#4a9ad6" stroke-width="5" stroke-linecap="round"><line x1="1048" y1="110" x2="1048" y2="96"/><line x1="1048" y1="110" x2="1061" y2="117"/><line x1="1048" y1="110" x2="1035" y2="117"/></g>
+        <circle cx="1048" cy="110" r="2.5" fill="#08313A"/>
+        <text x="1048" y="170" class="t3" text-anchor="middle">Cooling</text><text x="1048" y="187" class="t2" text-anchor="middle">fan + pad + fogging</text>
+      </g>
+      <g id="n_heating" class="node">
+        <rect class="card" x="1000" y="210" width="96" height="80" rx="18"/>
+        <g stroke="#ff9f43" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M1038 260 q-4 -6 0 -12 q4 -6 0 -12"/><path d="M1048 260 q-4 -6 0 -12 q4 -6 0 -12"/><path d="M1058 260 q-4 -6 0 -12 q4 -6 0 -12"/></g>
+        <text x="1048" y="310" class="t3" text-anchor="middle">Heating</text><text x="1048" y="327" class="t2" text-anchor="middle">heater / HVAC</text>
+      </g>
+      <g id="n_lights" class="node">
+        <rect class="card" x="1000" y="350" width="96" height="80" rx="18"/>
+        <circle cx="1048" cy="386" r="9" fill="none" stroke="#f5c542" stroke-width="2"/><rect x="1044" y="395" width="8" height="5" rx="1.5" fill="#f5c542"/><line x1="1048" y1="382" x2="1048" y2="390" stroke="#f5c542" stroke-width="1.6"/>
+        <text x="1048" y="450" class="t3" text-anchor="middle">Grow Lights</text><text x="1048" y="467" class="t2" text-anchor="middle">LED + shade screen</text>
+      </g>
+      <g id="n_co2" class="node">
+        <rect class="card" x="1000" y="490" width="96" height="80" rx="18"/>
+        <rect x="1040" y="522" width="16" height="22" rx="7" fill="none" stroke="#5fb37a" stroke-width="2"/><rect x="1044" y="517" width="8" height="6" rx="2" fill="#5fb37a"/>
+        <text x="1048" y="590" class="t3" text-anchor="middle">CO₂ Enrichment</text><text x="1048" y="607" class="t2" text-anchor="middle">CO₂ valve</text>
+      </g>
+      <g id="n_fert" class="node">
+        <rect class="card" x="1000" y="630" width="96" height="80" rx="18"/>
+        <path d="M1048 658 C1055 668 1059 672 1059 677 a11 11 0 0 1 -22 0 c0 -5 4 -10 11 -19 z" fill="none" stroke="#4ec0e9" stroke-width="2"/>
+        <line x1="1048" y1="654" x2="1048" y2="648" stroke="#4ec0e9" stroke-width="2" stroke-linecap="round"/><line x1="1043" y1="650" x2="1053" y2="650" stroke="#4ec0e9" stroke-width="2" stroke-linecap="round"/>
+        <text x="1048" y="730" class="t3" text-anchor="middle">Fertigation</text><text x="1048" y="747" class="t2" text-anchor="middle">dosing pump + valve</text>
+      </g>
+      <g id="n_maintain" class="node">
+        <rect class="card" x="1000" y="770" width="96" height="80" rx="18"/>
+        <circle cx="1048" cy="810" r="16" fill="none" stroke="#4caf72" stroke-width="2.2"/><polyline points="1041,810 1046,816 1056,803" fill="none" stroke="#4caf72" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="1048" y="870" class="t3" text-anchor="middle">Maintain</text><text x="1048" y="887" class="t2" text-anchor="middle">hold setpoint</text>
+      </g>
+      <g id="n_safemode" class="node">
+        <rect class="card danger" x="1000" y="910" width="96" height="80" rx="18"/>
+        <path d="M1048 932 l14 5 v9 c0 9 -7 14 -14 17 c-7 -3 -14 -8 -14 -17 v-9 z" fill="none" stroke="#ff9f43" stroke-width="2"/>
+        <polyline points="1042,950 1047,955 1055,945" fill="none" stroke="#ff9f43" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="1048" y="1010" class="t3" text-anchor="middle">Safe Mode</text><text x="1048" y="1027" class="t2" text-anchor="middle">fail-safe state</text>
+      </g>
+
+      <!-- ===== MERGE / LOG / ALERT ===== -->
+      <g id="n_merge" class="node">
+        <rect class="card" x="1230" y="416" width="108" height="88" rx="18"/>
+        <g stroke="#7fb0d6" stroke-width="2.4" fill="none" stroke-linecap="round"><path d="M1268 448 L1286 460"/><path d="M1268 472 L1286 460"/><line x1="1286" y1="460" x2="1304" y2="460"/></g>
+        <polygon points="1300,456 1308,460 1300,464" fill="#7fb0d6"/>
+        <text x="1284" y="524" class="t3" text-anchor="middle">Merge</text><text x="1284" y="541" class="t2" text-anchor="middle">all control actions</text>
+      </g>
+      <g id="n_log" class="node">
+        <rect class="card" x="1470" y="416" width="104" height="88" rx="18"/>
+        <ellipse cx="1522" cy="448" rx="15" ry="5" fill="none" stroke="#4a9ad6" stroke-width="2.2"/>
+        <path d="M1507 448 v22 a15 5 0 0 0 30 0 v-22" fill="none" stroke="#4a9ad6" stroke-width="2.2"/>
+        <path d="M1507 459 a15 5 0 0 0 30 0" fill="none" stroke="#4a9ad6" stroke-width="2.2"/>
+        <path d="M1507 470 a15 5 0 0 0 30 0" fill="none" stroke="#4a9ad6" stroke-width="2.2"/>
+        <text x="1522" y="524" class="t3" text-anchor="middle">Log to DB</text><text x="1522" y="541" class="t2" text-anchor="middle">time-series + dashboard</text>
+        <rect x="1596" y="449" width="22" height="22" rx="5" fill="#2b2d31" stroke="#5b5e66" stroke-width="1.4"/>
+        <line x1="1607" y1="454" x2="1607" y2="466" stroke="#9a9da3" stroke-width="1.5"/><line x1="1601" y1="460" x2="1613" y2="460" stroke="#9a9da3" stroke-width="1.5"/>
+      </g>
+      <g id="n_alert" class="node">
+        <rect class="card" x="1230" y="910" width="108" height="80" rx="18"/>
+        <path d="M1268 950 L1301 937 L1289 960 L1283 952 Z" fill="#4a9ad6"/><path d="M1283 952 L1301 937" stroke="#08313A" stroke-width="1"/>
+        <text x="1284" y="1010" class="t3" text-anchor="middle">Send Alert</text><text x="1284" y="1027" class="t2" text-anchor="middle">Telegram + email</text>
+        <rect x="1356" y="939" width="22" height="22" rx="5" fill="#2b2d31" stroke="#5b5e66" stroke-width="1.4"/>
+        <line x1="1367" y1="944" x2="1367" y2="956" stroke="#9a9da3" stroke-width="1.5"/><line x1="1361" y1="950" x2="1373" y2="950" stroke="#9a9da3" stroke-width="1.5"/>
+      </g>
+
+      <g id="bubbles"></g>
+      <g id="packets"></g>
+    </svg>
+
+</template>
+<template id="tpl-linear">
+    <svg id="wf" viewBox="0 0 1690 1080" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+      <defs>
+        <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.1" fill="#2a2c31"/></pattern>
+        <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <rect x="0" y="0" width="1690" height="1080" fill="#08313A"/>
+      <rect x="0" y="0" width="1690" height="1080" fill="url(#dots)"/>
+
+      <!-- ===== CONNECTORS ===== -->
+      <path id="p_trig_read" class="wire" d="M136 118 C250 130 320 280 320 420"/>
+      <circle cx="136" cy="118" r="3.5" fill="#9a9da3"/>
+      <path id="r_climate" class="wire" d="M200 329 C260 329 270 445 320 445"/>
+      <path id="r_substrate" class="wire" d="M200 424 C260 424 270 445 320 445"/>
+      <path id="r_light" class="wire" d="M200 519 C260 519 270 445 320 445"/>
+      <path id="r_weather" class="wire" d="M200 614 C260 614 270 445 320 445"/>
+      <g fill="#9a9da3"><circle cx="200" cy="329" r="3.5"/><circle cx="200" cy="424" r="3.5"/><circle cx="200" cy="519" r="3.5"/><circle cx="200" cy="614" r="3.5"/></g>
+
+      <path id="p_read_model" class="wire" d="M480 445 H560"/>
+      <circle cx="480" cy="445" r="3.5" fill="#9a9da3"/>
+      <path id="p_db_model" class="wire" d="M645 600 L645 495"/>
+      <circle cx="645" cy="600" r="3.5" fill="#9a9da3"/>
+      <path id="p_model_switch" class="wire" d="M730 445 C765 445 775 455 800 455"/>
+      <circle cx="730" cy="445" r="3.5" fill="#9a9da3"/>
+
+      <path id="p_sw_cooling" class="wire" d="M910 372 C1000 372 990 110 1010 110"/>
+      <path id="p_sw_heating" class="wire" d="M910 402 C1000 402 990 250 1010 250"/>
+      <path id="p_sw_lights" class="wire" d="M910 432 C1000 432 990 390 1010 390"/>
+      <path id="p_sw_co2" class="wire" d="M910 462 C1000 462 990 530 1010 530"/>
+      <path id="p_sw_fert" class="wire" d="M910 492 C1000 492 990 670 1010 670"/>
+      <path id="p_sw_maintain" class="wire" d="M910 522 C1000 522 990 810 1010 810"/>
+      <path id="p_sw_anomaly" class="wire" d="M910 552 C1000 552 990 950 1010 950"/>
+      <g fill="#9a9da3"><circle cx="910" cy="372" r="3.5"/><circle cx="910" cy="402" r="3.5"/><circle cx="910" cy="432" r="3.5"/><circle cx="910" cy="462" r="3.5"/><circle cx="910" cy="492" r="3.5"/><circle cx="910" cy="522" r="3.5"/><circle cx="910" cy="552" r="3.5"/></g>
+      <g fill="#8a8d93" font-size="10">
+        <text x="920" y="368">T / VPD high</text><text x="920" y="398">T low</text><text x="920" y="428">light low</text>
+        <text x="920" y="458">CO₂ low</text><text x="920" y="488">substrate off</text><text x="920" y="518">optimal</text><text x="920" y="548">anomaly</text>
+      </g>
+
+      <path id="p_cool_merge" class="wire" d="M1106 110 C1180 110 1170 460 1240 460"/>
+      <path id="p_heat_merge" class="wire" d="M1106 250 C1180 250 1170 460 1240 460"/>
+      <path id="p_lights_merge" class="wire" d="M1106 390 C1180 390 1185 460 1240 460"/>
+      <path id="p_co2_merge" class="wire" d="M1106 530 C1180 530 1185 460 1240 460"/>
+      <path id="p_fert_merge" class="wire" d="M1106 670 C1180 670 1170 460 1240 460"/>
+      <path id="p_maintain_merge" class="wire" d="M1106 810 C1180 810 1170 460 1240 460"/>
+      <g fill="#9a9da3"><circle cx="1106" cy="110" r="3.5"/><circle cx="1106" cy="250" r="3.5"/><circle cx="1106" cy="390" r="3.5"/><circle cx="1106" cy="530" r="3.5"/><circle cx="1106" cy="670" r="3.5"/><circle cx="1106" cy="810" r="3.5"/></g>
+
+      <path id="p_merge_log" class="wire" d="M1348 460 H1470"/>
+      <circle cx="1348" cy="460" r="3.5" fill="#9a9da3"/>
+      <path id="p_log_plus" class="wire" d="M1574 460 H1596"/>
+      <circle cx="1574" cy="460" r="3.5" fill="#9a9da3"/>
+      <path id="p_safe_alert" class="wire" d="M1106 950 H1240"/>
+      <circle cx="1106" cy="950" r="3.5" fill="#9a9da3"/>
+      <path id="p_safe_log" class="wire" d="M1106 950 C1180 1012 1452 1018 1522 944 C1562 882 1522 600 1522 504"/>
+      <circle cx="1522" cy="504" r="3.5" fill="#9a9da3"/>
+      <text x="1300" y="1035" fill="#8a8d93" font-size="10" text-anchor="middle">log anomaly event</text>
+      <path id="p_alert_plus" class="wire" d="M1348 950 H1356"/>
+      <circle cx="1348" cy="950" r="3.5" fill="#9a9da3"/>
+
+      <!-- ===== TRIGGER ===== -->
+      <g id="n_trigger" class="node">
+        <polygon points="28,90 14,116 25,116 19,136 40,106 28,106 34,90" fill="#ff5c4d"/>
+        <rect class="card" x="40" y="70" width="96" height="96" rx="18"/>
+        <circle cx="88" cy="118" r="15" fill="none" stroke="#1ec8d8" stroke-width="2.2"/>
+        <line x1="88" y1="118" x2="88" y2="108" stroke="#1ec8d8" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="88" y1="118" x2="97" y2="122" stroke="#1ec8d8" stroke-width="2.2" stroke-linecap="round"/>
+        <text x="88" y="192" class="t1" text-anchor="middle">Schedule Trigger</text><text x="88" y="210" class="t2" text-anchor="middle">every X min</text>
+      </g>
+
+      <!-- ===== SENSORS ===== -->
+      <g id="n_climate" class="node">
+        <rect class="card" x="40" y="300" width="160" height="58" rx="14"/>
+        <rect x="62" y="315" width="8" height="19" rx="4" fill="none" stroke="#ff6b6b" stroke-width="2"/><circle cx="66" cy="338" r="6" fill="#ff6b6b"/><rect x="65" y="321" width="2" height="15" fill="#ff6b6b"/>
+        <text x="88" y="326" class="t3s">Climate Sensor</text><text x="88" y="343" class="t2">T / RH / CO₂ / VPD</text>
+      </g>
+      <g id="n_substrate" class="node">
+        <rect class="card" x="40" y="395" width="160" height="58" rx="14"/>
+        <path d="M66 410 C73 422 77 427 77 432 a11 11 0 0 1 -22 0 c0 -5 4 -10 11 -22 z" fill="none" stroke="#4ec0e9" stroke-width="2"/>
+        <text x="88" y="421" class="t3s">Substrate Sensor</text><text x="88" y="438" class="t2">moisture / EC / pH</text>
+      </g>
+      <g id="n_light" class="node">
+        <rect class="card" x="40" y="490" width="160" height="58" rx="14"/>
+        <circle cx="66" cy="519" r="8" fill="none" stroke="#f5c542" stroke-width="2"/>
+        <g stroke="#f5c542" stroke-width="1.8" stroke-linecap="round"><line x1="66" y1="506" x2="66" y2="503"/><line x1="66" y1="535" x2="66" y2="532"/><line x1="53" y1="519" x2="50" y2="519"/><line x1="82" y1="519" x2="79" y2="519"/><line x1="57" y1="510" x2="55" y2="508"/><line x1="75" y1="510" x2="77" y2="508"/><line x1="57" y1="528" x2="55" y2="530"/><line x1="75" y1="528" x2="77" y2="530"/></g>
+        <text x="88" y="516" class="t3s">Light Sensor</text><text x="88" y="533" class="t2">PPFD / DLI</text>
+      </g>
+      <g id="n_weather" class="node">
+        <rect class="card" x="40" y="585" width="160" height="58" rx="14"/>
+        <path d="M57 620 a6 6 0 0 1 -1 -12 a8 8 0 0 1 15 -3 a7 7 0 0 1 5 15 z" fill="none" stroke="#9aa0a6" stroke-width="2"/>
+        <text x="88" y="611" class="t3s">Weather Station</text><text x="88" y="628" class="t2">outdoor</text>
+      </g>
+
+      <!-- ===== READ SENSORS ===== -->
+      <g id="n_readsensors" class="node">
+        <rect class="card" x="320" y="395" width="160" height="100" rx="18"/>
+        <g stroke="#45DFB1" stroke-width="2" stroke-linecap="round"><line x1="382" y1="432" x2="418" y2="432"/><line x1="382" y1="445" x2="418" y2="445"/><line x1="382" y1="458" x2="406" y2="458"/></g>
+        <circle cx="400" cy="422" r="3" fill="#45DFB1"/>
+        <text x="400" y="522" class="t3" text-anchor="middle">Read Sensors</text><text x="400" y="540" class="t2" text-anchor="middle">akuisisi + validasi</text>
+      </g>
+
+      <!-- ===== DECISION MODEL ===== -->
+      <g id="n_model" class="node">
+        <rect class="card" x="560" y="395" width="170" height="100" rx="18"/>
+        <path d="M645 418 l6 14 14 6 -14 6 -6 14 -6 -14 -14 -6 14 -6 z" fill="#a78bfa"/><circle cx="666" cy="423" r="3.5" fill="#a78bfa"/>
+        <text x="645" y="370" class="t3" text-anchor="middle">Decision Model</text><text x="645" y="386" class="t2" text-anchor="middle">Fuzzy + AI vs setpoint</text>
+      </g>
+
+      <!-- ===== DB (setpoints) ===== -->
+      <g id="n_db" class="node">
+        <rect class="card" x="560" y="600" width="170" height="70" rx="16"/>
+        <ellipse cx="645" cy="624" rx="14" ry="5" fill="none" stroke="#4a9ad6" stroke-width="2"/>
+        <path d="M631 624 v20 a14 5 0 0 0 28 0 v-20" fill="none" stroke="#4a9ad6" stroke-width="2"/>
+        <path d="M631 634 a14 5 0 0 0 28 0" fill="none" stroke="#4a9ad6" stroke-width="2"/>
+        <text x="645" y="688" class="t3" text-anchor="middle">Time-series DB</text><text x="645" y="704" class="t2" text-anchor="middle">setpoints + history</text>
+      </g>
+
+      <!-- ===== SWITCH ===== -->
+      <g id="n_switch" class="node">
+        <rect class="card" x="800" y="350" width="110" height="210" rx="18"/>
+        <g stroke="#5fb37a" stroke-width="2.2" fill="none" stroke-linecap="round"><line x1="828" y1="455" x2="846" y2="455"/><path d="M846 455 L872 437"/><path d="M846 455 L872 455"/><path d="M846 455 L872 473"/></g>
+        <g fill="#5fb37a"><polygon points="872,433 880,437 872,441"/><polygon points="872,451 880,455 872,459"/><polygon points="872,469 880,473 872,477"/></g>
+        <text x="855" y="582" class="t3" text-anchor="middle">Switch</text><text x="855" y="600" class="t2" text-anchor="middle">Evaluate vs Setpoint</text>
+      </g>
+
+      <!-- ===== ACTION NODES ===== -->
+      <g id="n_cooling" class="node">
+        <rect class="card" x="1010" y="70" width="96" height="80" rx="18"/>
+        <g stroke="#4a9ad6" stroke-width="5" stroke-linecap="round"><line x1="1058" y1="110" x2="1058" y2="96"/><line x1="1058" y1="110" x2="1071" y2="117"/><line x1="1058" y1="110" x2="1045" y2="117"/></g><circle cx="1058" cy="110" r="2.5" fill="#08313A"/>
+        <text x="1058" y="170" class="t3" text-anchor="middle">Cooling</text><text x="1058" y="187" class="t2" text-anchor="middle">fan + pad + fogging</text>
+      </g>
+      <g id="n_heating" class="node">
+        <rect class="card" x="1010" y="210" width="96" height="80" rx="18"/>
+        <g stroke="#ff9f43" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M1048 260 q-4 -6 0 -12 q4 -6 0 -12"/><path d="M1058 260 q-4 -6 0 -12 q4 -6 0 -12"/><path d="M1068 260 q-4 -6 0 -12 q4 -6 0 -12"/></g>
+        <text x="1058" y="310" class="t3" text-anchor="middle">Heating</text><text x="1058" y="327" class="t2" text-anchor="middle">heater / HVAC</text>
+      </g>
+      <g id="n_lights" class="node">
+        <rect class="card" x="1010" y="350" width="96" height="80" rx="18"/>
+        <circle cx="1058" cy="386" r="9" fill="none" stroke="#f5c542" stroke-width="2"/><rect x="1054" y="395" width="8" height="5" rx="1.5" fill="#f5c542"/><line x1="1058" y1="382" x2="1058" y2="390" stroke="#f5c542" stroke-width="1.6"/>
+        <text x="1058" y="450" class="t3" text-anchor="middle">Grow Lights</text><text x="1058" y="467" class="t2" text-anchor="middle">LED + shade screen</text>
+      </g>
+      <g id="n_co2" class="node">
+        <rect class="card" x="1010" y="490" width="96" height="80" rx="18"/>
+        <rect x="1050" y="522" width="16" height="22" rx="7" fill="none" stroke="#5fb37a" stroke-width="2"/><rect x="1054" y="517" width="8" height="6" rx="2" fill="#5fb37a"/>
+        <text x="1058" y="590" class="t3" text-anchor="middle">CO₂ Enrichment</text><text x="1058" y="607" class="t2" text-anchor="middle">CO₂ valve</text>
+      </g>
+      <g id="n_fert" class="node">
+        <rect class="card" x="1010" y="630" width="96" height="80" rx="18"/>
+        <path d="M1058 658 C1065 668 1069 672 1069 677 a11 11 0 0 1 -22 0 c0 -5 4 -10 11 -19 z" fill="none" stroke="#4ec0e9" stroke-width="2"/><line x1="1058" y1="654" x2="1058" y2="648" stroke="#4ec0e9" stroke-width="2" stroke-linecap="round"/><line x1="1053" y1="650" x2="1063" y2="650" stroke="#4ec0e9" stroke-width="2" stroke-linecap="round"/>
+        <text x="1058" y="730" class="t3" text-anchor="middle">Fertigation</text><text x="1058" y="747" class="t2" text-anchor="middle">dosing pump + valve</text>
+      </g>
+      <g id="n_maintain" class="node">
+        <rect class="card" x="1010" y="770" width="96" height="80" rx="18"/>
+        <circle cx="1058" cy="810" r="16" fill="none" stroke="#4caf72" stroke-width="2.2"/><polyline points="1051,810 1056,816 1066,803" fill="none" stroke="#4caf72" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="1058" y="870" class="t3" text-anchor="middle">Maintain</text><text x="1058" y="887" class="t2" text-anchor="middle">hold setpoint</text>
+      </g>
+      <g id="n_safemode" class="node">
+        <rect class="card danger" x="1010" y="910" width="96" height="80" rx="18"/>
+        <path d="M1058 932 l14 5 v9 c0 9 -7 14 -14 17 c-7 -3 -14 -8 -14 -17 v-9 z" fill="none" stroke="#ff9f43" stroke-width="2"/><polyline points="1052,950 1057,955 1065,945" fill="none" stroke="#ff9f43" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="1058" y="1010" class="t3" text-anchor="middle">Safe Mode</text><text x="1058" y="1027" class="t2" text-anchor="middle">fail-safe state</text>
+      </g>
+
+      <!-- ===== MERGE / LOG / ALERT ===== -->
+      <g id="n_merge" class="node">
+        <rect class="card" x="1240" y="416" width="108" height="88" rx="18"/>
+        <g stroke="#7fb0d6" stroke-width="2.4" fill="none" stroke-linecap="round"><path d="M1278 448 L1296 460"/><path d="M1278 472 L1296 460"/><line x1="1296" y1="460" x2="1314" y2="460"/></g><polygon points="1310,456 1318,460 1310,464" fill="#7fb0d6"/>
+        <text x="1294" y="524" class="t3" text-anchor="middle">Merge</text><text x="1294" y="541" class="t2" text-anchor="middle">all control actions</text>
+      </g>
+      <g id="n_log" class="node">
+        <rect class="card" x="1470" y="416" width="104" height="88" rx="18"/>
+        <ellipse cx="1522" cy="448" rx="15" ry="5" fill="none" stroke="#4a9ad6" stroke-width="2.2"/><path d="M1507 448 v22 a15 5 0 0 0 30 0 v-22" fill="none" stroke="#4a9ad6" stroke-width="2.2"/><path d="M1507 459 a15 5 0 0 0 30 0" fill="none" stroke="#4a9ad6" stroke-width="2.2"/><path d="M1507 470 a15 5 0 0 0 30 0" fill="none" stroke="#4a9ad6" stroke-width="2.2"/>
+        <text x="1522" y="524" class="t3" text-anchor="middle">Log to DB</text><text x="1522" y="541" class="t2" text-anchor="middle">time-series + dashboard</text>
+        <rect x="1596" y="449" width="22" height="22" rx="5" fill="#2b2d31" stroke="#5b5e66" stroke-width="1.4"/><line x1="1607" y1="454" x2="1607" y2="466" stroke="#9a9da3" stroke-width="1.5"/><line x1="1601" y1="460" x2="1613" y2="460" stroke="#9a9da3" stroke-width="1.5"/>
+      </g>
+      <g id="n_alert" class="node">
+        <rect class="card" x="1240" y="910" width="108" height="80" rx="18"/>
+        <path d="M1278 950 L1311 937 L1299 960 L1293 952 Z" fill="#4a9ad6"/><path d="M1293 952 L1311 937" stroke="#08313A" stroke-width="1"/>
+        <text x="1294" y="1010" class="t3" text-anchor="middle">Send Alert</text><text x="1294" y="1027" class="t2" text-anchor="middle">Telegram + email</text>
+        <rect x="1356" y="939" width="22" height="22" rx="5" fill="#2b2d31" stroke="#5b5e66" stroke-width="1.4"/><line x1="1367" y1="944" x2="1367" y2="956" stroke="#9a9da3" stroke-width="1.5"/><line x1="1361" y1="950" x2="1373" y2="950" stroke="#9a9da3" stroke-width="1.5"/>
+      </g>
+
+      <g id="bubbles"></g>
+      <g id="packets"></g>
+    </svg>
+
+</template>
+<style>
+  *{box-sizing:border-box}
+  #app{background:#062A32;color:#e6e7e9;font-family:Inter, system-ui, sans-serif;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:560px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#08313A;border-bottom:1px solid #2a2c31;flex-wrap:wrap}
+  .left{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{font-size:14px;font-weight:600}.brand span{color:#8a8d93;font-weight:400}
+  .viewtoggle{display:flex;background:#202227;border:1px solid #3a3d44;border-radius:9px;padding:2px}
+  .vbtn{background:transparent;color:#9a9da3;border:0;border-radius:7px;padding:5px 14px;font-size:13px;cursor:pointer;transition:.15s}
+  .vbtn:hover{color:#e6e7e9}
+  .vbtn.active{background:#33373f;color:#fff}
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .speed{display:flex;align-items:center;gap:6px;margin-left:6px;font-size:12px;color:#8a8d93}
+  .btn{background:#26282d;color:#cfd2d6;border:1px solid #3a3d44;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;transition:.15s}
+  .btn:hover{background:#30333a;color:#fff}
+  .btn.primary{background:#0B6477;border-color:#14919B;color:#eafff1}.btn.primary:hover{background:#14919B}
+  .btn.sp{padding:5px 9px;font-size:12px}.btn.sp.active{background:#3a3d44;color:#fff;border-color:#565a63}
+  .readout{padding:10px 16px;background:#062A32;border-bottom:1px solid #2a2c31;display:flex;flex-direction:column;gap:8px}
+  .sc-title{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
+  .sc-no{font-size:12px;color:#45DFB1;background:#0C3A36;border:1px solid #1A6B5E;border-radius:6px;padding:3px 8px;font-weight:700}
+  .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{font-size:11.5px;padding:4px 9px;border-radius:7px;border:1px solid;white-space:nowrap}
+  .chip.ok{background:#0C3A36;border-color:#1A6B5E;color:#45DFB1}
+  .chip.warn{background:#2b2417;border-color:#5a4622;color:#ffb24a}
+  .chip.crit{background:#2c1a1a;border-color:#5a2a2a;color:#ff7b72}
+  .stage{flex:1;background:#08313A;display:flex;align-items:center;justify-content:center}
+  #wf{width:100%;height:auto;max-height:66vh;display:block}
+  .wire{stroke:#9a9da3;stroke-width:1.6;fill:none;transition:stroke .2s,opacity .2s;opacity:.35}
+  .wire.dash{stroke:#6f7277;stroke-width:1.4;stroke-dasharray:4 4;opacity:.3}
+  .wire.flowing{stroke:#45DFB1;opacity:1;filter:drop-shadow(0 0 4px rgba(69,223,177,.6))}
+  .wire.flowing.warn{stroke:#ffb24a;filter:drop-shadow(0 0 4px rgba(255,178,74,.6))}
+  .card{fill:#2b2d31;stroke:#43464d;stroke-width:1.5;transition:stroke .25s,filter .25s}
+  .card.danger{stroke:#b85450;stroke-width:1.8}
+  .node{opacity:.42;transition:opacity .25s}
+  .node.active{opacity:1}
+  .node.active .card{stroke:#45DFB1;filter:drop-shadow(0 0 8px rgba(69,223,177,.85))}
+  .node.active .card.danger{stroke:#ffb24a;filter:drop-shadow(0 0 8px rgba(255,178,74,.85))}
+  .t1{fill:#e6e7e9;font-size:14px}.t1b{fill:#e6e7e9;font-size:15px;font-weight:500}
+  .t3{fill:#e6e7e9;font-size:12px}.t3s{fill:#e6e7e9;font-size:12px}.t2{fill:#8a8d93;font-size:10px}.port{fill:#8a8d93;font-size:10px}
+  .caption{padding:14px 18px;background:#08313A;border-top:1px solid #2a2c31;display:flex;gap:14px;align-items:flex-start}
+  .step{flex:0 0 auto;font-size:12px;color:#45DFB1;font-weight:600;background:#0C3A36;border:1px solid #1A6B5E;border-radius:8px;padding:6px 10px;white-space:nowrap;text-transform:capitalize}
+  .captext{font-size:15px;line-height:1.5;color:#d6d9dd}
+  @media (max-width:680px){.captext{font-size:13px}.brand{font-size:12px}}
+</style>
+<script>
+(function(){
+  const NS="http://www.w3.org/2000/svg";
+  const $=id=>document.getElementById(id);
+  const stage=$("stage");
+  let pk=null,bub=null;
+  const capText=$("capText"),phase=$("phase"),chipsEl=$("chips"),scNo=$("scNo"),scTitle=$("scTitle"),playBtn=$("playBtn");
+  let speed=1,paused=false,generation=0,idx=0,view="agent";
+
+  const maps={
+    agent:{n_climate:"d_climate",n_substrate:"d_substrate",n_light:"d_light",n_weather:"d_weather"},
+    linear:{n_climate:"r_climate",n_substrate:"r_substrate",n_light:"r_light",n_weather:"r_weather"}
+  };
+
+  const scen=[
+    { title:"Midday heat",
+      chips:[["Temp","33°C ▲","warn"],["RH","58%","ok"],["VPD","2.1 kPa ▲","warn"],["DLI","13","ok"],["CO₂","720 ppm","ok"],["Substrate","60%","ok"]],
+      focus:"n_climate", bubble:"33°C · VPD 2.1",
+      decide:"The Decision Model finds temperature 33°C and VPD 2.1 kPa above setpoint (≤28°C, ≤1.5 kPa), so it selects the T / VPD high branch.",
+      swPath:"p_sw_cooling", act:"n_cooling", mergePath:"p_cool_merge",
+      actMsg:"Cooling runs - exhaust fans, cooling pad, and fogging lower the temperature and raise humidity." },
+
+    { title:"Cloudy, low light",
+      chips:[["Temp","25°C","ok"],["RH","70%","ok"],["PPFD","180 µmol ▼","warn"],["DLI","7 / 14 ▼","warn"],["CO₂","700 ppm","ok"],["Substrate","58%","ok"]],
+      focus:"n_light", bubble:"DLI 7 / 14",
+      decide:"The Decision Model sees accumulated light at only 7 of the 14 mol·m⁻²·d⁻¹ target, so it selects the light low branch.",
+      swPath:"p_sw_lights", act:"n_lights", mergePath:"p_lights_merge",
+      actMsg:"Grow Lights run - supplemental LEDs switch on and the shade screen opens to raise the daily light integral." },
+
+    { title:"Substrate drying out",
+      chips:[["Temp","27°C","ok"],["RH","62%","ok"],["Substrate","34% ▼","warn"],["EC","1.2 mS/cm ▼","warn"],["pH","6.1","ok"],["DLI","12","ok"]],
+      focus:"n_substrate", bubble:"34% · EC 1.2",
+      decide:"The Decision Model finds substrate moisture at 34% (below the 50% threshold) and EC low at 1.2 mS/cm, so it selects the substrate off branch.",
+      swPath:"p_sw_fert", act:"n_fert", mergePath:"p_fert_merge",
+      actMsg:"Fertigation runs - the dosing pump and valve deliver nutrient solution through drip lines to the root zone." },
+
+    { title:"Night, temperature drop",
+      chips:[["Temp","16°C ▼","warn"],["RH","82% ▲","warn"],["VPD","0.4 kPa ▼","warn"],["DLI","0 (night)","ok"],["CO₂","650 ppm","ok"],["Substrate","57%","ok"]],
+      focus:"n_climate", bubble:"16°C low",
+      decide:"The Decision Model finds temperature 16°C below the 18°C minimum, so it selects the T low branch.",
+      swPath:"p_sw_heating", act:"n_heating", mergePath:"p_heat_merge",
+      actMsg:"Heating runs - the heater/HVAC warms the space and vents close to retain heat." },
+
+    { title:"Low CO₂ at peak photosynthesis",
+      chips:[["Temp","26°C","ok"],["DLI","15","ok"],["CO₂","380 ppm ▼","warn"],["RH","65%","ok"],["Substrate","59%","ok"]],
+      focus:"n_climate", bubble:"CO₂ 380 ppm",
+      decide:"The Decision Model sees ample light but CO₂ at 380 ppm, far below the ~800 ppm target, so it selects the CO₂ low branch.",
+      swPath:"p_sw_co2", act:"n_co2", mergePath:"p_co2_merge",
+      actMsg:"CO₂ Enrichment runs - the injection valve opens to raise CO₂ and boost photosynthesis." },
+
+    { title:"All parameters optimal",
+      chips:[["Temp","24°C","ok"],["RH","68%","ok"],["VPD","1.1 kPa","ok"],["DLI","14","ok"],["CO₂","800 ppm","ok"],["Substrate","55%","ok"]],
+      focus:null, bubble:null,
+      decide:"The Decision Model finds every parameter within its setpoint range, so it selects the optimal branch.",
+      swPath:"p_sw_maintain", act:"n_maintain", mergePath:"p_maintain_merge",
+      actMsg:"Maintain - conditions are held; only status and dashboard are updated." },
+
+    { title:"Peak midday load (multi-condition)", multi:true, warn:true,
+      chips:[["Temp","32°C ▲","warn"],["VPD","1.9 kPa ▲","warn"],["Substrate","38% ▼","warn"],["EC","1.1 mS/cm ▼","warn"],["CO₂","420 ppm ▼","warn"],["DLI","16","ok"]],
+      focusList:["n_climate","n_substrate"],
+      bubbles:[{node:"n_climate",text:"32°C · VPD 1.9"},{node:"n_substrate",text:"38% · EC 1.1"}],
+      decide:"The Decision Model finds three conditions at once: high temp/VPD, dry substrate, and low CO₂. With the Switch in all-matching mode, several branches fire together.",
+      branches:[{sw:"p_sw_cooling",act:"n_cooling",merge:"p_cool_merge"},{sw:"p_sw_fert",act:"n_fert",merge:"p_fert_merge"},{sw:"p_sw_co2",act:"n_co2",merge:"p_co2_merge"}],
+      actMsg:"Cooling, Fertigation, and CO₂ Enrichment run in parallel. The three actions are combined at Merge, then a single consolidated record is written to Log to DB." },
+
+    { title:"Critical anomaly",
+      chips:[["Temp","47°C ⚠","crit"],["RH sensor","ERROR ⚠","crit"],["Fertigation pump","FAILED ⚠","crit"],["DLI","-","crit"]],
+      focus:"n_climate", bubble:"47°C ⚠ sensor error", warn:true,
+      decide:"The Decision Model detects implausible readings (47°C, sensor error, pump failure), so it selects the anomaly branch.",
+      swPath:"p_sw_anomaly", anomaly:true,
+      actMsg:"Safe Mode secures the system, then Send Alert (Telegram/email) is dispatched and the event is written to Log to DB." }
+  ];
+
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  async function gate(){ while(paused){ await sleep(80);} }
+  function clearActive(){ document.querySelectorAll(".node.active").forEach(n=>n.classList.remove("active")); }
+  function setActive(ids){ clearActive(); ids.filter(Boolean).forEach(id=>{const e=$(id); if(e)e.classList.add("active");}); }
+
+  function showBubble(nodeId,text,warn){
+    const node=$(nodeId); if(!node) return; const card=node.querySelector(".card"); if(!card) return;
+    const b=card.getBBox();
+    const cx=b.x+b.width/2, top=b.y, w=Math.max(64,text.length*6.6+18), h=22, x=cx-w/2, y=top-h-8;
+    const g=document.createElementNS(NS,"g");
+    const r=document.createElementNS(NS,"rect");
+    r.setAttribute("x",x);r.setAttribute("y",y);r.setAttribute("width",w);r.setAttribute("height",h);r.setAttribute("rx",6);
+    r.setAttribute("fill","#24262b");r.setAttribute("stroke",warn?"#ff7b72":"#ffb24a");r.setAttribute("stroke-width","1.4");
+    const t=document.createElementNS(NS,"text");
+    t.setAttribute("x",cx);t.setAttribute("y",y+15);t.setAttribute("text-anchor","middle");t.setAttribute("font-size","12");t.setAttribute("fill",warn?"#ff9a93":"#ffce8a");t.textContent=text;
+    g.appendChild(r);g.appendChild(t); if(bub) bub.appendChild(g);
+  }
+
+  function animatePacket(pathId,opt){
+    opt=opt||{}; const dur=opt.dur||1100, rev=!!opt.rev, warn=!!opt.warn, delay=opt.delay||0;
+    return new Promise(async res=>{
+      if(delay) await sleep(delay/speed);
+      const path=$(pathId); if(!path||!pk) return res();
+      const L=path.getTotalLength();
+      const dot=document.createElementNS(NS,"circle");
+      dot.setAttribute("r","5.5");dot.setAttribute("fill",warn?"#ffb24a":"#45DFB1");dot.setAttribute("filter","url(#glow)");
+      pk.appendChild(dot); path.classList.add("flowing"); if(warn) path.classList.add("warn");
+      const t0=performance.now(), D=dur/speed;
+      function frame(t){
+        let p=Math.min(1,(t-t0)/D); const e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+        const pt=path.getPointAtLength((rev?(1-e):e)*L);
+        dot.setAttribute("cx",pt.x);dot.setAttribute("cy",pt.y);
+        if(p<1)requestAnimationFrame(frame); else{dot.remove();path.classList.remove("flowing","warn");res();}
+      } requestAnimationFrame(frame);
+    });
+  }
+
+  function setChips(sc){ chipsEl.innerHTML=""; sc.chips.forEach(c=>{const k=c[0],v=c[1],s=c[2];const el=document.createElement("span");el.className="chip "+(s==="ok"?"ok":s==="crit"?"crit":"warn");el.textContent=k+": "+v;chipsEl.appendChild(el);}); }
+
+  async function runScenario(sc,gen){
+    const w=!!sc.warn;
+    const focusList = sc.multi ? (sc.focusList||[]) : (sc.focus?[sc.focus]:[]);
+    scNo.textContent=(idx+1)+"/"+scen.length; scTitle.textContent=sc.title; setChips(sc);
+
+    // PHASE 1 - read sensors
+    phase.textContent="1 - read sensors";
+    if(view==="agent"){
+      capText.textContent="Scenario: "+sc.title+". The Schedule Trigger fires; the Greenhouse Agent reads the current sensor values.";
+      setActive(["n_trigger","n_agent"].concat(focusList));
+    } else {
+      capText.textContent="Scenario: "+sc.title+". The Schedule Trigger fires; the Read Sensors node acquires the current sensor values.";
+      setActive(["n_trigger","n_readsensors"].concat(focusList));
+    }
+    if(sc.multi&&sc.bubbles) sc.bubbles.forEach(b=>showBubble(b.node,b.text,true));
+    else if(sc.bubble) showBubble(sc.focus,sc.bubble,w);
+    await animatePacket(view==="agent"?"p_trig_agent":"p_trig_read",{dur:800});
+    if(gen!==generation)return;
+    const reads=focusList.length?focusList:["n_climate","n_substrate","n_light","n_weather"];
+    const rev=(view==="agent");
+    await Promise.all(reads.map((n,i)=>animatePacket(maps[view][n],{rev:rev,warn:w&&focusList.indexOf(n)>=0,dur:1000,delay:i*70})));
+    if(gen!==generation)return; await sleep(400/speed);
+
+    // PHASE 2 - decision (after reading)
+    phase.textContent="2 - decision";
+    if(view==="agent"){
+      capText.textContent="With the readings in hand, the Agent consults its Decision Model to evaluate them against setpoints. "+sc.decide;
+      setActive(["n_agent","n_model"].concat(focusList));
+      await Promise.all([animatePacket("d_model",{rev:true,dur:900,warn:w}),animatePacket("d_memory",{rev:true,dur:900,delay:120})]);
+    } else {
+      capText.textContent="Only after the readings are complete does the Decision Model evaluate them against setpoints from the Time-series DB. "+sc.decide;
+      setActive(["n_readsensors","n_model","n_db"]);
+      await Promise.all([animatePacket("p_read_model",{dur:800,warn:w}),animatePacket("p_db_model",{dur:800,delay:120})]);
+    }
+    if(gen!==generation)return; await sleep(450/speed);
+
+    // PHASE 3 - routing (Switch)
+    phase.textContent="3 - routing (Switch)";
+    if(view==="linear"){ setActive(["n_model","n_switch"]); await animatePacket("p_model_switch",{dur:700,warn:w}); }
+    else { setActive(["n_agent","n_switch"]); await animatePacket("p_agent_switch",{dur:700,warn:w}); }
+    if(gen!==generation)return;
+    if(sc.anomaly){
+      capText.textContent="The Switch routes to the emergency path - Safe Mode.";
+      setActive(["n_switch","n_safemode"]); await animatePacket(sc.swPath,{dur:1100,warn:true});
+    } else if(sc.multi){
+      capText.textContent="The Switch (all-matching mode) activates several actuator branches at once.";
+      setActive(["n_switch"].concat(sc.branches.map(b=>b.act))); await Promise.all(sc.branches.map((b,i)=>animatePacket(b.sw,{dur:1100,delay:i*120})));
+    } else {
+      capText.textContent="The Switch executes the decision by routing to the matching actuator.";
+      setActive(["n_switch",sc.act]); await animatePacket(sc.swPath,{dur:1100});
+    }
+    if(gen!==generation)return; await sleep(350/speed);
+
+    // PHASE 4 - act + log
+    phase.textContent="4 - act + log";
+    capText.textContent=sc.actMsg;
+    if(sc.anomaly){
+      setActive(["n_safemode","n_alert","n_log"]);
+      await Promise.all([animatePacket("p_safe_alert",{dur:900,warn:true}),animatePacket("p_safe_log",{dur:1300,warn:true,delay:150})]);
+      await animatePacket("p_alert_plus",{dur:400,warn:true});
+    } else if(sc.multi){
+      setActive(sc.branches.map(b=>b.act).concat(["n_merge"]));
+      await Promise.all(sc.branches.map((b,i)=>animatePacket(b.merge,{dur:1000,delay:i*110})));
+      if(gen!==generation)return;
+      setActive(["n_merge","n_log"]); await animatePacket("p_merge_log",{dur:700}); await animatePacket("p_log_plus",{dur:400});
+    } else {
+      setActive([sc.act,"n_merge"]); await animatePacket(sc.mergePath,{dur:1000});
+      if(gen!==generation)return;
+      setActive(["n_merge","n_log"]); await animatePacket("p_merge_log",{dur:700}); await animatePacket("p_log_plus",{dur:400});
+    }
+    if(gen!==generation)return; await sleep(1100/speed); if(bub) bub.innerHTML="";
+  }
+
+  async function loop(){ const gen=++generation; while(gen===generation){ await gate(); await runScenario(scen[idx],gen); if(gen!==generation)return; idx=(idx+1)%scen.length; } }
+  function restartLoop(){ if(pk)pk.innerHTML=""; if(bub)bub.innerHTML=""; document.querySelectorAll(".flowing").forEach(p=>p.classList.remove("flowing","warn")); loop(); }
+
+  function renderView(v){
+    view=v;
+    stage.innerHTML=$("tpl-"+v).innerHTML;
+    pk=$("packets"); bub=$("bubbles");
+    document.querySelectorAll(".vbtn").forEach(b=>b.classList.toggle("active",b.dataset.v===v));
+    idx=0; paused=false; playBtn.textContent="\u23F8 Pause"; playBtn.classList.add("primary");
+    restartLoop();
+  }
+
+  playBtn.addEventListener("click",()=>{ paused=!paused; playBtn.textContent=paused?"\u25B6 Play":"\u23F8 Pause"; playBtn.classList.toggle("primary",!paused); });
+  $("nextBtn").addEventListener("click",()=>{ idx=(idx+1)%scen.length; paused=false; playBtn.textContent="\u23F8 Pause"; playBtn.classList.add("primary"); restartLoop(); });
+  $("prevBtn").addEventListener("click",()=>{ idx=(idx-1+scen.length)%scen.length; paused=false; playBtn.textContent="\u23F8 Pause"; playBtn.classList.add("primary"); restartLoop(); });
+  $("restartBtn").addEventListener("click",()=>{ idx=0; paused=false; playBtn.textContent="\u23F8 Pause"; playBtn.classList.add("primary"); restartLoop(); });
+  document.querySelectorAll(".btn.sp").forEach(b=>b.addEventListener("click",()=>{ document.querySelectorAll(".btn.sp").forEach(x=>x.classList.remove("active")); b.classList.add("active"); speed=parseFloat(b.dataset.s); }));
+  document.querySelectorAll(".vbtn").forEach(b=>b.addEventListener("click",()=>renderView(b.dataset.v)));
+
+  renderView("agent");
+})();
+</script>
+
+</body>
+</html>

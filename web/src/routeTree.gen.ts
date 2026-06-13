@@ -16,6 +16,7 @@ import { Route as PublicationsRouteImport } from './routes/publications'
 import { Route as ImpactRouteImport } from './routes/impact'
 import { Route as FieldNotesRouteImport } from './routes/field-notes'
 import { Route as ExhibitionRouteImport } from './routes/exhibition'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as ContactUsRouteImport } from './routes/contact-us'
 import { Route as AboutUsRouteImport } from './routes/about-us'
 import { Route as IndexRouteImport } from './routes/index'
@@ -59,6 +60,11 @@ const ExhibitionRoute = ExhibitionRouteImport.update({
   path: '/exhibition',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactUsRoute = ContactUsRouteImport.update({
   id: '/contact-us',
   path: '/contact-us',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about-us': typeof AboutUsRoute
   '/contact-us': typeof ContactUsRoute
+  '/demo': typeof DemoRoute
   '/exhibition': typeof ExhibitionRoute
   '/field-notes': typeof FieldNotesRoute
   '/impact': typeof ImpactRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about-us': typeof AboutUsRoute
   '/contact-us': typeof ContactUsRoute
+  '/demo': typeof DemoRoute
   '/exhibition': typeof ExhibitionRoute
   '/field-notes': typeof FieldNotesRoute
   '/impact': typeof ImpactRoute
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about-us': typeof AboutUsRoute
   '/contact-us': typeof ContactUsRoute
+  '/demo': typeof DemoRoute
   '/exhibition': typeof ExhibitionRoute
   '/field-notes': typeof FieldNotesRoute
   '/impact': typeof ImpactRoute
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about-us'
     | '/contact-us'
+    | '/demo'
     | '/exhibition'
     | '/field-notes'
     | '/impact'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about-us'
     | '/contact-us'
+    | '/demo'
     | '/exhibition'
     | '/field-notes'
     | '/impact'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about-us'
     | '/contact-us'
+    | '/demo'
     | '/exhibition'
     | '/field-notes'
     | '/impact'
@@ -199,6 +211,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutUsRoute: typeof AboutUsRoute
   ContactUsRoute: typeof ContactUsRoute
+  DemoRoute: typeof DemoRoute
   ExhibitionRoute: typeof ExhibitionRoute
   FieldNotesRoute: typeof FieldNotesRoute
   ImpactRoute: typeof ImpactRoute
@@ -263,6 +276,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExhibitionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact-us': {
       id: '/contact-us'
       path: '/contact-us'
@@ -319,6 +339,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutUsRoute: AboutUsRoute,
   ContactUsRoute: ContactUsRoute,
+  DemoRoute: DemoRoute,
   ExhibitionRoute: ExhibitionRoute,
   FieldNotesRoute: FieldNotesRoute,
   ImpactRoute: ImpactRoute,

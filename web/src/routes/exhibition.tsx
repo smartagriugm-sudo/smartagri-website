@@ -252,6 +252,17 @@ function ExhibitionPage() {
               </div>
             ))}
           </div>
+
+          <div className="flex justify-center mt-10">
+            <Link
+              to="/demo"
+              className="inline-flex items-center gap-2 h-12 px-7 bg-[#0B6477] rounded-2xl text-white text-base font-medium hover:bg-[#14919B] transition-colors"
+              style={body}
+            >
+              Explore the interactive workflow demos
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
