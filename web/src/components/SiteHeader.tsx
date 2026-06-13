@@ -11,6 +11,7 @@ const navLinks = [
   { label: "Impact", to: "/impact" },
   { label: "Publications", to: "/publications" },
   { label: "Field Notes", to: "/field-notes" },
+  { label: "Exhibition", to: "/exhibition" },
   { label: "About Us", to: "/about-us" },
 ];
 
@@ -41,7 +42,7 @@ export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           <img src={A.logoWhite} alt="smartagri" className="h-8 w-auto" />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-5 xl:gap-7">
           {navLinks.map((link) => (
             <Link
               key={link.label}

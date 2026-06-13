@@ -11,6 +11,7 @@ const centerLinks = [
   { label: "Impact", href: "/impact" },
   { label: "Publications", href: "/publications" },
   { label: "Field Notes", href: "/field-notes" },
+  { label: "Exhibition", href: "/exhibition" },
   { label: "Team", href: "/team" },
   { label: "About Us", href: "/about-us" },
   { label: "Contact", href: "/contact-us" },

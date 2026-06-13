@@ -107,6 +107,7 @@ collections:
           - Community & Farmers
           - Award
           - UGM
+          - INAGRITECH 2026
       - name: excerpt
         label: Excerpt
         widget: text
