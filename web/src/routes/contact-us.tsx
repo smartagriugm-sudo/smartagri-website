@@ -28,10 +28,10 @@ export const Route = createFileRoute("/contact-us")({
 
 const CONTACT_EMAIL = "hello@smartagri.id";
 
-// TODO: paste the Google Apps Script Web App URL here once the inquiry
-// spreadsheet is set up (see SETUP-INQUIRIES.md). While empty, submissions
-// fall back to opening the visitor's email app.
-const INQUIRY_ENDPOINT = "";
+// Google Apps Script Web App that appends submissions to the team's
+// "smartagri — Inquiries" Google Sheet (see SETUP-INQUIRIES.md).
+const INQUIRY_ENDPOINT =
+  "https://script.google.com/macros/s/AKfycbxj-2d-hmXocr7OEag-oNrTy0yo3vUV40-DcmWx7K90ci9Lzol9iby6hcSyrT66k_M/exec";
 
 const contactInfo = [
   {
