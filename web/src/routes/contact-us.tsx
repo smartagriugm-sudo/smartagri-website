@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import { Clock, Download, Mail, MapPin, Pencil, Phone, Send } from "lucide-react";
+import { jsPDF } from "jspdf";
 import { accent, body, display } from "../lib/fonts";
+import { RESEARCH_AREAS } from "../lib/research";
+import { TECHNOLOGIES } from "../lib/technology";
 import PageHero from "../components/PageHero";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
@@ -24,6 +27,11 @@ export const Route = createFileRoute("/contact-us")({
 });
 
 const CONTACT_EMAIL = "hello@smartagri.id";
+
+// TODO: paste the Google Apps Script Web App URL here once the inquiry
+// spreadsheet is set up (see SETUP-INQUIRIES.md). While empty, submissions
+// fall back to opening the visitor's email app.
+const INQUIRY_ENDPOINT = "";
 
 const contactInfo = [
   {
@@ -53,67 +61,332 @@ const contactInfo = [
 const inputClass =
   "w-full rounded-xl border border-[#0B6477]/20 bg-white px-4 py-3 text-base text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-[#14919B] focus:ring-2 focus:ring-[#14919B]/30 transition-colors";
 
-function QuestionForm() {
-  const [submitted, setSubmitted] = useState(false);
+const labelClass = "text-sm font-medium text-neutral-700";
+
+// Optional follow-up questions per research area — shown only after the
+// visitor picks an area, and all of them optional.
+type ExtraField = {
+  key: string;
+  label: string;
+  type: "text" | "select";
+  options?: string[];
+  placeholder?: string;
+};
+
+const AREA_EXTRAS: Record<string, ExtraField[]> = {
+  "Open Field Technology": [
+    { key: "Crop type", label: "What crop do you grow?", type: "text", placeholder: "e.g. rice, maize, shallots" },
+    { key: "Land size", label: "Roughly how large is the land?", type: "text", placeholder: "e.g. 2 ha" },
+  ],
+  "Modernization Irrigation": [
+    {
+      key: "Irrigation type",
+      label: "What kind of irrigation system?",
+      type: "select",
+      options: ["Canal network", "Pump-based", "Drip", "Sprinkler", "Not sure yet"],
+    },
+    { key: "Area served", label: "Roughly how large is the area served?", type: "text", placeholder: "e.g. 150 ha" },
+  ],
+  "Smart Estate Technology": [
+    {
+      key: "Commodity",
+      label: "What commodity does the estate grow?",
+      type: "select",
+      options: ["Oil palm", "Sugarcane", "Coffee", "Tea", "Other"],
+    },
+    { key: "Estate size", label: "Roughly how large is the estate?", type: "text", placeholder: "e.g. 500 ha" },
+  ],
+  "Smart UAV Technology": [
+    {
+      key: "Service needed",
+      label: "What do you need the UAV for?",
+      type: "select",
+      options: ["Field mapping", "Crop monitoring", "Spraying", "Training", "Not sure yet"],
+    },
+  ],
+  "Indoor Farming Technology": [
+    {
+      key: "Facility type",
+      label: "What kind of facility?",
+      type: "select",
+      options: ["Greenhouse", "Plant factory", "Vertical farm", "Planning a new one"],
+    },
+  ],
+  "Agro-Informatics": [
+    {
+      key: "Data available",
+      label: "What data do you already have?",
+      type: "select",
+      options: ["Sensor data", "Drone/satellite imagery", "Farm records", "None yet"],
+    },
+  ],
+};
+
+type InquiryData = {
+  name: string;
+  email: string;
+  organization: string;
+  area: string;
+  extras: Record<string, string>;
+  techs: string[];
+  question: string;
+};
+
+const EMPTY_INQUIRY: InquiryData = {
+  name: "",
+  email: "",
+  organization: "",
+  area: "",
+  extras: {},
+  techs: [],
+  question: "",
+};
+
+function makeInquiryId() {
+  const now = new Date();
+  const ymd = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `SA-${ymd}-${rand}`;
+}
+
+function reviewRows(data: InquiryData): { label: string; value: string }[] {
+  const rows = [
+    { label: "Name", value: data.name },
+    { label: "Email", value: data.email },
+    { label: "Organization", value: data.organization },
+    { label: "Research area", value: data.area },
+    ...Object.entries(data.extras)
+      .filter(([, value]) => value)
+      .map(([key, value]) => ({ label: key, value })),
+    { label: "Technologies of interest", value: data.techs.join(", ") },
+    { label: "Question", value: data.question },
+  ];
+  return rows.filter((row) => row.value);
+}
+
+function downloadInquiryPdf(id: string, data: InquiryData) {
+  const doc = new jsPDF();
+  const rows = reviewRows(data);
+  let y = 22;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(11, 100, 119);
+  doc.text("smartagri — Inquiry Summary", 20, y);
+  y += 9;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(60, 60, 60);
+  doc.text(`Inquiry ID: ${id}`, 20, y);
+  y += 6;
+  doc.text(
+    `Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
+    20,
+    y,
+  );
+  y += 10;
+  rows.forEach((row) => {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(20, 20, 20);
+    doc.text(row.label, 20, y);
+    y += 5.5;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(70, 70, 70);
+    const lines = doc.splitTextToSize(row.value, 170);
+    doc.text(lines, 20, y);
+    y += lines.length * 5.5 + 4;
+    if (y > 270) {
+      doc.addPage();
+      y = 22;
+    }
+  });
+  y += 4;
+  doc.setFontSize(9);
+  doc.setTextColor(130, 130, 130);
+  doc.text(
+    `Keep this ID for follow-up. Smart Agriculture Research Center UGM — ${CONTACT_EMAIL}`,
+    20,
+    Math.min(y, 285),
+  );
+  doc.save(`smartagri-inquiry-${id}.pdf`);
+}
+
+function InquiryForm() {
+  const [step, setStep] = useState<"form" | "review" | "sent">("form");
+  const [data, setData] = useState<InquiryData>(EMPTY_INQUIRY);
+  const [id, setId] = useState("");
+
+  const set = (patch: Partial<InquiryData>) =>
+    setData((prev) => ({ ...prev, ...patch }));
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const name = String(data.get("name") ?? "");
-    const email = String(data.get("email") ?? "");
-    const organization = String(data.get("organization") ?? "");
-    const question = String(data.get("question") ?? "");
-
-    const subject = `Question from ${name} via smartagri.id`;
-    const bodyText = [
-      question,
-      "",
-      `Name: ${name}`,
-      `Email: ${email}`,
-      organization ? `Organization: ${organization}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    // No backend — hand the message to the visitor's email app. Show the
-    // success state first so the page responds even if the mail prompt is
-    // dismissed or blocked.
-    setSubmitted(true);
-    setTimeout(() => {
-      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
-    }, 150);
+    setId((prev) => prev || makeInquiryId());
+    setStep("review");
   }
 
-  if (submitted) {
+  function toggleTech(label: string) {
+    setData((prev) => ({
+      ...prev,
+      techs: prev.techs.includes(label)
+        ? prev.techs.filter((t) => t !== label)
+        : [...prev.techs, label],
+    }));
+  }
+
+  function send() {
+    const rows = reviewRows(data);
+    if (INQUIRY_ENDPOINT) {
+      // Fire-and-forget POST to the Google Apps Script inbox (see
+      // SETUP-INQUIRIES.md); no-cors because Apps Script doesn't set CORS.
+      fetch(INQUIRY_ENDPOINT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          id,
+          name: data.name,
+          email: data.email,
+          organization: data.organization,
+          area: data.area,
+          details: Object.entries(data.extras)
+            .filter(([, value]) => value)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join("; "),
+          technologies: data.techs.join(", "),
+          question: data.question,
+        }),
+      }).catch(() => {});
+    } else {
+      const subject = `[${id}] Inquiry from ${data.name}`;
+      const bodyText = [
+        `Inquiry ID: ${id}`,
+        "",
+        ...rows.map((row) => `${row.label}: ${row.value}`),
+      ].join("\n");
+      setTimeout(() => {
+        window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+      }, 150);
+    }
+    setStep("sent");
+  }
+
+  if (step === "review" || step === "sent") {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center gap-4 p-10">
-        <div
-          className="text-2xl md:text-3xl font-semibold text-neutral-900"
-          style={display}
-        >
-          Thank you for your message.
+      <div className="flex flex-col gap-5 p-7 md:p-9">
+        <div>
+          <h2
+            className="text-2xl md:text-3xl font-semibold text-neutral-900"
+            style={display}
+          >
+            {step === "review" ? (
+              <>
+                Review your <span style={accent}>inquiry</span>
+              </>
+            ) : (
+              <>
+                Thank <span style={accent}>you!</span>
+              </>
+            )}
+          </h2>
+          <p className="text-sm font-normal text-neutral-500 mt-2" style={body}>
+            {step === "review"
+              ? "Check your answers below, then send — or download a copy first."
+              : INQUIRY_ENDPOINT
+                ? "Your inquiry has been delivered to the smartagri team."
+                : "Your email app should have opened with the inquiry ready to send. If it didn't, email us at " +
+                  CONTACT_EMAIL +
+                  "."}
+          </p>
         </div>
-        <p
-          className="text-base font-normal text-neutral-500 max-w-[380px]"
-          style={body}
-        >
-          Your email app should have opened with the message ready to send. If
-          it didn't, email us directly at{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#0B6477] font-medium">
-            {CONTACT_EMAIL}
-          </a>
-          .
-        </p>
-        <button
-          onClick={() => setSubmitted(false)}
-          className="text-[#0B6477] font-medium hover:underline"
-          style={body}
-        >
-          Send another question
-        </button>
+
+        <div className="rounded-2xl bg-[#08313A] px-5 py-4">
+          <div
+            className="text-[11px] font-medium tracking-[0.1em] uppercase text-white/60"
+            style={body}
+          >
+            Your inquiry ID — save it for follow-up
+          </div>
+          <div
+            className="text-xl sm:text-2xl font-semibold text-[#45DFB1] mt-1"
+            style={display}
+          >
+            {id}
+          </div>
+        </div>
+
+        <dl className="border-t border-neutral-200">
+          {reviewRows(data).map((row) => (
+            <div
+              key={row.label}
+              className="grid grid-cols-[140px_1fr] gap-3 py-2.5 border-b border-neutral-100"
+            >
+              <dt className="text-sm font-normal text-neutral-400" style={body}>
+                {row.label}
+              </dt>
+              <dd className="text-sm font-normal text-neutral-800" style={body}>
+                {row.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="flex flex-wrap gap-3">
+          {step === "review" ? (
+            <>
+              <button
+                onClick={send}
+                className="inline-flex items-center gap-2 h-12 px-7 bg-[#45DFB1] rounded-2xl text-[#0B2A22] text-base font-medium hover:bg-[#80ED99] transition-colors"
+                style={body}
+              >
+                <Send className="w-4 h-4" />
+                Send inquiry
+              </button>
+              <button
+                onClick={() => downloadInquiryPdf(id, data)}
+                className="inline-flex items-center gap-2 h-12 px-6 rounded-2xl border border-[#0B6477] text-[#0B6477] text-base font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
+                style={body}
+              >
+                <Download className="w-4 h-4" />
+                Download PDF
+              </button>
+              <button
+                onClick={() => setStep("form")}
+                className="inline-flex items-center gap-2 h-12 px-5 rounded-2xl text-neutral-500 text-base font-medium hover:text-neutral-800 transition-colors"
+                style={body}
+              >
+                <Pencil className="w-4 h-4" />
+                Edit answers
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => downloadInquiryPdf(id, data)}
+                className="inline-flex items-center gap-2 h-12 px-6 rounded-2xl border border-[#0B6477] text-[#0B6477] text-base font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
+                style={body}
+              >
+                <Download className="w-4 h-4" />
+                Download PDF copy
+              </button>
+              <button
+                onClick={() => {
+                  setData(EMPTY_INQUIRY);
+                  setId("");
+                  setStep("form");
+                }}
+                className="inline-flex items-center gap-2 h-12 px-5 rounded-2xl text-neutral-500 text-base font-medium hover:text-neutral-800 transition-colors"
+                style={body}
+              >
+                Send another inquiry
+              </button>
+            </>
+          )}
+        </div>
       </div>
     );
   }
+
+  const extras = data.area ? (AREA_EXTRAS[data.area] ?? []) : [];
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-7 md:p-9">
@@ -125,57 +398,150 @@ function QuestionForm() {
       </h2>
       <p className="text-base font-normal text-neutral-500" style={body}>
         Do you have a question about our research? Are you a cooperative,
-        business, or student with a project in mind? Write to us.
+        business, or student with a project in mind? Write to us — only the
+        starred fields are required.
       </p>
+
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-neutral-700" style={body}>
+        <span className={labelClass} style={body}>
           Your name *
         </span>
         <input
-          name="name"
           required
+          value={data.name}
+          onChange={(e) => set({ name: e.target.value })}
           placeholder="Full name"
           className={inputClass}
           style={body}
         />
       </label>
+
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-neutral-700" style={body}>
+        <span className={labelClass} style={body}>
           Your email address *
         </span>
         <input
-          name="email"
           type="email"
           required
+          value={data.email}
+          onChange={(e) => set({ email: e.target.value })}
           placeholder="you@example.com"
           className={inputClass}
           style={body}
         />
       </label>
+
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-neutral-700" style={body}>
+        <span className={labelClass} style={body}>
           Organization
         </span>
         <input
-          name="organization"
+          value={data.organization}
+          onChange={(e) => set({ organization: e.target.value })}
           placeholder="Cooperative, company, or university (optional)"
           className={inputClass}
           style={body}
         />
       </label>
+
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-neutral-700" style={body}>
+        <span className={labelClass} style={body}>
+          Which research area fits your question?{" "}
+          <span className="font-normal text-neutral-400">(optional)</span>
+        </span>
+        <select
+          value={data.area}
+          onChange={(e) => set({ area: e.target.value, extras: {} })}
+          className={inputClass}
+          style={body}
+        >
+          <option value="">Not sure yet — just ask away</option>
+          {RESEARCH_AREAS.map((area) => (
+            <option key={area.label} value={area.label}>
+              {area.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {extras.map((field) => (
+        <label key={field.key} className="flex flex-col gap-1.5">
+          <span className={labelClass} style={body}>
+            {field.label}{" "}
+            <span className="font-normal text-neutral-400">(optional)</span>
+          </span>
+          {field.type === "select" ? (
+            <select
+              value={data.extras[field.key] ?? ""}
+              onChange={(e) =>
+                set({ extras: { ...data.extras, [field.key]: e.target.value } })
+              }
+              className={inputClass}
+              style={body}
+            >
+              <option value="">Choose…</option>
+              {field.options!.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              value={data.extras[field.key] ?? ""}
+              onChange={(e) =>
+                set({ extras: { ...data.extras, [field.key]: e.target.value } })
+              }
+              placeholder={field.placeholder}
+              className={inputClass}
+              style={body}
+            />
+          )}
+        </label>
+      ))}
+
+      <div className="flex flex-col gap-1.5">
+        <span className={labelClass} style={body}>
+          Technologies you're curious about{" "}
+          <span className="font-normal text-neutral-400">(optional)</span>
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {TECHNOLOGIES.map((tech) => {
+            const selected = data.techs.includes(tech.label);
+            return (
+              <button
+                type="button"
+                key={tech.id}
+                onClick={() => toggleTech(tech.label)}
+                className={
+                  selected
+                    ? "rounded-full px-3 py-1.5 text-sm font-medium bg-[#0B6477] text-white transition-colors"
+                    : "rounded-full px-3 py-1.5 text-sm font-medium border border-[#0B6477]/20 text-neutral-500 hover:border-[#0B6477] hover:text-[#0B6477] transition-colors"
+                }
+                style={body}
+              >
+                {tech.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <label className="flex flex-col gap-1.5">
+        <span className={labelClass} style={body}>
           Your question *
         </span>
         <textarea
-          name="question"
           required
           rows={5}
+          value={data.question}
+          onChange={(e) => set({ question: e.target.value })}
           placeholder="Tell us what you'd like to know or build together"
           className={`${inputClass} resize-y`}
           style={body}
         />
       </label>
+
       <label className="flex items-start gap-3">
         <input
           type="checkbox"
@@ -184,16 +550,16 @@ function QuestionForm() {
         />
         <span className="text-sm font-normal text-neutral-500" style={body}>
           I agree that smartagri may use the details above to respond to my
-          question. Submitting opens your email app — nothing is stored on this
-          site.
+          question.
         </span>
       </label>
+
       <button
         type="submit"
         className="self-start h-12 px-8 bg-[#45DFB1] rounded-2xl text-[#0B2A22] text-lg font-medium hover:bg-[#80ED99] transition-colors"
         style={body}
       >
-        Submit
+        Review & submit
       </button>
     </form>
   );
@@ -232,7 +598,6 @@ function ContactUsPage() {
                   className="w-full h-full min-h-[320px] border-0"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  allowFullScreen
                 />
                 <a
                   href="https://www.google.com/maps/search/?api=1&query=-7.7687041%2C110.3806344"
@@ -283,7 +648,7 @@ function ContactUsPage() {
               transition={{ delay: 0.12, duration: 0.55, ease: "easeOut" }}
               className="rounded-3xl bg-white border border-[#0B6477]/10"
             >
-              <QuestionForm />
+              <InquiryForm />
             </motion.div>
           </div>
         </div>
