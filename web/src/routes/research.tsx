@@ -11,12 +11,12 @@ export const Route = createFileRoute("/research")({
   head: () => ({
     meta: [
       {
-        title: "Research — smartagri",
+        title: "Research | smartagri",
       },
       {
         name: "description",
         content:
-          "The seven focus areas where the Smart Agriculture Research Center combines AI, IoT sensing, and agronomy — from precision irrigation to smart greenhouses.",
+          "The seven focus areas where the Smart Agriculture Research Center combines AI, IoT sensing, and agronomy, from precision irrigation to smart greenhouses.",
       },
     ],
   }),
@@ -36,7 +36,7 @@ const steps = [
   {
     number: "03",
     title: "Act",
-    desc: "Farmers and cooperatives get advice they can act on — when to irrigate, where to scout, what to expect at harvest.",
+    desc: "Farmers and cooperatives get advice they can act on: when to irrigate, where to scout, what to expect at harvest.",
   },
 ];
 

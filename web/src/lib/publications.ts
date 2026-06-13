@@ -5,7 +5,7 @@ export type Publication = {
   title: string;
   venue: string;
   authors: string;
-  /** DOI / external URL — also used to auto-fetch metadata from Crossref */
+  /** DOI / external URL, also used to auto-fetch metadata from Crossref */
   link?: string;
   /** Manual abstract shown on the detail page (Crossref often lacks one) */
   abstract?: string;
@@ -15,7 +15,7 @@ export type Publication = {
 
 type PublicationFile = Omit<Publication, "slug">;
 
-// Content lives in src/content/publications/*.json — one file per paper,
+// Content lives in src/content/publications/*.json, one file per paper,
 // managed through the /admin CMS (or by hand). Sorted newest year first;
 // within a year, files sort by filename (prefix with 1-, 2-, ... to control).
 const pubFiles = import.meta.glob<PublicationFile>(

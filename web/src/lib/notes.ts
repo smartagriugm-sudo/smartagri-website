@@ -51,14 +51,14 @@ export function categoryChip(category: string): string {
   return chipStyles[(index < 0 ? 0 : index) % chipStyles.length];
 }
 
-// Placeholder cover art for notes without a photo — cycle brand gradients.
+// Placeholder cover art for notes without a photo; cycle brand gradients.
 export const covers = [
   "linear-gradient(135deg, #0B6477 0%, #14919B 60%, #0AD1C8 100%)",
   "linear-gradient(135deg, #08313A 0%, #0B6477 70%, #14919B 100%)",
   "linear-gradient(135deg, #14919B 0%, #45DFB1 100%)",
 ];
 
-// Content lives in src/content/notes/*.json — one file per article, managed
+// Content lives in src/content/notes/*.json, one file per article, managed
 // through the /admin CMS (or by hand). Dates are stored as ISO (YYYY-MM-DD).
 type NoteFile = {
   category: NoteCategory;

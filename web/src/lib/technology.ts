@@ -62,7 +62,7 @@ export const TECHNOLOGIES: Technology[] = [
     ring: 2,
     tagline: "Drones that map, scout, and treat fields from above.",
     description:
-      "Fixed-wing and VTOL platforms flying programmed missions over fields and estates. A twenty-minute flight produces imagery that would take days to gather on foot — the eyes of our precision agriculture work.",
+      "Fixed-wing and VTOL platforms flying programmed missions over fields and estates. A twenty-minute flight produces imagery that would take days to gather on foot. They are the eyes of our precision agriculture work.",
     benefits: [
       "Whole-field coverage in minutes",
       "Centimeter-scale imagery",
@@ -104,7 +104,7 @@ export const TECHNOLOGIES: Technology[] = [
     ring: 2,
     tagline: "Hundreds of spectral bands for lab-grade plant analysis.",
     description:
-      "Where multispectral sees a handful of bands, hyperspectral sees hundreds — enough to estimate chlorophyll, nutrient status, and physiological responses non-destructively, from plant factories to field samples.",
+      "Where multispectral sees a handful of bands, hyperspectral sees hundreds, enough to estimate chlorophyll, nutrient status, and physiological responses non-destructively, from plant factories to field samples.",
     benefits: [
       "Non-destructive measurement",
       "Fine-grained physiological insight",
@@ -121,7 +121,7 @@ export const TECHNOLOGIES: Technology[] = [
     ring: 1,
     tagline: "Models that read leaves, count fruit, and flag disease.",
     description:
-      "Deep-learning vision models trained on field imagery to detect blight, rust, and pest damage, count plants and fruit, and grade produce — turning ordinary cameras into expert scouts that never tire.",
+      "Deep-learning vision models trained on field imagery to detect blight, rust, and pest damage, count plants and fruit, and grade produce, turning ordinary cameras into expert scouts that never tire.",
     benefits: [
       "Early disease detection",
       "Consistent, objective assessment",
@@ -159,7 +159,7 @@ export const TECHNOLOGIES: Technology[] = [
     ring: 2,
     tagline: "Reading plant physiology through electrical impedance.",
     description:
-      "Electrical impedance spectroscopy passes tiny signals through plant tissue to estimate chlorophyll and physiological status without harming the plant — a smartagri research specialty published in international journals.",
+      "Electrical impedance spectroscopy passes tiny signals through plant tissue to estimate chlorophyll and physiological status without harming the plant, a smartagri research specialty published in international journals.",
     benefits: [
       "Non-destructive physiological sensing",
       "Low-cost instrumentation",
@@ -193,7 +193,7 @@ export const TECHNOLOGIES: Technology[] = [
     ring: 2,
     tagline: "Water delivered exactly when and where crops ask for it.",
     description:
-      "Sensor-driven valves and pumps that irrigate on plant demand instead of fixed timers — from drip systems and sprinklers to modernized canal networks — cutting water use while protecting yield.",
+      "Sensor-driven valves and pumps that irrigate on plant demand instead of fixed timers (from drip systems and sprinklers to modernized canal networks), cutting water use while protecting yield.",
     benefits: [
       "Major water savings",
       "Less runoff and leaching",
@@ -248,7 +248,7 @@ export const TECHNOLOGIES: Technology[] = [
     ring: 1,
     tagline: "Dashboards that end in a decision, not a dataset.",
     description:
-      "The layer farmers and cooperatives actually touch: dashboards and advisories that fuse everything above into plain recommendations — which plot to scout first, when to irrigate, what to expect at harvest.",
+      "The layer farmers and cooperatives actually touch: dashboards and advisories that fuse everything above into plain recommendations: which plot to scout first, when to irrigate, what to expect at harvest.",
     benefits: [
       "Plain-language recommendations",
       "Designed with farmer cooperatives",

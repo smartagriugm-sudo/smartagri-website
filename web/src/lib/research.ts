@@ -14,13 +14,13 @@ export type ResearchArea = {
   desc: string;
 };
 
-// Area names from the center's research program. Descriptions are drafted —
+// Area names from the center's research program. Descriptions are drafted.
 // TODO: have the team review/replace the desc copy.
 export const RESEARCH_AREAS: ResearchArea[] = [
   {
     label: "Open Field Technology",
     icon: Sprout,
-    desc: "Sensing, automation, and mechanization for open-field production — from land preparation to harvest — tuned to smallholder realities.",
+    desc: "Sensing, automation, and mechanization for open-field production, from land preparation to harvest, tuned to smallholder realities.",
   },
   {
     label: "Modernization Irrigation",
@@ -40,7 +40,7 @@ export const RESEARCH_AREAS: ResearchArea[] = [
   {
     label: "Indoor Farming Technology",
     icon: Warehouse,
-    desc: "Controlled-environment agriculture — greenhouses and plant factories with closed-loop climate, light, and nutrient control.",
+    desc: "Controlled-environment agriculture: greenhouses and plant factories with closed-loop climate, light, and nutrient control.",
   },
   {
     label: "Agro-Informatics",

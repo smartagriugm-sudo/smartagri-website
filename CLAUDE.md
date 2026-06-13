@@ -48,6 +48,9 @@ Baca file ini sebelum membuat atau mengubah kode apa pun, dan ikuti aturan brand
   breakpoint (sm/md/lg), dan ukuran seperti tertulis.
 - Mobile-responsive penuh. Halaman harus scroll natural: video hero full-bleed, lalu seksi putih.
 - Tanpa backend, tanpa localStorage.
+- JANGAN gunakan em dash (—) di teks mana pun (konten situs, komentar kode, dokumen).
+  Pakai koma, titik dua, titik, tanda kurung, atau separator `·`/`|` sesuai konteks.
+  En dash (–) hanya untuk rentang angka/tanggal (mis. 14–18px, 19–20).
 - Inject font Google Fonts lewat `head()` route root; pastikan `src/styles.css` meng-`@import "tailwindcss";`
   dan berisi keyframes `marquee` + class `.animate-marquee`.
 

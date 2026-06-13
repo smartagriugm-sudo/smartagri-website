@@ -80,7 +80,7 @@ function FocusCarouselCard() {
 
   return (
     <div className="relative flex-1 h-[585px] rounded-3xl overflow-hidden bg-[#0B6477]">
-      {/* TODO: field.jpg is missing — deep teal gradient stands in until it lands in public/brand/ */}
+      {/* TODO: field.jpg is missing; deep teal gradient stands in until it lands in public/brand/ */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#0B6477] via-[#14919B] to-[#08313A]" />
       <div
         className="absolute inset-0 bg-cover bg-center"
@@ -258,7 +258,7 @@ const adaptableItems = [
 
 function AdaptableCard() {
   const words =
-    "Tune smartagri to fit your crop, climate, and goals—whether you manage open fields, orchards, or controlled-environment greenhouses.".split(
+    "Tune smartagri to fit your crop, climate, and goals, whether you manage open fields, orchards, or controlled-environment greenhouses.".split(
       " ",
     );
   return (

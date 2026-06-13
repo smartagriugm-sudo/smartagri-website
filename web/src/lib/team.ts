@@ -11,9 +11,9 @@ export const TEAM_CATEGORIES: TeamCategory[] = [
 
 export type TeamMember = {
   slug: string;
-  /** Clean name without titles — used on cards and for publication matching */
+  /** Clean name without titles; used on cards and for publication matching */
   name: string;
-  /** Full name with academic titles — shown on the profile page */
+  /** Full name with academic titles; shown on the profile page */
   fullName: string;
   role: string;
   category: TeamCategory;
@@ -28,7 +28,7 @@ export type TeamMember = {
   projects: string[];
   /** Optional portrait photo (e.g. /brand/team/<slug>.webp) */
   photo?: string;
-  /** Optional — buttons appear on the profile page when filled */
+  /** Optional; buttons appear on the profile page when filled */
   email?: string;
   linkedin?: string;
 };
@@ -43,7 +43,7 @@ export const TEAM: TeamMember[] = [
     category: "Lecturer",
     coordinator: true,
     core: true,
-    bio: "Coordinator of the Smart Agriculture Research Center and lecturer at the Department of Agricultural and Biosystems Engineering, UGM. His work spans smart farming systems, IoT-based field monitoring, and precision agriculture — supervising research from UAV multispectral monitoring to plant-factory environmental control.",
+    bio: "Coordinator of the Smart Agriculture Research Center and lecturer at the Department of Agricultural and Biosystems Engineering, UGM. His work spans smart farming systems, IoT-based field monitoring, and precision agriculture, supervising research from UAV multispectral monitoring to plant-factory environmental control.",
     expertise: [
       "Smart farming systems",
       "IoT sensing",
@@ -81,7 +81,7 @@ export const TEAM: TeamMember[] = [
     role: "Lecturer",
     category: "Lecturer",
     core: true,
-    bio: "Professor focusing on controlled-environment agriculture and postharvest technology — from plant-factory production systems to the quality of fresh produce after harvest.",
+    bio: "Professor focusing on controlled-environment agriculture and postharvest technology, from plant-factory production systems to the quality of fresh produce after harvest.",
     expertise: [
       "Controlled environment agriculture",
       "Postharvest technology",
@@ -114,7 +114,7 @@ export const TEAM: TeamMember[] = [
     role: "Lecturer",
     category: "Lecturer",
     core: true,
-    bio: "Lecturer and researcher specializing in spectral sensing for agriculture — from UAV-based multispectral mapping to hyperspectral analysis of crops in controlled environments, paired with machine learning.",
+    bio: "Lecturer and researcher specializing in spectral sensing for agriculture, from UAV-based multispectral mapping to hyperspectral analysis of crops in controlled environments, paired with machine learning.",
     expertise: [
       "Hyperspectral sensing",
       "UAV remote sensing",
@@ -172,7 +172,7 @@ export const TEAM: TeamMember[] = [
     role: "Researcher",
     category: "Researcher",
     core: true,
-    bio: "Researcher focusing on sensor development and instrumentation — including electrical impedance spectroscopy (EIS) approaches for non-destructive plant physiological measurement.",
+    bio: "Researcher focusing on sensor development and instrumentation, including electrical impedance spectroscopy (EIS) approaches for non-destructive plant physiological measurement.",
     expertise: [
       "EIS instrumentation",
       "Sensor development",
@@ -231,7 +231,7 @@ export function membersByCategory(category: TeamCategory): TeamMember[] {
   return TEAM.filter((member) => member.category === category);
 }
 
-// Naive author match on the member's last name — good enough while the
+// Naive author match on the member's last name; good enough while the
 // roster has unique last names. TODO: switch to explicit publication slugs
 // per member if last names ever collide.
 export function publicationsFor(member: TeamMember): Publication[] {

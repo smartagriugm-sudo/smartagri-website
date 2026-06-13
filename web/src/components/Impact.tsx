@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { accent, body, display } from "../lib/fonts";
 
-// Placeholder numbers — replace with the center's real figures.
+// Placeholder numbers; replace with the center's real figures.
 export const stats = [
   { value: "24+", label: "Active research projects" },
   { value: "120+", label: "Partner farms & cooperatives" },

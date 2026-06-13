@@ -10,7 +10,7 @@ export const Route = createFileRoute("/team")({
   component: TeamPage,
   head: () => ({
     meta: [
-      { title: "Team — smartagri" },
+      { title: "Team | smartagri" },
       {
         name: "description",
         content:
@@ -40,7 +40,7 @@ function TeamPage() {
                 The people growing <span style={accent}>smartagri</span>
               </>
             }
-            subtitle="Lecturers, researchers, and students of the Smart Agriculture Research Center — Department of Agricultural and Biosystems Engineering, Universitas Gadjah Mada."
+            subtitle="Lecturers, researchers, and students of the Smart Agriculture Research Center, Department of Agricultural and Biosystems Engineering, Universitas Gadjah Mada."
           />
           <div className="flex flex-col gap-14">
             {TEAM_CATEGORIES.map((category) => {

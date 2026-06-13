@@ -40,7 +40,7 @@ export default function Footer() {
               className="text-white/60 text-sm font-normal leading-relaxed max-w-[300px] mt-4"
               style={body}
             >
-              Smart Agriculture Research Center — Department of Agricultural
+              Smart Agriculture Research Center, Department of Agricultural
               and Biosystems Engineering, Faculty of Agricultural Technology,
               Universitas Gadjah Mada. We unite AI, IoT sensing, and agronomy
               to help farmers grow more sustainably.

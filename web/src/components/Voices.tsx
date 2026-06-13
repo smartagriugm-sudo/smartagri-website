@@ -32,7 +32,7 @@ function FarmerImage() {
 }
 
 const quote =
-  "smartagri completely changed how our cooperative manages its fields. Instead of guessing when to irrigate or treat crops, we now act on real data—like having an agronomist watching every plot, day and night.";
+  "smartagri completely changed how our cooperative manages its fields. Instead of guessing when to irrigate or treat crops, we now act on real data, like having an agronomist watching every plot, day and night.";
 
 export default function Voices() {
   return (
@@ -82,7 +82,7 @@ export default function Voices() {
               className="flex flex-col gap-3 w-full lg:w-[282px]"
             >
               <div className="w-full h-[280px] lg:h-[351px] rounded-2xl overflow-hidden relative bg-[#F3F5F4]">
-                {/* TODO: farmer.jpg is missing — brand-tinted block with the color icon
+                {/* TODO: farmer.jpg is missing; brand-tinted block with the color icon
                     stands in until it lands in public/brand/ */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <img src={A.iconColor} alt="" className="h-20 w-auto opacity-60" />
@@ -96,7 +96,7 @@ export default function Voices() {
                 transition={{ delay: 0.4, duration: 0.55, ease: "easeOut" }}
                 className="w-full h-24 rounded-2xl flex items-center justify-center gap-3 bg-[#F1F0EF]"
               >
-                {/* Placeholder partner — replace with a real partner and its logo */}
+                {/* Placeholder partner; replace with a real partner and its logo */}
                 <img src={A.iconColor} alt="" className="h-8 w-auto" />
                 <span
                   className="text-2xl md:text-3xl font-bold text-black"
@@ -133,7 +133,7 @@ export default function Voices() {
                 </motion.span>
               ))}
             </p>
-            {/* Placeholder testimonial — replace with a real one */}
+            {/* Placeholder testimonial; replace with a real one */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}

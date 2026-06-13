@@ -14,7 +14,7 @@ export const Route = createFileRoute("/publications")({
   head: () => ({
     meta: [
       {
-        title: "Publications — smartagri",
+        title: "Publications | smartagri",
       },
       {
         name: "description",
@@ -79,7 +79,7 @@ function PublicationsPage() {
                             className="block text-sm md:text-base font-normal text-neutral-500 mt-1"
                             style={body}
                           >
-                            {pub.authors} — {pub.venue}
+                            {pub.authors} · {pub.venue}
                           </span>
                         </span>
                         <ArrowUpRight className="shrink-0 w-6 h-6 text-[#0B6477] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

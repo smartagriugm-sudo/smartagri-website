@@ -13,7 +13,7 @@ export const Route = createFileRoute("/field-notes_/$slug")({
   loader: ({ params }) => findNote(params.slug),
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.title ?? "Field Notes"} — smartagri` },
+      { title: `${loaderData?.title ?? "Field Notes"} | smartagri` },
       ...(loaderData?.excerpt
         ? [{ name: "description", content: loaderData.excerpt }]
         : []),

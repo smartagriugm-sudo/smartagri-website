@@ -12,7 +12,7 @@ export const Route = createFileRoute("/impact")({
   head: () => ({
     meta: [
       {
-        title: "Impact — smartagri",
+        title: "Impact | smartagri",
       },
       {
         name: "description",
@@ -54,7 +54,7 @@ function ImpactPage() {
                 Research that <span style={accent}>delivers in the field</span>
               </>
             }
-            subtitle="Numbers we hold ourselves to — and what they mean for the farmers, scientists, and policymakers we work with."
+            subtitle="Numbers we hold ourselves to, and what they mean for the farmers, scientists, and policymakers we work with."
           />
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -135,7 +135,7 @@ function ImpactPage() {
               style={serif}
             >
               “Instead of guessing when to irrigate or treat crops, we now act
-              on real data — like having an agronomist watching every plot, day
+              on real data, like having an agronomist watching every plot, day
               and night.”
             </p>
             <footer className="mt-6">

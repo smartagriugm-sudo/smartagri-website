@@ -14,7 +14,7 @@ export const Route = createFileRoute("/about-us")({
   head: () => ({
     meta: [
       {
-        title: "About Us — smartagri",
+        title: "About Us | smartagri",
       },
       {
         name: "description",
@@ -40,7 +40,7 @@ function AboutUsPage() {
                 The people behind <span style={accent}>smartagri</span>
               </>
             }
-            subtitle="We are a research center at Universitas Gadjah Mada that believes the future of farming is grown together — by agronomists, engineers, and farmers like you."
+            subtitle="We are a research center at Universitas Gadjah Mada that believes the future of farming is grown together, by agronomists, engineers, and farmers like you."
           />
           <div className="grid lg:grid-cols-2 gap-6 max-w-[1100px] mx-auto">
             <motion.div
@@ -57,8 +57,8 @@ function AboutUsPage() {
                 className="text-xl md:text-2xl text-white leading-snug"
                 style={serif}
               >
-                Harness AI, sensing, and agronomy so every farmer — whatever
-                the size of their plot — can grow more with less.
+                Harness AI, sensing, and agronomy so every farmer, whatever
+                the size of their plot, can grow more with less.
               </p>
               <p
                 className="text-base font-normal text-white/70 leading-relaxed"
@@ -97,7 +97,7 @@ function AboutUsPage() {
                 style={body}
               >
                 Everything we publish is field-tested with the cooperatives we
-                serve — research is only finished when a farmer can use it.
+                serve. Research is only finished when a farmer can use it.
               </p>
             </motion.div>
           </div>
@@ -219,7 +219,7 @@ function AboutUsPage() {
                 Contact us
               </a>
             </div>
-            {/* Placeholder contact details — replace with the center's real ones */}
+            {/* Placeholder contact details; replace with the center's real ones */}
             <div className="flex flex-col gap-5">
               <div className="flex items-start gap-4">
                 <MapPin className="w-5 h-5 text-[#45DFB1] mt-1 shrink-0" />

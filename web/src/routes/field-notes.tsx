@@ -10,7 +10,7 @@ export const Route = createFileRoute("/field-notes")({
   head: () => ({
     meta: [
       {
-        title: "Field Notes — smartagri",
+        title: "Field Notes | smartagri",
       },
       {
         name: "description",

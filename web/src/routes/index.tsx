@@ -40,7 +40,7 @@ function AnimatedWords({ text, baseDelay }: { text: string; baseDelay: number })
 function Hero() {
   return (
     <section className="relative min-h-screen w-full text-white flex flex-col justify-between p-6 md:p-12 overflow-hidden">
-      {/* TODO: hero.mp4 is missing — brand gradient behind the video keeps the
+      {/* TODO: hero.mp4 is missing; brand gradient behind the video keeps the
           hero on-brand until it lands in public/brand/ */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#0B6477] via-[#14919B] to-[#80ED99] z-0" />
       <video

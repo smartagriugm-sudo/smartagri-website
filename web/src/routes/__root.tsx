@@ -15,7 +15,7 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'smartagri — Intelligent farming through AI and data',
+        title: 'smartagri: Intelligent farming through AI and data',
       },
       {
         name: 'description',
@@ -24,7 +24,7 @@ export const Route = createRootRoute({
       },
       {
         property: 'og:title',
-        content: 'smartagri — Intelligent farming through AI and data',
+        content: 'smartagri: Intelligent farming through AI and data',
       },
       {
         property: 'og:description',

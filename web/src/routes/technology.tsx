@@ -12,11 +12,11 @@ export const Route = createFileRoute("/technology")({
   component: TechnologyPage,
   head: () => ({
     meta: [
-      { title: "Technology — smartagri" },
+      { title: "Technology | smartagri" },
       {
         name: "description",
         content:
-          "Explore the core technologies behind smartagri — from IoT sensor networks and UAV platforms to machine learning and decision support — and how they interconnect.",
+          "Explore the core technologies behind smartagri: from IoT sensor networks and UAV platforms to machine learning and decision support, and how they interconnect.",
       },
     ],
   }),
@@ -291,14 +291,14 @@ function TechnologyPage() {
                   style={body}
                 >
                   <span className="w-2.5 h-2.5 rounded-full bg-[#0B6477]" />
-                  Inner ring — data &amp; intelligence
+                  Inner ring: data &amp; intelligence
                 </div>
                 <div
                   className="flex items-center gap-2 text-xs sm:text-sm font-normal text-neutral-500"
                   style={body}
                 >
                   <span className="w-2.5 h-2.5 rounded-full border-2 border-[#14919B] bg-white" />
-                  Outer ring — field sensing &amp; actuation
+                  Outer ring: field sensing &amp; actuation
                 </div>
               </div>
             </motion.div>

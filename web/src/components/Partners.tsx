@@ -13,7 +13,7 @@ export default function Partners() {
       <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-white to-transparent z-10" />
         <div className="pointer-events-none absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-white to-transparent z-10" />
-        {/* 29 partners — slow the marquee down so logos stay readable */}
+        {/* 29 partners; slow the marquee down so logos stay readable */}
         <div
           className="flex w-max animate-marquee gap-14 items-center"
           style={{ animationDuration: "120s" }}

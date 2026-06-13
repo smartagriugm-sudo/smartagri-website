@@ -15,12 +15,12 @@ export const Route = createFileRoute("/contact-us")({
   head: () => ({
     meta: [
       {
-        title: "Contact Us — smartagri",
+        title: "Contact Us | smartagri",
       },
       {
         name: "description",
         content:
-          "Get in touch with the Smart Agriculture Research Center — ask a question, explore a collaboration, or visit us in Sleman, Yogyakarta.",
+          "Get in touch with the Smart Agriculture Research Center: ask a question, explore a collaboration, or visit us in Sleman, Yogyakarta.",
       },
     ],
   }),
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/contact-us")({
 const CONTACT_EMAIL = "hello@smartagri.id";
 
 // Google Apps Script Web App that appends submissions to the team's
-// "smartagri — Inquiries" Google Sheet (see SETUP-INQUIRIES.md).
+// "smartagri Inquiries" Google Sheet (see SETUP-INQUIRIES.md).
 const INQUIRY_ENDPOINT =
   "https://script.google.com/macros/s/AKfycbxj-2d-hmXocr7OEag-oNrTy0yo3vUV40-DcmWx7K90ci9Lzol9iby6hcSyrT66k_M/exec";
 
@@ -48,7 +48,7 @@ const contactInfo = [
   {
     icon: Phone,
     label: "Phone",
-    // TODO: placeholder number — replace when the official line is provided
+    // TODO: placeholder number; replace when the official line is provided
     value: "+62 274 000 0000",
   },
   {
@@ -63,7 +63,7 @@ const inputClass =
 
 const labelClass = "text-sm font-medium text-neutral-700";
 
-// Optional follow-up questions per research area — shown only after the
+// Optional follow-up questions per research area, shown only after the
 // visitor picks an area, and all of them optional.
 type ExtraField = {
   key: string;
@@ -171,7 +171,7 @@ function downloadInquiryPdf(id: string, data: InquiryData) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.setTextColor(11, 100, 119);
-  doc.text("smartagri — Inquiry Summary", 20, y);
+  doc.text("smartagri: Inquiry Summary", 20, y);
   y += 9;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
@@ -203,7 +203,7 @@ function downloadInquiryPdf(id: string, data: InquiryData) {
   doc.setFontSize(9);
   doc.setTextColor(130, 130, 130);
   doc.text(
-    `Keep this ID for follow-up. Smart Agriculture Research Center UGM — ${CONTACT_EMAIL}`,
+    `Keep this ID for follow-up. Smart Agriculture Research Center UGM, ${CONTACT_EMAIL}`,
     20,
     Math.min(y, 285),
   );
@@ -290,7 +290,7 @@ function InquiryForm() {
           </h2>
           <p className="text-sm font-normal text-neutral-500 mt-2" style={body}>
             {step === "review"
-              ? "Check your answers below, then send — or download a copy first."
+              ? "Check your answers below, then send, or download a copy first."
               : INQUIRY_ENDPOINT
                 ? "Your inquiry has been delivered to the smartagri team."
                 : "Your email app should have opened with the inquiry ready to send. If it didn't, email us at " +
@@ -304,7 +304,7 @@ function InquiryForm() {
             className="text-[11px] font-medium tracking-[0.1em] uppercase text-white/60"
             style={body}
           >
-            Your inquiry ID — save it for follow-up
+            Your inquiry ID, save it for follow-up
           </div>
           <div
             className="text-xl sm:text-2xl font-semibold text-[#45DFB1] mt-1"
@@ -398,7 +398,7 @@ function InquiryForm() {
       </h2>
       <p className="text-base font-normal text-neutral-500" style={body}>
         Do you have a question about our research? Are you a cooperative,
-        business, or student with a project in mind? Write to us — only the
+        business, or student with a project in mind? Write to us. Only the
         starred fields are required.
       </p>
 
@@ -455,7 +455,7 @@ function InquiryForm() {
           className={inputClass}
           style={body}
         >
-          <option value="">Not sure yet — just ask away</option>
+          <option value="">Not sure yet, just ask away</option>
           {RESEARCH_AREAS.map((area) => (
             <option key={area.label} value={area.label}>
               {area.label}
@@ -578,7 +578,7 @@ function ContactUsPage() {
                 Come find us <span style={accent}>in the field</span>
               </>
             }
-            subtitle="Reach out to start a conversation — whether you're exploring a collaboration, piloting smartagri on your fields, or just curious about our work."
+            subtitle="Reach out to start a conversation, whether you're exploring a collaboration, piloting smartagri on your fields, or just curious about our work."
           />
 
           <div className="grid lg:grid-cols-2 gap-6 items-stretch">
@@ -590,7 +590,7 @@ function ContactUsPage() {
               className="flex flex-col gap-6"
             >
               <div className="rounded-3xl overflow-hidden border border-[#0B6477]/10 bg-white flex-1 min-h-[320px] relative">
-                {/* Google Maps embed (keyless) — Faculty of Agricultural
+                {/* Google Maps embed (keyless): Faculty of Agricultural
                     Technology UGM (-7.7687041, 110.3806344) */}
                 <iframe
                   title="smartagri location map"

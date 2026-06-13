@@ -12,7 +12,7 @@ export const Route = createFileRoute("/publications_/$slug")({
   loader: ({ params }) => findPublication(params.slug),
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.title ?? "Publications"} — smartagri` },
+      { title: `${loaderData?.title ?? "Publications"} | smartagri` },
       ...(loaderData?.abstract
         ? [{ name: "description", content: loaderData.abstract.slice(0, 160) }]
         : []),

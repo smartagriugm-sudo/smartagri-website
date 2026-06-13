@@ -13,6 +13,6 @@ export const A = {
   farmerPhoto: `${BASE}/farmer.jpg`,
 };
 
-// Partner logos live in public/brand/partners/ — referenced via this helper
+// Partner logos live in public/brand/partners/, referenced via this helper
 // so all media still resolves through this module.
 export const partnerLogo = (file: string) => `${BASE}/partners/${file}`;
