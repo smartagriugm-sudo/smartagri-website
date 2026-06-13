@@ -276,13 +276,13 @@ function TechnologyPage() {
             }
             subtitle="Hover or tap a technology to see what it does, where it's applied, and how it interconnects with the rest of the smartagri stack."
           />
-          <div className="grid lg:grid-cols-[1.2fr_1fr] gap-6 items-start">
+          <div className="grid lg:grid-cols-[1.2fr_1fr] gap-6 items-stretch">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.15 }}
               transition={{ duration: 0.55, ease: "easeOut" }}
-              className="rounded-3xl bg-white border border-[#0B6477]/10 p-6 sm:p-10"
+              className="h-full flex flex-col justify-center rounded-3xl bg-white border border-[#0B6477]/10 p-6 sm:p-10"
             >
               <TechMap active={active} onSelect={setActive} />
               <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2">
@@ -307,7 +307,7 @@ function TechnologyPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.15 }}
               transition={{ delay: 0.12, duration: 0.55, ease: "easeOut" }}
-              className="rounded-3xl bg-white border border-[#0B6477]/10 p-6 sm:p-8 lg:sticky lg:top-[92px]"
+              className="h-full rounded-3xl bg-white border border-[#0B6477]/10 p-6 sm:p-8"
             >
               <TechDetail tech={active} />
             </motion.aside>

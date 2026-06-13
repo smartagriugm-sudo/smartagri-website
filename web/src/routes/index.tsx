@@ -10,6 +10,7 @@ import Voices from "../components/Voices";
 import Impact from "../components/Impact";
 import Publications from "../components/Publications";
 import FieldNotes from "../components/FieldNotes";
+import CollaborationProcess from "../components/CollaborationProcess";
 import CallToAction from "../components/CallToAction";
 import Footer from "../components/Footer";
 
@@ -147,6 +148,7 @@ function Home() {
       <Impact />
       <Publications />
       <FieldNotes />
+      <CollaborationProcess />
       <CallToAction />
       <Footer />
     </main>

@@ -55,13 +55,14 @@ export function TeamCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
       transition={{ delay: (index % 4) * 0.08, duration: 0.5, ease: "easeOut" }}
+      className="h-full"
     >
       <Link
         to="/team/$slug"
         params={{ slug: member.slug }}
-        className="group block rounded-3xl bg-white border border-[#0B6477]/10 overflow-hidden hover:shadow-xl transition-shadow"
+        className="group flex flex-col h-full rounded-3xl bg-white border border-[#0B6477]/10 overflow-hidden hover:shadow-xl transition-shadow"
       >
-        <div className="aspect-[4/5] overflow-hidden relative">
+        <div className="aspect-[4/5] overflow-hidden relative shrink-0">
           <MemberPhoto member={member} index={index} />
           {member.coordinator && (
             <span
@@ -72,9 +73,9 @@ export function TeamCard({
             </span>
           )}
         </div>
-        <div className="p-5">
+        <div className="p-5 flex-1 flex flex-col">
           <div
-            className="text-base sm:text-lg font-medium text-neutral-900 leading-snug group-hover:text-[#0B6477] transition-colors"
+            className="text-base sm:text-lg font-medium text-neutral-900 leading-snug group-hover:text-[#0B6477] transition-colors min-h-[2.6rem]"
             style={display}
           >
             {member.name}

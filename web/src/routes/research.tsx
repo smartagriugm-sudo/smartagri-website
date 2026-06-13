@@ -1,10 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, createLink } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { ArrowUpRight } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import { RESEARCH_AREAS } from "../lib/research";
 import PageHero from "../components/PageHero";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
+
+const MotionLink = createLink(motion.a);
 
 export const Route = createFileRoute("/research")({
   component: ResearchPage,
@@ -16,7 +19,7 @@ export const Route = createFileRoute("/research")({
       {
         name: "description",
         content:
-          "The seven focus areas where the Smart Agriculture Research Center combines AI, IoT sensing, and agronomy, from precision irrigation to smart greenhouses.",
+          "The six focus areas where the Smart Agriculture Research Center combines AI, IoT sensing, and agronomy, from open fields to indoor farming.",
       },
     ],
   }),
@@ -58,16 +61,21 @@ function ResearchPage() {
           />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {RESEARCH_AREAS.map((area, i) => (
-              <motion.div
+              <MotionLink
                 key={area.label}
+                to="/research/$slug"
+                params={{ slug: area.slug }}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
                 transition={{ delay: (i % 3) * 0.1, duration: 0.55, ease: "easeOut" }}
-                className="rounded-3xl bg-white border border-[#0B6477]/10 p-7 flex flex-col gap-4 hover:shadow-xl transition-shadow"
+                className="group rounded-3xl bg-white border border-[#0B6477]/10 p-7 flex flex-col gap-4 hover:shadow-xl transition-shadow"
               >
-                <div className="w-12 h-12 rounded-2xl bg-[#0B6477] flex items-center justify-center">
-                  <area.icon className="w-6 h-6 text-[#45DFB1]" />
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-[#0B6477] flex items-center justify-center">
+                    <area.icon className="w-6 h-6 text-[#45DFB1]" />
+                  </div>
+                  <ArrowUpRight className="w-5 h-5 text-[#0B6477] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </div>
                 <h2
                   className="text-xl md:text-2xl font-medium text-neutral-900 leading-snug"
@@ -81,7 +89,7 @@ function ResearchPage() {
                 >
                   {area.desc}
                 </p>
-              </motion.div>
+              </MotionLink>
             ))}
           </div>
         </div>

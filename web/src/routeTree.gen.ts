@@ -19,6 +19,7 @@ import { Route as ContactUsRouteImport } from './routes/contact-us'
 import { Route as AboutUsRouteImport } from './routes/about-us'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
+import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
 import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
 
@@ -72,6 +73,11 @@ const TeamSlugRoute = TeamSlugRouteImport.update({
   path: '/team/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResearchSlugRoute = ResearchSlugRouteImport.update({
+  id: '/research_/$slug',
+  path: '/research/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicationsSlugRoute = PublicationsSlugRouteImport.update({
   id: '/publications_/$slug',
   path: '/publications/$slug',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/technology': typeof TechnologyRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/publications/$slug': typeof PublicationsSlugRoute
+  '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/technology': typeof TechnologyRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/publications/$slug': typeof PublicationsSlugRoute
+  '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
 }
 export interface FileRoutesById {
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/technology': typeof TechnologyRoute
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
   '/publications_/$slug': typeof PublicationsSlugRoute
+  '/research_/$slug': typeof ResearchSlugRoute
   '/team_/$slug': typeof TeamSlugRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/technology'
     | '/field-notes/$slug'
     | '/publications/$slug'
+    | '/research/$slug'
     | '/team/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/technology'
     | '/field-notes/$slug'
     | '/publications/$slug'
+    | '/research/$slug'
     | '/team/$slug'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/technology'
     | '/field-notes_/$slug'
     | '/publications_/$slug'
+    | '/research_/$slug'
     | '/team_/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   TechnologyRoute: typeof TechnologyRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   PublicationsSlugRoute: typeof PublicationsSlugRoute
+  ResearchSlugRoute: typeof ResearchSlugRoute
   TeamSlugRoute: typeof TeamSlugRoute
 }
 
@@ -258,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/research_/$slug': {
+      id: '/research_/$slug'
+      path: '/research/$slug'
+      fullPath: '/research/$slug'
+      preLoaderRoute: typeof ResearchSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/publications_/$slug': {
       id: '/publications_/$slug'
       path: '/publications/$slug'
@@ -287,6 +307,7 @@ const rootRouteChildren: RootRouteChildren = {
   TechnologyRoute: TechnologyRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   PublicationsSlugRoute: PublicationsSlugRoute,
+  ResearchSlugRoute: ResearchSlugRoute,
   TeamSlugRoute: TeamSlugRoute,
 }
 export const routeTree = rootRouteImport

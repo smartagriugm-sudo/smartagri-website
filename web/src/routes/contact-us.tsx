@@ -318,12 +318,15 @@ function InquiryForm() {
           {reviewRows(data).map((row) => (
             <div
               key={row.label}
-              className="grid grid-cols-[140px_1fr] gap-3 py-2.5 border-b border-neutral-100"
+              className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-3 py-2.5 border-b border-neutral-100"
             >
               <dt className="text-sm font-normal text-neutral-400" style={body}>
                 {row.label}
               </dt>
-              <dd className="text-sm font-normal text-neutral-800" style={body}>
+              <dd
+                className="text-sm font-normal text-neutral-800 min-w-0 break-words [overflow-wrap:anywhere] whitespace-pre-wrap"
+                style={body}
+              >
                 {row.value}
               </dd>
             </div>
@@ -535,11 +538,20 @@ function InquiryForm() {
           required
           rows={5}
           value={data.question}
-          onChange={(e) => set({ question: e.target.value })}
+          onChange={(e) => {
+            set({ question: e.target.value });
+            // Auto-grow so the whole question stays visible as it's typed.
+            e.target.style.height = "auto";
+            e.target.style.height = `${e.target.scrollHeight}px`;
+          }}
           placeholder="Tell us what you'd like to know or build together"
-          className={`${inputClass} resize-y`}
+          className={`${inputClass} resize-none overflow-hidden min-h-[140px]`}
           style={body}
         />
+        <span className="text-xs font-normal text-neutral-400" style={body}>
+          The box grows as you type, and you can use line breaks to organize
+          your question into paragraphs.
+        </span>
       </label>
 
       <label className="flex items-start gap-3">
