@@ -1,7 +1,7 @@
 # 🔧 Setup Admin CMS (sekali jalan)
 
 Sistem admin sudah terpasang di kode (`/admin` — Sveltia CMS, berbasis Git).
-Konten Publications & Field Notes kini berupa file JSON di
+Konten Field Notes, Publications, & Gallery kini berupa file JSON di
 `web/src/content/` — setiap "Publish" dari admin menjadi commit Git, lalu
 hosting otomatis rebuild dan tayang (±1–3 menit).
 
@@ -71,7 +71,7 @@ dan bisa menambah/mengedit/menghapus Publications & Field Notes lewat form.
 ## Cara pakai harian (untuk admin)
 
 1. Buka `/admin` → **Sign in with GitHub**.
-2. Pilih koleksi **Field Notes** atau **Publications**.
+2. Pilih koleksi **Field Notes**, **Publications**, atau **Gallery**.
 3. **New …** untuk entri baru, atau klik entri lama untuk edit/hapus.
 4. Klik **Publish** — perubahan tayang otomatis dalam ±1–3 menit.
 5. Riwayat lengkap & rollback tersedia di GitHub (menu commit history).
@@ -80,5 +80,10 @@ dan bisa menambah/mengedit/menghapus Publications & Field Notes lewat form.
 
 - Konten lain (statistik, tim, testimonial, mitra) masih diedit lewat kode /
   form konten — bisa ditambahkan ke CMS ini nanti dengan pola yang sama.
-- Foto upload dari CMS tersimpan di `web/public/brand/uploads/`.
+- Foto upload dari CMS tersimpan terpisah per koleksi supaya tidak menumpuk:
+  Field Notes di `web/public/brand/uploads/notes/`, Publications di
+  `.../uploads/publications/`, dan Gallery di `.../uploads/gallery/`.
+- Gallery: tiap entri adalah satu album kegiatan. Isi judul, tanggal, kategori,
+  lokasi, ringkasan, cover (opsional), dan daftar **Photos** (boleh banyak) yang
+  tampil saat kartu album diklik di halaman `/gallery`.
 - Selama belum di-setup, situs tetap normal — `/admin` hanya belum bisa login.

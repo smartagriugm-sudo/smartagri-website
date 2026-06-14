@@ -22,6 +22,11 @@ public_folder: /brand/uploads
 # (maks 2048px, kualitas 85) sebelum disimpan — menjaga repo tetap kecil
 # dan halaman cepat dimuat. File lama bisa dikompres manual dengan
 # `node scripts/optimize-uploads.mjs` di folder web/.
+#
+# Tiap koleksi punya subfolder upload sendiri (lihat media_folder per koleksi
+# di bawah) supaya foto berita, publikasi, dan galeri tidak menumpuk di satu
+# folder. Pada level koleksi, path yang diawali "/" dihitung dari root repo
+# (untuk media_folder) atau root situs (untuk public_folder).
 media_libraries:
   default:
     config:
@@ -39,6 +44,8 @@ collections:
     label: Field Notes
     label_singular: Field Note
     folder: web/src/content/notes
+    media_folder: /web/public/brand/uploads/notes
+    public_folder: /brand/uploads/notes
     create: true
     delete: true
     extension: json
@@ -134,6 +141,8 @@ collections:
     label: Publications
     label_singular: Publication
     folder: web/src/content/publications
+    media_folder: /web/public/brand/uploads/publications
+    public_folder: /brand/uploads/publications
     create: true
     delete: true
     extension: json
@@ -178,3 +187,68 @@ collections:
         widget: image
         required: false
         hint: "Opsional — figure/gambar utama paper untuk halaman detail."
+
+  - name: gallery
+    label: Gallery
+    label_singular: Album
+    folder: web/src/content/gallery
+    media_folder: /web/public/brand/uploads/gallery
+    public_folder: /brand/uploads/gallery
+    create: true
+    delete: true
+    extension: json
+    format: json
+    identifier_field: title
+    slug: "{{fields.date}}-{{slug}}"
+    summary: "{{title}} — {{category}}, {{date}}"
+    sortable_fields: [date, title, category]
+    fields:
+      - name: title
+        label: Title
+        widget: string
+      - name: date
+        label: Date
+        widget: datetime
+        date_format: "YYYY-MM-DD"
+        time_format: false
+        format: "YYYY-MM-DD"
+      - name: category
+        label: Category
+        widget: select
+        default: Field Activity
+        options:
+          - Exhibition
+          - Conference
+          - Field Activity
+          - Workshop & Training
+          - Collaboration
+          - Award
+      - name: location
+        label: Location
+        widget: string
+        hint: "Mis. Sleman, Yogyakarta atau JIExpo Kemayoran, Jakarta."
+      - name: excerpt
+        label: Excerpt
+        widget: text
+        hint: "Ringkasan 1–2 kalimat tentang kegiatan ini, tampil di kartu album."
+      - name: cover
+        label: Cover image
+        widget: image
+        required: false
+        hint: "Opsional — foto sampul album (landscape). Tanpa foto, kartu memakai gradien brand."
+      - name: photos
+        label: Photos
+        widget: list
+        required: false
+        hint: "Foto-foto dokumentasi kegiatan. Tambah sebanyak yang diperlukan; tampil di galeri album saat kartu diklik."
+        field:
+          name: photo
+          label: Photo
+          widget: image
+      - name: photoCount
+        label: Placeholder photo count
+        widget: number
+        required: false
+        default: 0
+        value_type: int
+        hint: "Sementara saja: jumlah kotak placeholder sebelum foto asli di-upload. Setelah ada foto di atas, angka ini diabaikan."

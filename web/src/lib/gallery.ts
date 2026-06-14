@@ -1,11 +1,10 @@
 import { Award, GraduationCap, Handshake, Mic2, Sprout, Store } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-// Documentation of smartagri activities, grouped into albums. This is a lib
-// data module (same pattern as research.ts / partners.ts / exhibition.ts), so
-// the team can edit entries here directly. Replace the gradient placeholders
-// with real photos by setting `cover` and filling `photos` with paths under
-// /brand/uploads/ (referenced as plain strings, mirroring note covers).
+// Documentation of smartagri activities, grouped into albums. Content lives in
+// src/content/gallery/*.json (one file per album), managed through the /admin
+// CMS (gallery collection) or by hand. Photos uploaded via the CMS land in
+// public/brand/uploads/gallery and are referenced as /brand/uploads/gallery/...
 export const GALLERY_CATEGORIES = [
   "Exhibition",
   "Conference",
@@ -32,19 +31,18 @@ export const categoryMeta: Record<
 export type GalleryAlbum = {
   slug: string;
   title: string;
-  /** ISO date (YYYY-MM-DD), used only for sorting newest first */
+  /** ISO date (YYYY-MM-DD), used for sorting newest first */
   date: string;
-  /** Human label shown on the card, e.g. "August 2025" */
+  /** Human label shown on the card, derived from `date` (e.g. "August 2025") */
   dateLabel: string;
   category: GalleryCategory;
   location: string;
   excerpt: string;
-  /** Optional real cover photo (e.g. /brand/uploads/foo.webp) */
+  /** Optional real cover photo (e.g. /brand/uploads/gallery/foo.webp) */
   cover?: string;
-  /** Number of photos in the album; drives placeholder tiles until real
-   *  photos are added. */
+  /** Effective photo count: real photos if uploaded, else the placeholder count */
   photoCount: number;
-  /** Optional real photo paths; when present they replace the placeholders. */
+  /** Real photo paths uploaded via the CMS; when present they replace placeholders */
   photos?: string[];
 };
 
@@ -56,103 +54,40 @@ export const galleryCovers = [
   "linear-gradient(135deg, #0B6477 0%, #45DFB1 100%)",
 ];
 
-// Example albums drawn from real smartagri activities. Titles reflect actual
-// events; locations, dates, and photo counts are placeholders for the team to
-// confirm and complete with real documentation.
-const ALBUMS: GalleryAlbum[] = [
-  {
-    slug: "aesap-2026",
-    title: "Three studies presented at AESAP 2026",
-    date: "2026-05-20",
-    dateLabel: "May 2026",
-    category: "Conference",
-    location: "Indonesia",
-    excerpt:
-      "Our researchers presented three studies at the Asian and European Symposium on Agricultural Practices, sharing results on controlled-environment and precision farming.",
-    photoCount: 9,
-  },
-  {
-    slug: "agrotropikal-2026-best-presenter",
-    title: "Best Presenter awards at the National Agrotropikal Seminar",
-    date: "2026-05-12",
-    dateLabel: "May 2026",
-    category: "Award",
-    location: "Yogyakarta",
-    excerpt:
-      "smartagri researchers were recognized with Best Presenter awards for their work on smart and sustainable agriculture at the 2026 National Agrotropikal Seminar.",
-    photoCount: 6,
-  },
-  {
-    slug: "agrotropikal-2026",
-    title: "National Agrotropikal Seminar 2026",
-    date: "2026-04-30",
-    dateLabel: "April 2026",
-    category: "Conference",
-    location: "Yogyakarta",
-    excerpt:
-      "The team joined the 2026 National Agrotropikal Seminar to present research and connect with peers across Indonesia's agricultural science community.",
-    photoCount: 8,
-  },
-  {
-    slug: "rgbi-2026-proposal",
-    title: "2026 RGBI proposal presentation selection",
-    date: "2026-04-20",
-    dateLabel: "April 2026",
-    category: "Collaboration",
-    location: "Yogyakarta",
-    excerpt:
-      "The smartagri research team took part in the 2026 RGBI proposal presentation selection, advancing collaborative research funding with partners.",
-    photoCount: 5,
-  },
-  {
-    slug: "field-sensor-deployment-sleman",
-    title: "Field sensor deployment in Sleman",
-    date: "2026-03-18",
-    dateLabel: "March 2026",
-    category: "Field Activity",
-    location: "Sleman, Yogyakarta",
-    excerpt:
-      "Installing soil-moisture and microclimate sensors across partner plots, calibrating gateways, and walking farmers through the live dashboard.",
-    photoCount: 14,
-  },
-  {
-    slug: "farmer-irrigation-workshop",
-    title: "Smart irrigation workshop with farmers",
-    date: "2026-02-10",
-    dateLabel: "February 2026",
-    category: "Workshop & Training",
-    location: "Sleman, Yogyakarta",
-    excerpt:
-      "A hands-on session with cooperative farmers on reading sensor data and scheduling irrigation from demand, not habit.",
-    photoCount: 11,
-  },
-  {
-    slug: "greenhouse-lab-documentation",
-    title: "Inside the greenhouse and lab",
-    date: "2026-01-15",
-    dateLabel: "January 2026",
-    category: "Field Activity",
-    location: "FTP UGM, Yogyakarta",
-    excerpt:
-      "Documentation of the controlled-environment greenhouse and instrumentation lab where the smartagri systems are built and tested.",
-    photoCount: 10,
-  },
-  {
-    slug: "inagritech-2025",
-    title: "smartagri at INAGRITECH 2025",
-    date: "2025-08-05",
-    dateLabel: "August 2025",
-    category: "Exhibition",
-    location: "JIExpo Kemayoran, Jakarta",
-    excerpt:
-      "Three days on the show floor with live demos and cross-sector conversations, closing with more than 2,000 visitors at the booth.",
-    photoCount: 18,
-  },
-];
+// One JSON file per album, edited through the /admin CMS (or by hand). Dates
+// are stored as ISO (YYYY-MM-DD).
+type GalleryFile = {
+  title: string;
+  date: string;
+  category: GalleryCategory;
+  location: string;
+  excerpt: string;
+  cover?: string;
+  /** Placeholder tile count used until real photos are uploaded */
+  photoCount?: number;
+  photos?: string[];
+};
 
-export const albums: GalleryAlbum[] = [...ALBUMS].sort((a, b) =>
-  b.date.localeCompare(a.date),
-);
+const albumFiles = import.meta.glob<GalleryFile>("../content/gallery/*.json", {
+  eager: true,
+  import: "default",
+});
+
+function formatMonthYear(iso: string) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export const albums: GalleryAlbum[] = Object.entries(albumFiles)
+  .map(([path, file]) => ({
+    ...file,
+    slug: path.split("/").pop()!.replace(/\.json$/, ""),
+    photoCount: file.photos?.length || file.photoCount || 0,
+  }))
+  .sort((a, b) => b.date.localeCompare(a.date))
+  .map((album) => ({ ...album, dateLabel: formatMonthYear(album.date) }));
 
 export function findAlbum(slug: string): GalleryAlbum | undefined {
   return albums.find((album) => album.slug === slug);
