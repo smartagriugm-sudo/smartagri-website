@@ -19,14 +19,14 @@ import type { LucideIcon } from "lucide-react";
 // show up automatically.
 export const EVENT_TAG = "INAGRITECH 2026";
 
-// TODO: confirm exact date, venue, hall, and booth number with the committee.
 export const EVENT = {
   name: "INAGRITECH 2026",
   tagline:
     "Indonesia's international exhibition for agriculture, horticulture, and plantation technology.",
-  date: "TODO: e.g. 5–7 August 2026",
-  venue: "TODO: JIExpo Kemayoran, Jakarta",
-  booth: "TODO: Hall B, Booth A-12",
+  date: "28 - 30 July 2026",
+  venue: "JIExpo Kemayoran, Jakarta",
+  // TODO: replace with the exact hall/booth number once confirmed.
+  booth: "Coming soon",
   // Optional official event website; leave empty to hide the link.
   website: "",
 };

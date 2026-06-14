@@ -9,6 +9,7 @@ import {
   MapPin,
   Store,
 } from "lucide-react";
+import { A } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
 import {
   ARCHITECTURE,
@@ -18,7 +19,7 @@ import {
   SHOWCASE,
   SPONSORS,
 } from "../lib/exhibition";
-import { categoryChip, notes } from "../lib/notes";
+import { categoryChip, covers, notes } from "../lib/notes";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import CallToAction from "../components/CallToAction";
@@ -415,39 +416,58 @@ function ExhibitionPage() {
 
           {eventNotes.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {eventNotes.map((note) => (
+              {eventNotes.map((note, i) => (
                 <Link
                   key={note.slug}
                   to="/field-notes/$slug"
                   params={{ slug: note.slug }}
-                  className="group rounded-3xl bg-[#F3F7F6] p-6 flex flex-col gap-3 hover:shadow-lg transition-shadow"
+                  className="group rounded-3xl bg-[#F3F7F6] overflow-hidden flex flex-col hover:shadow-lg transition-shadow"
                 >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${categoryChip(note.category)}`}
-                      style={body}
-                    >
-                      {note.category}
-                    </span>
-                    <span
-                      className="text-sm font-normal text-neutral-400"
-                      style={body}
-                    >
-                      {note.date}
-                    </span>
+                  <div
+                    className="relative h-[170px]"
+                    style={{ background: covers[i % covers.length] }}
+                  >
+                    {note.cover ? (
+                      <img
+                        src={note.cover}
+                        alt=""
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <img src={A.iconWhite} alt="" className="h-10 w-auto opacity-50" />
+                      </div>
+                    )}
                   </div>
-                  <h3
-                    className="text-lg font-medium text-neutral-900 leading-snug group-hover:text-[#0B6477] transition-colors"
-                    style={display}
-                  >
-                    {note.title}
-                  </h3>
-                  <p
-                    className="text-sm font-normal text-neutral-500 leading-relaxed line-clamp-3"
-                    style={body}
-                  >
-                    {note.excerpt}
-                  </p>
+                  <div className="p-6 flex flex-col gap-3 flex-1">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${categoryChip(note.category)}`}
+                        style={body}
+                      >
+                        {note.category}
+                      </span>
+                      <span
+                        className="text-sm font-normal text-neutral-400"
+                        style={body}
+                      >
+                        {note.date}
+                      </span>
+                    </div>
+                    <h3
+                      className="text-lg font-medium text-neutral-900 leading-snug group-hover:text-[#0B6477] transition-colors"
+                      style={display}
+                    >
+                      {note.title}
+                    </h3>
+                    <p
+                      className="text-sm font-normal text-neutral-500 leading-relaxed line-clamp-3"
+                      style={body}
+                    >
+                      {note.excerpt}
+                    </p>
+                  </div>
                 </Link>
               ))}
             </div>

@@ -12,7 +12,7 @@ const navLinks = [
   { label: "Publications", to: "/publications" },
   { label: "Field Notes", to: "/field-notes" },
   // Highlighted: Exhibition is a time-bound annual event, not a permanent page.
-  { label: "Exhibition", to: "/exhibition", highlight: true },
+  { label: "INAGRITECH 26", to: "/exhibition", highlight: true },
   { label: "About Us", to: "/about-us" },
 ];
 

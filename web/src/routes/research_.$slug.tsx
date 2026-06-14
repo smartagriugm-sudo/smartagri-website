@@ -8,19 +8,26 @@ import Footer from "../components/Footer";
 
 export const Route = createFileRoute("/research_/$slug")({
   component: ResearchDetailPage,
-  loader: ({ params }) => findResearchArea(params.slug),
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.label ?? "Research"} | smartagri` },
-      ...(loaderData
-        ? [{ name: "description", content: loaderData.overview.slice(0, 160) }]
-        : []),
-    ],
-  }),
+  // Return only the slug (serializable). The area object holds an `icon`
+  // component (a function), which can't be serialized to the client, so we
+  // resolve the full area from the slug inside the component/head instead.
+  loader: ({ params }) => ({ slug: params.slug }),
+  head: ({ loaderData }) => {
+    const area = loaderData ? findResearchArea(loaderData.slug) : undefined;
+    return {
+      meta: [
+        { title: `${area?.label ?? "Research"} | smartagri` },
+        ...(area
+          ? [{ name: "description", content: area.overview.slice(0, 160) }]
+          : []),
+      ],
+    };
+  },
 });
 
 function ResearchDetailPage() {
-  const area = Route.useLoaderData();
+  const { slug } = Route.useLoaderData();
+  const area = findResearchArea(slug);
 
   if (!area) {
     return (
