@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Smart Greenhouse Workflow Simulator</title>
-  <style>html,body{margin:0;background:#062A32}</style>
+  <style>html,body{margin:0;height:100%;background:#062A32}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></head>
 <body>
 <!-- Smart Greenhouse — combined workflow simulator (Agent / Linear) -->
@@ -452,7 +452,7 @@
 </template>
 <style>
   *{box-sizing:border-box}
-  #app{background:#062A32;color:#e6e7e9;font-family:Inter, system-ui, sans-serif;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:560px}
+  #app{background:#062A32;color:#e6e7e9;font-family:Inter, system-ui, sans-serif;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;height:100%;min-height:520px;user-select:none;-webkit-user-select:none}
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#08313A;border-bottom:1px solid #2a2c31;flex-wrap:wrap}
   .left{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .brand{font-size:14px;font-weight:600}.brand span{color:#8a8d93;font-weight:400}
@@ -690,7 +690,7 @@
   function renderView(v){
     view=v;
     stage.innerHTML=$("tpl-"+v).innerHTML;
-    pk=$("packets"); bub=$("bubbles"); requestAnimationFrame(fitView);
+    pk=$("packets"); bub=$("bubbles"); setTimeout(fitView,60);
     document.querySelectorAll(".vbtn").forEach(b=>b.classList.toggle("active",b.dataset.v===v));
     idx=0; paused=false; playBtn.textContent="\u23F8 Pause"; playBtn.classList.add("primary");
     restartLoop();
@@ -720,6 +720,8 @@
   function fitView(){
     const wf=$("wf"); if(!wf) return;
     const sw=stage.clientWidth, sh=stage.clientHeight;
+    // Stage not laid out yet (e.g. just after load): retry next frame.
+    if(!sw || !sh){ setTimeout(fitView,60); return; }
     const baseW=sw, baseH=sw*ASPECT;            // size of #wf at scale 1 (width:100%)
     fitScale = Math.min(1, sh/baseH);           // shrink to fit height if needed
     scale = fitScale;
@@ -753,6 +755,7 @@
   const midp=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
 
   stage.addEventListener("pointerdown",e=>{
+    e.preventDefault();
     stage.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
     stage.classList.add("grabbing");
