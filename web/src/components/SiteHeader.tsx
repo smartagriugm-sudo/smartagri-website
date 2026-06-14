@@ -1,20 +1,33 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { A } from "../lib/assets";
 import { body } from "../lib/fonts";
 
-const navLinks = [
+type NavLink = { label: string; to: string; highlight?: boolean };
+
+const leadLinks: NavLink[] = [
   { label: "Research", to: "/research" },
   { label: "Technology", to: "/technology" },
+];
+// Grouped under a "Media" dropdown on narrow desktops (see MediaDropdown).
+const mediaLinks: NavLink[] = [
   { label: "Publications", to: "/publications" },
   { label: "Field Notes", to: "/field-notes" },
   { label: "Gallery", to: "/gallery" },
-  // Highlighted: Exhibition is a time-bound annual event, not a permanent page.
-  { label: "INAGRITECH 26", to: "/exhibition", highlight: true },
-  { label: "About Us", to: "/about-us" },
 ];
+const tailLinks: NavLink[] = [{ label: "About Us", to: "/about-us" }];
+// Highlighted: Exhibition is a time-bound annual event, not a permanent page.
+// Kept last so it sits next to the Contact us CTA as one action cluster.
+const eventLink: NavLink = {
+  label: "INAGRITECH 26",
+  to: "/exhibition",
+  highlight: true,
+};
+
+// Flat list used by the mobile menu (vertical space is not constrained there).
+const navLinks = [...leadLinks, ...mediaLinks, ...tailLinks, eventLink];
 
 // Pulsing "live event" dot shown next to highlighted (event) nav items.
 function LiveDot() {
@@ -23,6 +36,63 @@ function LiveDot() {
       <span className="absolute inline-flex h-full w-full rounded-full bg-[#45DFB1] opacity-75 animate-ping" />
       <span className="relative inline-flex h-2 w-2 rounded-full bg-[#45DFB1]" />
     </span>
+  );
+}
+
+// A single desktop nav link (standard or highlighted event style).
+function DesktopNavLink({ link }: { link: NavLink }) {
+  if (link.highlight) {
+    return (
+      <Link
+        to={link.to}
+        className="inline-flex items-center gap-1.5 text-[#45DFB1] text-base font-medium hover:text-[#80ED99] transition-colors"
+        style={body}
+      >
+        {link.label}
+        <LiveDot />
+      </Link>
+    );
+  }
+  return (
+    <Link
+      to={link.to}
+      className="text-white text-base opacity-90 hover:opacity-100"
+      style={body}
+    >
+      {link.label}
+    </Link>
+  );
+}
+
+// On narrow desktops (lg, below xl) the media links collapse into this
+// hover/focus dropdown so the bar stays uncramped; at xl+ they show inline.
+function MediaDropdown({ className = "" }: { className?: string }) {
+  return (
+    <div className={`relative group ${className}`}>
+      <button
+        type="button"
+        className="inline-flex items-center gap-1 text-white text-base opacity-90 hover:opacity-100"
+        style={body}
+        aria-haspopup="true"
+      >
+        Media
+        <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180 group-focus-within:rotate-180" />
+      </button>
+      <div className="absolute left-0 top-full pt-3 z-50 opacity-0 invisible translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible group-focus-within:translate-y-0">
+        <div className="min-w-[190px] rounded-2xl bg-[#08313A] border border-white/10 shadow-xl p-2 flex flex-col">
+          {mediaLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="rounded-lg px-3 py-2 text-base text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              style={body}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -54,28 +124,20 @@ export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
         </Link>
 
         <nav className="hidden lg:flex items-center gap-5 xl:gap-7">
-          {navLinks.map((link) =>
-            link.highlight ? (
-              <Link
-                key={link.label}
-                to={link.to}
-                className="inline-flex items-center gap-1.5 text-[#45DFB1] text-base font-medium hover:text-[#80ED99] transition-colors"
-                style={body}
-              >
-                {link.label}
-                <LiveDot />
-              </Link>
-            ) : (
-              <Link
-                key={link.label}
-                to={link.to}
-                className="text-white text-base opacity-90 hover:opacity-100"
-                style={body}
-              >
-                {link.label}
-              </Link>
-            ),
-          )}
+          {leadLinks.map((link) => (
+            <DesktopNavLink key={link.to} link={link} />
+          ))}
+          {/* Media: inline links at xl+, grouped into a dropdown on narrow (lg) screens. */}
+          <span className="hidden xl:contents">
+            {mediaLinks.map((link) => (
+              <DesktopNavLink key={link.to} link={link} />
+            ))}
+          </span>
+          <MediaDropdown className="xl:hidden" />
+          {tailLinks.map((link) => (
+            <DesktopNavLink key={link.to} link={link} />
+          ))}
+          <DesktopNavLink link={eventLink} />
           <Link
             to="/contact-us"
             className="h-10 px-5 rounded-full bg-[#45DFB1] text-[#0B2A22] font-medium flex items-center hover:bg-[#80ED99] transition-colors"
