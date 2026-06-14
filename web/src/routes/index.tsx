@@ -9,6 +9,7 @@ import ResearchAreas from "../components/ResearchAreas";
 import Voices from "../components/Voices";
 import Publications from "../components/Publications";
 import FieldNotes from "../components/FieldNotes";
+import GalleryPreview from "../components/GalleryPreview";
 import CollaborationProcess from "../components/CollaborationProcess";
 import CallToAction from "../components/CallToAction";
 import Footer from "../components/Footer";
@@ -146,6 +147,7 @@ function Home() {
       <Voices />
       <Publications />
       <FieldNotes />
+      <GalleryPreview />
       <CollaborationProcess />
       <CallToAction />
       <Footer />
