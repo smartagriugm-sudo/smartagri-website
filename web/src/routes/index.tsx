@@ -7,7 +7,6 @@ import SiteHeader from "../components/SiteHeader";
 import Partners from "../components/Partners";
 import ResearchAreas from "../components/ResearchAreas";
 import Voices from "../components/Voices";
-import Impact from "../components/Impact";
 import Publications from "../components/Publications";
 import FieldNotes from "../components/FieldNotes";
 import CollaborationProcess from "../components/CollaborationProcess";
@@ -145,7 +144,6 @@ function Home() {
       <Partners />
       <ResearchAreas />
       <Voices />
-      <Impact />
       <Publications />
       <FieldNotes />
       <CollaborationProcess />

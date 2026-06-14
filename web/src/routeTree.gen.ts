@@ -14,6 +14,7 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PublicationsRouteImport } from './routes/publications'
 import { Route as ImpactRouteImport } from './routes/impact'
+import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as FieldNotesRouteImport } from './routes/field-notes'
 import { Route as ExhibitionRouteImport } from './routes/exhibition'
 import { Route as DemoRouteImport } from './routes/demo'
@@ -48,6 +49,11 @@ const PublicationsRoute = PublicationsRouteImport.update({
 const ImpactRoute = ImpactRouteImport.update({
   id: '/impact',
   path: '/impact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GalleryRoute = GalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FieldNotesRoute = FieldNotesRouteImport.update({
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
   '/exhibition': typeof ExhibitionRoute
   '/field-notes': typeof FieldNotesRoute
+  '/gallery': typeof GalleryRoute
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
   '/exhibition': typeof ExhibitionRoute
   '/field-notes': typeof FieldNotesRoute
+  '/gallery': typeof GalleryRoute
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/demo': typeof DemoRoute
   '/exhibition': typeof ExhibitionRoute
   '/field-notes': typeof FieldNotesRoute
+  '/gallery': typeof GalleryRoute
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/exhibition'
     | '/field-notes'
+    | '/gallery'
     | '/impact'
     | '/publications'
     | '/research'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/exhibition'
     | '/field-notes'
+    | '/gallery'
     | '/impact'
     | '/publications'
     | '/research'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/exhibition'
     | '/field-notes'
+    | '/gallery'
     | '/impact'
     | '/publications'
     | '/research'
@@ -214,6 +226,7 @@ export interface RootRouteChildren {
   DemoRoute: typeof DemoRoute
   ExhibitionRoute: typeof ExhibitionRoute
   FieldNotesRoute: typeof FieldNotesRoute
+  GalleryRoute: typeof GalleryRoute
   ImpactRoute: typeof ImpactRoute
   PublicationsRoute: typeof PublicationsRoute
   ResearchRoute: typeof ResearchRoute
@@ -260,6 +273,13 @@ declare module '@tanstack/react-router' {
       path: '/impact'
       fullPath: '/impact'
       preLoaderRoute: typeof ImpactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gallery': {
+      id: '/gallery'
+      path: '/gallery'
+      fullPath: '/gallery'
+      preLoaderRoute: typeof GalleryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/field-notes': {
@@ -342,6 +362,7 @@ const rootRouteChildren: RootRouteChildren = {
   DemoRoute: DemoRoute,
   ExhibitionRoute: ExhibitionRoute,
   FieldNotesRoute: FieldNotesRoute,
+  GalleryRoute: GalleryRoute,
   ImpactRoute: ImpactRoute,
   PublicationsRoute: PublicationsRoute,
   ResearchRoute: ResearchRoute,
