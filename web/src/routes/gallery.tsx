@@ -1,7 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, Camera, Images, MapPin, X } from "lucide-react";
+import {
+  CalendarDays,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  Images,
+  MapPin,
+  X,
+} from "lucide-react";
 import { A } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
 import {
@@ -108,6 +116,121 @@ function AlbumMeta({ album }: { album: GalleryAlbum }) {
   );
 }
 
+// Full-screen photo slideshow opened from an album's photo grid. Navigate with
+// the on-screen arrows, the keyboard (left/right), or a swipe on touch.
+function PhotoLightbox({
+  photos,
+  index,
+  onIndex,
+  onClose,
+}: {
+  photos: string[];
+  index: number;
+  onIndex: (next: number) => void;
+  onClose: () => void;
+}) {
+  const total = photos.length;
+  const go = (dir: number) => onIndex((index + dir + total) % total);
+  const touchX = useRef<number | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+      } else if (e.key === "ArrowRight") {
+        go(1);
+      } else if (e.key === "ArrowLeft") {
+        go(-1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClose}
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 select-none"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Photo ${index + 1} of ${total}`}
+    >
+      <button
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+      >
+        <X className="w-6 h-6" />
+      </button>
+
+      <span
+        className="absolute top-6 left-1/2 -translate-x-1/2 text-sm font-medium text-white/80"
+        style={body}
+      >
+        {index + 1} / {total}
+      </span>
+
+      {total > 1 && (
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              go(-1);
+            }}
+            aria-label="Previous photo"
+            className="absolute left-3 md:left-6 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+          >
+            <ChevronLeft className="w-7 h-7" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              go(1);
+            }}
+            aria-label="Next photo"
+            className="absolute right-3 md:right-6 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+          >
+            <ChevronRight className="w-7 h-7" />
+          </button>
+        </>
+      )}
+
+      <div
+        className="relative w-full h-full flex items-center justify-center p-10 md:p-16"
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={(e) => {
+          touchX.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={(e) => {
+          if (touchX.current === null) return;
+          const dx = e.changedTouches[0].clientX - touchX.current;
+          touchX.current = null;
+          if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+        }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={index}
+            src={photos[index]}
+            alt={`Photo ${index + 1} of ${total}`}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            draggable={false}
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+          />
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+}
+
 // Lightbox-style album preview. Shows real photos when present, otherwise
 // placeholder tiles sized to the album's photo count.
 function AlbumModal({
@@ -119,9 +242,15 @@ function AlbumModal({
   index: number;
   onClose: () => void;
 }) {
+  // Index of the photo open in the full-screen slideshow, or null when closed.
+  const [photoIndex, setPhotoIndex] = useState<number | null>(null);
+  // Keep the album's Escape handler from firing while the slideshow is open.
+  const photoOpenRef = useRef(false);
+  photoOpenRef.current = photoIndex !== null;
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !photoOpenRef.current) onClose();
     };
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -132,11 +261,14 @@ function AlbumModal({
     };
   }, [onClose]);
 
-  const tiles = album.photos?.length
-    ? album.photos
+  const photos = album.photos ?? [];
+  const hasPhotos = photos.length > 0;
+  const tiles = hasPhotos
+    ? photos
     : Array.from({ length: album.photoCount }, () => null);
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -203,28 +335,42 @@ function AlbumModal({
             </span>
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-            {tiles.map((photo, i) => (
-              <div
-                key={i}
-                className="relative aspect-square rounded-xl overflow-hidden"
-                style={{
-                  background: galleryCovers[(index + i) % galleryCovers.length],
-                }}
-              >
-                {photo ? (
+            {tiles.map((photo, i) =>
+              photo ? (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setPhotoIndex(i)}
+                  aria-label={`Open photo ${i + 1}`}
+                  className="group relative aspect-square rounded-xl overflow-hidden cursor-zoom-in"
+                  style={{
+                    background:
+                      galleryCovers[(index + i) % galleryCovers.length],
+                  }}
+                >
                   <img
                     src={photo}
                     alt=""
                     loading="lazy"
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                ) : (
+                  <span className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                </button>
+              ) : (
+                <div
+                  key={i}
+                  className="relative aspect-square rounded-xl overflow-hidden"
+                  style={{
+                    background:
+                      galleryCovers[(index + i) % galleryCovers.length],
+                  }}
+                >
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Camera className="w-5 h-5 text-white/50" />
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              ),
+            )}
           </div>
           {!album.photos?.length && (
             <p
@@ -237,6 +383,18 @@ function AlbumModal({
         </div>
       </motion.div>
     </motion.div>
+
+    <AnimatePresence>
+      {photoIndex !== null && hasPhotos && (
+        <PhotoLightbox
+          photos={photos}
+          index={photoIndex}
+          onIndex={setPhotoIndex}
+          onClose={() => setPhotoIndex(null)}
+        />
+      )}
+    </AnimatePresence>
+    </>
   );
 }
 
