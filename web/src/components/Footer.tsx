@@ -11,9 +11,9 @@ const researchLinks = RESEARCH_AREAS.map((area) => ({
 const centerLinks = [
   { label: "Research", href: "/research" },
   { label: "Technology", href: "/technology" },
-  { label: "Gallery", href: "/gallery" },
   { label: "Publications", href: "/publications" },
   { label: "Field Notes", href: "/field-notes" },
+  { label: "Gallery", href: "/gallery" },
   { label: "Exhibition", href: "/exhibition" },
   { label: "About Us", href: "/about-us" },
   { label: "Contact", href: "/contact-us" },
