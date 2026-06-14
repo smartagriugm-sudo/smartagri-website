@@ -375,6 +375,22 @@
   stage.addEventListener("pointerup",endPtr); stage.addEventListener("pointercancel",endPtr);
   let rT; window.addEventListener("resize",()=>{ clearTimeout(rT); rT=setTimeout(fitView,150); });
 
+  // Center each glyph in its card: horizontally for middle-anchored labels,
+  // left column for output cards, always vertically centered. Measures the
+  // real bbox so it stays correct regardless of the glyph drawn.
+  function recenterIcons(){
+    document.querySelectorAll(".node").forEach(n=>{
+      const card=n.querySelector(".card"), ic=n.querySelector(".ic"); if(!card||!ic) return;
+      let cb,ib; try{ cb=card.getBBox(); ib=ic.getBBox(); }catch(e){ return; }
+      if(!ib.width && !ib.height) return;
+      const t1=n.querySelector(".t1");
+      const centered = t1 && t1.getAttribute("text-anchor")==="middle";
+      const tcx = centered ? (cb.x+cb.width/2) : (cb.x+26);
+      const tcy = cb.y+cb.height/2;
+      ic.setAttribute("transform","translate("+(tcx-(ib.x+ib.width/2)).toFixed(2)+","+(tcy-(ib.y+ib.height/2)).toFixed(2)+")");
+    });
+  }
+  recenterIcons();
   setTimeout(fitView,60);
   loop();
 })();
