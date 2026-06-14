@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UAV Crop Mapping Workflow Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+  html,body{margin:0;height:100%;background:#062A32}
+  *{box-sizing:border-box}
+  #app{background:#062A32;color:#e6e7e9;font-family:Inter, system-ui, sans-serif;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;height:100%;min-height:520px;user-select:none;-webkit-user-select:none}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#08313A;border-bottom:1px solid #2a3a40;flex-wrap:wrap}
+  .brand{font-size:14px;font-weight:600}.brand span{color:#8aa0a6;font-weight:400}
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .btn{background:#0d3a44;color:#cfe0e3;border:1px solid #1d4d57;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
+  .btn:hover{background:#14919B;color:#fff}
+  .btn.primary{background:#0B6477;border-color:#14919B;color:#eafff7}.btn.primary:hover{background:#14919B}
+  .btn.sp{padding:5px 9px;font-size:12px}.btn.sp.active{background:#14919B;color:#fff;border-color:#45DFB1}
+  .speed{display:flex;align-items:center;gap:5px;color:#8aa0a6;font-size:12px;margin-left:4px}
+  .readout{padding:10px 16px;background:#072d34;border-bottom:1px solid #2a3a40;display:flex;flex-direction:column;gap:8px}
+  .sc-title{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
+  .sc-no{font-size:12px;color:#45DFB1;background:#0C3A36;border:1px solid #1A6B5E;border-radius:6px;padding:3px 8px;font-weight:700}
+  .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{font-size:11.5px;padding:4px 9px;border-radius:7px;border:1px solid;white-space:nowrap}
+  .chip.ok{background:#0C3A36;border-color:#1A6B5E;color:#45DFB1}
+  .chip.warn{background:#2b2417;border-color:#5a4622;color:#ffb24a}
+  .chip.crit{background:#2c1a1a;border-color:#5a2a2a;color:#ff7b72}
+  .stagewrap{position:relative;flex:1;display:flex;min-height:0}
+  .stage{flex:1;background:#08313A;overflow:hidden;min-height:0;position:relative;cursor:grab;touch-action:none}
+  .stage.grabbing{cursor:grabbing}
+  #wf{width:100%;height:auto;display:block;transform-origin:0 0}
+  .zoomctl{position:absolute;right:14px;bottom:14px;display:flex;gap:6px;background:rgba(8,49,58,.8);border:1px solid #2a3a40;border-radius:10px;padding:4px;z-index:5;backdrop-filter:blur(4px)}
+  .zbtn{background:#0B6477;color:#eafff7;border:1px solid #14919B;border-radius:7px;min-width:30px;height:30px;font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;font-family:inherit}
+  .zbtn:hover{background:#14919B}
+  .zbtn.zlabel{min-width:48px;font-size:12px;font-weight:600}
+  .wire{stroke:#5f7c84;stroke-width:1.7;fill:none;transition:stroke .2s,opacity .2s;opacity:.4}
+  .wire.flowing{stroke:#45DFB1;opacity:1;filter:drop-shadow(0 0 4px rgba(69,223,177,.6))}
+  .wire.flowing.warn{stroke:#ffb24a;filter:drop-shadow(0 0 4px rgba(255,178,74,.6))}
+  .card{fill:#0d3a44;stroke:#1d4d57;stroke-width:1.5;transition:stroke .25s,filter .25s}
+  .node{opacity:.45;transition:opacity .25s}
+  .node.active{opacity:1}
+  .node.active .card{stroke:#45DFB1;filter:drop-shadow(0 0 8px rgba(69,223,177,.85))}
+  .node.active .card.warn{stroke:#ffb24a;filter:drop-shadow(0 0 8px rgba(255,178,74,.85))}
+  .ic{fill:none;stroke:#cfe9e4;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .t1{fill:#e6e7e9;font-size:15px;font-weight:500}
+  .t2{fill:#8aa0a6;font-size:11px}
+  .caption{padding:14px 18px;background:#08313A;border-top:1px solid #2a3a40;display:flex;gap:14px;align-items:flex-start}
+  .step{flex:0 0 auto;font-size:12px;color:#45DFB1;font-weight:600;background:#0C3A36;border:1px solid #1A6B5E;border-radius:8px;padding:6px 10px;white-space:nowrap}
+  .captext{font-size:15px;line-height:1.5;color:#d6dee0}
+  @media (max-width:680px){.captext{font-size:13px}.brand{font-size:12px}}
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">UAV Crop Mapping &middot; <span>Workflow Simulator</span></div>
+    <div class="controls">
+      <button id="prevBtn" class="btn">&#9664;</button>
+      <button id="playBtn" class="btn primary">&#9208; Pause</button>
+      <button id="nextBtn" class="btn">&#9654;</button>
+      <button id="restartBtn" class="btn">&#8634; Restart</button>
+      <div class="speed"><span>Speed</span>
+        <button class="btn sp" data-s="0.5">0.5x</button>
+        <button class="btn sp active" data-s="1">1x</button>
+        <button class="btn sp" data-s="2">2x</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="readout">
+    <div class="sc-title"><span class="sc-no" id="scNo">1/6</span><span id="scTitle">&mdash;</span></div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="stagewrap">
+    <div class="stage" id="stage">
+      <svg id="wf" viewBox="0 0 1960 780" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.1" fill="#0e3b44"/></pattern>
+          <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <rect x="0" y="0" width="1960" height="780" fill="#08313A"/>
+        <rect x="0" y="0" width="1960" height="780" fill="url(#dots)"/>
+
+        <!-- main chain wires -->
+        <path id="p1" class="wire" d="M170 410 H225"/>
+        <path id="p2" class="wire" d="M375 410 H430"/>
+        <path id="p3" class="wire" d="M580 410 H635"/>
+        <path id="p4" class="wire" d="M785 410 H840"/>
+        <path id="p5" class="wire" d="M990 410 H1045"/>
+
+        <!-- branch wires (analysis -> outputs) -->
+        <path id="b_health" class="wire" d="M1195 410 C1295 410 1295 135 1390 135"/>
+        <path id="b_irrig" class="wire" d="M1195 410 C1295 410 1295 245 1390 245"/>
+        <path id="b_scout" class="wire" d="M1195 410 C1295 410 1295 355 1390 355"/>
+        <path id="b_spray" class="wire" d="M1195 410 C1295 410 1295 465 1390 465"/>
+        <path id="b_nutrient" class="wire" d="M1195 410 C1295 410 1295 575 1390 575"/>
+        <path id="b_refly" class="wire" d="M1195 410 C1295 410 1295 685 1390 685"/>
+
+        <!-- merge wires (outputs -> merge) -->
+        <path id="m_health" class="wire" d="M1570 135 C1620 135 1605 410 1655 410"/>
+        <path id="m_irrig" class="wire" d="M1570 245 C1620 245 1610 410 1655 410"/>
+        <path id="m_scout" class="wire" d="M1570 355 C1620 355 1620 410 1655 410"/>
+        <path id="m_spray" class="wire" d="M1570 465 C1620 465 1620 410 1655 410"/>
+        <path id="m_nutrient" class="wire" d="M1570 575 C1620 575 1610 410 1655 410"/>
+        <path id="m_refly" class="wire" d="M1570 685 C1620 685 1605 410 1655 410"/>
+
+        <path id="p_merge_dash" class="wire" d="M1745 410 H1785"/>
+
+        <!-- ===== MAIN CHAIN NODES ===== -->
+        <g id="n_plan" class="node">
+          <rect class="card" x="20" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(79,389)"><rect x="0" y="0" width="34" height="24" rx="3"/><path d="M0 8 H34 M0 16 H34 M11 0 V24 M23 0 V24"/></g>
+          <text x="95" y="472" class="t1" text-anchor="middle">Flight Plan</text>
+          <text x="95" y="489" class="t2" text-anchor="middle">boundary + grid</text>
+        </g>
+        <g id="n_fly" class="node">
+          <rect class="card" x="225" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(283,390)"><rect x="11" y="9" width="12" height="6" rx="2"/><circle cx="3" cy="4" r="3.2"/><circle cx="31" cy="4" r="3.2"/><circle cx="3" cy="20" r="3.2"/><circle cx="31" cy="20" r="3.2"/><path d="M6 5 L13 11 M28 5 L21 11 M6 19 L13 13 M28 19 L21 13"/></g>
+          <text x="300" y="472" class="t1" text-anchor="middle">UAV Flight</text>
+          <text x="300" y="489" class="t2" text-anchor="middle">autonomous grid</text>
+        </g>
+        <g id="n_capture" class="node">
+          <rect class="card" x="430" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(488,390)"><path d="M2 6 H8 L11 2 H21 L24 6 H30 a3 3 0 0 1 3 3 V19 a3 3 0 0 1 -3 3 H2 a3 3 0 0 1 -3 -3 V9 a3 3 0 0 1 3 -3 Z"/><circle cx="16" cy="13" r="5.5"/></g>
+          <text x="505" y="472" class="t1" text-anchor="middle">Capture</text>
+          <text x="505" y="489" class="t2" text-anchor="middle">multispectral + RGB</text>
+        </g>
+        <g id="n_photo" class="node">
+          <rect class="card" x="635" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(694,391)"><path d="M16 0 L32 8 L16 16 L0 8 Z"/><path d="M0 15 L16 23 L32 15"/></g>
+          <text x="710" y="472" class="t1" text-anchor="middle">Photogrammetry</text>
+          <text x="710" y="489" class="t2" text-anchor="middle">orthomosaic</text>
+        </g>
+        <g id="n_indices" class="node">
+          <rect class="card" x="840" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(900,389)"><path d="M0 24 V10 M10 24 V2 M20 24 V14 M30 24 V6"/></g>
+          <text x="915" y="472" class="t1" text-anchor="middle">Vegetation Indices</text>
+          <text x="915" y="489" class="t2" text-anchor="middle">NDVI / NDRE</text>
+        </g>
+        <g id="n_analysis" class="node">
+          <rect class="card" x="1045" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(1103,389)"><rect x="6" y="6" width="20" height="20" rx="3"/><rect x="12" y="12" width="8" height="8" rx="1.5" stroke="#45DFB1"/><path d="M11 2 V6 M16 2 V6 M21 2 V6 M11 26 V30 M16 26 V30 M21 26 V30 M2 11 H6 M2 16 H6 M2 21 H6 M26 11 H30 M26 16 H30 M26 21 H30"/></g>
+          <text x="1120" y="472" class="t1" text-anchor="middle">AI Analysis</text>
+          <text x="1120" y="489" class="t2" text-anchor="middle">classify + route</text>
+        </g>
+
+        <!-- ===== OUTPUT NODES ===== -->
+        <g id="n_health" class="node">
+          <rect class="card" x="1390" y="105" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1404,122)"><rect x="0" y="0" width="22" height="22" rx="3"/><path d="M0 7 H22 M0 14 H22 M7 0 V22 M14 0 V22" stroke-width="1.4"/></g>
+          <text x="1436" y="131" class="t1">Health Map</text>
+          <text x="1436" y="149" class="t2">per-plot NDVI</text>
+        </g>
+        <g id="n_irrig" class="node">
+          <rect class="card" x="1390" y="215" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1408,231)"><path d="M9 0 C9 0 18 11 18 18 a9 9 0 0 1 -18 0 C0 11 9 0 9 0 Z"/></g>
+          <text x="1436" y="241" class="t1">Irrigation Zones</text>
+          <text x="1436" y="259" class="t2">water stress</text>
+        </g>
+        <g id="n_scout" class="node">
+          <rect class="card" x="1390" y="325" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1406,341)"><circle cx="9" cy="9" r="8"/><path d="M15 15 L22 22"/></g>
+          <text x="1436" y="351" class="t1">Disease Scouting</text>
+          <text x="1436" y="369" class="t2">hotspot alert</text>
+        </g>
+        <g id="n_spray" class="node">
+          <rect class="card" x="1390" y="435" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1408,451)"><path d="M6 2 H12 V9 L17 13 H1 L6 9 Z"/><path d="M2 19 v2 M9 21 v2 M16 19 v2" stroke-width="1.6"/></g>
+          <text x="1436" y="461" class="t1">Spray Map</text>
+          <text x="1436" y="479" class="t2">variable rate</text>
+        </g>
+        <g id="n_nutrient" class="node">
+          <rect class="card" x="1390" y="545" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1410,561)"><path d="M6 0 H12 M8 0 V8 L2 20 a2 2 0 0 0 2 3 H14 a2 2 0 0 0 2 -3 L10 8 V0"/><path d="M4 16 H14" stroke-width="1.4"/></g>
+          <text x="1436" y="571" class="t1">Nutrient Zones</text>
+          <text x="1436" y="589" class="t2">low NDRE</text>
+        </g>
+        <g id="n_refly" class="node">
+          <rect class="card" x="1390" y="655" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1408,671)"><path d="M17 5 A9 9 0 1 0 18 13"/><path d="M17 0 V6 H11"/></g>
+          <text x="1436" y="681" class="t1">Re-fly</text>
+          <text x="1436" y="699" class="t2">quality fail</text>
+        </g>
+
+        <!-- ===== MERGE + DASHBOARD ===== -->
+        <g id="n_merge" class="node">
+          <rect class="card" x="1655" y="375" width="90" height="70" rx="16"/>
+          <g class="ic" transform="translate(1683,393)"><path d="M0 0 C12 0 12 17 22 17 M0 34 C12 34 12 17 22 17 M16 11 L23 17 L16 23"/></g>
+          <text x="1700" y="467" class="t1" text-anchor="middle">Merge</text>
+          <text x="1700" y="484" class="t2" text-anchor="middle">layers</text>
+        </g>
+        <g id="n_dash" class="node">
+          <rect class="card" x="1785" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(1843,389)"><rect x="0" y="0" width="34" height="24" rx="3"/><path d="M6 18 V12 M13 18 V7 M20 18 V14 M27 18 V9" stroke="#45DFB1"/></g>
+          <text x="1860" y="472" class="t1" text-anchor="middle">Farm Dashboard</text>
+          <text x="1860" y="489" class="t2" text-anchor="middle">map + report</text>
+        </g>
+
+        <g id="packets"></g>
+      </svg>
+    </div>
+    <div class="zoomctl">
+      <button class="zbtn" id="zoomOut" title="Zoom out" aria-label="Zoom out">&#8722;</button>
+      <button class="zbtn zlabel" id="zoomReset" title="Reset zoom">Fit</button>
+      <button class="zbtn" id="zoomIn" title="Zoom in" aria-label="Zoom in">+</button>
+    </div>
+  </div>
+
+  <div class="caption"><div class="step" id="phase">plan</div><div id="capText" class="captext">Starting&hellip;</div></div>
+</div>
+
+<script>
+(function(){
+  const NS="http://www.w3.org/2000/svg";
+  const $=id=>document.getElementById(id);
+  const stage=$("stage"), pk=$("packets");
+  const capText=$("capText"),phase=$("phase"),chipsEl=$("chips"),scNo=$("scNo"),scTitle=$("scTitle"),playBtn=$("playBtn");
+  let speed=1,paused=false,generation=0,idx=0;
+
+  const scen=[
+    { title:"Healthy maize field", out:"n_health", bpath:"b_health", mpath:"m_health",
+      chips:[["Area","12.4 ha","ok"],["Altitude","80 m","ok"],["Overlap","75%","ok"],["GSD","2.6 cm/px","ok"],["NDVI","0.82 avg","ok"]],
+      finding:"AI Analysis reads a uniformly high NDVI (0.82 avg). The canopy is healthy across every plot.",
+      route:"With no stress detected, the result routes to the Health Map (the optimal path).",
+      act:"A clean per-plot NDVI health map is produced, confirming the field is on track." },
+
+    { title:"Water stress in SE block", out:"n_irrig", bpath:"b_irrig", mpath:"m_irrig", warn:true,
+      chips:[["Area","12.4 ha","ok"],["NDVI","0.41 patch ▼","warn"],["Canopy temp","high ▲","warn"],["GSD","2.6 cm/px","ok"],["Quality","Good","ok"]],
+      finding:"AI Analysis finds a low-NDVI patch (0.41) with elevated canopy temperature in the south-east block, a water-stress signature.",
+      route:"The result routes to Irrigation Zones to target the affected area.",
+      act:"An irrigation prescription map highlights the stressed zone for priority watering." },
+
+    { title:"Disease hotspot", out:"n_scout", bpath:"b_scout", mpath:"m_scout", warn:true,
+      chips:[["Area","12.4 ha","ok"],["NDRE","anomaly ▲","warn"],["Cluster","3 plots ▲","warn"],["GSD","2.6 cm/px","ok"],["Quality","Good","ok"]],
+      finding:"AI Analysis detects a red-edge (NDRE) anomaly cluster across three plots, an early-disease pattern.",
+      route:"The result routes to Disease Scouting so the team can verify on the ground.",
+      act:"A scouting alert pins the suspected plots for a same-day field check." },
+
+    { title:"Weed pressure, west edge", out:"n_spray", bpath:"b_spray", mpath:"m_spray", warn:true,
+      chips:[["Area","12.4 ha","ok"],["Inter-row","weeds ▲","warn"],["Coverage","8% ▲","warn"],["GSD","2.6 cm/px","ok"],["Quality","Good","ok"]],
+      finding:"AI Analysis flags inter-row vegetation along the west edge, consistent with weed pressure.",
+      route:"The result routes to the Spray Map for targeted, variable-rate treatment.",
+      act:"A variable-rate spray map limits herbicide to the weedy zones, saving input." },
+
+    { title:"Nitrogen deficiency, north strip", out:"n_nutrient", bpath:"b_nutrient", mpath:"m_nutrient", warn:true,
+      chips:[["Area","12.4 ha","ok"],["NDRE","low N ▼","warn"],["Chlorophyll","low ▼","warn"],["GSD","2.6 cm/px","ok"],["Quality","Good","ok"]],
+      finding:"AI Analysis sees low NDRE and chlorophyll in the north strip, indicating nitrogen deficiency.",
+      route:"The result routes to Nutrient Zones for a fertilization prescription.",
+      act:"A nutrient zone map guides variable-rate fertilization where it is needed most." },
+
+    { title:"Cloud shadow, low light", out:"n_refly", bpath:"b_refly", mpath:"m_refly", warn:true,
+      chips:[["Area","12.4 ha","ok"],["Light","low ▼","crit"],["Cloud","cover ⚠","crit"],["GSD","2.6 cm/px","ok"],["Quality","Fail ⚠","crit"]],
+      finding:"AI Analysis fails the quality check: cloud shadow and low light make the reflectance unreliable.",
+      route:"Instead of a product, the result routes to Re-fly.",
+      act:"A re-fly is scheduled for a clear-sky window so the survey data can be trusted." }
+  ];
+
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  async function gate(){ while(paused){ await sleep(80);} }
+  function clearActive(){ document.querySelectorAll(".node.active").forEach(n=>n.classList.remove("active")); }
+  function setActive(ids,warn){
+    clearActive();
+    ids.filter(Boolean).forEach(id=>{const e=$(id); if(e){ e.classList.add("active"); const c=e.querySelector(".card"); if(c) c.classList.toggle("warn",!!warn);} });
+  }
+  function setChips(sc){ chipsEl.innerHTML=""; sc.chips.forEach(c=>{const el=document.createElement("span");el.className="chip "+(c[2]||"ok");el.textContent=c[0]+": "+c[1];chipsEl.appendChild(el);}); }
+
+  function animatePacket(pathId,opt){
+    opt=opt||{}; const dur=opt.dur||1100, warn=!!opt.warn;
+    return new Promise(res=>{
+      const path=$(pathId); if(!path){ return res(); }
+      const L=path.getTotalLength();
+      const dot=document.createElementNS(NS,"circle");
+      dot.setAttribute("r","5.5"); dot.setAttribute("fill",warn?"#ffb24a":"#45DFB1"); dot.setAttribute("filter","url(#glow)");
+      pk.appendChild(dot); path.classList.add("flowing"); if(warn) path.classList.add("warn");
+      const t0=performance.now(), D=dur/speed;
+      function frame(t){
+        let p=Math.min(1,(t-t0)/D); const e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+        const pt=path.getPointAtLength(e*L);
+        dot.setAttribute("cx",pt.x); dot.setAttribute("cy",pt.y);
+        if(p<1) requestAnimationFrame(frame); else { dot.remove(); path.classList.remove("flowing","warn"); res(); }
+      } requestAnimationFrame(frame);
+    });
+  }
+
+  function buildSteps(sc){
+    return [
+      {n:["n_plan","n_fly"], p:["p1"], phase:"1 · plan & fly", t:"Scenario: "+sc.title+". The flight plan is generated and the UAV flies the planned grid."},
+      {n:["n_fly","n_capture"], p:["p2"], phase:"2 · capture", t:"Multispectral and RGB images are captured with GPS geotags at 75% overlap."},
+      {n:["n_capture","n_photo"], p:["p3"], phase:"3 · stitch", t:"The images are aligned and stitched into an orthomosaic and elevation model."},
+      {n:["n_photo","n_indices"], p:["p4"], phase:"4 · indices", t:"Vegetation indices (NDVI, NDRE) are computed across the whole orthomosaic."},
+      {n:["n_indices","n_analysis"], p:["p5"], phase:"5 · analysis", t:sc.finding},
+      {n:["n_analysis",sc.out], p:[sc.bpath], phase:"6 · route", warn:sc.warn, t:sc.route},
+      {n:[sc.out,"n_merge"], p:[sc.mpath], phase:"7 · layer", warn:sc.warn, t:sc.act},
+      {n:["n_merge","n_dash"], p:["p_merge_dash"], phase:"8 · deliver", t:"Layers are merged and the per-plot map is delivered to the farm dashboard."}
+    ];
+  }
+
+  async function runScenario(sc,gen){
+    scNo.textContent=(idx+1)+"/"+scen.length; scTitle.textContent=sc.title; setChips(sc);
+    const steps=buildSteps(sc);
+    for(const st of steps){
+      if(gen!==generation) return;
+      phase.textContent=st.phase; capText.textContent=st.t; setActive(st.n,st.warn);
+      await Promise.all(st.p.map(id=>animatePacket(id,{warn:st.warn})));
+      if(gen!==generation) return;
+      await sleep(420/speed);
+    }
+    if(gen!==generation) return; await sleep(1100/speed);
+  }
+
+  async function loop(){ const gen=++generation; while(gen===generation){ await gate(); await runScenario(scen[idx],gen); if(gen!==generation)return; idx=(idx+1)%scen.length; } }
+  function restart(){ if(pk)pk.innerHTML=""; document.querySelectorAll(".flowing").forEach(p=>p.classList.remove("flowing","warn")); loop(); }
+
+  playBtn.addEventListener("click",()=>{ paused=!paused; playBtn.textContent=paused?"▶ Play":"⏸ Pause"; playBtn.classList.toggle("primary",!paused); });
+  $("nextBtn").addEventListener("click",()=>{ idx=(idx+1)%scen.length; paused=false; playBtn.textContent="⏸ Pause"; playBtn.classList.add("primary"); restart(); });
+  $("prevBtn").addEventListener("click",()=>{ idx=(idx-1+scen.length)%scen.length; paused=false; playBtn.textContent="⏸ Pause"; playBtn.classList.add("primary"); restart(); });
+  $("restartBtn").addEventListener("click",()=>{ idx=0; paused=false; playBtn.textContent="⏸ Pause"; playBtn.classList.add("primary"); restart(); });
+  document.querySelectorAll(".btn.sp").forEach(b=>b.addEventListener("click",()=>{ document.querySelectorAll(".btn.sp").forEach(x=>x.classList.remove("active")); b.classList.add("active"); speed=parseFloat(b.dataset.s); }));
+
+  // ===== Google-Maps-style pan & zoom =====
+  let scale=1, tx=0, ty=0, fitScale=1;
+  const ASPECT=780/1960;
+  function applyTransform(animate){
+    const wf=$("wf"); if(!wf) return;
+    wf.style.transition = animate ? "transform .18s ease-out" : "none";
+    wf.style.transform = "translate("+tx+"px,"+ty+"px) scale("+scale+")";
+    const zr=$("zoomReset"); if(zr) zr.textContent = (Math.round(scale/fitScale*100)===100) ? "Fit" : Math.round(scale/fitScale*100)+"%";
+  }
+  function fitView(){
+    const wf=$("wf"); if(!wf) return;
+    const sw=stage.clientWidth, sh=stage.clientHeight;
+    if(!sw || !sh){ setTimeout(fitView,60); return; }
+    const baseW=sw, baseH=sw*ASPECT;
+    fitScale = Math.min(1, sh/baseH);
+    scale = fitScale; tx=(sw-baseW*scale)/2; ty=(sh-baseH*scale)/2;
+    applyTransform(true);
+  }
+  function clampScale(s){ return Math.min(fitScale*5, Math.max(fitScale*0.5, s)); }
+  function zoomAt(px,py,factor,animate){
+    const ns=clampScale(scale*factor); const k=ns/scale;
+    tx = px-(px-tx)*k; ty = py-(py-ty)*k; scale=ns; applyTransform(animate);
+  }
+  function center(){ return { x: stage.clientWidth/2, y: stage.clientHeight/2 }; }
+  $("zoomIn").addEventListener("click",()=>{ const c=center(); zoomAt(c.x,c.y,1.3,true); });
+  $("zoomOut").addEventListener("click",()=>{ const c=center(); zoomAt(c.x,c.y,1/1.3,true); });
+  $("zoomReset").addEventListener("click",fitView);
+  stage.addEventListener("wheel",e=>{ e.preventDefault(); const r=stage.getBoundingClientRect(); zoomAt(e.clientX-r.left,e.clientY-r.top,e.deltaY<0?1.12:1/1.12,false); },{passive:false});
+
+  const ptrs=new Map(); let pinchDist=0, pinchMid=null, panLast=null;
+  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const midp=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+  stage.addEventListener("pointerdown",e=>{
+    e.preventDefault(); stage.setPointerCapture(e.pointerId);
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); stage.classList.add("grabbing");
+    if(ptrs.size===1){ panLast={x:e.clientX,y:e.clientY}; }
+    else if(ptrs.size===2){ const p=[...ptrs.values()]; pinchDist=dist(p[0],p[1]); pinchMid=midp(p[0],p[1]); panLast=null; }
+  });
+  stage.addEventListener("pointermove",e=>{
+    if(!ptrs.has(e.pointerId)) return;
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    const r=stage.getBoundingClientRect();
+    if(ptrs.size>=2){
+      const p=[...ptrs.values()]; const nd=dist(p[0],p[1]); const nm=midp(p[0],p[1]);
+      if(pinchDist){ zoomAt(nm.x-r.left,nm.y-r.top,nd/pinchDist,false); }
+      if(pinchMid){ tx+=(nm.x-pinchMid.x); ty+=(nm.y-pinchMid.y); applyTransform(false); }
+      pinchDist=nd; pinchMid=nm;
+    } else if(panLast){
+      tx+=(e.clientX-panLast.x); ty+=(e.clientY-panLast.y); panLast={x:e.clientX,y:e.clientY}; applyTransform(false);
+    }
+  });
+  function endPtr(e){ ptrs.delete(e.pointerId); if(ptrs.size<2){ pinchDist=0; pinchMid=null; } if(ptrs.size===1){ const p=[...ptrs.values()][0]; panLast={x:p.x,y:p.y}; } if(ptrs.size===0){ panLast=null; stage.classList.remove("grabbing"); } }
+  stage.addEventListener("pointerup",endPtr); stage.addEventListener("pointercancel",endPtr);
+  let rT; window.addEventListener("resize",()=>{ clearTimeout(rT); rT=setTimeout(fitView,150); });
+
+  setTimeout(fitView,60);
+  loop();
+})();
+</script>
+</body>
+</html>

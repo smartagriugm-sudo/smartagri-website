@@ -35,6 +35,8 @@ export const DEMOS: WorkflowDemo[] = [
     title: "UAV Crop Mapping",
     icon: Plane,
     desc: "The drone-to-map pipeline: flight plan, multispectral capture, stitching, and per-plot health maps.",
+    src: "/demos/uav-crop-mapping.html",
+    height: 760,
   },
   {
     slug: "iot-field-monitoring",
