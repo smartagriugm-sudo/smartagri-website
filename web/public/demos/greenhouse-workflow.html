@@ -477,7 +477,9 @@
   .stagewrap{position:relative;flex:1;display:flex;min-height:0}
   .stage{flex:1;background:#08313A;overflow:hidden;min-height:0;position:relative;cursor:grab;touch-action:none}
   .stage.grabbing{cursor:grabbing}
-  #wf{width:100%;height:auto;display:block;transform-origin:0 0;will-change:transform}
+  /* No will-change here: it would rasterize the SVG at 1x and scale the
+     bitmap (blurry when zoomed in). Without it the SVG re-renders crisply. */
+  #wf{width:100%;height:auto;display:block;transform-origin:0 0}
   .zoomctl{position:absolute;right:14px;bottom:14px;display:flex;gap:6px;background:rgba(8,49,58,.8);border:1px solid #2a2c31;border-radius:10px;padding:4px;z-index:5;backdrop-filter:blur(4px)}
   .zbtn{background:#0B6477;color:#eafff7;border:1px solid #14919B;border-radius:7px;min-width:30px;height:30px;font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
   .zbtn:hover{background:#14919B}
