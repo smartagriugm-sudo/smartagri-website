@@ -28,7 +28,9 @@ export const DEMOS: WorkflowDemo[] = [
     slug: "irrigation-modernization",
     title: "Irrigation Modernization",
     icon: Droplets,
-    desc: "Canal telemetry and demand-based scheduling, from water-level readings to gate and pump actions.",
+    desc: "Canal telemetry and demand-based scheduling, from water-level and discharge readings through the allocation policy to gate actions across primary, secondary, and tertiary networks.",
+    src: "/demos/irrigation-modernization.html",
+    height: 760,
   },
   {
     slug: "uav-crop-mapping",
@@ -42,13 +44,17 @@ export const DEMOS: WorkflowDemo[] = [
     slug: "iot-field-monitoring",
     title: "IoT Field Monitoring",
     icon: RadioTower,
-    desc: "Sensor network data flowing from the field through the gateway to live dashboards and alerts.",
+    desc: "Sensor network data flowing from the field through the edge node, gateway, and cloud, validated and evaluated into live dashboards and alerts.",
+    src: "/demos/iot-field-monitoring.html",
+    height: 760,
   },
   {
     slug: "open-field-advisory",
     title: "Open Field Advisory",
     icon: Sprout,
-    desc: "How field, weather, and model data combine into planting, irrigation, and treatment recommendations.",
+    desc: "How field, weather, satellite, and crop-model data combine into planting, irrigation, fertilization, and treatment recommendations for the farmer.",
+    src: "/demos/open-field-advisory.html",
+    height: 760,
   },
 ];
 

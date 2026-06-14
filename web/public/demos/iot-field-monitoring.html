@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IoT Field Monitoring Workflow Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+  html,body{margin:0;height:100%;background:#062A32}
+  *{box-sizing:border-box}
+  #app{background:#062A32;color:#e6e7e9;font-family:Inter, system-ui, sans-serif;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;height:100%;min-height:520px;user-select:none;-webkit-user-select:none}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#08313A;border-bottom:1px solid #2a3a40;flex-wrap:wrap}
+  .brand{font-size:14px;font-weight:600}.brand span{color:#8aa0a6;font-weight:400}
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .btn{background:#0d3a44;color:#cfe0e3;border:1px solid #1d4d57;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
+  .btn:hover{background:#14919B;color:#fff}
+  .btn.primary{background:#0B6477;border-color:#14919B;color:#eafff7}.btn.primary:hover{background:#14919B}
+  .btn.sp{padding:5px 9px;font-size:12px}.btn.sp.active{background:#14919B;color:#fff;border-color:#45DFB1}
+  .speed{display:flex;align-items:center;gap:5px;color:#8aa0a6;font-size:12px;margin-left:4px}
+  .readout{padding:10px 16px;background:#072d34;border-bottom:1px solid #2a3a40;display:flex;flex-direction:column;gap:8px}
+  .sc-title{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
+  .sc-no{font-size:12px;color:#45DFB1;background:#0C3A36;border:1px solid #1A6B5E;border-radius:6px;padding:3px 8px;font-weight:700}
+  .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{font-size:11.5px;padding:4px 9px;border-radius:7px;border:1px solid;white-space:nowrap}
+  .chip.ok{background:#0C3A36;border-color:#1A6B5E;color:#45DFB1}
+  .chip.warn{background:#2b2417;border-color:#5a4622;color:#ffb24a}
+  .chip.crit{background:#2c1a1a;border-color:#5a2a2a;color:#ff7b72}
+  .stagewrap{position:relative;flex:1;display:flex;min-height:0}
+  .stage{flex:1;background:#08313A;overflow:hidden;min-height:0;position:relative;cursor:grab;touch-action:none}
+  .stage.grabbing{cursor:grabbing}
+  #wf{width:100%;height:auto;display:block;transform-origin:0 0}
+  .zoomctl{position:absolute;right:14px;bottom:14px;display:flex;gap:6px;background:rgba(8,49,58,.8);border:1px solid #2a3a40;border-radius:10px;padding:4px;z-index:5;backdrop-filter:blur(4px)}
+  .zbtn{background:#0B6477;color:#eafff7;border:1px solid #14919B;border-radius:7px;min-width:30px;height:30px;font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;font-family:inherit}
+  .zbtn:hover{background:#14919B}
+  .zbtn.zlabel{min-width:48px;font-size:12px;font-weight:600}
+  .wire{stroke:#5f7c84;stroke-width:1.7;fill:none;transition:stroke .2s,opacity .2s;opacity:.4}
+  .wire.flowing{stroke:#45DFB1;opacity:1;filter:drop-shadow(0 0 4px rgba(69,223,177,.6))}
+  .wire.flowing.warn{stroke:#ffb24a;filter:drop-shadow(0 0 4px rgba(255,178,74,.6))}
+  .card{fill:#0d3a44;stroke:#1d4d57;stroke-width:1.5;transition:stroke .25s,filter .25s}
+  .node{opacity:.45;transition:opacity .25s}
+  .node.active{opacity:1}
+  .node.active .card{stroke:#45DFB1;filter:drop-shadow(0 0 8px rgba(69,223,177,.85))}
+  .node.active .card.warn{stroke:#ffb24a;filter:drop-shadow(0 0 8px rgba(255,178,74,.85))}
+  .ic{fill:none;stroke:#cfe9e4;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .t1{fill:#e6e7e9;font-size:15px;font-weight:500}
+  .t2{fill:#8aa0a6;font-size:11px}
+  .caption{padding:14px 18px;background:#08313A;border-top:1px solid #2a3a40;display:flex;gap:14px;align-items:flex-start}
+  .step{flex:0 0 auto;font-size:12px;color:#45DFB1;font-weight:600;background:#0C3A36;border:1px solid #1A6B5E;border-radius:8px;padding:6px 10px;white-space:nowrap}
+  .captext{font-size:15px;line-height:1.5;color:#d6dee0}
+  @media (max-width:680px){.captext{font-size:13px}.brand{font-size:12px}}
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">IoT Field Monitoring &middot; <span>Workflow Simulator</span></div>
+    <div class="controls">
+      <button id="prevBtn" class="btn">&#9664;</button>
+      <button id="playBtn" class="btn primary">&#9208; Pause</button>
+      <button id="nextBtn" class="btn">&#9654;</button>
+      <button id="restartBtn" class="btn">&#8634; Restart</button>
+      <div class="speed"><span>Speed</span>
+        <button class="btn sp" data-s="0.5">0.5x</button>
+        <button class="btn sp active" data-s="1">1x</button>
+        <button class="btn sp" data-s="2">2x</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="readout">
+    <div class="sc-title"><span class="sc-no" id="scNo">1/6</span><span id="scTitle">&mdash;</span></div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="stagewrap">
+    <div class="stage" id="stage">
+      <svg id="wf" viewBox="0 0 1960 780" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.1" fill="#0e3b44"/></pattern>
+          <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <rect x="0" y="0" width="1960" height="780" fill="#08313A"/>
+        <rect x="0" y="0" width="1960" height="780" fill="url(#dots)"/>
+
+        <!-- main chain wires -->
+        <path id="p1" class="wire" d="M170 410 H225"/>
+        <path id="p2" class="wire" d="M375 410 H430"/>
+        <path id="p3" class="wire" d="M580 410 H635"/>
+        <path id="p4" class="wire" d="M785 410 H840"/>
+        <path id="p5" class="wire" d="M990 410 H1045"/>
+
+        <!-- branch wires (rule engine -> outputs) -->
+        <path id="b_dash" class="wire" d="M1195 410 C1295 410 1295 135 1390 135"/>
+        <path id="b_irrig" class="wire" d="M1195 410 C1295 410 1295 245 1390 245"/>
+        <path id="b_climate" class="wire" d="M1195 410 C1295 410 1295 355 1390 355"/>
+        <path id="b_device" class="wire" d="M1195 410 C1295 410 1295 465 1390 465"/>
+        <path id="b_disease" class="wire" d="M1195 410 C1295 410 1295 575 1390 575"/>
+        <path id="b_fault" class="wire" d="M1195 410 C1295 410 1295 685 1390 685"/>
+
+        <!-- notify wires (outputs -> notify) -->
+        <path id="m_dash" class="wire" d="M1570 135 C1620 135 1605 410 1655 410"/>
+        <path id="m_irrig" class="wire" d="M1570 245 C1620 245 1610 410 1655 410"/>
+        <path id="m_climate" class="wire" d="M1570 355 C1620 355 1620 410 1655 410"/>
+        <path id="m_device" class="wire" d="M1570 465 C1620 465 1620 410 1655 410"/>
+        <path id="m_disease" class="wire" d="M1570 575 C1620 575 1610 410 1655 410"/>
+        <path id="m_fault" class="wire" d="M1570 685 C1620 685 1605 410 1655 410"/>
+
+        <path id="p_merge_dash" class="wire" d="M1745 410 H1785"/>
+
+        <!-- ===== MAIN CHAIN NODES ===== -->
+        <g id="n_sensors" class="node">
+          <rect class="card" x="20" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(83,388)"><rect x="5" y="5" width="16" height="16" rx="2"/><circle cx="13" cy="13" r="3" fill="#45DFB1" stroke="none"/><path d="M9 5 V1 M13 5 V1 M17 5 V1 M9 21 V25 M13 21 V25 M17 21 V25 M5 9 H1 M5 13 H1 M5 17 H1 M21 9 H25 M21 13 H25 M21 17 H25" stroke-width="1.4"/></g>
+          <text x="95" y="472" class="t1" text-anchor="middle">Field Sensors</text>
+          <text x="95" y="489" class="t2" text-anchor="middle">soil · air</text>
+        </g>
+        <g id="n_edge" class="node">
+          <rect class="card" x="225" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(287,392)"><circle cx="13" cy="19" r="2.2" fill="#45DFB1" stroke="none"/><path d="M6 13 a10 10 0 0 1 14 0 M9 16 a6 6 0 0 1 8 0 M3 10 a14 14 0 0 1 20 0"/></g>
+          <text x="300" y="472" class="t1" text-anchor="middle">Edge Node</text>
+          <text x="300" y="489" class="t2" text-anchor="middle">LoRa radio</text>
+        </g>
+        <g id="n_gateway" class="node">
+          <rect class="card" x="430" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(489,389)"><rect x="1" y="11" width="30" height="10" rx="2"/><circle cx="6" cy="16" r="1.4" fill="#45DFB1" stroke="none"/><path d="M11 16 H26" stroke-width="1.3"/><path d="M9 11 V4 M23 11 V4"/><path d="M9 4 l3 -2 M23 4 l-3 -2" stroke-width="1.3"/></g>
+          <text x="505" y="472" class="t1" text-anchor="middle">Gateway</text>
+          <text x="505" y="489" class="t2" text-anchor="middle">aggregate</text>
+        </g>
+        <g id="n_cloud" class="node">
+          <rect class="card" x="635" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(697,392)"><path d="M8 18 a6 6 0 0 1 0 -12 a7 7 0 0 1 13 2 a5 5 0 0 1 1 10 Z"/></g>
+          <text x="710" y="472" class="t1" text-anchor="middle">Cloud Ingest</text>
+          <text x="710" y="489" class="t2" text-anchor="middle">time series</text>
+        </g>
+        <g id="n_qc" class="node">
+          <rect class="card" x="840" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(902,388)"><path d="M13 1 L24 5 V12 C24 18 13 23 13 23 C13 23 2 18 2 12 V5 Z"/><path d="M8 12 L12 16 L19 8" stroke="#45DFB1"/></g>
+          <text x="915" y="472" class="t1" text-anchor="middle">Validation</text>
+          <text x="915" y="489" class="t2" text-anchor="middle">range · calib</text>
+        </g>
+        <g id="n_rules" class="node">
+          <rect class="card" x="1045" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(1105,390)"><circle cx="4" cy="11" r="3.2" fill="#45DFB1" stroke="none"/><circle cx="26" cy="2" r="2.6"/><circle cx="26" cy="11" r="2.6"/><circle cx="26" cy="20" r="2.6"/><path d="M7 11 L23 2 M7 11 H23 M7 11 L23 20"/></g>
+          <text x="1120" y="472" class="t1" text-anchor="middle">Rule Engine</text>
+          <text x="1120" y="489" class="t2" text-anchor="middle">thresholds</text>
+        </g>
+
+        <!-- ===== OUTPUT NODES ===== -->
+        <g id="n_dash_live" class="node">
+          <rect class="card" x="1390" y="105" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1406,121)"><rect x="0" y="0" width="24" height="17" rx="2"/><path d="M5 13 V9 M10 13 V5 M15 13 V10 M19 13 V7" stroke="#45DFB1" stroke-width="1.6"/><path d="M9 21 H15 M12 17 V21" stroke-width="1.4"/></g>
+          <text x="1436" y="131" class="t1">Live Dashboard</text>
+          <text x="1436" y="149" class="t2">update</text>
+        </g>
+        <g id="n_irrig" class="node">
+          <rect class="card" x="1390" y="215" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1406,231)"><path d="M11 1 C11 1 3 11 3 16 a8 8 0 0 0 16 0 C19 11 11 1 11 1 Z" stroke="#45DFB1"/></g>
+          <text x="1436" y="241" class="t1">Irrigation Alert</text>
+          <text x="1436" y="259" class="t2">low moisture</text>
+        </g>
+        <g id="n_climate" class="node">
+          <rect class="card" x="1390" y="325" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1408,339)"><path d="M9 3 a3 3 0 0 1 6 0 V14 a5 5 0 1 1 -6 0 Z" stroke="#ffb24a"/><circle cx="12" cy="18" r="2.4" fill="#ffb24a" stroke="none"/></g>
+          <text x="1436" y="351" class="t1">Frost / Heat Alert</text>
+          <text x="1436" y="369" class="t2">temp extreme</text>
+        </g>
+        <g id="n_device" class="node">
+          <rect class="card" x="1390" y="435" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1406,453)"><rect x="0" y="6" width="20" height="11" rx="2"/><rect x="21" y="9" width="2" height="5" fill="#ffb24a" stroke="none"/><rect x="3" y="8.5" width="5" height="6" fill="#ffb24a" stroke="none"/></g>
+          <text x="1436" y="461" class="t1">Node Health</text>
+          <text x="1436" y="479" class="t2">battery / link</text>
+        </g>
+        <g id="n_disease" class="node">
+          <rect class="card" x="1390" y="545" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1406,551)"><ellipse cx="12" cy="13" rx="6" ry="7" stroke="#ffb24a"/><path d="M6 9 L1 6 M6 13 H0 M6 17 L1 20 M18 9 L23 6 M18 13 H24 M18 17 L23 20 M9 4 L7 1 M15 4 L17 1" stroke="#ffb24a" stroke-width="1.4"/></g>
+          <text x="1436" y="571" class="t1">Disease Risk</text>
+          <text x="1436" y="589" class="t2">humid + wet</text>
+        </g>
+        <g id="n_fault" class="node">
+          <rect class="card" x="1390" y="655" width="180" height="60" rx="14"/>
+          <g class="ic" transform="translate(1408,659)"><path d="M11 1 L22 21 H0 Z" stroke="#ff7b72"/><path d="M11 8 V14 M11 17 v0.4" stroke="#ff7b72"/></g>
+          <text x="1436" y="681" class="t1">Sensor Fault</text>
+          <text x="1436" y="699" class="t2">data gap</text>
+        </g>
+
+        <!-- ===== NOTIFY + DASHBOARD ===== -->
+        <g id="n_merge" class="node">
+          <rect class="card" x="1655" y="375" width="90" height="70" rx="16"/>
+          <g class="ic" transform="translate(1683,393)"><path d="M11 3 a7 7 0 0 1 7 7 c0 7 2 8 2 8 H2 s2 -1 2 -8 a7 7 0 0 1 7 -7 Z"/><path d="M8 21 a3 3 0 0 0 6 0"/><path d="M11 1 V3" stroke-width="1.4"/></g>
+          <text x="1700" y="467" class="t1" text-anchor="middle">Notify</text>
+          <text x="1700" y="484" class="t2" text-anchor="middle">push / SMS</text>
+        </g>
+        <g id="n_dash" class="node">
+          <rect class="card" x="1785" y="370" width="150" height="80" rx="16"/>
+          <g class="ic" transform="translate(1843,389)"><rect x="0" y="0" width="34" height="24" rx="3"/><path d="M6 18 V12 M13 18 V7 M20 18 V14 M27 18 V9" stroke="#45DFB1"/></g>
+          <text x="1860" y="472" class="t1" text-anchor="middle">Users</text>
+          <text x="1860" y="489" class="t2" text-anchor="middle">farmer + agronomist</text>
+        </g>
+
+        <g id="packets"></g>
+      </svg>
+    </div>
+    <div class="zoomctl">
+      <button class="zbtn" id="zoomOut" title="Zoom out" aria-label="Zoom out">&#8722;</button>
+      <button class="zbtn zlabel" id="zoomReset" title="Reset zoom">Fit</button>
+      <button class="zbtn" id="zoomIn" title="Zoom in" aria-label="Zoom in">+</button>
+    </div>
+  </div>
+
+  <div class="caption"><div class="step" id="phase">sense</div><div id="capText" class="captext">Starting&hellip;</div></div>
+</div>
+
+<script>
+(function(){
+  const NS="http://www.w3.org/2000/svg";
+  const $=id=>document.getElementById(id);
+  const stage=$("stage"), pk=$("packets");
+  const capText=$("capText"),phase=$("phase"),chipsEl=$("chips"),scNo=$("scNo"),scTitle=$("scTitle"),playBtn=$("playBtn");
+  let speed=1,paused=false,generation=0,idx=0;
+
+  const scen=[
+    { title:"Normal telemetry", out:"n_dash_live", bpath:"b_dash", mpath:"m_dash",
+      chips:[["Moisture","32% ok","ok"],["Temp","27°C","ok"],["Humidity","68%","ok"],["Battery","91%","ok"],["Link","strong","ok"]],
+      finding:"Every reading sits inside its normal band and all nodes are reporting. No threshold is crossed.",
+      route:"With nothing out of range, the Rule Engine routes to a routine Live Dashboard update.",
+      act:"The latest values refresh on the live dashboard; no alert is raised." },
+
+    { title:"Low soil moisture", out:"n_irrig", bpath:"b_irrig", mpath:"m_irrig", warn:true,
+      chips:[["Moisture","14% ▼","warn"],["Threshold","20%","ok"],["Temp","31°C","ok"],["Forecast","no rain","warn"],["Status","Dry","warn"]],
+      finding:"Soil moisture has dropped below the irrigation threshold and no rain is expected soon.",
+      route:"The Rule Engine routes to an Irrigation Alert for the affected zone.",
+      act:"An irrigation alert with the zone and shortfall is pushed to the operator." },
+
+    { title:"Frost risk before dawn", out:"n_climate", bpath:"b_climate", mpath:"m_climate", warn:true,
+      chips:[["Temp","3°C ▼","warn"],["Trend","falling ▼","warn"],["Humidity","88%","ok"],["Time","04:10","ok"],["Status","Frost risk","warn"]],
+      finding:"Air temperature is falling toward the frost line during the early-morning hours.",
+      route:"The Rule Engine routes to a Frost / Heat Alert.",
+      act:"A frost warning is sent so crews can run protection before damage occurs." },
+
+    { title:"Node battery critical", out:"n_device", bpath:"b_device", mpath:"m_device", warn:true,
+      chips:[["Node","B-07 ⚠","warn"],["Battery","6% ▼","warn"],["Last seen","42 min ▼","warn"],["Link","weak ▼","warn"],["Status","Node down","warn"]],
+      finding:"One node has a critically low battery and has missed its last several check-ins.",
+      route:"The Rule Engine routes to a Node Health alert.",
+      act:"A maintenance ticket flags node B-07 for a battery swap before it goes dark." },
+
+    { title:"Disease-favorable weather", out:"n_disease", bpath:"b_disease", mpath:"m_disease", warn:true,
+      chips:[["Humidity","94% ▲","warn"],["Leaf wet","9 h ▲","warn"],["Temp","23°C","ok"],["Risk index","high ▲","warn"],["Status","Disease risk","warn"]],
+      finding:"Prolonged high humidity and leaf wetness have pushed the fungal-risk index into the high band.",
+      route:"The Rule Engine routes to a Disease Risk alert.",
+      act:"An early disease-risk advisory recommends scouting and a preventive spray window." },
+
+    { title:"Sensor fault / data gap", out:"n_fault", bpath:"b_fault", mpath:"m_fault", warn:true,
+      chips:[["Node","A-03 ⚠","crit"],["Reading","flatline ⚠","crit"],["Value","out of range ⚠","crit"],["Gap","18 min ⚠","crit"],["Status","Sensor fault","crit"]],
+      finding:"A sensor is returning a flatlined, out-of-range value, so its data is quarantined.",
+      route:"Instead of a normal alert, the Rule Engine routes to a Sensor Fault flag.",
+      act:"The faulty channel is excluded from analytics and queued for recalibration." }
+  ];
+
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  async function gate(){ while(paused){ await sleep(80);} }
+  function clearActive(){ document.querySelectorAll(".node.active").forEach(n=>n.classList.remove("active")); }
+  function setActive(ids,warn){
+    clearActive();
+    ids.filter(Boolean).forEach(id=>{const e=$(id); if(e){ e.classList.add("active"); const c=e.querySelector(".card"); if(c) c.classList.toggle("warn",!!warn);} });
+  }
+  function setChips(sc){ chipsEl.innerHTML=""; sc.chips.forEach(c=>{const el=document.createElement("span");el.className="chip "+(c[2]||"ok");el.textContent=c[0]+": "+c[1];chipsEl.appendChild(el);}); }
+
+  function animatePacket(pathId,opt){
+    opt=opt||{}; const dur=opt.dur||1100, warn=!!opt.warn;
+    return new Promise(res=>{
+      const path=$(pathId); if(!path){ return res(); }
+      const L=path.getTotalLength();
+      const dot=document.createElementNS(NS,"circle");
+      dot.setAttribute("r","5.5"); dot.setAttribute("fill",warn?"#ffb24a":"#45DFB1"); dot.setAttribute("filter","url(#glow)");
+      pk.appendChild(dot); path.classList.add("flowing"); if(warn) path.classList.add("warn");
+      const t0=performance.now(), D=dur/speed;
+      function frame(t){
+        let p=Math.min(1,(t-t0)/D); const e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+        const pt=path.getPointAtLength(e*L);
+        dot.setAttribute("cx",pt.x); dot.setAttribute("cy",pt.y);
+        if(p<1) requestAnimationFrame(frame); else { dot.remove(); path.classList.remove("flowing","warn"); res(); }
+      } requestAnimationFrame(frame);
+    });
+  }
+
+  function buildSteps(sc){
+    return [
+      {n:["n_sensors","n_edge"], p:["p1"], phase:"1 · sense", t:"Scenario: "+sc.title+". Field sensors read soil moisture, air temperature, and humidity across the plot."},
+      {n:["n_edge","n_gateway"], p:["p2"], phase:"2 · transmit", t:"Each edge node sends its readings over LoRa radio to the field gateway."},
+      {n:["n_gateway","n_cloud"], p:["p3"], phase:"3 · ingest", t:"The gateway forwards the batched telemetry to the cloud time-series store."},
+      {n:["n_cloud","n_qc"], p:["p4"], phase:"4 · validate", t:"Validation checks each value against sensor ranges, calibration, and timestamps."},
+      {n:["n_qc","n_rules"], p:["p5"], phase:"5 · evaluate", t:sc.finding},
+      {n:["n_rules",sc.out], p:[sc.bpath], phase:"6 · decide", warn:sc.warn, t:sc.route},
+      {n:[sc.out,"n_merge"], p:[sc.mpath], phase:"7 · notify", warn:sc.warn, t:sc.act},
+      {n:["n_merge","n_dash"], p:["p_merge_dash"], phase:"8 · deliver", t:"The update or alert is pushed to the farmer and agronomist on their dashboards and phones."}
+    ];
+  }
+
+  async function runScenario(sc,gen){
+    scNo.textContent=(idx+1)+"/"+scen.length; scTitle.textContent=sc.title; setChips(sc);
+    const steps=buildSteps(sc);
+    for(const st of steps){
+      if(gen!==generation) return;
+      phase.textContent=st.phase; capText.textContent=st.t; setActive(st.n,st.warn);
+      await Promise.all(st.p.map(id=>animatePacket(id,{warn:st.warn})));
+      if(gen!==generation) return;
+      await sleep(420/speed);
+    }
+    if(gen!==generation) return; await sleep(1100/speed);
+  }
+
+  async function loop(){ const gen=++generation; while(gen===generation){ await gate(); await runScenario(scen[idx],gen); if(gen!==generation)return; idx=(idx+1)%scen.length; } }
+  function restart(){ if(pk)pk.innerHTML=""; document.querySelectorAll(".flowing").forEach(p=>p.classList.remove("flowing","warn")); loop(); }
+
+  playBtn.addEventListener("click",()=>{ paused=!paused; playBtn.textContent=paused?"▶ Play":"⏸ Pause"; playBtn.classList.toggle("primary",!paused); });
+  $("nextBtn").addEventListener("click",()=>{ idx=(idx+1)%scen.length; paused=false; playBtn.textContent="⏸ Pause"; playBtn.classList.add("primary"); restart(); });
+  $("prevBtn").addEventListener("click",()=>{ idx=(idx-1+scen.length)%scen.length; paused=false; playBtn.textContent="⏸ Pause"; playBtn.classList.add("primary"); restart(); });
+  $("restartBtn").addEventListener("click",()=>{ idx=0; paused=false; playBtn.textContent="⏸ Pause"; playBtn.classList.add("primary"); restart(); });
+  document.querySelectorAll(".btn.sp").forEach(b=>b.addEventListener("click",()=>{ document.querySelectorAll(".btn.sp").forEach(x=>x.classList.remove("active")); b.classList.add("active"); speed=parseFloat(b.dataset.s); }));
+
+  // ===== Google-Maps-style pan & zoom =====
+  let scale=1, tx=0, ty=0, fitScale=1;
+  const ASPECT=780/1960;
+  function applyTransform(animate){
+    const wf=$("wf"); if(!wf) return;
+    wf.style.transition = animate ? "transform .18s ease-out" : "none";
+    wf.style.transform = "translate("+tx+"px,"+ty+"px) scale("+scale+")";
+    const zr=$("zoomReset"); if(zr) zr.textContent = (Math.round(scale/fitScale*100)===100) ? "Fit" : Math.round(scale/fitScale*100)+"%";
+  }
+  function fitView(){
+    const wf=$("wf"); if(!wf) return;
+    const sw=stage.clientWidth, sh=stage.clientHeight;
+    if(!sw || !sh){ setTimeout(fitView,60); return; }
+    const baseW=sw, baseH=sw*ASPECT;
+    fitScale = Math.min(1, sh/baseH);
+    scale = fitScale; tx=(sw-baseW*scale)/2; ty=(sh-baseH*scale)/2;
+    applyTransform(true);
+  }
+  function clampScale(s){ return Math.min(fitScale*5, Math.max(fitScale*0.5, s)); }
+  function zoomAt(px,py,factor,animate){
+    const ns=clampScale(scale*factor); const k=ns/scale;
+    tx = px-(px-tx)*k; ty = py-(py-ty)*k; scale=ns; applyTransform(animate);
+  }
+  function center(){ return { x: stage.clientWidth/2, y: stage.clientHeight/2 }; }
+  $("zoomIn").addEventListener("click",()=>{ const c=center(); zoomAt(c.x,c.y,1.3,true); });
+  $("zoomOut").addEventListener("click",()=>{ const c=center(); zoomAt(c.x,c.y,1/1.3,true); });
+  $("zoomReset").addEventListener("click",fitView);
+  stage.addEventListener("wheel",e=>{ e.preventDefault(); const r=stage.getBoundingClientRect(); zoomAt(e.clientX-r.left,e.clientY-r.top,e.deltaY<0?1.12:1/1.12,false); },{passive:false});
+
+  const ptrs=new Map(); let pinchDist=0, pinchMid=null, panLast=null;
+  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const midp=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+  stage.addEventListener("pointerdown",e=>{
+    e.preventDefault(); stage.setPointerCapture(e.pointerId);
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); stage.classList.add("grabbing");
+    if(ptrs.size===1){ panLast={x:e.clientX,y:e.clientY}; }
+    else if(ptrs.size===2){ const p=[...ptrs.values()]; pinchDist=dist(p[0],p[1]); pinchMid=midp(p[0],p[1]); panLast=null; }
+  });
+  stage.addEventListener("pointermove",e=>{
+    if(!ptrs.has(e.pointerId)) return;
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    const r=stage.getBoundingClientRect();
+    if(ptrs.size>=2){
+      const p=[...ptrs.values()]; const nd=dist(p[0],p[1]); const nm=midp(p[0],p[1]);
+      if(pinchDist){ zoomAt(nm.x-r.left,nm.y-r.top,nd/pinchDist,false); }
+      if(pinchMid){ tx+=(nm.x-pinchMid.x); ty+=(nm.y-pinchMid.y); applyTransform(false); }
+      pinchDist=nd; pinchMid=nm;
+    } else if(panLast){
+      tx+=(e.clientX-panLast.x); ty+=(e.clientY-panLast.y); panLast={x:e.clientX,y:e.clientY}; applyTransform(false);
+    }
+  });
+  function endPtr(e){ ptrs.delete(e.pointerId); if(ptrs.size<2){ pinchDist=0; pinchMid=null; } if(ptrs.size===1){ const p=[...ptrs.values()][0]; panLast={x:p.x,y:p.y}; } if(ptrs.size===0){ panLast=null; stage.classList.remove("grabbing"); } }
+  stage.addEventListener("pointerup",endPtr); stage.addEventListener("pointercancel",endPtr);
+  let rT; window.addEventListener("resize",()=>{ clearTimeout(rT); rT=setTimeout(fitView,150); });
+
+  setTimeout(fitView,60);
+  loop();
+})();
+</script>
+</body>
+</html>
