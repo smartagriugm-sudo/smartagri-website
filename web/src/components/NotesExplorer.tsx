@@ -4,7 +4,7 @@ import { Link, createLink } from "@tanstack/react-router";
 
 // Router-typed Link that also accepts framer-motion animation props
 const MotionLink = createLink(motion.a);
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, CalendarDays } from "lucide-react";
 import { A } from "../lib/assets";
 import { body, display } from "../lib/fonts";
 import {
@@ -60,7 +60,11 @@ function Meta({ note }: { note: Note }) {
       >
         {note.category}
       </span>
-      <span className="text-sm font-normal text-neutral-400" style={body}>
+      <span
+        className="inline-flex items-center gap-1.5 text-sm font-normal text-neutral-400"
+        style={body}
+      >
+        <CalendarDays className="w-4 h-4" />
         {note.date}
       </span>
     </div>
