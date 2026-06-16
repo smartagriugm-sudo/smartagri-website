@@ -4,7 +4,6 @@ import { Leaf } from "lucide-react";
 import { A } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
 import SiteHeader from "../components/SiteHeader";
-import Partners from "../components/Partners";
 import ResearchAreas from "../components/ResearchAreas";
 import Voices from "../components/Voices";
 import Publications from "../components/Publications";
@@ -142,7 +141,6 @@ function Home() {
     <main>
       <SiteHeader overlay />
       <Hero />
-      <Partners />
       <ResearchAreas />
       <Voices />
       <Publications />

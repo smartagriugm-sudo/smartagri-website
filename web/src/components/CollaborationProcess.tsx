@@ -8,6 +8,7 @@ import {
   Search,
 } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
+import PartnerMarquee from "./PartnerMarquee";
 
 // "Our collaboration process" — six steps from first contact to a working,
 // supported deployment, in smartagri's voice. TODO: team to review the copy.
@@ -105,6 +106,17 @@ export default function CollaborationProcess() {
               </p>
             </motion.div>
           ))}
+        </div>
+
+        {/* The partners we collaborate with: who pairs with the process above. */}
+        <div className="mt-16 md:mt-20 pt-12 border-t border-[#0B6477]/10">
+          <h3
+            className="text-center text-xl md:text-2xl font-medium text-neutral-900 mb-10"
+            style={display}
+          >
+            In collaboration with <span style={accent}>leading partners</span>
+          </h3>
+          <PartnerMarquee />
         </div>
       </div>
     </section>
