@@ -145,17 +145,28 @@ ${body}
   return null;
 }
 
-async function fetchJson(url, attempts = 4) {
+// A browser-like UA + Accept; some WordPress/WAF setups reject or 5xx requests
+// that look like bots (e.g. from CI/datacenter IPs without these headers).
+const REQUEST_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (compatible; smartagri-news-import/1.0; +https://smartagri.id)",
+  Accept: "application/json,text/html,*/*",
+};
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchJson(url, attempts = 6) {
   let lastErr;
   for (let i = 0; i < attempts; i++) {
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+      const res = await fetch(url, { headers: REQUEST_HEADERS });
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} for ${url}`);
       return await res.json();
     } catch (err) {
       lastErr = err;
-      // Transient network blips (ECONNRESET, etc.) are common; back off and retry.
-      if (i < attempts - 1) await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+      // Transient blips (ECONNRESET) and server hiccups (5xx) are common; back
+      // off with growing delays and retry: 3s, 6s, 12s, 24s, 30s.
+      if (i < attempts - 1) await sleep(Math.min(30000, 3000 * 2 ** i));
     }
   }
   throw lastErr;
@@ -173,8 +184,13 @@ async function importImage(url, wpId, idx) {
     const dest = path.join(IMG_DIR, name);
     const publicPath = `${IMG_PUBLIC_PREFIX}/${name}`;
     if (existsSync(dest)) return publicPath;
-    const res = await fetch(clean);
-    if (!res.ok) return null;
+    let res;
+    for (let i = 0; i < 4; i++) {
+      res = await fetch(clean, { headers: REQUEST_HEADERS });
+      if (res.ok) break;
+      if (i < 3) await sleep(2000 * (i + 1));
+    }
+    if (!res || !res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
     await sharp(buf)
       .rotate()
@@ -234,9 +250,26 @@ async function main() {
   await mkdir(IMG_DIR, { recursive: true });
   await mkdir(NOTES_DIR, { recursive: true });
 
+  const catList = await fetchJson(`${WP_BASE}/categories?per_page=100&_fields=id,name`);
+  const tagList = await fetchJson(`${WP_BASE}/tags?per_page=100&_fields=id,name`);
+  const catMap = new Map(catList.map((c) => [c.id, c.name]));
+  const tagMap = new Map(tagList.map((t) => [t.id, t.name]));
+
+  // Fetch all posts (newest first), paginating in case the site grows.
+  const posts = [];
+  for (let page = 1; ; page++) {
+    const batch = await fetchJson(
+      `${WP_BASE}/posts?per_page=100&page=${page}&orderby=date&order=desc` +
+        `&_fields=id,date,slug,title,excerpt,content,categories,tags,featured_media,link`,
+    );
+    posts.push(...batch);
+    if (batch.length < 100) break;
+  }
+
   // RETRANSLATE=true forces a full re-import (e.g. to translate everything once
   // ANTHROPIC_API_KEY is set): drop previously imported notes so they are
-  // regenerated. Manually-authored notes (no wpId) are kept.
+  // regenerated. Done only AFTER all fetches succeed, so a network/API failure
+  // never leaves the content half-deleted. Manual notes (no wpId) are kept.
   if (process.env.RETRANSLATE === "true") {
     for (const f of await readdir(NOTES_DIR)) {
       if (!f.endsWith(".json")) continue;
@@ -250,23 +283,7 @@ async function main() {
     console.log("RETRANSLATE: cleared previously imported notes.");
   }
 
-  const catList = await fetchJson(`${WP_BASE}/categories?per_page=100&_fields=id,name`);
-  const tagList = await fetchJson(`${WP_BASE}/tags?per_page=100&_fields=id,name`);
-  const catMap = new Map(catList.map((c) => [c.id, c.name]));
-  const tagMap = new Map(tagList.map((t) => [t.id, t.name]));
-
   const { wpIds, files } = await loadExisting();
-
-  // Fetch all posts (newest first), paginating in case the site grows.
-  const posts = [];
-  for (let page = 1; ; page++) {
-    const batch = await fetchJson(
-      `${WP_BASE}/posts?per_page=100&page=${page}&orderby=date&order=desc` +
-        `&_fields=id,date,slug,title,excerpt,content,categories,tags,featured_media,link`,
-    );
-    posts.push(...batch);
-    if (batch.length < 100) break;
-  }
 
   let imported = 0;
   let skipped = 0;
