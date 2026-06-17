@@ -5,7 +5,7 @@
 //
 // Run from the web/ directory:  node scripts/import-wp.mjs
 // Optional: IMPORT_LIMIT=5 node scripts/import-wp.mjs   (cap new posts per run)
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -145,10 +145,20 @@ ${body}
   return null;
 }
 
-async function fetchJson(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-  return res.json();
+async function fetchJson(url, attempts = 4) {
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+      return await res.json();
+    } catch (err) {
+      lastErr = err;
+      // Transient network blips (ECONNRESET, etc.) are common; back off and retry.
+      if (i < attempts - 1) await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+    }
+  }
+  throw lastErr;
 }
 
 // Download an image and store it as WebP; returns the public path or null.
@@ -223,6 +233,22 @@ async function loadExisting() {
 async function main() {
   await mkdir(IMG_DIR, { recursive: true });
   await mkdir(NOTES_DIR, { recursive: true });
+
+  // RETRANSLATE=true forces a full re-import (e.g. to translate everything once
+  // ANTHROPIC_API_KEY is set): drop previously imported notes so they are
+  // regenerated. Manually-authored notes (no wpId) are kept.
+  if (process.env.RETRANSLATE === "true") {
+    for (const f of await readdir(NOTES_DIR)) {
+      if (!f.endsWith(".json")) continue;
+      try {
+        const d = JSON.parse(await readFile(path.join(NOTES_DIR, f), "utf8"));
+        if (d.wpId) await rm(path.join(NOTES_DIR, f));
+      } catch {
+        /* ignore */
+      }
+    }
+    console.log("RETRANSLATE: cleared previously imported notes.");
+  }
 
   const catList = await fetchJson(`${WP_BASE}/categories?per_page=100&_fields=id,name`);
   const tagList = await fetchJson(`${WP_BASE}/tags?per_page=100&_fields=id,name`);

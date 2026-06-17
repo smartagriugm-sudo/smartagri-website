@@ -8,7 +8,12 @@ name: Import WordPress news
 on:
   schedule:
     - cron: "*/15 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      retranslate:
+        description: "Re-import and re-translate ALL posts (needs ANTHROPIC_API_KEY)"
+        type: boolean
+        default: false
   repository_dispatch:
     types: [wp-publish]
 
@@ -42,6 +47,7 @@ jobs:
         # of imported posts; without it, posts are imported in Indonesian.
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RETRANSLATE: ${{ inputs.retranslate }}
         run: node scripts/import-wp.mjs
 
       - name: Commit and push if there are new posts

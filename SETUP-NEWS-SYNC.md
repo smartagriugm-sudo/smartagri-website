@@ -98,19 +98,21 @@ artikel diimpor apa adanya dalam bahasa Indonesia (tanpa error).
 3. Opsional: `TRANSLATE_MODEL` (default `claude-haiku-4-5-20251001`, model cepat
    dan murah untuk terjemahan).
 
-**Menerjemahkan berita yang sudah terlanjur diimpor (backfill):** karena
-artikel yang sudah ada dilewati, jalankan sekali dengan key untuk menulis ulang
-semuanya dalam bahasa Inggris:
+**Menerjemahkan berita yang sudah terlanjur diimpor (backfill):** artikel yang
+sudah ada normalnya dilewati, jadi sediakan sekali pemicu khusus. Paling mudah,
+**tanpa koding**: setelah secret `ANTHROPIC_API_KEY` terpasang, buka GitHub →
+tab **Actions** → workflow **Import WordPress news** → **Run workflow** →
+centang **retranslate** → Run. Workflow akan mengimpor ulang semua berita dalam
+bahasa Inggris dan commit otomatis (gambar tidak diunduh ulang).
+
+Alternatif lokal (kalau key ada di mesin Anda):
 
 ```
-# dari folder web/, dengan key terpasang di environment
-# hapus dulu artikel hasil impor (yang punya wpId), lalu impor ulang
-node -e "const fs=require('fs');for(const f of fs.readdirSync('src/content/notes')){if(f.endsWith('.json')&&JSON.parse(fs.readFileSync('src/content/notes/'+f)).wpId)fs.unlinkSync('src/content/notes/'+f)}"
-ANTHROPIC_API_KEY=sk-ant-... node scripts/import-wp.mjs
+# dari folder web/
+RETRANSLATE=true ANTHROPIC_API_KEY=sk-ant-... node scripts/import-wp.mjs
 ```
 
-Gambar tidak diunduh ulang (sudah ter-cache), jadi prosesnya relatif cepat;
-biaya terjemahan kecil (model Haiku, sekitar beberapa dolar untuk seluruh
+Biaya terjemahan kecil (model Haiku, sekitar beberapa dolar untuk seluruh
 backfill, lalu sen per artikel baru).
 
 ## Batasan saat ini
