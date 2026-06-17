@@ -38,6 +38,8 @@ export type Note = {
   body?: string;
   /** Set on auto-imported posts: link to the original article on the old site */
   sourceUrl?: string;
+  /** When true, the note stays in the repo but is hidden from every listing */
+  hidden?: boolean;
 };
 
 // Chip colors cycle through the brand palette per category.
@@ -72,6 +74,7 @@ type NoteFile = {
   cover?: string;
   body?: string;
   sourceUrl?: string;
+  hidden?: boolean;
 };
 
 const noteFiles = import.meta.glob<NoteFile>("../content/notes/*.json", {
@@ -92,6 +95,7 @@ export const notes: Note[] = Object.entries(noteFiles)
     ...note,
     slug: path.split("/").pop()!.replace(/\.json$/, ""),
   }))
+  .filter((note) => !note.hidden)
   .sort((a, b) => b.date.localeCompare(a.date))
   .map((note) => ({ ...note, date: formatDate(note.date) }));
 
