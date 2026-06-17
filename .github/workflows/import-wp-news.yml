@@ -38,6 +38,10 @@ jobs:
 
       - name: Import new posts
         working-directory: web
+        # ANTHROPIC_API_KEY (optional repo secret) enables English translation
+        # of imported posts; without it, posts are imported in Indonesian.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: node scripts/import-wp.mjs
 
       - name: Commit and push if there are new posts

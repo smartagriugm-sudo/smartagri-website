@@ -79,6 +79,40 @@ Publikasikan satu berita uji di situs lama, lalu cek tab **Actions** di GitHub:
 workflow "Import WordPress news" harus jalan, dan berita muncul di situs baru
 dalam beberapa menit.
 
+## Terjemahan otomatis ke Inggris (opsional)
+
+Karena situs baru default berbahasa Inggris sedangkan situs lama berbahasa
+Indonesia, importer bisa menerjemahkan judul, excerpt, dan isi artikel ke
+Inggris memakai Anthropic Claude API, sambil menjaga format Markdown, gambar,
+dan nama diri. Versi Indonesia asli tetap disimpan di field `original` untuk
+fitur dwibahasa (toggle EN/ID) yang akan ditambahkan nanti.
+
+Aktif **hanya** bila environment `ANTHROPIC_API_KEY` tersedia. Tanpa itu,
+artikel diimpor apa adanya dalam bahasa Indonesia (tanpa error).
+
+**Mengaktifkan:**
+1. Buat API key di https://console.anthropic.com/ .
+2. GitHub repo → Settings → Secrets and variables → Actions → New repository
+   secret → nama `ANTHROPIC_API_KEY`, isi tokennya. Workflow sudah membaca
+   secret ini otomatis.
+3. Opsional: `TRANSLATE_MODEL` (default `claude-haiku-4-5-20251001`, model cepat
+   dan murah untuk terjemahan).
+
+**Menerjemahkan berita yang sudah terlanjur diimpor (backfill):** karena
+artikel yang sudah ada dilewati, jalankan sekali dengan key untuk menulis ulang
+semuanya dalam bahasa Inggris:
+
+```
+# dari folder web/, dengan key terpasang di environment
+# hapus dulu artikel hasil impor (yang punya wpId), lalu impor ulang
+node -e "const fs=require('fs');for(const f of fs.readdirSync('src/content/notes')){if(f.endsWith('.json')&&JSON.parse(fs.readFileSync('src/content/notes/'+f)).wpId)fs.unlinkSync('src/content/notes/'+f)}"
+ANTHROPIC_API_KEY=sk-ant-... node scripts/import-wp.mjs
+```
+
+Gambar tidak diunduh ulang (sudah ter-cache), jadi prosesnya relatif cepat;
+biaya terjemahan kecil (model Haiku, sekitar beberapa dolar untuk seluruh
+backfill, lalu sen per artikel baru).
+
 ## Batasan saat ini
 - Hanya **menambah berita baru**. Perubahan/edit atau penghapusan artikel di
   situs lama belum ikut tersinkron (bisa ditambahkan nanti bila perlu).

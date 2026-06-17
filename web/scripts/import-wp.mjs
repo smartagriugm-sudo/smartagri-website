@@ -91,6 +91,60 @@ function sanitize(s) {
   return s.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+// Optional translation of the Indonesian fields to English via the Anthropic
+// API. Active only when ANTHROPIC_API_KEY is set; otherwise content stays in
+// Indonesian (no error). Returns { title, excerpt, body } in English or null.
+const TRANSLATE_MODEL = process.env.TRANSLATE_MODEL || "claude-haiku-4-5-20251001";
+async function translateToEnglish({ title, excerpt, body }) {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
+  const prompt = `You are translating an Indonesian news article from a university smart-agriculture research center into natural, professional English for the center's website.
+
+Rules:
+- Translate faithfully; do not add, remove, or summarize content.
+- Preserve Markdown exactly, including image syntax (![](...)) and links.
+- Keep proper nouns, people's names, institutions, and acronyms unchanged (e.g. SmartAgri, UGM, FTP, BRIN, DTPB).
+- Output ONLY the three tagged blocks below, nothing else.
+
+<TITLE>${title}</TITLE>
+<EXCERPT>${excerpt}</EXCERPT>
+<BODY>
+${body}
+</BODY>`;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: TRANSLATE_MODEL,
+          max_tokens: 8000,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      if (!res.ok) {
+        console.warn(`  translate HTTP ${res.status}`);
+        continue;
+      }
+      const data = await res.json();
+      const text = data?.content?.[0]?.text || "";
+      const t = text.match(/<TITLE>([\s\S]*?)<\/TITLE>/);
+      const e = text.match(/<EXCERPT>([\s\S]*?)<\/EXCERPT>/);
+      const b = text.match(/<BODY>([\s\S]*?)<\/BODY>/);
+      if (t && e && b) {
+        return { title: t[1].trim(), excerpt: e[1].trim(), body: b[1].trim() };
+      }
+    } catch (err) {
+      console.warn("  translate error:", err.message);
+    }
+  }
+  return null;
+}
+
 async function fetchJson(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
@@ -254,20 +308,34 @@ async function main() {
       }
     }
 
-    const body = turndown.turndown(doc.body.innerHTML).trim();
+    let body = turndown.turndown(doc.body.innerHTML).trim();
     const fullText = htmlToText(post.content?.rendered || "");
-    const excerpt =
+    let excerpt =
       truncateWords(fullText, 45) || cleanExcerpt(post.excerpt?.rendered || "");
+    let title = decodeEntities(post.title?.rendered || "").trim();
+
+    // Translate to English when enabled; keep the Indonesian original under
+    // `original` so a future bilingual toggle can show both languages.
+    let original;
+    const translated = await translateToEnglish({ title, excerpt, body });
+    if (translated) {
+      original = { lang: "id", title, excerpt, body };
+      title = translated.title || title;
+      excerpt = translated.excerpt || excerpt;
+      body = translated.body || body;
+    }
+
     const note = {
       wpId: post.id,
       category: mapCategory(post.categories || [], catMap),
       date,
-      title: decodeEntities(post.title?.rendered || "").trim(),
+      title,
       excerpt,
       tags: mapTags(post.tags || [], tagMap),
       ...(cover ? { cover } : {}),
       sourceUrl: post.link,
       body,
+      ...(original ? { original } : {}),
     };
 
     await writeFile(
