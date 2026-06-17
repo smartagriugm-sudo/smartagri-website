@@ -2,7 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { body, display } from "../lib/fonts";
 import { categoryChip, findNote } from "../lib/notes";
 import SiteHeader from "../components/SiteHeader";
@@ -214,6 +214,23 @@ function NoteDetailPage() {
                   </span>
                 ))}
               </div>
+            )}
+            {note.sourceUrl && (
+              <p
+                className="mt-8 text-sm font-normal text-neutral-400"
+                style={body}
+              >
+                Originally published on our previous site.{" "}
+                <a
+                  href={note.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[#0B6477] font-medium hover:underline"
+                >
+                  Read the original
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </a>
+              </p>
             )}
           </motion.div>
         </div>

@@ -36,6 +36,8 @@ export type Note = {
   cover?: string;
   /** Optional article body in Markdown (edited via the /admin CMS) */
   body?: string;
+  /** Set on auto-imported posts: link to the original article on the old site */
+  sourceUrl?: string;
 };
 
 // Chip colors cycle through the brand palette per category.
@@ -69,6 +71,7 @@ type NoteFile = {
   tags?: string[];
   cover?: string;
   body?: string;
+  sourceUrl?: string;
 };
 
 const noteFiles = import.meta.glob<NoteFile>("../content/notes/*.json", {

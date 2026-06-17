@@ -1,0 +1,53 @@
+name: Import WordPress news
+
+# Pulls new posts from the old WordPress site into Field Notes (converting
+# images to WebP and HTML to Markdown) and commits them, which triggers a
+# Vercel deploy. Near-real-time runs come from the WordPress publish webhook
+# (repository_dispatch); the schedule is a safety-net poll in case a webhook
+# is missed. See SETUP-NEWS-SYNC.md for the webhook setup.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+  repository_dispatch:
+    types: [wp-publish]
+
+permissions:
+  contents: write
+
+# Never let two import runs race on a push to main.
+concurrency:
+  group: import-wp-news
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Import new posts
+        working-directory: web
+        run: node scripts/import-wp.mjs
+
+      - name: Commit and push if there are new posts
+        run: |
+          if [ -n "$(git status --porcelain web/src/content/notes web/public/brand/uploads/notes)" ]; then
+            git config user.name "smartagri-news-bot"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add web/src/content/notes web/public/brand/uploads/notes
+            git commit -m "Import latest news from the old site"
+            git push
+          else
+            echo "No new posts to import."
+          fi
