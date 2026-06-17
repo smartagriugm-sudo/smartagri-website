@@ -206,6 +206,7 @@ async function main() {
     const dom = new JSDOM(`<body>${post.content?.rendered || ""}</body>`);
     const doc = dom.window.document;
     let coverFromBody = null;
+    let firstImgEl = null;
     const imgs = [...doc.querySelectorAll("img")];
     for (const [i, img] of imgs.entries()) {
       const src = img.getAttribute("src");
@@ -215,7 +216,10 @@ async function main() {
         img.setAttribute("src", local);
         img.removeAttribute("srcset");
         img.removeAttribute("sizes");
-        if (!coverFromBody) coverFromBody = local;
+        if (!coverFromBody) {
+          coverFromBody = local;
+          firstImgEl = img;
+        }
       }
     }
 
@@ -232,6 +236,21 @@ async function main() {
         }
       } catch {
         /* fall back to body cover */
+      }
+    }
+
+    // When the cover is the first body image, drop it from the body so it
+    // doesn't render twice (once as cover, once at the top of the article).
+    if (firstImgEl && cover === coverFromBody) {
+      const parent = firstImgEl.parentElement;
+      firstImgEl.remove();
+      if (
+        parent &&
+        ["FIGURE", "P"].includes(parent.tagName) &&
+        !parent.textContent.trim() &&
+        parent.querySelectorAll("img").length === 0
+      ) {
+        parent.remove();
       }
     }
 
