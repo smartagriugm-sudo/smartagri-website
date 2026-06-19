@@ -21,6 +21,7 @@ import { Route as DemoRouteImport } from './routes/demo'
 import { Route as ContactUsRouteImport } from './routes/contact-us'
 import { Route as AboutUsRouteImport } from './routes/about-us'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AiIndexRouteImport } from './routes/ai/index'
 import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
 import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
 import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
@@ -88,6 +89,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiIndexRoute = AiIndexRouteImport.update({
+  id: '/ai/',
+  path: '/ai/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamSlugRoute = TeamSlugRouteImport.update({
   id: '/team_/$slug',
   path: '/team/$slug',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
+  '/ai/': typeof AiIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
+  '/ai': typeof AiIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/publications_/$slug': typeof PublicationsSlugRoute
   '/research_/$slug': typeof ResearchSlugRoute
   '/team_/$slug': typeof TeamSlugRoute
+  '/ai/': typeof AiIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/publications/$slug'
     | '/research/$slug'
     | '/team/$slug'
+    | '/ai/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/publications/$slug'
     | '/research/$slug'
     | '/team/$slug'
+    | '/ai'
   id:
     | '__root__'
     | '/'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/publications_/$slug'
     | '/research_/$slug'
     | '/team_/$slug'
+    | '/ai/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   PublicationsSlugRoute: typeof PublicationsSlugRoute
   ResearchSlugRoute: typeof ResearchSlugRoute
   TeamSlugRoute: typeof TeamSlugRoute
+  AiIndexRoute: typeof AiIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -350,6 +363,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai/': {
+      id: '/ai/'
+      path: '/ai'
+      fullPath: '/ai/'
+      preLoaderRoute: typeof AiIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team_/$slug': {
       id: '/team_/$slug'
       path: '/team/$slug'
@@ -414,6 +434,7 @@ const rootRouteChildren: RootRouteChildren = {
   PublicationsSlugRoute: PublicationsSlugRoute,
   ResearchSlugRoute: ResearchSlugRoute,
   TeamSlugRoute: TeamSlugRoute,
+  AiIndexRoute: AiIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
