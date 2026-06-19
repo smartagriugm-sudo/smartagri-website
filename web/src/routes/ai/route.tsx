@@ -7,6 +7,10 @@ import SiteHeader from '../../components/SiteHeader'
 
 export const Route = createFileRoute('/ai')({
   component: AILayout,
+  // Keep the AI area out of search engines (it is a private, gated tool).
+  head: () => ({
+    meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+  }),
 })
 
 // Gates every /ai* page. When auth is disabled (Supabase not configured) the

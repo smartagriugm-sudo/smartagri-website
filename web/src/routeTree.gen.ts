@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TechnologyRouteImport } from './routes/technology'
 import { Route as TeamRouteImport } from './routes/team'
+import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PublicationsRouteImport } from './routes/publications'
@@ -39,6 +40,11 @@ const TechnologyRoute = TechnologyRouteImport.update({
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignInRoute = SignInRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
   '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
   '/ai/chat': typeof AiChatRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
   '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
   '/ai/chat': typeof AiChatRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
   '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
   '/ai/chat': typeof AiChatRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
     | '/publications'
     | '/research'
     | '/sign-in'
+    | '/sign-up'
     | '/team'
     | '/technology'
     | '/ai/chat'
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/publications'
     | '/research'
     | '/sign-in'
+    | '/sign-up'
     | '/team'
     | '/technology'
     | '/ai/chat'
@@ -266,6 +277,7 @@ export interface FileRouteTypes {
     | '/publications'
     | '/research'
     | '/sign-in'
+    | '/sign-up'
     | '/team'
     | '/technology'
     | '/ai/chat'
@@ -290,6 +302,7 @@ export interface RootRouteChildren {
   PublicationsRoute: typeof PublicationsRoute
   ResearchRoute: typeof ResearchRoute
   SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
   TeamRoute: typeof TeamRoute
   TechnologyRoute: typeof TechnologyRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign-in': {
@@ -478,6 +498,7 @@ const rootRouteChildren: RootRouteChildren = {
   PublicationsRoute: PublicationsRoute,
   ResearchRoute: ResearchRoute,
   SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
   TeamRoute: TeamRoute,
   TechnologyRoute: TechnologyRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,

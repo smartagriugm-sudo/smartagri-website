@@ -23,16 +23,32 @@ pengembangan). Begitu kedua env diisi, gerbang aktif otomatis.
    - **anon public key** → `VITE_SUPABASE_ANON_KEY`
    (Keduanya publik/aman dipakai di browser. Jangan pakai `service_role` key.)
 
-### 2. Batasi pendaftaran (penting)
+### 2. Aktifkan pendaftaran email/password
 Buka **Authentication → Sign In / Providers** (atau **Settings**):
-- **Matikan "Allow new users to sign up"** supaya tidak ada pendaftaran publik.
 - Aktifkan **Email** provider (email + password).
+- Karena memakai **sign-up terbuka**, biarkan **"Allow new users to sign up"
+  tetap ON** (kalau OFF, halaman `/sign-up` akan gagal).
+- (Opsional) aktifkan **Confirm email** kalau ingin verifikasi email sebelum
+  user bisa login.
 
-### 3. Tambah akun asisten riset
-Buka **Authentication → Users → Add user** untuk tiap asisten riset
-(email + password), atau **Invite** lewat email. Hanya user yang Anda buat di
-sini yang bisa login. Pengelolaan akun (tambah/hapus/reset password) dilakukan
-dari dashboard Supabase ini.
+### 3. Akun asisten riset
+Asisten riset mendaftar sendiri di halaman **`/sign-up`** (email + password).
+Anda juga tetap bisa menambah/menghapus/reset akun manual lewat **Authentication
+→ Users** di dashboard Supabase.
+
+> Catatan keamanan: sign-up terbuka berarti siapa pun yang tahu URL `/sign-up`
+> bisa membuat akun lalu mengakses AI. Pembatasan saat ini hanya "URL tidak
+> dipublikasikan" + noindex. Kapan saja bisa diperketat: matikan "Allow new
+> users to sign up" di Supabase (lalu kelola akun manual), atau minta saya
+> tambahkan pembatasan domain email.
+
+### Akses ke halaman login/daftar
+- **Tidak ada tombol login publik.** `/sign-in` dan `/sign-up` hanya diakses
+  lewat URL langsung yang Anda bagikan ke asisten riset.
+- Kedua halaman (dan seluruh `/ai*`) sudah diberi **`noindex`** agar tidak
+  muncul di hasil pencarian.
+- Setelah login, menu **"AI Assistant"** muncul otomatis di nav; saat **Sign
+  out**, hilang lagi.
 
 ### 4. Isi environment
 - Lokal: file `web/.env`

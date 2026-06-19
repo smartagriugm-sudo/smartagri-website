@@ -1,39 +1,40 @@
 import { useEffect, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { Loader2, Lock } from 'lucide-react'
+import { Loader2, UserPlus } from 'lucide-react'
 import { isAuthConfigured, supabase } from '../lib/auth/supabase'
 import { useAuth } from '../lib/auth/auth'
 import { accent, body, display } from '../lib/fonts'
 import SiteHeader from '../components/SiteHeader'
 
-export const Route = createFileRoute('/sign-in')({
+export const Route = createFileRoute('/sign-up')({
   validateSearch: (search: Record<string, unknown>) => ({
     redirect:
       typeof search.redirect === 'string' && search.redirect.startsWith('/')
         ? search.redirect
         : undefined,
   }),
-  component: SignInPage,
+  component: SignUpPage,
   head: () => ({
     meta: [
-      { title: 'Sign In | smartagri' },
+      { title: 'Sign Up | smartagri' },
       { name: 'robots', content: 'noindex, nofollow' },
-      { name: 'description', content: 'Research assistant sign in for the SmartAgri AI Assistant.' },
+      { name: 'description', content: 'Research assistant sign up for the SmartAgri AI Assistant.' },
     ],
   }),
 })
 
-function SignInPage() {
+function SignUpPage() {
   const { redirect } = Route.useSearch()
   const { user, loading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const target = redirect ?? '/ai'
 
-  // Already signed in: go straight to the destination.
   useEffect(() => {
     if (!loading && user) window.location.assign(target)
   }, [loading, user, target])
@@ -43,18 +44,34 @@ function SignInPage() {
       setError('Authentication is not configured yet.')
       return
     }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.')
+      return
+    }
     setSubmitting(true)
     setError(null)
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    setNotice(null)
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
     })
-    if (signInError) {
-      setSubmitting(false)
-      setError(signInError.message)
+    setSubmitting(false)
+    if (signUpError) {
+      setError(signUpError.message)
       return
     }
-    window.location.assign(target)
+    // If email confirmation is on, there is no session yet.
+    if (data.session) {
+      window.location.assign(target)
+    } else {
+      setNotice(
+        'Account created. Please check your email to confirm your address, then sign in.',
+      )
+    }
   }
 
   return (
@@ -64,16 +81,16 @@ function SignInPage() {
         <div className="w-full max-w-[420px] rounded-3xl border border-[#0B6477]/10 bg-white p-8 shadow-sm">
           <div className="mb-6 flex flex-col items-center gap-3 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0B6477]">
-              <Lock className="h-6 w-6 text-[#45DFB1]" />
+              <UserPlus className="h-6 w-6 text-[#45DFB1]" />
             </div>
             <h1
               className="text-2xl font-semibold tracking-[-0.025em] text-neutral-900"
               style={display}
             >
-              Research Assistant <span style={accent}>Sign In</span>
+              Create an <span style={accent}>account</span>
             </h1>
             <p className="text-sm text-neutral-500" style={body}>
-              Sign in to access the SmartAgri AI Assistant.
+              Register to access the SmartAgri AI Assistant.
             </p>
           </div>
 
@@ -82,7 +99,7 @@ function SignInPage() {
               className="rounded-xl bg-[#F3F7F6] px-4 py-3 text-center text-sm text-neutral-500"
               style={body}
             >
-              Sign-in is not configured yet. Please contact the SmartAgri team.
+              Sign-up is not configured yet. Please contact the SmartAgri team.
             </p>
           ) : (
             <form
@@ -115,7 +132,21 @@ function SignInPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Your password"
+                  placeholder="At least 6 characters"
+                  className="w-full rounded-xl border border-[#0B6477]/20 bg-white px-3 py-2.5 text-[15px] text-neutral-800 outline-none transition-colors placeholder:text-neutral-400 focus:border-[#0B6477]"
+                  style={body}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-neutral-700" style={body}>
+                  Confirm password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="Re-enter password"
                   className="w-full rounded-xl border border-[#0B6477]/20 bg-white px-3 py-2.5 text-[15px] text-neutral-800 outline-none transition-colors placeholder:text-neutral-400 focus:border-[#0B6477]"
                   style={body}
                 />
@@ -124,6 +155,11 @@ function SignInPage() {
               {error && (
                 <p className="text-sm text-[#B91C1C]" style={body}>
                   {error}
+                </p>
+              )}
+              {notice && (
+                <p className="text-sm text-[#0B6477]" style={body}>
+                  {notice}
                 </p>
               )}
 
@@ -136,29 +172,24 @@ function SignInPage() {
                 {submitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Signing in...
+                    Creating account...
                   </>
                 ) : (
-                  'Sign In'
+                  'Sign Up'
                 )}
               </button>
             </form>
           )}
 
-          {isAuthConfigured && (
-            <p className="mt-6 text-center text-sm text-neutral-500" style={body}>
-              Don&apos;t have an account?{' '}
-              <Link
-                to="/sign-up"
-                search={{ redirect }}
-                className="font-medium text-[#0B6477] hover:underline"
-              >
-                Sign up
-              </Link>
-            </p>
-          )}
-          <p className="mt-3 text-center text-xs text-neutral-400" style={body}>
-            For research assistants only.
+          <p className="mt-6 text-center text-sm text-neutral-500" style={body}>
+            Already have an account?{' '}
+            <Link
+              to="/sign-in"
+              search={{ redirect }}
+              className="font-medium text-[#0B6477] hover:underline"
+            >
+              Sign in
+            </Link>
           </p>
         </div>
       </section>
