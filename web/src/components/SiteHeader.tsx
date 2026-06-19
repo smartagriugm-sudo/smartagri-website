@@ -4,13 +4,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { A } from "../lib/assets";
 import { body } from "../lib/fonts";
+import { useAuth } from "../lib/auth/auth";
 
 type NavLink = { label: string; to: string; highlight?: boolean };
 
 const leadLinks: NavLink[] = [
   { label: "Research", to: "/research" },
   { label: "Technology", to: "/technology" },
-  { label: "AI Assistant", to: "/ai" },
 ];
 // Grouped under a "Media" dropdown on narrow desktops (see MediaDropdown).
 const mediaLinks: NavLink[] = [
@@ -27,8 +27,8 @@ const eventLink: NavLink = {
   highlight: true,
 };
 
-// Flat list used by the mobile menu (vertical space is not constrained there).
-const navLinks = [...leadLinks, ...mediaLinks, ...tailLinks, eventLink];
+// Shown only to signed-in research assistants (or when auth is disabled).
+const AI_LINK: NavLink = { label: "AI Assistant", to: "/ai" };
 
 // Pulsing "live event" dot shown next to highlighted (event) nav items.
 function LiveDot() {
@@ -102,6 +102,19 @@ function MediaDropdown({ className = "" }: { className?: string }) {
 export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { user, isConfigured, signOut } = useAuth();
+
+  // When auth is disabled (no Supabase env) the AI link is public; when
+  // enabled, it appears only for signed-in research assistants.
+  const showAi = !isConfigured || !!user;
+  const signedIn = isConfigured && !!user;
+  const mobileLinks: NavLink[] = [
+    ...leadLinks,
+    ...(showAi ? [AI_LINK] : []),
+    ...mediaLinks,
+    ...tailLinks,
+    eventLink,
+  ];
 
   useEffect(() => {
     if (!overlay) return;
@@ -128,6 +141,7 @@ export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           {leadLinks.map((link) => (
             <DesktopNavLink key={link.to} link={link} />
           ))}
+          {showAi && <DesktopNavLink link={AI_LINK} />}
           {/* Media: inline links at xl+, grouped into a dropdown on narrow (lg) screens. */}
           <span className="hidden xl:contents">
             {mediaLinks.map((link) => (
@@ -139,6 +153,16 @@ export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
             <DesktopNavLink key={link.to} link={link} />
           ))}
           <DesktopNavLink link={eventLink} />
+          {signedIn && (
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="text-white/80 text-base hover:text-white transition-colors"
+              style={body}
+            >
+              Sign out
+            </button>
+          )}
           <Link
             to="/contact-us"
             className="h-10 px-5 rounded-full bg-[#45DFB1] text-[#0B2A22] font-medium flex items-center hover:bg-[#80ED99] transition-colors"
@@ -168,7 +192,7 @@ export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
                 exit={{ opacity: 0, y: -10 }}
                 className="absolute top-full right-6 mt-2 w-60 bg-[#08313A]/95 backdrop-blur-lg border border-white/10 rounded-2xl p-4 flex flex-col gap-3 shadow-xl"
               >
-                {navLinks.map((link) => (
+                {mobileLinks.map((link) => (
                   <Link
                     key={link.label}
                     to={link.to}
@@ -184,6 +208,19 @@ export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
                     {link.highlight && <LiveDot />}
                   </Link>
                 ))}
+                {signedIn && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      void signOut();
+                    }}
+                    className="text-left text-white/80 text-base hover:text-white"
+                    style={body}
+                  >
+                    Sign out
+                  </button>
+                )}
                 <Link
                   to="/contact-us"
                   onClick={() => setMenuOpen(false)}

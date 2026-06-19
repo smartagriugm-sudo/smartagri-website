@@ -1,10 +1,15 @@
-import { defineEventHandler, readBody } from 'h3'
+import { defineEventHandler, getRequestHeader, readBody } from 'h3'
 import { CHAT_SYSTEM_PROMPT } from '../../../src/lib/ai/prompts'
 import { jsonResponse, streamChatCompletion } from '../../../src/lib/ai/ollama'
+import { isAuthorized } from '../../../src/lib/ai/auth-guard'
 
 // POST /api/ai/chat — proxy for the chat assistant. The browser only ever
 // talks to this route, never to Ollama directly.
 export default defineEventHandler(async (event) => {
+  if (!(await isAuthorized(getRequestHeader(event, 'authorization')))) {
+    return jsonResponse({ error: 'Unauthorized' }, 401)
+  }
+
   const body = (await readBody(event).catch(() => null)) as {
     messages?: unknown
   } | null

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TechnologyRouteImport } from './routes/technology'
 import { Route as TeamRouteImport } from './routes/team'
+import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PublicationsRouteImport } from './routes/publications'
 import { Route as ImpactRouteImport } from './routes/impact'
@@ -20,6 +21,7 @@ import { Route as ExhibitionRouteImport } from './routes/exhibition'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as ContactUsRouteImport } from './routes/contact-us'
 import { Route as AboutUsRouteImport } from './routes/about-us'
+import { Route as AiRouteRouteImport } from './routes/ai/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AiIndexRouteImport } from './routes/ai/index'
 import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
@@ -37,6 +39,11 @@ const TechnologyRoute = TechnologyRouteImport.update({
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResearchRoute = ResearchRouteImport.update({
@@ -84,15 +91,20 @@ const AboutUsRoute = AboutUsRouteImport.update({
   path: '/about-us',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiRouteRoute = AiRouteRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiIndexRoute = AiIndexRouteImport.update({
-  id: '/ai/',
-  path: '/ai/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AiRouteRoute,
 } as any)
 const TeamSlugRoute = TeamSlugRouteImport.update({
   id: '/team_/$slug',
@@ -115,18 +127,19 @@ const FieldNotesSlugRoute = FieldNotesSlugRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiGenerateRoute = AiGenerateRouteImport.update({
-  id: '/ai/generate',
-  path: '/ai/generate',
-  getParentRoute: () => rootRouteImport,
+  id: '/generate',
+  path: '/generate',
+  getParentRoute: () => AiRouteRoute,
 } as any)
 const AiChatRoute = AiChatRouteImport.update({
-  id: '/ai/chat',
-  path: '/ai/chat',
-  getParentRoute: () => rootRouteImport,
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AiRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ai': typeof AiRouteRouteWithChildren
   '/about-us': typeof AboutUsRoute
   '/contact-us': typeof ContactUsRoute
   '/demo': typeof DemoRoute
@@ -136,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/sign-in': typeof SignInRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
   '/ai/chat': typeof AiChatRoute
@@ -157,6 +171,7 @@ export interface FileRoutesByTo {
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/sign-in': typeof SignInRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
   '/ai/chat': typeof AiChatRoute
@@ -170,6 +185,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ai': typeof AiRouteRouteWithChildren
   '/about-us': typeof AboutUsRoute
   '/contact-us': typeof ContactUsRoute
   '/demo': typeof DemoRoute
@@ -179,6 +195,7 @@ export interface FileRoutesById {
   '/impact': typeof ImpactRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/sign-in': typeof SignInRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
   '/ai/chat': typeof AiChatRoute
@@ -193,6 +210,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ai'
     | '/about-us'
     | '/contact-us'
     | '/demo'
@@ -202,6 +220,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/publications'
     | '/research'
+    | '/sign-in'
     | '/team'
     | '/technology'
     | '/ai/chat'
@@ -223,6 +242,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/publications'
     | '/research'
+    | '/sign-in'
     | '/team'
     | '/technology'
     | '/ai/chat'
@@ -235,6 +255,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/ai'
     | '/about-us'
     | '/contact-us'
     | '/demo'
@@ -244,6 +265,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/publications'
     | '/research'
+    | '/sign-in'
     | '/team'
     | '/technology'
     | '/ai/chat'
@@ -257,6 +279,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AiRouteRoute: typeof AiRouteRouteWithChildren
   AboutUsRoute: typeof AboutUsRoute
   ContactUsRoute: typeof ContactUsRoute
   DemoRoute: typeof DemoRoute
@@ -266,15 +289,13 @@ export interface RootRouteChildren {
   ImpactRoute: typeof ImpactRoute
   PublicationsRoute: typeof PublicationsRoute
   ResearchRoute: typeof ResearchRoute
+  SignInRoute: typeof SignInRoute
   TeamRoute: typeof TeamRoute
   TechnologyRoute: typeof TechnologyRoute
-  AiChatRoute: typeof AiChatRoute
-  AiGenerateRoute: typeof AiGenerateRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   PublicationsSlugRoute: typeof PublicationsSlugRoute
   ResearchSlugRoute: typeof ResearchSlugRoute
   TeamSlugRoute: typeof TeamSlugRoute
-  AiIndexRoute: typeof AiIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -291,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/research': {
@@ -356,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutUsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai': {
+      id: '/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AiRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -365,10 +400,10 @@ declare module '@tanstack/react-router' {
     }
     '/ai/': {
       id: '/ai/'
-      path: '/ai'
+      path: '/'
       fullPath: '/ai/'
       preLoaderRoute: typeof AiIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AiRouteRoute
     }
     '/team_/$slug': {
       id: '/team_/$slug'
@@ -400,23 +435,39 @@ declare module '@tanstack/react-router' {
     }
     '/ai/generate': {
       id: '/ai/generate'
-      path: '/ai/generate'
+      path: '/generate'
       fullPath: '/ai/generate'
       preLoaderRoute: typeof AiGenerateRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AiRouteRoute
     }
     '/ai/chat': {
       id: '/ai/chat'
-      path: '/ai/chat'
+      path: '/chat'
       fullPath: '/ai/chat'
       preLoaderRoute: typeof AiChatRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AiRouteRoute
     }
   }
 }
 
+interface AiRouteRouteChildren {
+  AiChatRoute: typeof AiChatRoute
+  AiGenerateRoute: typeof AiGenerateRoute
+  AiIndexRoute: typeof AiIndexRoute
+}
+
+const AiRouteRouteChildren: AiRouteRouteChildren = {
+  AiChatRoute: AiChatRoute,
+  AiGenerateRoute: AiGenerateRoute,
+  AiIndexRoute: AiIndexRoute,
+}
+
+const AiRouteRouteWithChildren =
+  AiRouteRoute._addFileChildren(AiRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AiRouteRoute: AiRouteRouteWithChildren,
   AboutUsRoute: AboutUsRoute,
   ContactUsRoute: ContactUsRoute,
   DemoRoute: DemoRoute,
@@ -426,15 +477,13 @@ const rootRouteChildren: RootRouteChildren = {
   ImpactRoute: ImpactRoute,
   PublicationsRoute: PublicationsRoute,
   ResearchRoute: ResearchRoute,
+  SignInRoute: SignInRoute,
   TeamRoute: TeamRoute,
   TechnologyRoute: TechnologyRoute,
-  AiChatRoute: AiChatRoute,
-  AiGenerateRoute: AiGenerateRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   PublicationsSlugRoute: PublicationsSlugRoute,
   ResearchSlugRoute: ResearchSlugRoute,
   TeamSlugRoute: TeamSlugRoute,
-  AiIndexRoute: AiIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

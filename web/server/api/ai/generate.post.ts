@@ -1,15 +1,20 @@
-import { defineEventHandler, readBody } from 'h3'
+import { defineEventHandler, getRequestHeader, readBody } from 'h3'
 import {
   DOCUMENT_TYPE_CONFIGS,
   buildGeneratorPrompt,
 } from '../../../src/lib/ai/prompts'
 import { jsonResponse, streamChatCompletion } from '../../../src/lib/ai/ollama'
+import { isAuthorized } from '../../../src/lib/ai/auth-guard'
 import type { DocumentType } from '../../../src/lib/ai/types'
 
 const VALID_DOC_TYPES = Object.keys(DOCUMENT_TYPE_CONFIGS) as DocumentType[]
 
 // POST /api/ai/generate — proxy for the document generator.
 export default defineEventHandler(async (event) => {
+  if (!(await isAuthorized(getRequestHeader(event, 'authorization')))) {
+    return jsonResponse({ error: 'Unauthorized' }, 401)
+  }
+
   const body = (await readBody(event).catch(() => null)) as {
     docType?: unknown
     fields?: unknown

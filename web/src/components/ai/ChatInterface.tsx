@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import { Send, Square, Trash2 } from 'lucide-react'
 import type { ChatMessage } from '../../lib/ai/types'
 import { consumeStream, generateMessageId } from '../../lib/ai/stream'
+import { getAccessToken } from '../../lib/auth/supabase'
 import { body, display } from '../../lib/fonts'
 import ChatBubble from './ChatBubble'
 import TypingIndicator from './TypingIndicator'
@@ -108,9 +109,13 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
     }
 
     try {
+      const token = await getAccessToken()
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ messages: history }),
         signal: ac.signal,
       })

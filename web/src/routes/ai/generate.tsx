@@ -4,6 +4,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { AlertCircle } from 'lucide-react'
 import type { DocumentType } from '../../lib/ai/types'
 import { consumeStream } from '../../lib/ai/stream'
+import { getAccessToken } from '../../lib/auth/supabase'
 import { body } from '../../lib/fonts'
 import SiteHeader from '../../components/SiteHeader'
 import GeneratorForm from '../../components/ai/GeneratorForm'
@@ -49,9 +50,13 @@ function AIGeneratePage() {
     setError(null)
 
     try {
+      const token = await getAccessToken()
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ docType, fields }),
       })
 
