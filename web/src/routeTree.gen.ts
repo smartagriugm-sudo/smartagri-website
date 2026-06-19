@@ -25,6 +25,7 @@ import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
 import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
 import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
+import { Route as AiChatRouteImport } from './routes/ai/chat'
 
 const TechnologyRoute = TechnologyRouteImport.update({
   id: '/technology',
@@ -106,6 +107,11 @@ const FieldNotesSlugRoute = FieldNotesSlugRouteImport.update({
   path: '/field-notes/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiChatRoute = AiChatRouteImport.update({
+  id: '/ai/chat',
+  path: '/ai/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/research': typeof ResearchRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
+  '/ai/chat': typeof AiChatRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/research': typeof ResearchRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
+  '/ai/chat': typeof AiChatRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/research': typeof ResearchRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
+  '/ai/chat': typeof AiChatRoute
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
   '/publications_/$slug': typeof PublicationsSlugRoute
   '/research_/$slug': typeof ResearchSlugRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/research'
     | '/team'
     | '/technology'
+    | '/ai/chat'
     | '/field-notes/$slug'
     | '/publications/$slug'
     | '/research/$slug'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/research'
     | '/team'
     | '/technology'
+    | '/ai/chat'
     | '/field-notes/$slug'
     | '/publications/$slug'
     | '/research/$slug'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/research'
     | '/team'
     | '/technology'
+    | '/ai/chat'
     | '/field-notes_/$slug'
     | '/publications_/$slug'
     | '/research_/$slug'
@@ -232,6 +244,7 @@ export interface RootRouteChildren {
   ResearchRoute: typeof ResearchRoute
   TeamRoute: typeof TeamRoute
   TechnologyRoute: typeof TechnologyRoute
+  AiChatRoute: typeof AiChatRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   PublicationsSlugRoute: typeof PublicationsSlugRoute
   ResearchSlugRoute: typeof ResearchSlugRoute
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FieldNotesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai/chat': {
+      id: '/ai/chat'
+      path: '/ai/chat'
+      fullPath: '/ai/chat'
+      preLoaderRoute: typeof AiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -368,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResearchRoute: ResearchRoute,
   TeamRoute: TeamRoute,
   TechnologyRoute: TechnologyRoute,
+  AiChatRoute: AiChatRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   PublicationsSlugRoute: PublicationsSlugRoute,
   ResearchSlugRoute: ResearchSlugRoute,
