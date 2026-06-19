@@ -20,7 +20,7 @@ export const Route = createFileRoute('/ai/generate')({
       {
         name: 'description',
         content:
-          'SmartAgri SARC UGM academic document generator: activity reports, articles, proposals, abstracts, data summaries, and official letters.',
+          'SmartAgri UGM academic document generator: activity reports, articles, proposals, abstracts, data summaries, and official letters.',
       },
     ],
   }),

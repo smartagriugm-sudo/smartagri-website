@@ -14,7 +14,7 @@ export const Route = createFileRoute('/ai/')({
       {
         name: 'description',
         content:
-          'An AI-powered research assistant for SmartAgri SARC UGM: precision agriculture Q&A, academic document generation, and data analysis.',
+          'An AI-powered research assistant for SmartAgri UGM: precision agriculture Q&A, academic document generation, and data analysis.',
       },
     ],
   }),
@@ -62,7 +62,7 @@ function AILandingPage() {
                 AI <span style={accent}>Research Assistant</span>
               </>
             }
-            subtitle="An AI-powered research assistant for SmartAgri SARC UGM. Ask about precision agriculture research, generate academic documents automatically, and get help analyzing your data."
+            subtitle="An AI-powered research assistant for SmartAgri UGM. Ask about precision agriculture research, generate academic documents automatically, and get help analyzing your data."
           />
 
           <div className="grid gap-6 md:grid-cols-2">
@@ -127,8 +127,8 @@ function AILandingPage() {
           >
             <Shield className="h-4 w-4 shrink-0 text-[#0B6477]" />
             <p className="text-xs text-neutral-500 md:text-sm" style={body}>
-              Powered by open-source AI (Qwen) via Ollama, running on the SARC UGM
-              server. Your data is not sent to third parties.
+              Powered by open-source AI (Qwen) via Ollama, running on the SmartAgri
+              UGM server. Your data is not sent to third parties.
             </p>
           </motion.div>
         </div>

@@ -158,7 +158,7 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
               AI Research Assistant
             </h1>
             <p className="text-xs text-neutral-500 md:text-sm" style={body}>
-              SmartAgri SARC UGM
+              SmartAgri UGM
             </p>
           </div>
           <button

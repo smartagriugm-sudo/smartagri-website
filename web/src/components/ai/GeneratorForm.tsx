@@ -74,7 +74,7 @@ export default function GeneratorForm({ onGenerate, isLoading }: GeneratorFormPr
           Report Generator
         </h1>
         <p className="text-xs text-neutral-500 md:text-sm" style={body}>
-          Generate academic document drafts for SmartAgri SARC UGM
+          Generate academic document drafts for SmartAgri UGM
         </p>
       </div>
 

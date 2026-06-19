@@ -2,7 +2,7 @@ import type { DocumentType, DocumentTypeConfig } from './types'
 
 // ─── Chat System Prompt ────────────────────────────────────────────────────
 
-export const CHAT_SYSTEM_PROMPT = `You are the SmartAgri AI Research Assistant, the intelligent research assistant of the Smart Agriculture Research Center (SARC), Department of Agricultural and Biosystems Engineering (DTPB), Faculty of Agricultural Technology, Universitas Gadjah Mada (UGM), Yogyakarta, Indonesia.
+export const CHAT_SYSTEM_PROMPT = `You are the SmartAgri AI Research Assistant, the intelligent research assistant of the Smart Agriculture Research Center, Department of Agricultural and Biosystems Engineering (DTPB), Faculty of Agricultural Technology, Universitas Gadjah Mada (UGM), Yogyakarta, Indonesia.
 
 Your areas of expertise:
 - Precision agriculture and smart farming (IoT, sensors, automation)
@@ -29,7 +29,7 @@ export const DOCUMENT_TYPE_CONFIGS: Record<DocumentType, DocumentTypeConfig> = {
     fields: [
       { key: 'title', label: 'Activity Title', type: 'text', required: true, placeholder: 'e.g. Monitoring the Drip Irrigation System at KWT Teratai Mekar' },
       { key: 'date', label: 'Date & Location', type: 'text', required: true, placeholder: 'e.g. 15 June 2026, Condongcatur, Sleman' },
-      { key: 'team', label: 'Team / Participants', type: 'text', required: false, placeholder: 'e.g. SARC UGM team (3 people)' },
+      { key: 'team', label: 'Team / Participants', type: 'text', required: false, placeholder: 'e.g. SmartAgri UGM team (3 people)' },
       { key: 'description', label: 'Activity Description', type: 'textarea', required: true, placeholder: 'Describe what was done during the activity...' },
       { key: 'findings', label: 'Key Results & Findings', type: 'textarea', required: true, placeholder: 'What was found or achieved...' },
       { key: 'language', label: 'Output Language', type: 'select', required: true,
@@ -38,9 +38,9 @@ export const DOCUMENT_TYPE_CONFIGS: Record<DocumentType, DocumentTypeConfig> = {
   },
   news_article: {
     label: 'News / SmartAgri Article',
-    description: 'Popular science journalistic article for the SARC website',
+    description: 'Popular science journalistic article for the SmartAgri UGM website',
     fields: [
-      { key: 'title', label: 'Article Title', type: 'text', required: true, placeholder: 'e.g. SARC UGM Launches Automated Fertigation System in Sleman' },
+      { key: 'title', label: 'Article Title', type: 'text', required: true, placeholder: 'e.g. SmartAgri UGM Launches Automated Fertigation System in Sleman' },
       { key: 'event', label: 'Topic / Event Covered', type: 'text', required: true, placeholder: 'e.g. Launch of the RGBI 2026 program at KWT Teratai Mekar' },
       { key: 'keyPoints', label: 'Key Points', type: 'textarea', required: true, placeholder: 'List the main points to convey...' },
       { key: 'tone', label: 'Writing Tone', type: 'select', required: true,
@@ -94,7 +94,7 @@ export const DOCUMENT_TYPE_CONFIGS: Record<DocumentType, DocumentTypeConfig> = {
       { key: 'recipient', label: 'Addressed To', type: 'text', required: true, placeholder: 'e.g. Dean, Faculty of Agricultural Technology UGM' },
       { key: 'purpose', label: 'Purpose / Subject', type: 'text', required: true, placeholder: 'e.g. Request for a reference letter for a visa application' },
       { key: 'mainContent', label: 'Main Content', type: 'textarea', required: true, placeholder: 'Points that must appear in the letter/email...' },
-      { key: 'sender', label: 'Sender', type: 'text', required: false, placeholder: 'e.g. Dr. Andri Prima Nugroho, SARC UGM' },
+      { key: 'sender', label: 'Sender', type: 'text', required: false, placeholder: 'e.g. Dr. Andri Prima Nugroho, SmartAgri UGM' },
     ],
   },
 }
@@ -112,7 +112,7 @@ export function buildGeneratorPrompt(
     .map((f) => `${f.label}: ${fields[f.key]}`)
     .join('\n')
 
-  const baseInstruction = `You are the SmartAgri SARC UGM academic writing assistant.
+  const baseInstruction = `You are the SmartAgri UGM academic writing assistant.
 Your task is to produce a high-quality document from the information provided.
 Write in English unless explicitly asked to use Bahasa Indonesia.
 Output ONLY the document itself, with no extra explanation and no opening lines such as "Here is...".
@@ -132,7 +132,7 @@ ${fieldSummary}
 
 ${fields.language === 'id' ? 'Write the entire document in formal Bahasa Indonesia.' : 'Write the entire document in formal English.'}`,
 
-    news_article: `${baseInstruction}Write a popular science news article for the SmartAgri SARC UGM website.
+    news_article: `${baseInstruction}Write a popular science news article for the SmartAgri UGM website.
 Structure: a strong lead, an informative body (3-5 paragraphs), and a memorable closing.
 Tone: ${fields.tone === 'formal' ? 'formal and authoritative' : 'semi-formal and easy to read'}.
 Target length: ${fields.length === 'short' ? '~300 words' : fields.length === 'medium' ? '~600 words' : '~1000 words'}.
@@ -173,7 +173,7 @@ Data information:
 ${fieldSummary}`,
 
     formal_letter: `${baseInstruction}Write a professional ${fields.letterType === 'letter' ? 'official letter' : 'formal email'}.
-${fields.letterType === 'letter' ? 'Use a formal letter format: letterhead (write [SARC UGM LETTERHEAD]), letter number [___/___/___/____], subject, salutation, body, closing, and signature.' : 'Email format: Subject, Greeting, Body (3-4 paragraphs), Closing, and Signature.'}
+${fields.letterType === 'letter' ? 'Use a formal letter format: letterhead (write [SmartAgri UGM LETTERHEAD]), letter number [___/___/___/____], subject, salutation, body, closing, and signature.' : 'Email format: Subject, Greeting, Body (3-4 paragraphs), Closing, and Signature.'}
 
 Letter information:
 ${fieldSummary}`,
