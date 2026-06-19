@@ -11,7 +11,9 @@ const config = defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
     devtools(),
-    nitro({ rollupConfig: { external: [/^@sentry\//] } }),
+    // serverDir enables Nitro's file-based server routes under web/server/
+    // (e.g. server/api/ai/chat.post.ts -> POST /api/ai/chat). Off by default.
+    nitro({ serverDir: 'server', rollupConfig: { external: [/^@sentry\//] } }),
     tailwindcss(),
     tanstackStart(),
     viteReact(),
