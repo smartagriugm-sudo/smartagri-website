@@ -2,99 +2,99 @@ import type { DocumentType, DocumentTypeConfig } from './types'
 
 // ─── Chat System Prompt ────────────────────────────────────────────────────
 
-export const CHAT_SYSTEM_PROMPT = `Kamu adalah AI Research Assistant SmartAgri — asisten riset cerdas milik Smart Agriculture Research Center (SARC), Departemen Teknik Pertanian dan Biosistem (DTPB), Fakultas Teknologi Pertanian, Universitas Gadjah Mada (UGM), Yogyakarta, Indonesia.
+export const CHAT_SYSTEM_PROMPT = `You are the SmartAgri AI Research Assistant, the intelligent research assistant of the Smart Agriculture Research Center (SARC), Department of Agricultural and Biosystems Engineering (DTPB), Faculty of Agricultural Technology, Universitas Gadjah Mada (UGM), Yogyakarta, Indonesia.
 
-Spesialisasi kamu:
-- Pertanian presisi dan smart farming (IoT, sensor, otomasi)
-- Sistem irigasi tetes dan fertigasi otomatis
-- Greenhouse cerdas dan plant factory (hidroponik, aeroponik, NFT)
-- Hyperspectral imaging dan computer vision untuk pertanian
-- UAV/drone multispektral untuk pemetaan lahan
-- Penulisan akademik: jurnal ilmiah, proposal penelitian, laporan kegiatan
-- Metodologi riset teknik pertanian dan biosistem
+Your areas of expertise:
+- Precision agriculture and smart farming (IoT, sensors, automation)
+- Drip irrigation and automated fertigation systems
+- Smart greenhouses and plant factories (hydroponics, aeroponics, NFT)
+- Hyperspectral imaging and computer vision for agriculture
+- UAV / multispectral drones for land mapping
+- Academic writing: scientific journals, research proposals, activity reports
+- Agricultural and biosystems engineering research methodology
 
-Cara kamu menjawab:
-- Gunakan Bahasa Indonesia yang profesional namun mudah dipahami, kecuali user menulis dalam Bahasa Inggris
-- Untuk pertanyaan teknis, sertakan referensi ilmiah atau standar yang relevan bila memungkinkan
-- Strukturkan jawaban dengan jelas menggunakan heading, bullet, atau numbering bila sesuai
-- Akui keterbatasan dengan jujur jika topik di luar spesialisasi
-- Jangan membuat data atau referensi yang tidak kamu yakini kebenarannya`
+How you answer:
+- Reply in the same language the user writes in; default to English.
+- For technical questions, cite relevant scientific references or standards when possible.
+- Structure answers clearly with headings, bullets, or numbering when appropriate.
+- Be honest about limitations if a topic is outside your expertise.
+- Do not fabricate data or references you are not confident about.`
 
-// ─── Document Type Configs (untuk form fields) ────────────────────────────
+// ─── Document Type Configs (for form fields) ──────────────────────────────
 
 export const DOCUMENT_TYPE_CONFIGS: Record<DocumentType, DocumentTypeConfig> = {
   activity_report: {
-    label: 'Laporan Kegiatan',
-    description: 'Laporan resmi kegiatan field visit, monitoring, atau deployment',
+    label: 'Activity Report',
+    description: 'Official report of a field visit, monitoring, or deployment activity',
     fields: [
-      { key: 'title', label: 'Judul Kegiatan', type: 'text', required: true, placeholder: 'cth: Monitoring Sistem Irigasi Tetes KWT Teratai Mekar' },
-      { key: 'date', label: 'Tanggal & Lokasi', type: 'text', required: true, placeholder: 'cth: 15 Juni 2026, Condongcatur, Sleman' },
-      { key: 'team', label: 'Tim / Peserta', type: 'text', required: false, placeholder: 'cth: Tim SARC UGM (3 orang)' },
-      { key: 'description', label: 'Deskripsi Kegiatan', type: 'textarea', required: true, placeholder: 'Jelaskan apa yang dilakukan selama kegiatan...' },
-      { key: 'findings', label: 'Hasil & Temuan Utama', type: 'textarea', required: true, placeholder: 'Apa yang ditemukan atau dicapai...' },
-      { key: 'language', label: 'Bahasa Output', type: 'select', required: true,
-        options: [{ value: 'id', label: 'Bahasa Indonesia' }, { value: 'en', label: 'English' }] },
+      { key: 'title', label: 'Activity Title', type: 'text', required: true, placeholder: 'e.g. Monitoring the Drip Irrigation System at KWT Teratai Mekar' },
+      { key: 'date', label: 'Date & Location', type: 'text', required: true, placeholder: 'e.g. 15 June 2026, Condongcatur, Sleman' },
+      { key: 'team', label: 'Team / Participants', type: 'text', required: false, placeholder: 'e.g. SARC UGM team (3 people)' },
+      { key: 'description', label: 'Activity Description', type: 'textarea', required: true, placeholder: 'Describe what was done during the activity...' },
+      { key: 'findings', label: 'Key Results & Findings', type: 'textarea', required: true, placeholder: 'What was found or achieved...' },
+      { key: 'language', label: 'Output Language', type: 'select', required: true,
+        options: [{ value: 'en', label: 'English' }, { value: 'id', label: 'Bahasa Indonesia' }] },
     ],
   },
   news_article: {
-    label: 'Berita / Artikel SmartAgri',
-    description: 'Artikel jurnalistik ilmiah populer untuk website SARC',
+    label: 'News / SmartAgri Article',
+    description: 'Popular science journalistic article for the SARC website',
     fields: [
-      { key: 'title', label: 'Judul Artikel', type: 'text', required: true, placeholder: 'cth: SARC UGM Resmikan Sistem Fertigasi Otomatis di Sleman' },
-      { key: 'event', label: 'Topik / Event yang Diliput', type: 'text', required: true, placeholder: 'cth: Peluncuran program RGBI 2026 di KWT Teratai Mekar' },
-      { key: 'keyPoints', label: 'Poin-Poin Penting', type: 'textarea', required: true, placeholder: 'Tuliskan poin-poin utama yang ingin disampaikan...' },
-      { key: 'tone', label: 'Tone Penulisan', type: 'select', required: true,
+      { key: 'title', label: 'Article Title', type: 'text', required: true, placeholder: 'e.g. SARC UGM Launches Automated Fertigation System in Sleman' },
+      { key: 'event', label: 'Topic / Event Covered', type: 'text', required: true, placeholder: 'e.g. Launch of the RGBI 2026 program at KWT Teratai Mekar' },
+      { key: 'keyPoints', label: 'Key Points', type: 'textarea', required: true, placeholder: 'List the main points to convey...' },
+      { key: 'tone', label: 'Writing Tone', type: 'select', required: true,
         options: [{ value: 'formal', label: 'Formal' }, { value: 'semiformal', label: 'Semi-formal' }] },
-      { key: 'length', label: 'Panjang Artikel', type: 'select', required: true,
-        options: [{ value: 'short', label: 'Singkat (~300 kata)' }, { value: 'medium', label: 'Standar (~600 kata)' }, { value: 'long', label: 'Panjang (~1000 kata)' }] },
-      { key: 'language', label: 'Bahasa Output', type: 'select', required: true,
-        options: [{ value: 'id', label: 'Bahasa Indonesia' }, { value: 'en', label: 'English' }, { value: 'both', label: 'Bilingual (keduanya)' }] },
+      { key: 'length', label: 'Article Length', type: 'select', required: true,
+        options: [{ value: 'short', label: 'Short (~300 words)' }, { value: 'medium', label: 'Standard (~600 words)' }, { value: 'long', label: 'Long (~1000 words)' }] },
+      { key: 'language', label: 'Output Language', type: 'select', required: true,
+        options: [{ value: 'en', label: 'English' }, { value: 'id', label: 'Bahasa Indonesia' }, { value: 'both', label: 'Bilingual (both)' }] },
     ],
   },
   research_proposal: {
-    label: 'Draft Proposal Penelitian',
-    description: 'Kerangka proposal riset akademik',
+    label: 'Research Proposal Draft',
+    description: 'Academic research proposal outline',
     fields: [
-      { key: 'title', label: 'Judul Penelitian', type: 'text', required: true, placeholder: 'cth: Optimasi Fertigasi Berbasis IoT pada Tomat Greenhouse' },
-      { key: 'field', label: 'Bidang / Topik', type: 'text', required: true, placeholder: 'cth: Teknik Irigasi, Smart Greenhouse, Hortikultura' },
-      { key: 'background', label: 'Latar Belakang Singkat', type: 'textarea', required: true, placeholder: 'Apa masalah yang melatarbelakangi penelitian ini...' },
-      { key: 'objectives', label: 'Tujuan Penelitian', type: 'textarea', required: true, placeholder: 'Apa yang ingin dicapai...' },
-      { key: 'methods', label: 'Metode yang Direncanakan', type: 'textarea', required: false, placeholder: 'Pendekatan riset, alat, bahan, prosedur...' },
-      { key: 'outputs', label: 'Target Luaran', type: 'text', required: false, placeholder: 'cth: Jurnal Scopus Q2, prototipe sistem, paten' },
+      { key: 'title', label: 'Research Title', type: 'text', required: true, placeholder: 'e.g. IoT-Based Fertigation Optimization for Greenhouse Tomatoes' },
+      { key: 'field', label: 'Field / Topic', type: 'text', required: true, placeholder: 'e.g. Irrigation Engineering, Smart Greenhouse, Horticulture' },
+      { key: 'background', label: 'Brief Background', type: 'textarea', required: true, placeholder: 'What problem motivates this research...' },
+      { key: 'objectives', label: 'Research Objectives', type: 'textarea', required: true, placeholder: 'What you aim to achieve...' },
+      { key: 'methods', label: 'Planned Methods', type: 'textarea', required: false, placeholder: 'Research approach, tools, materials, procedures...' },
+      { key: 'outputs', label: 'Target Outputs', type: 'text', required: false, placeholder: 'e.g. Scopus Q2 journal, system prototype, patent' },
     ],
   },
   journal_abstract: {
-    label: 'Abstrak Jurnal Ilmiah',
-    description: 'Draft abstrak 200-250 kata format IMRaD untuk paper ilmiah',
+    label: 'Scientific Journal Abstract',
+    description: '200-250 word IMRaD-format abstract draft for a paper',
     fields: [
-      { key: 'title', label: 'Judul Paper', type: 'text', required: true, placeholder: 'cth: Hyperspectral-Based Stomatal Conductance Estimation...' },
-      { key: 'background', label: 'Latar Belakang / Masalah', type: 'textarea', required: true, placeholder: 'Apa gap penelitian yang diisi...' },
-      { key: 'methods', label: 'Metode', type: 'textarea', required: true, placeholder: 'Pendekatan, dataset, algoritma, eksperimen...' },
-      { key: 'results', label: 'Hasil Utama', type: 'textarea', required: true, placeholder: 'Temuan dan angka kunci...' },
-      { key: 'conclusion', label: 'Kesimpulan & Implikasi', type: 'textarea', required: true, placeholder: 'Apa maknanya dan rekomendasi ke depan...' },
-      { key: 'language', label: 'Bahasa Output', type: 'select', required: true,
+      { key: 'title', label: 'Paper Title', type: 'text', required: true, placeholder: 'e.g. Hyperspectral-Based Stomatal Conductance Estimation...' },
+      { key: 'background', label: 'Background / Problem', type: 'textarea', required: true, placeholder: 'What research gap is addressed...' },
+      { key: 'methods', label: 'Methods', type: 'textarea', required: true, placeholder: 'Approach, dataset, algorithm, experiments...' },
+      { key: 'results', label: 'Main Results', type: 'textarea', required: true, placeholder: 'Findings and key figures...' },
+      { key: 'conclusion', label: 'Conclusion & Implications', type: 'textarea', required: true, placeholder: 'What it means and recommendations...' },
+      { key: 'language', label: 'Output Language', type: 'select', required: true,
         options: [{ value: 'en', label: 'English' }, { value: 'id', label: 'Bahasa Indonesia' }] },
     ],
   },
   data_summary: {
-    label: 'Ringkasan Data & Analisis',
-    description: 'Narasi interpretatif dari data sensor, eksperimen, atau survei',
+    label: 'Data Summary & Analysis',
+    description: 'Interpretive narrative of sensor, experiment, or survey data',
     fields: [
-      { key: 'dataContext', label: 'Konteks Data', type: 'text', required: true, placeholder: 'cth: Data sensor suhu & kelembaban greenhouse selama 7 hari' },
-      { key: 'dataDescription', label: 'Deskripsi / Isi Data', type: 'textarea', required: true, placeholder: 'Paste atau jelaskan datanya di sini...' },
-      { key: 'analysisGoal', label: 'Tujuan Analisis', type: 'textarea', required: true, placeholder: 'Apa yang ingin diketahui dari data ini...' },
+      { key: 'dataContext', label: 'Data Context', type: 'text', required: true, placeholder: 'e.g. Greenhouse temperature & humidity sensor data over 7 days' },
+      { key: 'dataDescription', label: 'Data Description / Content', type: 'textarea', required: true, placeholder: 'Paste or describe the data here...' },
+      { key: 'analysisGoal', label: 'Analysis Goal', type: 'textarea', required: true, placeholder: 'What you want to learn from this data...' },
     ],
   },
   formal_letter: {
-    label: 'Surat / Email Resmi',
-    description: 'Surat resmi atau email formal untuk korespondensi akademik',
+    label: 'Official Letter / Email',
+    description: 'Formal letter or email for academic correspondence',
     fields: [
-      { key: 'letterType', label: 'Jenis', type: 'select', required: true,
-        options: [{ value: 'letter', label: 'Surat Resmi' }, { value: 'email', label: 'Email Formal' }] },
-      { key: 'recipient', label: 'Ditujukan Kepada', type: 'text', required: true, placeholder: 'cth: Dekan Fakultas Teknologi Pertanian UGM' },
-      { key: 'purpose', label: 'Tujuan / Perihal', type: 'text', required: true, placeholder: 'cth: Permohonan surat keterangan untuk pengajuan visa' },
-      { key: 'mainContent', label: 'Isi Utama', type: 'textarea', required: true, placeholder: 'Poin-poin yang harus ada dalam surat/email...' },
-      { key: 'sender', label: 'Pengirim', type: 'text', required: false, placeholder: 'cth: Dr. Andri Prima Nugroho, SARC UGM' },
+      { key: 'letterType', label: 'Type', type: 'select', required: true,
+        options: [{ value: 'letter', label: 'Official Letter' }, { value: 'email', label: 'Formal Email' }] },
+      { key: 'recipient', label: 'Addressed To', type: 'text', required: true, placeholder: 'e.g. Dean, Faculty of Agricultural Technology UGM' },
+      { key: 'purpose', label: 'Purpose / Subject', type: 'text', required: true, placeholder: 'e.g. Request for a reference letter for a visa application' },
+      { key: 'mainContent', label: 'Main Content', type: 'textarea', required: true, placeholder: 'Points that must appear in the letter/email...' },
+      { key: 'sender', label: 'Sender', type: 'text', required: false, placeholder: 'e.g. Dr. Andri Prima Nugroho, SARC UGM' },
     ],
   },
 }
@@ -103,79 +103,79 @@ export const DOCUMENT_TYPE_CONFIGS: Record<DocumentType, DocumentTypeConfig> = {
 
 export function buildGeneratorPrompt(
   docType: DocumentType,
-  fields: Record<string, string>
+  fields: Record<string, string>,
 ): string {
   const config = DOCUMENT_TYPE_CONFIGS[docType]
 
   const fieldSummary = config.fields
-    .filter(f => fields[f.key]?.trim())
-    .map(f => `${f.label}: ${fields[f.key]}`)
+    .filter((f) => fields[f.key]?.trim())
+    .map((f) => `${f.label}: ${fields[f.key]}`)
     .join('\n')
 
-  const baseInstruction = `Kamu adalah asisten penulisan akademik SmartAgri SARC UGM.
-Tugas kamu adalah membuat dokumen berkualitas tinggi berdasarkan informasi yang diberikan.
-Gunakan Bahasa Indonesia yang profesional kecuali diminta menggunakan Bahasa Inggris.
-Hasilkan HANYA dokumennya saja — tanpa penjelasan tambahan, tanpa kalimat pembuka seperti "Berikut adalah..."
+  const baseInstruction = `You are the SmartAgri SARC UGM academic writing assistant.
+Your task is to produce a high-quality document from the information provided.
+Write in English unless explicitly asked to use Bahasa Indonesia.
+Output ONLY the document itself, with no extra explanation and no opening lines such as "Here is...".
 
 `
 
   const prompts: Record<DocumentType, string> = {
-    activity_report: `${baseInstruction}Buat Laporan Kegiatan resmi dengan struktur:
-1. PENDAHULUAN (latar belakang kegiatan)
-2. PELAKSANAAN KEGIATAN (detail waktu, tempat, peserta, aktivitas)
-3. HASIL DAN PEMBAHASAN (temuan, capaian, data yang relevan)
-4. KESIMPULAN DAN REKOMENDASI
-5. PENUTUP
+    activity_report: `${baseInstruction}Create an official Activity Report with this structure:
+1. INTRODUCTION (background of the activity)
+2. ACTIVITY EXECUTION (time, place, participants, activities)
+3. RESULTS AND DISCUSSION (findings, achievements, relevant data)
+4. CONCLUSION AND RECOMMENDATIONS
+5. CLOSING
 
-Informasi kegiatan:
+Activity information:
 ${fieldSummary}
 
-${fields.language === 'en' ? 'Write the entire document in English.' : 'Tulis seluruh dokumen dalam Bahasa Indonesia formal.'}`,
+${fields.language === 'id' ? 'Write the entire document in formal Bahasa Indonesia.' : 'Write the entire document in formal English.'}`,
 
-    news_article: `${baseInstruction}Buat artikel berita ilmiah populer untuk website SmartAgri SARC UGM.
-Struktur: Lead yang kuat → Body informatif (3-5 paragraf) → Penutup berkesan.
-Tone: ${fields.tone === 'formal' ? 'formal dan berwibawa' : 'semi-formal, mudah dibaca'}.
-Panjang target: ${fields.length === 'short' ? '~300 kata' : fields.length === 'medium' ? '~600 kata' : '~1000 kata'}.
+    news_article: `${baseInstruction}Write a popular science news article for the SmartAgri SARC UGM website.
+Structure: a strong lead, an informative body (3-5 paragraphs), and a memorable closing.
+Tone: ${fields.tone === 'formal' ? 'formal and authoritative' : 'semi-formal and easy to read'}.
+Target length: ${fields.length === 'short' ? '~300 words' : fields.length === 'medium' ? '~600 words' : '~1000 words'}.
 
-Informasi artikel:
+Article information:
 ${fieldSummary}
 
-${fields.language === 'en' ? 'Write in English.' : fields.language === 'both' ? 'Tulis versi Bahasa Indonesia dulu, lalu English translation di bawahnya dengan separator "---".' : 'Tulis dalam Bahasa Indonesia.'}`,
+${fields.language === 'id' ? 'Write in Bahasa Indonesia.' : fields.language === 'both' ? 'Write the English version first, then the Bahasa Indonesia translation below it, separated by "---".' : 'Write in English.'}`,
 
-    research_proposal: `${baseInstruction}Buat Draft Proposal Penelitian dengan struktur:
-1. JUDUL PENELITIAN
-2. LATAR BELAKANG
-3. RUMUSAN MASALAH
-4. TUJUAN PENELITIAN
-5. MANFAAT PENELITIAN
-6. TINJAUAN PUSTAKA (ringkasan teori dan penelitian terkait, 3-5 paragraf)
-7. METODE PENELITIAN
-8. LUARAN YANG DIHARAPKAN
-9. DAFTAR PUSTAKA (placeholder jika tidak ada referensi spesifik)
+    research_proposal: `${baseInstruction}Create a Research Proposal Draft with this structure:
+1. RESEARCH TITLE
+2. BACKGROUND
+3. PROBLEM STATEMENT
+4. RESEARCH OBJECTIVES
+5. SIGNIFICANCE OF THE RESEARCH
+6. LITERATURE REVIEW (summary of theory and related work, 3-5 paragraphs)
+7. RESEARCH METHODS
+8. EXPECTED OUTPUTS
+9. REFERENCES (use placeholders if no specific references are given)
 
-Informasi penelitian:
+Research information:
 ${fieldSummary}`,
 
-    journal_abstract: `${baseInstruction}Buat abstrak jurnal ilmiah format IMRaD (200-250 kata).
-Struktur dalam satu paragraf: Latar Belakang & Tujuan → Metode → Hasil Utama → Kesimpulan & Implikasi.
-Gunakan kalimat aktif, hindari singkatan yang tidak umum, sertakan angka kunci dari hasil.
+    journal_abstract: `${baseInstruction}Write a scientific journal abstract in IMRaD format (200-250 words).
+Single paragraph flow: Background & Objective, Methods, Main Results, Conclusion & Implications.
+Use active voice, avoid uncommon abbreviations, and include key figures from the results.
 
-Informasi paper:
+Paper information:
 ${fieldSummary}
 
-${fields.language === 'en' ? 'Write the abstract in English.' : 'Tulis abstrak dalam Bahasa Indonesia.'}`,
+${fields.language === 'id' ? 'Write the abstract in Bahasa Indonesia.' : 'Write the abstract in English.'}`,
 
-    data_summary: `${baseInstruction}Buat ringkasan analisis data yang naratif dan informatif.
-Struktur: Gambaran Umum Data → Tren Utama → Anomali atau Temuan Menarik → Interpretasi → Rekomendasi Tindak Lanjut.
-Gunakan bahasa yang jelas, sertakan angka spesifik jika ada dalam data.
+    data_summary: `${baseInstruction}Write a narrative, informative data analysis summary.
+Structure: Data Overview, Main Trends, Anomalies or Interesting Findings, Interpretation, Follow-up Recommendations.
+Use clear language and include specific figures if they are present in the data.
 
-Informasi data:
+Data information:
 ${fieldSummary}`,
 
-    formal_letter: `${baseInstruction}Buat ${fields.letterType === 'letter' ? 'surat resmi' : 'email formal'} yang profesional.
-${fields.letterType === 'letter' ? 'Gunakan format surat resmi Indonesia: kop surat (tulis [KOP SURAT SARC UGM]), nomor surat [___/___/___/____], perihal, salam pembuka, isi, salam penutup, tanda tangan.' : 'Format email: Subject, Salam, Isi (3-4 paragraf), Penutup, Tanda tangan.'}
+    formal_letter: `${baseInstruction}Write a professional ${fields.letterType === 'letter' ? 'official letter' : 'formal email'}.
+${fields.letterType === 'letter' ? 'Use a formal letter format: letterhead (write [SARC UGM LETTERHEAD]), letter number [___/___/___/____], subject, salutation, body, closing, and signature.' : 'Email format: Subject, Greeting, Body (3-4 paragraphs), Closing, and Signature.'}
 
-Informasi surat:
+Letter information:
 ${fieldSummary}`,
   }
 

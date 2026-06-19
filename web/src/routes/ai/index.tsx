@@ -14,7 +14,7 @@ export const Route = createFileRoute('/ai/')({
       {
         name: 'description',
         content:
-          'Asisten riset berbasis AI untuk SmartAgri SARC UGM: tanya jawab riset pertanian presisi, pembuatan dokumen akademik, dan analisis data.',
+          'An AI-powered research assistant for SmartAgri SARC UGM: precision agriculture Q&A, academic document generation, and data analysis.',
       },
     ],
   }),
@@ -24,27 +24,27 @@ const features = [
   {
     icon: MessageSquare,
     title: 'Chat Assistant',
-    desc: 'Tanya jawab langsung seputar riset pertanian presisi, smart farming, metodologi penelitian, dan penulisan akademik.',
+    desc: 'Ask anything about precision agriculture research, smart farming, research methodology, and academic writing.',
     examples: [
-      'Apa perbedaan fertigasi drip dan sprinkler?',
-      'Bantu review metodologi penelitian saya',
-      'Jelaskan cara kerja sensor EC pada larutan nutrisi',
+      'What is the difference between drip and sprinkler fertigation?',
+      'Help me review my research methodology',
+      'Explain how an EC sensor works in a nutrient solution',
     ],
     to: '/ai/chat' as const,
-    cta: 'Mulai Chat',
+    cta: 'Start Chat',
     variant: 'mint' as const,
   },
   {
     icon: FileText,
     title: 'Document Generator',
-    desc: 'Generate draft laporan kegiatan, artikel berita, proposal penelitian, abstrak jurnal, dan dokumen akademik lainnya secara otomatis.',
+    desc: 'Generate drafts of activity reports, news articles, research proposals, journal abstracts, and other academic documents automatically.',
     examples: [
-      'Laporan kegiatan field visit',
-      'Draft proposal penelitian',
-      'Abstrak jurnal ilmiah',
+      'Field visit activity report',
+      'Research proposal draft',
+      'Scientific journal abstract',
     ],
     to: '/ai/generate' as const,
-    cta: 'Buat Dokumen',
+    cta: 'Create Document',
     variant: 'teal' as const,
   },
 ]
@@ -62,7 +62,7 @@ function AILandingPage() {
                 AI <span style={accent}>Research Assistant</span>
               </>
             }
-            subtitle="Asisten riset berbasis AI untuk SmartAgri SARC UGM. Tanya jawab seputar riset pertanian presisi, buat dokumen akademik otomatis, dan bantu analisis data, semuanya dalam Bahasa Indonesia."
+            subtitle="An AI-powered research assistant for SmartAgri SARC UGM. Ask about precision agriculture research, generate academic documents automatically, and get help analyzing your data."
           />
 
           <div className="grid gap-6 md:grid-cols-2">
@@ -127,8 +127,8 @@ function AILandingPage() {
           >
             <Shield className="h-4 w-4 shrink-0 text-[#0B6477]" />
             <p className="text-xs text-neutral-500 md:text-sm" style={body}>
-              Powered by open-source AI (Qwen) via Ollama, berjalan di server SARC
-              UGM. Data tidak dikirim ke pihak ketiga.
+              Powered by open-source AI (Qwen) via Ollama, running on the SARC UGM
+              server. Your data is not sent to third parties.
             </p>
           </motion.div>
         </div>

@@ -10,7 +10,7 @@ interface ChatBubbleProps {
 }
 
 function formatTime(date: Date) {
-  return date.toLocaleTimeString('id-ID', {
+  return date.toLocaleTimeString('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
@@ -96,7 +96,7 @@ export default function ChatBubble({ message, onCopy, copied }: ChatBubbleProps)
           <button
             type="button"
             onClick={() => onCopy(message.content)}
-            aria-label="Salin"
+            aria-label="Copy"
             className="absolute bottom-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 opacity-0 transition-opacity hover:bg-[#0B6477]/10 hover:text-[#0B6477] focus:opacity-100 group-hover:opacity-100"
           >
             {copied ? (

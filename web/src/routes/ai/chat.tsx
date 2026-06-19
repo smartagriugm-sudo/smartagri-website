@@ -3,7 +3,7 @@ import SiteHeader from '../../components/SiteHeader'
 import ChatInterface from '../../components/ai/ChatInterface'
 
 const WELCOME_MESSAGE =
-  'Halo! Saya AI Research Assistant SmartAgri SARC UGM. Saya siap membantu kamu dengan pertanyaan seputar riset pertanian presisi, penulisan akademik, analisis data, dan topik lainnya. Apa yang bisa saya bantu hari ini?'
+  "Hi! I'm the SmartAgri SARC UGM AI Research Assistant. I can help with questions on precision agriculture research, academic writing, data analysis, and more. How can I help you today?"
 
 export const Route = createFileRoute('/ai/chat')({
   component: AIChatPage,
@@ -13,7 +13,7 @@ export const Route = createFileRoute('/ai/chat')({
       {
         name: 'description',
         content:
-          'Asisten riset AI SmartAgri SARC UGM untuk pertanyaan seputar pertanian presisi, penulisan akademik, dan analisis data.',
+          'SmartAgri SARC UGM AI research assistant for questions on precision agriculture, academic writing, and data analysis.',
       },
     ],
   }),

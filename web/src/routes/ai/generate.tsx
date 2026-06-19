@@ -10,7 +10,7 @@ import GeneratorForm from '../../components/ai/GeneratorForm'
 import GeneratorPreview from '../../components/ai/GeneratorPreview'
 
 const ERROR_TEXT =
-  'Gagal membuat dokumen. Pastikan server Ollama aktif, lalu coba lagi.'
+  'Failed to generate the document. Make sure the Ollama server is running, then try again.'
 
 export const Route = createFileRoute('/ai/generate')({
   component: AIGeneratePage,
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/ai/generate')({
       {
         name: 'description',
         content:
-          'Generator draf dokumen akademik SmartAgri SARC UGM: laporan kegiatan, artikel, proposal, abstrak, ringkasan data, dan surat resmi.',
+          'SmartAgri SARC UGM academic document generator: activity reports, articles, proposals, abstracts, data summaries, and official letters.',
       },
     ],
   }),

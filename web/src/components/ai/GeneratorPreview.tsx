@@ -76,7 +76,7 @@ export default function GeneratorPreview({
             ) : (
               <Copy className="h-4 w-4" />
             )}
-            {copied ? 'Tersalin' : 'Salin Semua'}
+            {copied ? 'Copied' : 'Copy All'}
           </button>
           <button
             type="button"
@@ -85,7 +85,7 @@ export default function GeneratorPreview({
             style={body}
           >
             <Download className="h-4 w-4" />
-            Unduh .txt
+            Download .txt
           </button>
         </motion.div>
       )}
@@ -97,7 +97,7 @@ export default function GeneratorPreview({
               <FileText className="h-7 w-7 text-[#0B6477]" />
             </div>
             <p className="max-w-[260px] text-sm text-neutral-400" style={body}>
-              Hasil dokumen akan muncul di sini
+              Your generated document will appear here
             </p>
           </div>
         ) : (

@@ -74,13 +74,13 @@ export default function GeneratorForm({ onGenerate, isLoading }: GeneratorFormPr
           Report Generator
         </h1>
         <p className="text-xs text-neutral-500 md:text-sm" style={body}>
-          Buat draf dokumen akademik SmartAgri SARC UGM
+          Generate academic document drafts for SmartAgri SARC UGM
         </p>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-neutral-700" style={body}>
-          Jenis Dokumen
+          Document Type
         </label>
         <select
           value={docType}
@@ -153,7 +153,7 @@ export default function GeneratorForm({ onGenerate, isLoading }: GeneratorFormPr
 
               {errors[field.key] && (
                 <span className="text-xs text-red-500" style={body}>
-                  Wajib diisi
+                  Required
                 </span>
               )}
             </div>
@@ -171,12 +171,12 @@ export default function GeneratorForm({ onGenerate, isLoading }: GeneratorFormPr
         {isLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Sedang membuat...
+            Generating...
           </>
         ) : (
           <>
             <Sparkles className="h-4 w-4" />
-            Generate Dokumen
+            Generate Document
           </>
         )}
       </button>

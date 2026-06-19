@@ -12,7 +12,7 @@ interface ChatInterfaceProps {
 }
 
 const ERROR_TEXT =
-  'Maaf, terjadi kesalahan saat menghubungi AI. Pastikan server Ollama aktif, lalu coba lagi.'
+  'Sorry, something went wrong while contacting the AI. Make sure the Ollama server is running, then try again.'
 
 export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
@@ -168,7 +168,7 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
             style={body}
           >
             <Trash2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Bersihkan</span>
+            <span className="hidden sm:inline">Clear</span>
           </button>
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
                   void handleSend()
                 }
               }}
-              placeholder="Tanyakan sesuatu tentang riset pertanian, penulisan akademik, analisis data..."
+              placeholder="Ask anything about precision agriculture research, academic writing, or data analysis..."
               className="max-h-40 flex-1 resize-none bg-transparent py-1.5 text-[15px] leading-relaxed text-neutral-800 outline-none placeholder:text-neutral-400"
               style={body}
             />
@@ -214,7 +214,7 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
               <button
                 type="button"
                 onClick={handleStop}
-                aria-label="Hentikan"
+                aria-label="Stop"
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0B6477] text-white transition-colors hover:bg-[#14919B]"
               >
                 <Square className="h-4 w-4" fill="currentColor" />
@@ -224,7 +224,7 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
                 type="button"
                 onClick={() => void handleSend()}
                 disabled={!inputValue.trim()}
-                aria-label="Kirim"
+                aria-label="Send"
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#45DFB1] text-[#0B2A22] transition-colors hover:bg-[#80ED99] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Send className="h-4 w-4" />
@@ -235,7 +235,7 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
             <span className="text-[11px] text-neutral-400" style={body}>
               {showGenerating
                 ? 'Generating...'
-                : 'Enter untuk kirim, Shift+Enter baris baru'}
+                : 'Press Enter to send, Shift+Enter for a new line'}
             </span>
           </div>
         </div>
