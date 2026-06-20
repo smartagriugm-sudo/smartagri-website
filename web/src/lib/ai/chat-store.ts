@@ -19,20 +19,41 @@ function reviveMessages(raw: unknown): ChatMessage[] {
   }))
 }
 
-// Load all of the current user's conversations, newest first.
-export async function loadConversations(): Promise<Conversation[]> {
+// Load only id + title for the sidebar (newest first). Messages are fetched
+// lazily per conversation when the user opens it, so a large history does not
+// bloat the initial load or Supabase egress.
+export async function loadConversationSummaries(): Promise<Conversation[]> {
   if (!supabase) return []
   try {
     const { data, error } = await supabase
       .from('conversations')
-      .select('id, title, messages')
+      .select('id, title')
       .order('updated_at', { ascending: false })
     if (error || !data) return []
     return data.map((r) => ({
       id: r.id as string,
       title: (r.title as string) || 'New chat',
-      messages: reviveMessages(r.messages),
+      messages: [],
+      loaded: false,
     }))
+  } catch {
+    return []
+  }
+}
+
+// Fetch the messages for a single conversation (on open).
+export async function loadConversationMessages(
+  id: string,
+): Promise<ChatMessage[]> {
+  if (!supabase) return []
+  try {
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('messages')
+      .eq('id', id)
+      .maybeSingle()
+    if (error || !data) return []
+    return reviveMessages((data as { messages: unknown }).messages)
   } catch {
     return []
   }

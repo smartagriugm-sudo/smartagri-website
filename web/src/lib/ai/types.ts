@@ -21,6 +21,9 @@ export interface Conversation {
   // Incognito chats are never listed in the sidebar and (once persistence is
   // added) are never written to storage.
   incognito?: boolean
+  // false = a saved conversation whose messages have not been fetched yet
+  // (sidebar summary). Loaded/new conversations are true.
+  loaded?: boolean
 }
 
 export interface AIModelOption {

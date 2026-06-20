@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import {
+  Loader2,
   Menu,
   MoreVertical,
   PanelLeft,
@@ -19,7 +20,8 @@ import { getAccessToken } from '../../lib/auth/supabase'
 import { useAuth } from '../../lib/auth/auth'
 import {
   deleteConversation,
-  loadConversations,
+  loadConversationMessages,
+  loadConversationSummaries,
   saveConversation,
 } from '../../lib/ai/chat-store'
 import { getProfile } from '../../lib/profile'
@@ -55,7 +57,13 @@ const SUGGESTIONS = [
 ]
 
 function newConversation(incognito = false): Conversation {
-  return { id: generateMessageId(), title: 'New chat', messages: [], incognito }
+  return {
+    id: generateMessageId(),
+    title: 'New chat',
+    messages: [],
+    incognito,
+    loaded: true,
+  }
 }
 
 function buildAttachmentText(atts: { name: string; content: string }[]): string {
@@ -88,6 +96,7 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false) // mobile drawer
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // desktop
   const [menuOpen, setMenuOpen] = useState(false)
+  const [loadingConvId, setLoadingConvId] = useState<string | null>(null)
   // Saved AI preferences (from the profile page), sent with each request.
   const [prefs, setPrefs] = useState<{
     name: string
@@ -137,10 +146,10 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
     if (hydratedRef.current || authLoading) return
     hydratedRef.current = true
     if (!persistEnabled) return
-    void loadConversations().then((loaded) => {
-      if (loaded.length === 0) return
+    void loadConversationSummaries().then((summaries) => {
+      if (summaries.length === 0) return
       const fresh = newConversation()
-      setConversations([fresh, ...loaded])
+      setConversations([fresh, ...summaries])
       setActiveId(fresh.id)
     })
     void getProfile().then((p) => {
@@ -217,8 +226,11 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
 
   // Drop incognito chats and any leftover empty (unused) chats before opening a
   // fresh one, so the sidebar never accumulates blank "New chat" entries.
+  // Saved summaries (loaded === false) are kept even though messages is empty.
   const prune = (list: Conversation[]) =>
-    list.filter((c) => !c.incognito && c.messages.length > 0)
+    list.filter(
+      (c) => !c.incognito && (c.messages.length > 0 || c.loaded === false),
+    )
 
   const handleNewChat = () => {
     const conv = newConversation()
@@ -238,10 +250,22 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
     setSidebarOpen(false)
   }
 
-  const handleSelect = (id: string) => {
+  const handleSelect = async (id: string) => {
     setConversations((prev) => dropIncognito(prev, id))
     setActiveId(id)
     setSidebarOpen(false)
+    // Lazily fetch messages the first time a saved conversation is opened.
+    const conv = conversationsRef.current.find((c) => c.id === id)
+    if (conv && conv.loaded === false) {
+      setLoadingConvId(id)
+      const msgs = await loadConversationMessages(id)
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === id ? { ...c, messages: msgs, loaded: true } : c,
+        ),
+      )
+      setLoadingConvId((cur) => (cur === id ? null : cur))
+    }
   }
 
   const handleDelete = (id: string) => {
@@ -649,7 +673,12 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
           </div>
         </div>
 
-        {isEmpty ? (
+        {loadingConvId === activeId ? (
+          /* Fetching a saved conversation's messages */
+          <div className="flex flex-1 items-center justify-center bg-white">
+            <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
+          </div>
+        ) : isEmpty ? (
           /* Empty state: greeting + centered composer + suggestions */
           <div className="flex-1 overflow-y-auto">
             <div className="mx-auto flex min-h-full max-w-3xl flex-col justify-center px-4 py-10">

@@ -37,9 +37,12 @@ export default function ChatSidebar({
   const [query, setQuery] = useState('')
   const { user, isConfigured, signOut } = useAuth()
 
-  // Incognito chats never appear in the list, and a brand-new empty chat only
-  // shows up once it has messages (Gemini behaviour).
-  const recents = conversations.filter((c) => !c.incognito && c.messages.length > 0)
+  // Incognito chats never appear in the list. A brand-new empty chat only shows
+  // up once it has messages, but saved summaries (loaded === false, messages not
+  // fetched yet) are always shown.
+  const recents = conversations.filter(
+    (c) => !c.incognito && (c.messages.length > 0 || c.loaded === false),
+  )
   const q = query.trim().toLowerCase()
   const filtered = q
     ? recents.filter((c) => c.title.toLowerCase().includes(q))
