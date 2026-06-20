@@ -22,6 +22,7 @@ import {
   loadConversations,
   saveConversation,
 } from '../../lib/ai/chat-store'
+import { getProfile } from '../../lib/profile'
 import { DEFAULT_MODEL_ID } from '../../lib/ai/models'
 import { accent, body, display } from '../../lib/fonts'
 import ChatBubble from './ChatBubble'
@@ -87,6 +88,20 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false) // mobile drawer
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // desktop
   const [menuOpen, setMenuOpen] = useState(false)
+  // Saved AI preferences (from the profile page), sent with each request.
+  const [prefs, setPrefs] = useState<{
+    name: string
+    about: string
+    instructions: string
+    language: string
+    style: string
+  }>({
+    name: '',
+    about: '',
+    instructions: '',
+    language: 'auto',
+    style: 'balanced',
+  })
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -127,6 +142,17 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
       const fresh = newConversation()
       setConversations([fresh, ...loaded])
       setActiveId(fresh.id)
+    })
+    void getProfile().then((p) => {
+      if (!p) return
+      if (p.ai_model) setModelId(p.ai_model)
+      setPrefs({
+        name: p.preferred_name || p.full_name || '',
+        about: p.about_me || '',
+        instructions: p.instructions || '',
+        language: p.ai_language || 'auto',
+        style: p.ai_style || 'balanced',
+      })
     })
   }, [authLoading, persistEnabled])
 
@@ -297,7 +323,15 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ messages: history, model: modelId }),
+        body: JSON.stringify({
+          messages: history,
+          model: modelId,
+          name: prefs.name,
+          about: prefs.about,
+          instructions: prefs.instructions,
+          language: prefs.language,
+          style: prefs.style,
+        }),
         signal: ac.signal,
       })
 

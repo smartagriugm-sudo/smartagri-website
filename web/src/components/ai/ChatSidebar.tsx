@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import {
   LogOut,
   MessageSquare,
@@ -160,17 +161,23 @@ export default function ChatSidebar({
       {isConfigured && user ? (
         <div className="border-t border-[#0B6477]/10 p-2">
           <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6477] text-sm font-semibold text-[#45DFB1]">
-              {initial}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm text-neutral-700" style={body}>
-                {email}
+            <Link
+              to="/ai/profile"
+              className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 transition-colors hover:opacity-80"
+              aria-label="Profile and settings"
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6477] text-sm font-semibold text-[#45DFB1]">
+                {initial}
               </div>
-              <div className="text-[11px] text-neutral-400" style={body}>
-                Research assistant
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm text-neutral-700" style={body}>
+                  {email}
+                </div>
+                <div className="text-[11px] text-neutral-400" style={body}>
+                  Profile &amp; settings
+                </div>
               </div>
-            </div>
+            </Link>
             <button
               type="button"
               onClick={() => void signOut()}

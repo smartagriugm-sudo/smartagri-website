@@ -13,8 +13,13 @@ perangkat.
 1. Buka dashboard Supabase project Anda, masuk ke **SQL Editor**.
 2. Tempelkan isi file [`web/supabase/conversations.sql`](web/supabase/conversations.sql)
    lalu **Run**. Ini membuat tabel `conversations` + index + policy RLS.
-3. Selesai. Login ke `/ai/chat`, kirim beberapa pesan, lalu reload. Percakapan
-   akan muncul kembali di sidebar **Recent**.
+3. Tempelkan juga isi [`web/supabase/profiles.sql`](web/supabase/profiles.sql)
+   lalu **Run**. Ini membuat tabel `profiles` (untuk halaman `/ai/profile`),
+   trigger auto-create saat signup, backfill user lama, dan bucket Storage
+   `avatars` untuk foto profil, semua dengan RLS.
+4. Selesai. Login ke `/ai/chat`, kirim beberapa pesan, lalu reload. Percakapan
+   akan muncul kembali di sidebar **Recent**. Buka **Profile & settings** (dari
+   menu avatar header atau bagian akun di sidebar) untuk mengatur profil.
 
 ## Cara kerja
 
