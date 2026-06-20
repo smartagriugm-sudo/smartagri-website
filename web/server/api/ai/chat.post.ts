@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
 
   const body = (await readBody(event).catch(() => null)) as {
     messages?: unknown
+    model?: unknown
   } | null
 
   const messages = body?.messages
@@ -19,9 +20,12 @@ export default defineEventHandler(async (event) => {
     return jsonResponse({ error: 'messages array is required' }, 400)
   }
 
+  // Optional model override (the client model picker). Falls back to AI_MODEL.
+  const model = typeof body?.model === 'string' ? body.model : undefined
+
   // Inject the SmartAgri system prompt at the start of the conversation.
-  return streamChatCompletion([
-    { role: 'system', content: CHAT_SYSTEM_PROMPT },
-    ...messages,
-  ])
+  return streamChatCompletion(
+    [{ role: 'system', content: CHAT_SYSTEM_PROMPT }, ...messages],
+    model,
+  )
 })

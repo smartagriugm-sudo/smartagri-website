@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion'
-import { Check, Copy } from 'lucide-react'
+import { Check, Copy, Paperclip, RotateCcw } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { ChatMessage } from '../../lib/ai/types'
 import { body } from '../../lib/fonts'
 
@@ -7,33 +9,30 @@ interface ChatBubbleProps {
   message: ChatMessage
   onCopy: (text: string) => void
   copied?: boolean
+  onRegenerate?: (id: string) => void
+  showRegenerate?: boolean
 }
 
-function formatTime(date: Date) {
-  return date.toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
-}
+const PROSE =
+  'prose prose-sm max-w-none text-neutral-800 ' +
+  'prose-headings:font-semibold prose-headings:tracking-[-0.01em] prose-headings:text-neutral-900 ' +
+  'prose-p:my-2 prose-p:leading-relaxed prose-strong:font-semibold prose-strong:text-neutral-900 ' +
+  'prose-a:text-[#0B6477] prose-a:no-underline hover:prose-a:underline ' +
+  'prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 marker:text-[#14919B] ' +
+  'prose-code:rounded prose-code:bg-[#0B6477]/8 prose-code:px-1 prose-code:py-0.5 prose-code:text-[#0B6477] ' +
+  'prose-code:before:content-none prose-code:after:content-none ' +
+  'prose-pre:rounded-xl prose-pre:bg-[#0B2A22] prose-pre:text-white'
 
-// Minimal formatting: newlines are kept via `whitespace-pre-wrap` on the
-// wrapper, and **bold** segments are rendered. No full markdown parser.
-function renderContent(text: string) {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-    part.startsWith('**') && part.endsWith('**') ? (
-      <strong key={i} className="font-semibold">
-        {part.slice(2, -2)}
-      </strong>
-    ) : (
-      <span key={i}>{part}</span>
-    ),
-  )
-}
-
-export default function ChatBubble({ message, onCopy, copied }: ChatBubbleProps) {
+export default function ChatBubble({
+  message,
+  onCopy,
+  copied,
+  onRegenerate,
+  showRegenerate,
+}: ChatBubbleProps) {
   const isUser = message.role === 'user'
 
+  // User: a compact neutral bubble, right-aligned (Gemini style).
   if (isUser) {
     return (
       <motion.div
@@ -42,62 +41,82 @@ export default function ChatBubble({ message, onCopy, copied }: ChatBubbleProps)
         transition={{ duration: 0.25, ease: 'easeOut' }}
         className="flex justify-end"
       >
-        <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-[#0B6477] px-4 py-3 text-white md:max-w-[75%]">
+        <div className="max-w-[85%] rounded-3xl bg-[#EEF3F2] px-4 py-2.5 text-neutral-800 md:max-w-[75%]">
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {message.attachments.map((file) => (
+                <span
+                  key={file.name}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2 py-1 text-xs text-neutral-600"
+                  style={body}
+                >
+                  <Paperclip className="h-3 w-3 text-[#14919B]" />
+                  {file.name}
+                </span>
+              ))}
+            </div>
+          )}
           <div
             className="whitespace-pre-wrap text-[15px] leading-relaxed"
             style={body}
           >
             {message.content}
           </div>
-          <div
-            className="mt-1 text-right text-[11px] text-white/60"
-            style={body}
-            suppressHydrationWarning
-          >
-            {formatTime(message.timestamp)}
-          </div>
         </div>
       </motion.div>
     )
   }
 
-  const isError = message.isError
+  // Assistant error: a small red-tinted notice (no card chrome otherwise).
+  if (message.isError) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className="flex justify-start"
+      >
+        <div
+          className="max-w-[85%] rounded-2xl border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-[15px] text-[#B91C1C] md:max-w-[75%]"
+          style={body}
+        >
+          {message.content}
+        </div>
+      </motion.div>
+    )
+  }
+
+  // Assistant: full-width markdown prose with an action row (Gemini style).
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="flex justify-start"
+      className="group"
     >
-      <div
-        className={`group relative max-w-[85%] rounded-2xl rounded-tl-md border px-4 py-3 md:max-w-[75%] ${
-          isError
-            ? 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
-            : 'border-[#0B6477]/10 bg-[#F3F7F6] text-neutral-800'
-        }`}
-      >
-        <div
-          className="whitespace-pre-wrap pr-6 text-[15px] leading-relaxed"
-          style={body}
+      <div className={PROSE} style={body}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: ({ ...props }) => (
+              <a {...props} target="_blank" rel="noreferrer" />
+            ),
+          }}
         >
-          {renderContent(message.content)}
-          {message.isStreaming && (
-            <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse align-middle bg-[#0B6477]/60" />
-          )}
-        </div>
-        <div
-          className={`mt-1 text-[11px] ${isError ? 'text-[#B91C1C]/70' : 'text-neutral-400'}`}
-          style={body}
-          suppressHydrationWarning
-        >
-          {formatTime(message.timestamp)}
-        </div>
-        {!isError && message.content && (
+          {message.content}
+        </ReactMarkdown>
+        {message.isStreaming && (
+          <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse align-middle bg-[#0B6477]/60" />
+        )}
+      </div>
+
+      {!message.isStreaming && message.content && (
+        <div className="mt-2 flex items-center gap-1">
           <button
             type="button"
             onClick={() => onCopy(message.content)}
             aria-label="Copy"
-            className="absolute bottom-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 opacity-0 transition-opacity hover:bg-[#0B6477]/10 hover:text-[#0B6477] focus:opacity-100 group-hover:opacity-100"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-[#0B6477]/10 hover:text-[#0B6477]"
           >
             {copied ? (
               <Check className="h-4 w-4 text-[#0B6477]" />
@@ -105,8 +124,18 @@ export default function ChatBubble({ message, onCopy, copied }: ChatBubbleProps)
               <Copy className="h-4 w-4" />
             )}
           </button>
-        )}
-      </div>
+          {showRegenerate && onRegenerate && (
+            <button
+              type="button"
+              onClick={() => onRegenerate(message.id)}
+              aria-label="Regenerate response"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-[#0B6477]/10 hover:text-[#0B6477]"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      )}
     </motion.div>
   )
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, LogOut, Menu, X } from "lucide-react";
 import { A } from "../lib/assets";
 import { body } from "../lib/fonts";
 import { useAuth } from "../lib/auth/auth";
@@ -46,7 +46,7 @@ function DesktopNavLink({ link }: { link: NavLink }) {
     return (
       <Link
         to={link.to}
-        className="inline-flex items-center gap-1.5 text-[#45DFB1] text-base font-medium hover:text-[#80ED99] transition-colors"
+        className="inline-flex items-center gap-1.5 whitespace-nowrap text-[#45DFB1] text-base font-medium hover:text-[#80ED99] transition-colors"
         style={body}
       >
         {link.label}
@@ -57,7 +57,7 @@ function DesktopNavLink({ link }: { link: NavLink }) {
   return (
     <Link
       to={link.to}
-      className="text-white text-base opacity-90 hover:opacity-100"
+      className="whitespace-nowrap text-white text-base opacity-90 hover:opacity-100"
       style={body}
     >
       {link.label}
@@ -91,6 +91,54 @@ function MediaDropdown({ className = "" }: { className?: string }) {
               {link.label}
             </Link>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Compact signed-in account control: an avatar (first initial of the email)
+// that reveals the email + Sign out on hover/focus. Replaces the wide "Sign
+// out" text link so the bar stays uncramped when the AI Assistant link shows.
+function AccountMenu({
+  email,
+  onSignOut,
+}: {
+  email: string;
+  onSignOut: () => void;
+}) {
+  const initial = (email.trim()[0] || "?").toUpperCase();
+  return (
+    <div className="relative group">
+      <button
+        type="button"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-[#45DFB1] text-[#0B2A22] text-sm font-semibold transition-colors hover:bg-[#80ED99]"
+        style={body}
+        aria-haspopup="true"
+        aria-label="Account menu"
+      >
+        {initial}
+      </button>
+      <div className="absolute right-0 top-full pt-3 z-50 opacity-0 invisible translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible group-focus-within:translate-y-0">
+        <div className="min-w-[220px] rounded-2xl bg-[#08313A] border border-white/10 shadow-xl p-2">
+          <div className="px-3 py-2">
+            <div className="text-[11px] uppercase tracking-[0.12em] text-white/40" style={body}>
+              Signed in as
+            </div>
+            <div className="mt-0.5 truncate text-sm text-white/90" style={body}>
+              {email}
+            </div>
+          </div>
+          <div className="my-1 h-px bg-white/10" />
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+            style={body}
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
         </div>
       </div>
     </div>
@@ -142,34 +190,26 @@ export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
             <DesktopNavLink key={link.to} link={link} />
           ))}
           {showAi && <DesktopNavLink link={AI_LINK} />}
-          {/* Media: inline links at xl+, grouped into a dropdown on narrow (lg) screens. */}
-          <span className="hidden xl:contents">
-            {mediaLinks.map((link) => (
-              <DesktopNavLink key={link.to} link={link} />
-            ))}
-          </span>
-          <MediaDropdown className="xl:hidden" />
+          {/* Publications, Field Notes, and Gallery always live under this
+              "Media" dropdown to keep the bar compact. */}
+          <MediaDropdown />
           {tailLinks.map((link) => (
             <DesktopNavLink key={link.to} link={link} />
           ))}
           <DesktopNavLink link={eventLink} />
-          {signedIn && (
-            <button
-              type="button"
-              onClick={() => void signOut()}
-              className="text-white/80 text-base hover:text-white transition-colors"
-              style={body}
-            >
-              Sign out
-            </button>
-          )}
           <Link
             to="/contact-us"
-            className="h-10 px-5 rounded-full bg-[#45DFB1] text-[#0B2A22] font-medium flex items-center hover:bg-[#80ED99] transition-colors"
+            className="h-10 px-5 rounded-full bg-[#45DFB1] text-[#0B2A22] font-medium flex items-center whitespace-nowrap hover:bg-[#80ED99] transition-colors"
             style={body}
           >
             Contact us
           </Link>
+          {signedIn && user && (
+            <AccountMenu
+              email={user.email ?? ""}
+              onSignOut={() => void signOut()}
+            />
+          )}
         </nav>
 
         <div className="lg:hidden">

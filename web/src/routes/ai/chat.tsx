@@ -3,7 +3,7 @@ import SiteHeader from '../../components/SiteHeader'
 import ChatInterface from '../../components/ai/ChatInterface'
 
 const WELCOME_MESSAGE =
-  "Hi! I'm the SmartAgri UGM AI Research Assistant. I can help with questions on precision agriculture research, academic writing, data analysis, and more. How can I help you today?"
+  'Ask about precision agriculture research, smart farming, methodology, data analysis, or academic writing. You can also attach a text file for context.'
 
 export const Route = createFileRoute('/ai/chat')({
   component: AIChatPage,

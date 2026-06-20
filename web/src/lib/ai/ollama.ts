@@ -35,6 +35,7 @@ export function jsonResponse(data: unknown, status: number): Response {
  */
 export async function streamChatCompletion(
   messages: Array<{ role: string; content: string }>,
+  model?: string,
 ): Promise<Response> {
   const cfg = getAIConfig()
 
@@ -46,7 +47,7 @@ export async function streamChatCompletion(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${cfg.apiKey}`,
       },
-      body: JSON.stringify({ model: cfg.model, messages, stream: true }),
+      body: JSON.stringify({ model: model || cfg.model, messages, stream: true }),
       signal: AbortSignal.timeout(cfg.timeoutMs),
     })
   } catch {

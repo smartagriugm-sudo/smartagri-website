@@ -5,6 +5,28 @@ export interface ChatMessage {
   timestamp: Date
   isStreaming?: boolean
   isError?: boolean
+  // Display-only chips for files attached to a user message.
+  attachments?: { name: string }[]
+  // Extracted text from those files, appended to the prompt sent to the model
+  // (kept separate from `content` so the bubble shows only what the user typed).
+  attachmentText?: string
+}
+
+// One in-session conversation. Conversations live in React state only (no
+// backend, no localStorage), so they reset on a full page reload.
+export interface Conversation {
+  id: string
+  title: string
+  messages: ChatMessage[]
+  // Incognito chats are never listed in the sidebar and (once persistence is
+  // added) are never written to storage.
+  incognito?: boolean
+}
+
+export interface AIModelOption {
+  id: string
+  label: string
+  detail: string
 }
 
 export interface GeneratorFormData {
