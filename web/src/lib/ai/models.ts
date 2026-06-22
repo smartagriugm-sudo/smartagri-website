@@ -28,6 +28,11 @@ export const AI_MODELS: AIModelOption[] = [
     detail: 'Fast · multilingual',
   },
   {
+    id: 'mistral-nemo:12b',
+    label: 'Mistral Nemo 12B',
+    detail: 'Multilingual · long context',
+  },
+  {
     id: 'gemma2:27b',
     label: 'Gemma 2 27B',
     detail: 'Strong reasoning & writing',
