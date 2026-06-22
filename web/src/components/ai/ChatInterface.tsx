@@ -444,6 +444,39 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
     await runStream(convId, aiId, history)
   }
 
+  // Re-run from a user message: optionally edit its text, drop everything after
+  // it, then stream a fresh reply. Used by the user-bubble retry/edit actions.
+  const resubmitUser = async (id: string, newText?: string) => {
+    if (isLoading) return
+    const convId = activeId
+    const msgs = active?.messages ?? []
+    const idx = msgs.findIndex((m) => m.id === id)
+    if (idx < 0 || msgs[idx].role !== 'user') return
+
+    const edited: ChatMessage =
+      newText !== undefined && newText !== msgs[idx].content
+        ? { ...msgs[idx], content: newText }
+        : msgs[idx]
+    const kept = msgs.slice(0, idx)
+    const history = toHistory([...kept, edited])
+    if (history.length === 0) return
+
+    const aiId = generateMessageId()
+    const aiMessage: ChatMessage = {
+      id: aiId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      isStreaming: true,
+    }
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === convId ? { ...c, messages: [...kept, edited, aiMessage] } : c,
+      ),
+    )
+    await runStream(convId, aiId, history)
+  }
+
   const handleSend = () => void send(inputValue, attachments)
   const handleStop = () => abortRef.current?.abort()
 
@@ -750,6 +783,9 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
                         m.id === lastMessage?.id &&
                         m.role === 'assistant'
                       }
+                      onEdit={(id, text) => void resubmitUser(id, text)}
+                      onRetry={(id) => void resubmitUser(id)}
+                      busy={isLoading}
                     />
                   ))}
                 </AnimatePresence>
