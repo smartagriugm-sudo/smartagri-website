@@ -32,10 +32,6 @@ import ChatSidebar from './ChatSidebar'
 import ModelMenu from './ModelMenu'
 import TypingIndicator from './TypingIndicator'
 
-interface ChatInterfaceProps {
-  welcomeMessage?: string
-}
-
 interface PendingAttachment {
   name: string
   content: string
@@ -49,12 +45,19 @@ const ACCEPT_TYPES = '.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml'
 const MAX_FILE_BYTES = 1_000_000
 const MAX_FILE_CHARS = 20_000
 
-const SUGGESTIONS = [
-  'What is the difference between drip and sprinkler fertigation?',
-  'Help me review my research methodology',
-  'How does an EC sensor work in a nutrient solution?',
-  'Outline an abstract for a controlled-environment study',
+// Warm, comforting subtitles shown under the greeting (one picked per session).
+const WARM_LINES = [
+  'How can I help with your research today?',
+  'What would you like to explore?',
+  "Ready when you are, let's dig in.",
+  'What are we working on today?',
 ]
+
+function greetingForHour(hour: number): string {
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
 
 function newConversation(incognito = false): Conversation {
   return {
@@ -83,7 +86,7 @@ function toHistory(msgs: ChatMessage[]): { role: string; content: string }[] {
     .map((m) => ({ role: m.role, content: toApiContent(m) }))
 }
 
-export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
+export default function ChatInterface() {
   const [conversations, setConversations] = useState<Conversation[]>(() => [
     newConversation(),
   ])
@@ -97,6 +100,8 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // desktop
   const [menuOpen, setMenuOpen] = useState(false)
   const [loadingConvId, setLoadingConvId] = useState<string | null>(null)
+  const [greeting, setGreeting] = useState('Hello')
+  const [warmLine, setWarmLine] = useState(WARM_LINES[0])
   // Saved AI preferences (from the profile page), sent with each request.
   const [prefs, setPrefs] = useState<{
     name: string
@@ -133,6 +138,7 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
   const isEmpty = messages.length === 0
   const isIncognito = !!active?.incognito
   const lastMessage = messages[messages.length - 1]
+  const firstName = (prefs.name || '').trim().split(/\s+/)[0]
 
   // Keep a ref of the latest conversations so async callbacks/effects can read
   // current data. Declared before the persist effect so it syncs first.
@@ -185,6 +191,13 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
       behavior: 'smooth',
     })
   }, [messages, isLoading])
+
+  // Time-based greeting + a warm subtitle, computed client-side to avoid SSR
+  // hydration mismatch.
+  useEffect(() => {
+    setGreeting(greetingForHour(new Date().getHours()))
+    setWarmLine(WARM_LINES[Math.floor(Math.random() * WARM_LINES.length)])
+  }, [])
 
   // Close the options menu on outside click.
   useEffect(() => {
@@ -525,9 +538,7 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
             }
           }}
           placeholder={
-            isIncognito
-              ? 'Ask anything (incognito, not saved)...'
-              : 'Ask anything about precision agriculture research...'
+            isIncognito ? 'Ask anything (incognito, not saved)…' : 'Ask anything…'
           }
           className="block max-h-52 w-full resize-none bg-transparent px-1.5 py-1 text-[15px] leading-relaxed text-neutral-800 outline-none placeholder:text-neutral-400"
           style={body}
@@ -578,9 +589,6 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
           </div>
         </div>
       </div>
-      <p className="mt-2 text-center text-[11px] text-neutral-400" style={body}>
-        SmartAgri AI can make mistakes. Attach .txt, .md, .csv, or .json for context.
-      </p>
     </div>
   )
 
@@ -733,7 +741,12 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
                     </>
                   ) : (
                     <>
-                      How can I help with your <span style={accent}>research</span>?
+                      {greeting}
+                      {firstName && (
+                        <>
+                          , <span style={accent}>{firstName}</span>
+                        </>
+                      )}
                     </>
                   )}
                 </h2>
@@ -743,26 +756,11 @@ export default function ChatInterface({ welcomeMessage }: ChatInterfaceProps) {
                 >
                   {isIncognito
                     ? "This chat won't appear in your history or be saved."
-                    : (welcomeMessage ??
-                      'Ask about precision agriculture, smart farming, methodology, or academic writing.')}
+                    : warmLine}
                 </p>
               </div>
 
               {composer}
-
-              <div className="mt-6 grid w-full gap-2.5 sm:grid-cols-2">
-                {SUGGESTIONS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => void send(s, [])}
-                    className="rounded-2xl border border-[#0B6477]/15 bg-white px-4 py-3 text-left text-sm text-neutral-600 transition-colors hover:border-[#0B6477]/40 hover:bg-[#F3F7F6] hover:text-neutral-800"
-                    style={body}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
         ) : (
