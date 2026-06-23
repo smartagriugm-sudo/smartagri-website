@@ -27,6 +27,7 @@ import {
 } from '../../lib/ai/chat-store'
 import { getProfile } from '../../lib/profile'
 import { DEFAULT_MODEL_ID, getModel } from '../../lib/ai/models'
+import { EXTRACT_ACCEPT, extractText } from '../../lib/ai/extract-text'
 import { accent, body, display } from '../../lib/fonts'
 import ChatBubble from './ChatBubble'
 import ChatSidebar from './ChatSidebar'
@@ -41,9 +42,8 @@ interface PendingAttachment {
 const ERROR_TEXT =
   'Sorry, something went wrong while contacting the AI. Make sure the Ollama server is running, then try again.'
 
-// Text formats we can read client-side and feed to the (text-only) model.
-const ACCEPT_TYPES = '.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml'
-const MAX_FILE_BYTES = 1_000_000
+// Files we extract text from client-side and feed to the model as context.
+const MAX_FILE_BYTES = 15_000_000
 const MAX_FILE_CHARS = 20_000
 
 // Warm, comforting subtitles shown under the greeting (one picked per session).
@@ -104,6 +104,7 @@ export default function ChatInterface() {
   const [greeting, setGreeting] = useState('Hello')
   const [warmLine, setWarmLine] = useState(WARM_LINES[0])
   const [thinking, setThinking] = useState(true)
+  const [attaching, setAttaching] = useState(false)
 
   const reasoningModel = getModel(modelId).reasoning ?? false
   // Saved AI preferences (from the profile page), sent with each request.
@@ -309,17 +310,21 @@ export default function ChatInterface() {
 
   const onFiles = async (fileList: FileList | null) => {
     if (!fileList) return
+    setAttaching(true)
     const next: PendingAttachment[] = []
     for (const file of Array.from(fileList)) {
       if (file.size > MAX_FILE_BYTES) continue
       try {
-        const text = await file.text()
-        next.push({ name: file.name, content: text.slice(0, MAX_FILE_CHARS) })
+        const text = await extractText(file)
+        if (text.trim()) {
+          next.push({ name: file.name, content: text.slice(0, MAX_FILE_CHARS) })
+        }
       } catch {
         // Skip unreadable file.
       }
     }
     if (next.length) setAttachments((prev) => [...prev, ...next])
+    setAttaching(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -555,17 +560,23 @@ export default function ChatInterface() {
               ref={fileInputRef}
               type="file"
               multiple
-              accept={ACCEPT_TYPES}
+              accept={EXTRACT_ACCEPT}
               onChange={(e) => void onFiles(e.target.files)}
               className="hidden"
             />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              aria-label="Attach a text file"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#0B6477]/20 text-neutral-500 transition-colors hover:border-[#0B6477] hover:text-[#0B6477]"
+              disabled={attaching}
+              aria-label="Attach a document (PDF, DOCX, XLSX, or text)"
+              title="Attach PDF, DOCX, XLSX, or text"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#0B6477]/20 text-neutral-500 transition-colors hover:border-[#0B6477] hover:text-[#0B6477] disabled:opacity-60"
             >
-              <Plus className="h-5 w-5" />
+              {attaching ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Plus className="h-5 w-5" />
+              )}
             </button>
             {reasoningModel && (
               <button

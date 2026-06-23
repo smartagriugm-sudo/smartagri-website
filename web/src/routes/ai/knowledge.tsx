@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../../lib/auth/auth'
 import { getAccessToken, supabase } from '../../lib/auth/supabase'
 import { generateMessageId } from '../../lib/ai/stream'
+import { EXTRACT_ACCEPT, extractText } from '../../lib/ai/extract-text'
 import { accent, body, display } from '../../lib/fonts'
 import SiteHeader from '../../components/SiteHeader'
 import Footer from '../../components/Footer'
@@ -33,8 +34,6 @@ interface KbDoc {
   count: number
 }
 
-const ACCEPT = '.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml'
-
 function formatDate(value?: string) {
   if (!value) return ''
   try {
@@ -52,6 +51,7 @@ function KnowledgePage() {
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
   const [docs, setDocs] = useState<KbDoc[]>([])
   const [loadingDocs, setLoadingDocs] = useState(true)
+  const [extracting, setExtracting] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const loadDocs = async () => {
@@ -86,13 +86,24 @@ function KnowledgePage() {
 
   const onFile = async (file: File | undefined) => {
     if (!file) return
-    if (file.size > 2_000_000) {
-      setMsg({ kind: 'err', text: 'File is too large (max 2 MB of text).' })
+    setMsg(null)
+    if (file.size > 15_000_000) {
+      setMsg({ kind: 'err', text: 'File is too large (max 15 MB).' })
       return
     }
-    const content = await file.text()
-    setText(content)
-    if (!title.trim()) setTitle(file.name.replace(/\.[^.]+$/, ''))
+    setExtracting(true)
+    try {
+      const content = await extractText(file)
+      if (!content.trim()) {
+        setMsg({ kind: 'err', text: 'No readable text found in that file.' })
+      } else {
+        setText(content)
+        if (!title.trim()) setTitle(file.name.replace(/\.[^.]+$/, ''))
+      }
+    } catch {
+      setMsg({ kind: 'err', text: 'Could not read that file.' })
+    }
+    setExtracting(false)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -214,21 +225,26 @@ function KnowledgePage() {
                   <input
                     ref={fileRef}
                     type="file"
-                    accept={ACCEPT}
+                    accept={EXTRACT_ACCEPT}
                     className="hidden"
                     onChange={(e) => void onFile(e.target.files?.[0])}
                   />
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
-                    className="inline-flex items-center gap-2 rounded-xl border border-[#0B6477]/20 px-3.5 py-2 text-sm font-medium text-neutral-700 transition-colors hover:border-[#0B6477] hover:text-[#0B6477]"
+                    disabled={extracting}
+                    className="inline-flex items-center gap-2 rounded-xl border border-[#0B6477]/20 px-3.5 py-2 text-sm font-medium text-neutral-700 transition-colors hover:border-[#0B6477] hover:text-[#0B6477] disabled:opacity-60"
                     style={body}
                   >
-                    <Upload className="h-4 w-4" />
-                    Load a text file
+                    {extracting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                    {extracting ? 'Reading file...' : 'Load a file'}
                   </button>
                   <span className="ml-2 text-xs text-neutral-400" style={body}>
-                    .txt, .md, .csv, .json (PDF/DOCX coming soon)
+                    PDF, DOCX, XLSX, TXT, MD, CSV
                   </span>
                 </div>
               </div>
