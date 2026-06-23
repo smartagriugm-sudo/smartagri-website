@@ -2,6 +2,8 @@ import { defineEventHandler, getRequestHeader, readBody } from 'h3'
 import { CHAT_SYSTEM_PROMPT } from '../../../src/lib/ai/prompts'
 import { jsonResponse, streamChatCompletion } from '../../../src/lib/ai/ollama'
 import { isAuthorized } from '../../../src/lib/ai/auth-guard'
+import { embedText } from '../../../src/lib/ai/embed'
+import { retrieveChunks } from '../../../src/lib/ai/retrieve'
 
 // POST /api/ai/chat — proxy for the chat assistant. The browser only ever
 // talks to this route, never to Ollama directly.
@@ -49,10 +51,33 @@ export default defineEventHandler(async (event) => {
     prefs.push('Give thorough, detailed responses with relevant context.')
   // Reasoning models (Qwen3) think by default; `/no_think` disables it.
   if (body?.think === false) prefs.push('/no_think')
-  const system =
+  let system =
     prefs.length > 0
       ? `${CHAT_SYSTEM_PROMPT}\n\n${prefs.join('\n')}`
       : CHAT_SYSTEM_PROMPT
+
+  // RAG: retrieve SmartAgri knowledge-base excerpts relevant to the latest user
+  // message and add them as grounding context. Fully best-effort — if embeddings
+  // or the vector store are unavailable, the chat continues without RAG.
+  const lastUser = [...(messages as Array<{ role?: string; content?: unknown }>)]
+    .reverse()
+    .find((m) => m?.role === 'user')
+  const query = typeof lastUser?.content === 'string' ? lastUser.content : ''
+  if (query) {
+    const embedding = await embedText(query)
+    if (embedding) {
+      const chunks = await retrieveChunks(embedding, 5)
+      if (chunks.length > 0) {
+        const sources = chunks
+          .map((c, i) => `[${i + 1}] ${c.title ?? 'Source'}\n${c.content}`)
+          .join('\n\n')
+        system +=
+          '\n\nUse the following SmartAgri knowledge-base excerpts when they are' +
+          ' relevant, and cite the source titles. If they are not relevant,' +
+          ` answer from your own knowledge.\n\n${sources}`
+      }
+    }
+  }
 
   // Inject the SmartAgri system prompt at the start of the conversation.
   return streamChatCompletion(
