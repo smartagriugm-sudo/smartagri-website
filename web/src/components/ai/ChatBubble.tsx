@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { Check, Copy, Paperclip, Pencil, RotateCcw, Send } from 'lucide-react'
+import { Brain, Check, Copy, Paperclip, Pencil, RotateCcw, Send } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { ChatMessage } from '../../lib/ai/types'
@@ -34,6 +34,25 @@ function formatTime(date: Date) {
     minute: '2-digit',
     hour12: false,
   })
+}
+
+// Split a reasoning model's output into its <think> block and the final answer.
+function parseThinking(text: string): {
+  thinking: string | null
+  answer: string
+  thinkingDone: boolean
+} {
+  const start = text.indexOf('<think>')
+  if (start === -1) return { thinking: null, answer: text, thinkingDone: true }
+  const end = text.indexOf('</think>')
+  if (end === -1) {
+    return { thinking: text.slice(start + 7), answer: '', thinkingDone: false }
+  }
+  return {
+    thinking: text.slice(start + 7, end).trim(),
+    answer: text.slice(end + 8).replace(/^\s+/, ''),
+    thinkingDone: true,
+  }
 }
 
 function IconButton({
@@ -212,13 +231,33 @@ export default function ChatBubble({
     )
   }
 
-  // Assistant: full-width markdown prose with a timestamp + action row.
+  // Assistant: full-width markdown prose with a timestamp + action row. For
+  // reasoning models, the <think> block is shown as a collapsible "Reasoning".
+  const { thinking, answer, thinkingDone } = parseThinking(message.content)
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
     >
+      {thinking !== null && (
+        <details
+          className="mb-2 rounded-xl border border-[#0B6477]/10 bg-[#F3F7F6] px-3 py-2"
+          open={!thinkingDone}
+        >
+          <summary className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-neutral-500">
+            <Brain className="h-3.5 w-3.5 text-[#14919B]" />
+            {thinkingDone ? 'Reasoning' : 'Thinking…'}
+          </summary>
+          <div
+            className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-neutral-500"
+            style={body}
+          >
+            {thinking}
+          </div>
+        </details>
+      )}
+
       <div className={PROSE} style={body}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
@@ -226,7 +265,7 @@ export default function ChatBubble({
             a: ({ ...props }) => <a {...props} target="_blank" rel="noreferrer" />,
           }}
         >
-          {message.content}
+          {answer}
         </ReactMarkdown>
         {message.isStreaming && (
           <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse align-middle bg-[#0B6477]/60" />
@@ -236,7 +275,7 @@ export default function ChatBubble({
       {!message.isStreaming && message.content && (
         <div className="mt-2 flex items-center gap-0.5">
           {time}
-          <IconButton label="Copy" onClick={() => onCopy(message.content)}>
+          <IconButton label="Copy" onClick={() => onCopy(answer || message.content)}>
             {copied ? (
               <Check className="h-4 w-4 text-[#0B6477]" />
             ) : (

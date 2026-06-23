@@ -30,6 +30,9 @@ export interface AIModelOption {
   id: string
   label: string
   detail: string
+  // True for models that support a thinking/reasoning mode (e.g. Qwen3). The
+  // chat shows a "Thinking" toggle only for these.
+  reasoning?: boolean
 }
 
 export interface GeneratorFormData {

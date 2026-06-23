@@ -18,6 +18,12 @@ export const AI_MODELS: AIModelOption[] = [
     detail: 'Highest quality',
   },
   {
+    id: 'qwen3.6:27b',
+    label: 'Qwen3 27B',
+    detail: 'Reasoning · deeper thinking',
+    reasoning: true,
+  },
+  {
     id: 'qwen2.5:7b',
     label: 'Qwen 2.5 7B',
     detail: 'Fast · lightweight',

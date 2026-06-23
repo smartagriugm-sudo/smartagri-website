@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
     instructions?: unknown
     language?: unknown
     style?: unknown
+    think?: unknown
   } | null
 
   const messages = body?.messages
@@ -46,6 +47,8 @@ export default defineEventHandler(async (event) => {
   if (style === 'concise') prefs.push('Keep responses brief and to the point.')
   else if (style === 'detailed')
     prefs.push('Give thorough, detailed responses with relevant context.')
+  // Reasoning models (Qwen3) think by default; `/no_think` disables it.
+  if (body?.think === false) prefs.push('/no_think')
   const system =
     prefs.length > 0
       ? `${CHAT_SYSTEM_PROMPT}\n\n${prefs.join('\n')}`

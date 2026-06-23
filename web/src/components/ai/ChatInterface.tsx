@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import {
+  Brain,
   Loader2,
   Menu,
   MoreVertical,
@@ -25,7 +26,7 @@ import {
   saveConversation,
 } from '../../lib/ai/chat-store'
 import { getProfile } from '../../lib/profile'
-import { DEFAULT_MODEL_ID } from '../../lib/ai/models'
+import { DEFAULT_MODEL_ID, getModel } from '../../lib/ai/models'
 import { accent, body, display } from '../../lib/fonts'
 import ChatBubble from './ChatBubble'
 import ChatSidebar from './ChatSidebar'
@@ -102,6 +103,9 @@ export default function ChatInterface() {
   const [loadingConvId, setLoadingConvId] = useState<string | null>(null)
   const [greeting, setGreeting] = useState('Hello')
   const [warmLine, setWarmLine] = useState(WARM_LINES[0])
+  const [thinking, setThinking] = useState(true)
+
+  const reasoningModel = getModel(modelId).reasoning ?? false
   // Saved AI preferences (from the profile page), sent with each request.
   const [prefs, setPrefs] = useState<{
     name: string
@@ -368,6 +372,7 @@ export default function ChatInterface() {
           instructions: prefs.instructions,
           language: prefs.language,
           style: prefs.style,
+          ...(reasoningModel ? { think: thinking } : {}),
         }),
         signal: ac.signal,
       })
@@ -545,7 +550,7 @@ export default function ChatInterface() {
         />
 
         <div className="mt-1 flex items-center justify-between gap-2">
-          <div className="flex items-center">
+          <div className="flex items-center gap-1.5">
             <input
               ref={fileInputRef}
               type="file"
@@ -562,6 +567,23 @@ export default function ChatInterface() {
             >
               <Plus className="h-5 w-5" />
             </button>
+            {reasoningModel && (
+              <button
+                type="button"
+                onClick={() => setThinking((t) => !t)}
+                aria-pressed={thinking}
+                title="Let the model reason step by step before answering"
+                className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors ${
+                  thinking
+                    ? 'border-[#0B6477]/30 bg-[#0B6477]/10 text-[#0B6477]'
+                    : 'border-[#0B6477]/20 text-neutral-500 hover:border-[#0B6477] hover:text-[#0B6477]'
+                }`}
+                style={body}
+              >
+                <Brain className="h-4 w-4" />
+                Thinking
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
