@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, LogOut, Menu, Settings, X } from "lucide-react";
+import { BookOpen, ChevronDown, LogOut, Menu, Settings, X } from "lucide-react";
 import { A } from "../lib/assets";
 import { body } from "../lib/fonts";
 import { useAuth } from "../lib/auth/auth";
@@ -130,6 +130,14 @@ function AccountMenu({
             </div>
           </div>
           <div className="my-1 h-px bg-white/10" />
+          <Link
+            to="/ai/knowledge"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+            style={body}
+          >
+            <BookOpen className="h-4 w-4" />
+            Knowledge base
+          </Link>
           <Link
             to="/ai/profile"
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"

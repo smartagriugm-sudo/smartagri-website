@@ -42,7 +42,7 @@ export default function ModelMenu({ modelId, onChange }: ModelMenuProps) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 min-w-[240px] rounded-2xl border border-[#0B6477]/10 bg-white p-1.5 shadow-xl">
+        <div className="absolute bottom-full right-0 z-50 mb-2 max-h-[60vh] min-w-[240px] overflow-y-auto rounded-2xl border border-[#0B6477]/10 bg-white p-1.5 shadow-xl">
           {AI_MODELS.map((m) => {
             const selected = m.id === modelId
             return (
