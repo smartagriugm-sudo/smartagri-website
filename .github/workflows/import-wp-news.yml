@@ -43,9 +43,14 @@ jobs:
 
       - name: Import new posts
         working-directory: web
-        # ANTHROPIC_API_KEY (optional repo secret) enables English translation
-        # of imported posts; without it, posts are imported in Indonesian.
+        # English translation backends (both optional). Set the TRANSLATE_OLLAMA_*
+        # repo secrets/vars to translate via the on-prem Ollama server (free), or
+        # ANTHROPIC_API_KEY to use the Anthropic API. Without either, posts are
+        # imported in Indonesian.
         env:
+          TRANSLATE_OLLAMA_URL: ${{ secrets.TRANSLATE_OLLAMA_URL }}
+          TRANSLATE_OLLAMA_KEY: ${{ secrets.TRANSLATE_OLLAMA_KEY }}
+          TRANSLATE_OLLAMA_MODEL: ${{ vars.TRANSLATE_OLLAMA_MODEL }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           RETRANSLATE: ${{ inputs.retranslate }}
         run: node scripts/import-wp.mjs

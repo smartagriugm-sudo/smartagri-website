@@ -83,14 +83,41 @@ dalam beberapa menit.
 
 Karena situs baru default berbahasa Inggris sedangkan situs lama berbahasa
 Indonesia, importer bisa menerjemahkan judul, excerpt, dan isi artikel ke
-Inggris memakai Anthropic Claude API, sambil menjaga format Markdown, gambar,
-dan nama diri. Versi Indonesia asli tetap disimpan di field `original` untuk
-fitur dwibahasa (toggle EN/ID) yang akan ditambahkan nanti.
+Inggris, sambil menjaga format Markdown, gambar, dan nama diri. Versi Indonesia
+asli tetap disimpan di field `original` untuk fitur dwibahasa (toggle EN/ID)
+nanti. Gambar dilindungi (di-placeholder) saat penerjemahan agar pathnya tidak
+diubah model.
 
-Aktif **hanya** bila environment `ANTHROPIC_API_KEY` tersedia. Tanpa itu,
-artikel diimpor apa adanya dalam bahasa Indonesia (tanpa error).
+Ada **dua backend** (keduanya opsional):
+- **Ollama on-prem (gratis)** bila `TRANSLATE_OLLAMA_URL` diisi (endpoint
+  OpenAI-compatible, mis. `https://ai.smartagri.id/v1`). Ini yang dipakai.
+- **Anthropic API** bila `ANTHROPIC_API_KEY` diisi (cadangan).
 
-**Mengaktifkan:**
+Tanpa keduanya, artikel diimpor apa adanya dalam bahasa Indonesia (tanpa error).
+Bila salah satu diaktifkan tetapi server/API sedang tidak tersedia saat sebuah
+post baru muncul, post itu **dilewati** (bukan diimpor dalam bahasa Indonesia)
+agar dicoba lagi pada run berikutnya.
+
+### A. Mengaktifkan via Ollama on-prem (gratis, tanpa pembayaran)
+Pakai server AI Anda sendiri (GPU). Set sebagai **repo secret/variable** di
+GitHub (Settings → Secrets and variables → Actions):
+- Secret `TRANSLATE_OLLAMA_URL` = `https://ai.smartagri.id/v1` (URL tunnel tetap;
+  Quick Tunnel kurang cocok karena URL berubah).
+- Secret `TRANSLATE_OLLAMA_KEY` = secret Caddy/`AI_API_KEY`.
+- Variable `TRANSLATE_OLLAMA_MODEL` = mis. `qwen2.5:32b` atau `gemma2:27b`
+  (model kuat lebih rapi menjaga format; hindari model reasoning untuk ini).
+
+Backfill (menerjemahkan berita yang sudah ada) — pilih salah satu:
+- **Dari Actions**: workflow **Import WordPress news** → **Run workflow** →
+  centang **retranslate** (perlu secret di atas terpasang).
+- **Lokal** (dari `web/`, server harus terjangkau):
+  ```
+  RETRANSLATE=true TRANSLATE_OLLAMA_URL=https://<tunnel>/v1 \
+    TRANSLATE_OLLAMA_KEY=<secret> TRANSLATE_OLLAMA_MODEL=qwen2.5:32b \
+    node scripts/import-wp.mjs
+  ```
+
+### B. Mengaktifkan via Anthropic API (berbayar)
 1. Buat API key di https://console.anthropic.com/ .
 2. GitHub repo → Settings → Secrets and variables → Actions → New repository
    secret → nama `ANTHROPIC_API_KEY`, isi tokennya. Workflow sudah membaca

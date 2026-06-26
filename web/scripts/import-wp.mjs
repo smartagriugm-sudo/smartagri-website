@@ -91,14 +91,18 @@ function sanitize(s) {
   return s.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
-// Optional translation of the Indonesian fields to English via the Anthropic
-// API. Active only when ANTHROPIC_API_KEY is set; otherwise content stays in
-// Indonesian (no error). Returns { title, excerpt, body } in English or null.
+// Optional translation of the Indonesian fields to English. Two backends:
+//   - On-prem Ollama (free) when TRANSLATE_OLLAMA_URL is set (OpenAI-compatible
+//     base, e.g. https://ai.smartagri.id/v1). Preferred.
+//   - Anthropic API when ANTHROPIC_API_KEY is set (fallback).
+// When neither is configured, content stays in Indonesian (no error).
 const TRANSLATE_MODEL = process.env.TRANSLATE_MODEL || "claude-haiku-4-5-20251001";
-async function translateToEnglish({ title, excerpt, body }) {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return null;
-  const prompt = `You are translating an Indonesian news article from a university smart-agriculture research center into natural, professional English for the center's website.
+const OLLAMA_URL = process.env.TRANSLATE_OLLAMA_URL;
+const OLLAMA_KEY = process.env.TRANSLATE_OLLAMA_KEY || "ollama";
+const OLLAMA_MODEL = process.env.TRANSLATE_OLLAMA_MODEL || "qwen2.5:32b";
+
+function buildTranslatePrompt({ title, excerpt, body }) {
+  return `You are translating an Indonesian news article from a university smart-agriculture research center into natural, professional English for the center's website.
 
 Rules:
 - Translate faithfully; do not add, remove, or summarize content.
@@ -111,6 +115,48 @@ Rules:
 <BODY>
 ${body}
 </BODY>`;
+}
+
+// Strip a leading <think>...</think> block in case a reasoning model is used.
+function stripThink(text) {
+  const end = text.indexOf("</think>");
+  return end === -1 ? text : text.slice(end + 8);
+}
+
+async function callOllama(prompt) {
+  if (!OLLAMA_URL) return null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(`${OLLAMA_URL}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          Authorization: `Bearer ${OLLAMA_KEY}`,
+        },
+        body: JSON.stringify({
+          model: OLLAMA_MODEL,
+          messages: [{ role: "user", content: prompt }],
+          stream: false,
+          max_tokens: 8000,
+        }),
+      });
+      if (!res.ok) {
+        console.warn(`  translate(ollama) HTTP ${res.status}`);
+        continue;
+      }
+      const data = await res.json();
+      const text = data?.choices?.[0]?.message?.content || "";
+      if (text) return text;
+    } catch (err) {
+      console.warn("  translate(ollama) error:", err.message);
+    }
+  }
+  return null;
+}
+
+async function callAnthropic(prompt) {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -127,20 +173,50 @@ ${body}
         }),
       });
       if (!res.ok) {
-        console.warn(`  translate HTTP ${res.status}`);
+        console.warn(`  translate(anthropic) HTTP ${res.status}`);
         continue;
       }
       const data = await res.json();
       const text = data?.content?.[0]?.text || "";
-      const t = text.match(/<TITLE>([\s\S]*?)<\/TITLE>/);
-      const e = text.match(/<EXCERPT>([\s\S]*?)<\/EXCERPT>/);
-      const b = text.match(/<BODY>([\s\S]*?)<\/BODY>/);
-      if (t && e && b) {
-        return { title: t[1].trim(), excerpt: e[1].trim(), body: b[1].trim() };
-      }
+      if (text) return text;
     } catch (err) {
-      console.warn("  translate error:", err.message);
+      console.warn("  translate(anthropic) error:", err.message);
     }
+  }
+  return null;
+}
+
+const TRANSLATE_ENABLED = !!(OLLAMA_URL || process.env.ANTHROPIC_API_KEY);
+
+async function translateToEnglish(fields) {
+  if (!TRANSLATE_ENABLED) return null;
+  // Shield markdown images so the model cannot alter their paths.
+  const imgs = [];
+  const safeBody = (fields.body || "").replace(/!\[[^\]]*\]\([^)]*\)/g, (m) => {
+    imgs.push(m);
+    return `[[IMAGE_${imgs.length - 1}]]`;
+  });
+  const prompt = buildTranslatePrompt({ ...fields, body: safeBody });
+  let text = OLLAMA_URL ? await callOllama(prompt) : null;
+  if (!text && process.env.ANTHROPIC_API_KEY) text = await callAnthropic(prompt);
+  if (!text) return null;
+  text = stripThink(text);
+  const t = text.match(/<TITLE>([\s\S]*?)<\/TITLE>/);
+  const e = text.match(/<EXCERPT>([\s\S]*?)<\/EXCERPT>/);
+  // BODY may arrive without a closing tag from smaller models; fall back to
+  // everything after <BODY>.
+  let body = null;
+  const bClosed = text.match(/<BODY>([\s\S]*?)<\/BODY>/);
+  if (bClosed) body = bClosed[1];
+  else {
+    const open = text.indexOf("<BODY>");
+    if (open !== -1) body = text.slice(open + 6);
+  }
+  if (t && e && body && body.trim()) {
+    const restored = body
+      .trim()
+      .replace(/\[\[IMAGE_(\d+)\]\]/g, (_, i) => imgs[Number(i)] ?? "");
+    return { title: t[1].trim(), excerpt: e[1].trim(), body: restored };
   }
   return null;
 }
@@ -361,6 +437,14 @@ async function main() {
     // `original` so a future bilingual toggle can show both languages.
     let original;
     const translated = await translateToEnglish({ title, excerpt, body });
+    // If translation is configured but unavailable (e.g. the Ollama server is
+    // momentarily down), skip this post so it is retried next run rather than
+    // imported in Indonesian.
+    if (TRANSLATE_ENABLED && !translated) {
+      console.warn(`  skip (translation unavailable): ${file}`);
+      skipped++;
+      continue;
+    }
     if (translated) {
       original = { lang: "id", title, excerpt, body };
       title = translated.title || title;
