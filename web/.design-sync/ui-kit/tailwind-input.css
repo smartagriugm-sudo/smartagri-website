@@ -1,0 +1,33 @@
+@import "tailwindcss" source(none);
+@source "./src/**/*.tsx";
+
+/* smartagri ships Inter as a single variable woff2 (latin subset). All roles
+   (display/body/accent) are Inter at different weights. */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./fonts/Inter-latin.woff2") format("woff2");
+}
+
+/* Linear-style display tracking baseline; explicit tracking-[...] utilities on
+   larger headings override this with stronger values. */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+}
+
+/* Continuous partner-logo marquee (see PartnerMarquee). */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  animation: marquee 35s linear infinite;
+}

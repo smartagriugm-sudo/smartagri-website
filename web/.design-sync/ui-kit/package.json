@@ -1,0 +1,9 @@
+{
+  "name": "smartagri-ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "module": "./dist/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts"
+}
