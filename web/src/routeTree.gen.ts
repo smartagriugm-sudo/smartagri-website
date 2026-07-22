@@ -29,6 +29,7 @@ import { Route as AiIndexRouteImport } from './routes/ai/index'
 import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
 import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
 import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
+import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
 import { Route as AiProfileRouteImport } from './routes/ai/profile'
 import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
@@ -135,6 +136,11 @@ const PublicationsSlugRoute = PublicationsSlugRouteImport.update({
   path: '/publications/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LinksInsightsRoute = LinksInsightsRouteImport.update({
+  id: '/links_/insights',
+  path: '/links/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FieldNotesSlugRoute = FieldNotesSlugRouteImport.update({
   id: '/field-notes_/$slug',
   path: '/field-notes/$slug',
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
+  '/links/insights': typeof LinksInsightsRoute
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
@@ -209,6 +216,7 @@ export interface FileRoutesByTo {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
+  '/links/insights': typeof LinksInsightsRoute
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
@@ -237,6 +245,7 @@ export interface FileRoutesById {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
+  '/links_/insights': typeof LinksInsightsRoute
   '/publications_/$slug': typeof PublicationsSlugRoute
   '/research_/$slug': typeof ResearchSlugRoute
   '/team_/$slug': typeof TeamSlugRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/field-notes/$slug'
+    | '/links/insights'
     | '/publications/$slug'
     | '/research/$slug'
     | '/team/$slug'
@@ -292,6 +302,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/field-notes/$slug'
+    | '/links/insights'
     | '/publications/$slug'
     | '/research/$slug'
     | '/team/$slug'
@@ -319,6 +330,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/field-notes_/$slug'
+    | '/links_/insights'
     | '/publications_/$slug'
     | '/research_/$slug'
     | '/team_/$slug'
@@ -343,6 +355,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRoute
   TechnologyRoute: typeof TechnologyRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
+  LinksInsightsRoute: typeof LinksInsightsRoute
   PublicationsSlugRoute: typeof PublicationsSlugRoute
   ResearchSlugRoute: typeof ResearchSlugRoute
   TeamSlugRoute: typeof TeamSlugRoute
@@ -490,6 +503,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicationsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/links_/insights': {
+      id: '/links_/insights'
+      path: '/links/insights'
+      fullPath: '/links/insights'
+      preLoaderRoute: typeof LinksInsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/field-notes_/$slug': {
       id: '/field-notes_/$slug'
       path: '/field-notes/$slug'
@@ -565,6 +585,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRoute,
   TechnologyRoute: TechnologyRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
+  LinksInsightsRoute: LinksInsightsRoute,
   PublicationsSlugRoute: PublicationsSlugRoute,
   ResearchSlugRoute: ResearchSlugRoute,
   TeamSlugRoute: TeamSlugRoute,
