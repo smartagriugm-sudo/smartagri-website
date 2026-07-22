@@ -1,0 +1,12 @@
+{
+  "projectId": "a9fcbe86-1ec4-4419-984e-3551524e15a6",
+  "pkg": "smartagri-ui",
+  "globalName": "SmartAgri",
+  "shape": "package",
+  "buildCmd": "cd .design-sync/ui-kit && ../../node_modules/.bin/tsc -p tsconfig.json && node ../../.ds-sync/node_modules/@tailwindcss/cli/dist/index.mjs -i tailwind-input.css -o ds.css",
+  "cssEntry": "./ds.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "componentSrcMap": {
+    "MemberPhoto": null
+  }
+}

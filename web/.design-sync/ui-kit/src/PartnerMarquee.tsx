@@ -1,0 +1,52 @@
+import { body } from "./fonts";
+
+export type MarqueePartner = {
+  /** Partner name, shown beside the logo. */
+  name: string;
+  /** Optional logo URL; the name always renders. */
+  logo?: string | null;
+};
+
+export type PartnerMarqueeProps = {
+  /** The partner roster to scroll. The list is duplicated internally so the
+   *  marquee loops seamlessly. */
+  partners: MarqueePartner[];
+};
+
+// Continuous grayscale logo marquee. Sits on a white background; the side
+// gradients fade the logos in and out at the edges. Pass the roster via
+// `partners` (decoupled from the app's PARTNERS data source).
+export function PartnerMarquee({ partners }: PartnerMarqueeProps) {
+  return (
+    <div className="relative overflow-hidden">
+      <div className="pointer-events-none absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-white to-transparent z-10" />
+      <div className="pointer-events-none absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-white to-transparent z-10" />
+      {/* duplicated list so the marquee loops seamlessly; slow so logos stay readable */}
+      <div
+        className="flex w-max animate-marquee gap-14 items-center"
+        style={{ animationDuration: "120s" }}
+      >
+        {[...partners, ...partners].map((partner, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-3 shrink-0 grayscale opacity-60"
+          >
+            {partner.logo && (
+              <img
+                src={partner.logo}
+                alt={partner.name}
+                className="h-9 w-auto max-w-[120px] object-contain"
+              />
+            )}
+            <span
+              className="text-lg font-semibold text-black whitespace-nowrap"
+              style={body}
+            >
+              {partner.name}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

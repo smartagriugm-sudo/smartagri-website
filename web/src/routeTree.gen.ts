@@ -15,6 +15,7 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PublicationsRouteImport } from './routes/publications'
+import { Route as LinksRouteImport } from './routes/links'
 import { Route as ImpactRouteImport } from './routes/impact'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as FieldNotesRouteImport } from './routes/field-notes'
@@ -62,6 +63,11 @@ const ResearchRoute = ResearchRouteImport.update({
 const PublicationsRoute = PublicationsRouteImport.update({
   id: '/publications',
   path: '/publications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinksRoute = LinksRouteImport.update({
+  id: '/links',
+  path: '/links',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ImpactRoute = ImpactRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/field-notes': typeof FieldNotesRoute
   '/gallery': typeof GalleryRoute
   '/impact': typeof ImpactRoute
+  '/links': typeof LinksRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
   '/sign-in': typeof SignInRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/field-notes': typeof FieldNotesRoute
   '/gallery': typeof GalleryRoute
   '/impact': typeof ImpactRoute
+  '/links': typeof LinksRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
   '/sign-in': typeof SignInRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/field-notes': typeof FieldNotesRoute
   '/gallery': typeof GalleryRoute
   '/impact': typeof ImpactRoute
+  '/links': typeof LinksRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
   '/sign-in': typeof SignInRoute
@@ -245,6 +254,7 @@ export interface FileRouteTypes {
     | '/field-notes'
     | '/gallery'
     | '/impact'
+    | '/links'
     | '/publications'
     | '/research'
     | '/sign-in'
@@ -270,6 +280,7 @@ export interface FileRouteTypes {
     | '/field-notes'
     | '/gallery'
     | '/impact'
+    | '/links'
     | '/publications'
     | '/research'
     | '/sign-in'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/field-notes'
     | '/gallery'
     | '/impact'
+    | '/links'
     | '/publications'
     | '/research'
     | '/sign-in'
@@ -323,6 +335,7 @@ export interface RootRouteChildren {
   FieldNotesRoute: typeof FieldNotesRoute
   GalleryRoute: typeof GalleryRoute
   ImpactRoute: typeof ImpactRoute
+  LinksRoute: typeof LinksRoute
   PublicationsRoute: typeof PublicationsRoute
   ResearchRoute: typeof ResearchRoute
   SignInRoute: typeof SignInRoute
@@ -377,6 +390,13 @@ declare module '@tanstack/react-router' {
       path: '/publications'
       fullPath: '/publications'
       preLoaderRoute: typeof PublicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/links': {
+      id: '/links'
+      path: '/links'
+      fullPath: '/links'
+      preLoaderRoute: typeof LinksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/impact': {
@@ -537,6 +557,7 @@ const rootRouteChildren: RootRouteChildren = {
   FieldNotesRoute: FieldNotesRoute,
   GalleryRoute: GalleryRoute,
   ImpactRoute: ImpactRoute,
+  LinksRoute: LinksRoute,
   PublicationsRoute: PublicationsRoute,
   ResearchRoute: ResearchRoute,
   SignInRoute: SignInRoute,
