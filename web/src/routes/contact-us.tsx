@@ -26,7 +26,7 @@ export const Route = createFileRoute("/contact-us")({
   }),
 });
 
-const CONTACT_EMAIL = "hello@smartagri.id";
+const CONTACT_EMAIL = "hello@smart-agri.id";
 
 // Google Apps Script Web App that appends submissions to the team's
 // "smartagri Inquiries" Google Sheet (see SETUP-INQUIRIES.md).
@@ -47,9 +47,8 @@ const contactInfo = [
   },
   {
     icon: Phone,
-    label: "Phone",
-    // TODO: placeholder number; replace when the official line is provided
-    value: "+62 274 000 0000",
+    label: "WhatsApp",
+    value: "+62 85111220365",
   },
   {
     icon: Clock,
