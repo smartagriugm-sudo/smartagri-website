@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { accent, body, display, serif } from "../lib/fonts";
 import { RESEARCH_AREAS } from "../lib/research";
 import { coreMembers } from "../lib/team";
@@ -195,7 +195,7 @@ function AboutUsPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="rounded-3xl bg-[#08313A] p-8 md:p-14 grid lg:grid-cols-2 gap-10 items-center"
+            className="rounded-3xl bg-[#08313A] p-8 md:p-14 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between"
           >
             <div className="flex flex-col gap-4">
               <h2
@@ -205,46 +205,20 @@ function AboutUsPage() {
                 Work <span style={{ ...accent, color: "#80ED99" }}>with us</span>
               </h2>
               <p
-                className="text-base md:text-lg font-normal text-white/75 max-w-[480px]"
+                className="text-base md:text-lg font-normal text-white/75 max-w-[560px]"
                 style={body}
               >
                 Partner on a research project, pilot smartagri on your fields,
                 or join the team. We answer every message.
               </p>
-              <a
-                href="/contact-us"
-                className="self-start h-12 px-7 bg-[#45DFB1] rounded-2xl text-[#0B2A22] text-lg font-medium hover:bg-[#80ED99] transition-colors flex items-center"
-                style={body}
-              >
-                Contact us
-              </a>
             </div>
-            {/* Placeholder contact details; replace with the center's real ones */}
-            <div className="flex flex-col gap-5">
-              <div className="flex items-start gap-4">
-                <MapPin className="w-5 h-5 text-[#45DFB1] mt-1 shrink-0" />
-                <span className="text-base font-normal text-white/80" style={body}>
-                  Jl. Flora Bulaksumur No.1, Kocoran, Caturtunggal, Kec. Depok,
-                  Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281
-                </span>
-              </div>
-              <div className="flex items-start gap-4">
-                <Mail className="w-5 h-5 text-[#45DFB1] mt-1 shrink-0" />
-                <a
-                  href="mailto:hello@smartagri.id"
-                  className="text-base font-normal text-white/80 hover:text-white transition-colors"
-                  style={body}
-                >
-                  hello@smartagri.id
-                </a>
-              </div>
-              <div className="flex items-start gap-4">
-                <Phone className="w-5 h-5 text-[#45DFB1] mt-1 shrink-0" />
-                <span className="text-base font-normal text-white/80" style={body}>
-                  +62 274 000 0000
-                </span>
-              </div>
-            </div>
+            <a
+              href="/contact-us"
+              className="self-start lg:self-auto shrink-0 h-12 px-7 bg-[#45DFB1] rounded-2xl text-[#0B2A22] text-lg font-medium hover:bg-[#80ED99] transition-colors flex items-center"
+              style={body}
+            >
+              Contact us
+            </a>
           </motion.div>
         </div>
       </section>
