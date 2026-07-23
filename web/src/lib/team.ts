@@ -236,6 +236,7 @@ export const TEAM: TeamMember[] = [
 const SLUGS_WITH_PHOTO = new Set<string>([
   "andri-prima-nugroho",
   "lilik-sutiarso",
+  "mohammad-affan-fajar-falah",
   "muhammad-fajar-ridho-ilham",
   "prieskarinda-lestari",
   "ardan-wiratmoko",

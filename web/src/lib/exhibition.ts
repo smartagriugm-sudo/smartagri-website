@@ -25,8 +25,10 @@ export const EVENT = {
     "Indonesia's international exhibition for agriculture, horticulture, and plantation technology.",
   date: "28 - 30 July 2026",
   venue: "JIExpo Kemayoran, Jakarta",
-  // TODO: replace with the exact hall/booth number once confirmed.
-  booth: "Coming soon",
+  booth: "Hall A2 · A2K4-04",
+  // Floor plan PDF (Google Drive); linked from the "Find us at" card.
+  floorPlan:
+    "https://drive.google.com/file/d/1RLsJDF9KIufxNCFcB97uYT4JRS2gaB4J/view?usp=sharing",
   // Optional official event website; leave empty to hide the link.
   website: "",
 };

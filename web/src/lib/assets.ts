@@ -11,6 +11,7 @@ export const A = {
   iconColor: `${BASE}/icon-color.svg`,
   backgroundCard: `${BASE}/field.jpg`,
   farmerPhoto: `${BASE}/farmer.jpg`,
+  inagritechHero: `${BASE}/inagritech-hero.webp`,
 };
 
 // Partner logos live in public/brand/partners/, referenced via this helper

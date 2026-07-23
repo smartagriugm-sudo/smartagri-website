@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
@@ -37,10 +38,17 @@ export const Route = createFileRoute("/exhibition")({
   }),
 });
 
-const detail = [
+type Detail = {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  href?: string;
+};
+
+const detail: Detail[] = [
   { icon: CalendarDays, label: "Date", value: EVENT.date },
   { icon: MapPin, label: "Venue", value: EVENT.venue },
-  { icon: Store, label: "Find us at", value: EVENT.booth },
+  { icon: Store, label: "Find us at", value: EVENT.booth, href: EVENT.floorPlan },
 ];
 
 function ExhibitionPage() {
@@ -54,6 +62,14 @@ function ExhibitionPage() {
 
       {/* Hero */}
       <section className="relative bg-[#08313A] text-white overflow-hidden">
+        {/* Event photo, kept behind a heavy green wash so it reads as brand
+            color first and imagery second (not a raw photo hero). */}
+        <div
+          className="pointer-events-none absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${A.inagritechHero})` }}
+        />
+        <div className="pointer-events-none absolute inset-0 bg-[#08313A]/88" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#08313A] via-[#08313A]/50 to-transparent" />
         <div className="pointer-events-none absolute -top-24 -right-24 w-[420px] h-[420px] rounded-full bg-[#14919B]/30 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 -left-24 w-[420px] h-[420px] rounded-full bg-[#45DFB1]/20 blur-3xl" />
         <div className="relative max-w-[1360px] mx-auto px-6 md:px-12 pt-14 md:pt-20 pb-14 md:pb-16">
@@ -85,28 +101,55 @@ function ExhibitionPage() {
             </p>
 
             <div className="grid sm:grid-cols-3 gap-4 mt-10">
-              {detail.map((d) => (
-                <div
-                  key={d.label}
-                  className="rounded-2xl bg-white/5 border border-white/10 p-5 flex items-start gap-3"
-                >
-                  <d.icon className="w-5 h-5 text-[#45DFB1] mt-0.5 shrink-0" />
-                  <div>
-                    <div
-                      className="text-[11px] font-medium tracking-[0.1em] uppercase text-white/50"
-                      style={body}
-                    >
-                      {d.label}
+              {detail.map((d) => {
+                const inner = (
+                  <>
+                    <d.icon className="w-5 h-5 text-[#45DFB1] mt-0.5 shrink-0" />
+                    <div className="min-w-0">
+                      <div
+                        className="text-[11px] font-medium tracking-[0.1em] uppercase text-white/50"
+                        style={body}
+                      >
+                        {d.label}
+                      </div>
+                      <div
+                        className="text-sm font-normal text-white/90 leading-relaxed"
+                        style={body}
+                      >
+                        {d.value}
+                      </div>
+                      {d.href && (
+                        <div
+                          className="mt-1 inline-flex items-center gap-1 text-[12px] font-medium text-[#45DFB1]"
+                          style={body}
+                        >
+                          View floor plan
+                          <ArrowUpRight className="w-3 h-3" />
+                        </div>
+                      )}
                     </div>
-                    <div
-                      className="text-sm font-normal text-white/90 leading-relaxed"
-                      style={body}
-                    >
-                      {d.value}
-                    </div>
+                  </>
+                );
+
+                return d.href ? (
+                  <a
+                    key={d.label}
+                    href={d.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-2xl bg-white/5 border border-white/10 p-5 flex items-start gap-3 hover:bg-white/10 hover:border-[#45DFB1]/40 transition-colors"
+                  >
+                    {inner}
+                  </a>
+                ) : (
+                  <div
+                    key={d.label}
+                    className="rounded-2xl bg-white/5 border border-white/10 p-5 flex items-start gap-3"
+                  >
+                    {inner}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 mt-8">
