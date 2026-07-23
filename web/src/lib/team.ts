@@ -134,11 +134,7 @@ export const TEAM: TeamMember[] = [
     category: "Researcher",
     core: true,
     bio: "Researcher in controlled-environment agriculture. First author of the center's Scientia Horticulturae paper on vapor pressure deficit (VPD) control in micro-plant factories for spinach microgreens production.",
-    expertise: [
-      "Plant factory systems",
-      "VPD & climate control",
-      "Controlled environment agriculture",
-    ],
+    expertise: ["Indoor Farming Management"],
     projects: [
       "VPD control in micro-plant factories",
       "Smart greenhouse climate systems",
@@ -152,7 +148,7 @@ export const TEAM: TeamMember[] = [
     category: "Researcher",
     core: true,
     bio: "Researcher working on remote sensing and data analysis for precision agriculture, including UAV multispectral monitoring of crop physiological performance.",
-    expertise: ["Remote sensing", "Data analysis", "Multispectral imagery"],
+    expertise: ["Precision Agricultural Systems Engineering"],
     projects: ["UAV-VTOL multispectral monitoring for precision agriculture"],
   },
   {
@@ -163,7 +159,7 @@ export const TEAM: TeamMember[] = [
     category: "Researcher",
     core: true,
     bio: "Researcher at the Smart Agriculture Research Center working on agricultural automation and smart farming systems.",
-    expertise: ["Agricultural automation", "Smart farming systems"],
+    expertise: ["Smart Environmental System"],
     projects: ["Smart farming field deployments"],
   },
   {
@@ -174,11 +170,7 @@ export const TEAM: TeamMember[] = [
     category: "Researcher",
     core: true,
     bio: "Researcher focusing on sensor development and instrumentation, including electrical impedance spectroscopy (EIS) approaches for non-destructive plant physiological measurement.",
-    expertise: [
-      "EIS instrumentation",
-      "Sensor development",
-      "Plant physiological sensing",
-    ],
+    expertise: ["Plant Electrophysiology & Electrical Spectroscopy"],
     projects: ["EIS-based chlorophyll estimation in leafy crops"],
   },
   {
@@ -189,7 +181,7 @@ export const TEAM: TeamMember[] = [
     category: "Researcher",
     core: true,
     bio: "Researcher at the Smart Agriculture Research Center working on smart agricultural systems and field research programs.",
-    expertise: ["Smart agriculture systems", "Field research"],
+    expertise: ["Plant Sensing & Phenotyping"],
     projects: ["Smart farming research programs"],
   },
   {
@@ -200,11 +192,7 @@ export const TEAM: TeamMember[] = [
     category: "Researcher",
     core: true,
     bio: "Researcher working on UAV-based multispectral monitoring and field operations, and an active contributor to the center's research communication.",
-    expertise: [
-      "UAV operations",
-      "Multispectral monitoring",
-      "Research communication",
-    ],
+    expertise: ["Smart UAV Technology"],
     projects: ["UAV-VTOL multispectral monitoring for precision agriculture"],
   },
   {
@@ -215,7 +203,7 @@ export const TEAM: TeamMember[] = [
     category: "Researcher",
     core: true,
     bio: "Researcher working on multispectral data analysis for crop monitoring within the center's precision agriculture program.",
-    expertise: ["Multispectral data analysis", "Crop monitoring"],
+    expertise: ["Smart UAV Technology"],
     projects: ["UAV-VTOL multispectral monitoring for precision agriculture"],
   },
   {
@@ -225,8 +213,19 @@ export const TEAM: TeamMember[] = [
     role: "Researcher",
     category: "Researcher",
     core: true,
-    bio: "Researcher at the Smart Agriculture Research Center working on smart farming systems and precision agriculture field research.",
-    expertise: ["Smart farming systems", "Precision agriculture"],
+    bio: "Researcher at the Smart Agriculture Research Center working on spectral data analytics for precision agriculture.",
+    expertise: ["Spectral Data Analytics"],
+    projects: ["Smart farming research programs"],
+  },
+  {
+    slug: "fathuzaky-setyawan",
+    name: "Fathuzaky Setyawan",
+    fullName: "Fathuzaky Setyawan",
+    role: "Researcher",
+    category: "Researcher",
+    core: true,
+    bio: "Researcher at the Smart Agriculture Research Center working on agricultural data systems engineering.",
+    expertise: ["Agricultural Data Systems Engineering"],
     projects: ["Smart farming research programs"],
   },
 ];
@@ -247,6 +246,7 @@ const SLUGS_WITH_PHOTO = new Set<string>([
   "diena-itaul-mufida",
   "fahmi-arsyad",
   "mutiara-alifia-ramadhanty",
+  "fathuzaky-setyawan",
 ]);
 
 for (const member of TEAM) {
