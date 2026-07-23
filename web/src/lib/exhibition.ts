@@ -13,6 +13,7 @@ import {
   Warehouse,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { partnerLogo } from "./assets";
 
 // Tag used to surface event coverage (news, daily reports, after report) from
 // Field Notes on the exhibition page. Articles tagged with this in /admin
@@ -113,10 +114,14 @@ export type Sponsor = {
 };
 
 // Sponsors and supporting organizations.
-// TODO: add sponsor logos here when confirmed, e.g.
-//   { name: "Sponsor Name", logo: partnerLogo("sponsor-file.png") },
 // While empty, the exhibition page shows a "coming soon" placeholder.
-export const SPONSORS: Sponsor[] = [];
+export const SPONSORS: Sponsor[] = [
+  {
+    name: "Cendekia Prima Inovasi",
+    logo: partnerLogo("cendekia-prima-inovasi.png"),
+  },
+  { name: "PERTETA Yogyakarta", logo: partnerLogo("perteta-jogja.webp") },
+];
 
 export type ExhibitionDoc = {
   title: string;
