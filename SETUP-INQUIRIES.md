@@ -47,16 +47,40 @@ function doPost(e) {
     data.question,
     'New',
   ]);
-  // Opsional: notifikasi email setiap ada pertanyaan masuk —
-  // hapus tanda komentar (//) di baris di bawah untuk mengaktifkan.
-  // MailApp.sendEmail('hello@smartagri.id',
-  //   '[' + data.id + '] New inquiry from ' + data.name,
-  //   data.question + '\n\nFrom: ' + data.name + ' <' + data.email + '>');
+
+  // Notifikasi email ke tim setiap ada pertanyaan masuk. Reply-To diset ke
+  // email pengunjung, jadi tim tinggal klik "Reply" untuk membalas langsung.
+  const lines = [
+    'Inquiry ID: ' + data.id,
+    'Name: ' + data.name,
+    'Email: ' + data.email,
+    'Organization: ' + (data.organization || '-'),
+    'Research area: ' + (data.area || '-'),
+    'Details: ' + (data.details || '-'),
+    'Technologies: ' + (data.technologies || '-'),
+    '',
+    'Question:',
+    data.question || '-',
+  ];
+  if (data.email) {
+    MailApp.sendEmail({
+      to: 'hello@smart-agri.id',
+      subject: '[' + data.id + '] New inquiry from ' + data.name,
+      body: lines.join('\n'),
+      replyTo: data.email,
+      name: 'smartagri website',
+    });
+  }
+
   return ContentService.createTextOutput(
     JSON.stringify({ ok: true }),
   ).setMimeType(ContentService.MimeType.JSON);
 }
 ```
+
+> Memperbarui skrip yang sudah ter-deploy? Setelah menempel kode baru dan
+> **Save**, buka **Deploy → Manage deployments →** ikon pensil **→ Version:
+> New version → Deploy**. URL `/exec` tetap sama, kode baru langsung aktif.
 
 ## Langkah 3 — Deploy sebagai Web App
 
@@ -81,8 +105,9 @@ tempel URL di antara tanda kutip → commit/push.
   follow-up via email tinggal menyebut ID-nya.
 - Tim membuka Sheet: sortir per tanggal/area, filter status, ubah status
   (`New → In Review → Replied → Closed`), tambah kolom catatan/PIC bebas.
-- Jika notifikasi email diaktifkan (Langkah 2), setiap pertanyaan baru juga
-  mampir ke inbox `hello@smartagri.id`.
+- Setiap pertanyaan baru juga mampir ke inbox `hello@smart-agri.id`. Karena
+  Reply-To diset ke email pengunjung, tim cukup klik **Reply** untuk membalas
+  langsung ke penanya (tanpa menyalin alamatnya).
 
 ## Catatan teknis
 
