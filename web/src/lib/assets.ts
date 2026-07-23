@@ -16,3 +16,7 @@ export const A = {
 // Partner logos live in public/brand/partners/, referenced via this helper
 // so all media still resolves through this module.
 export const partnerLogo = (file: string) => `${BASE}/partners/${file}`;
+
+// Team portraits live in public/brand/team/<slug>.webp (white background),
+// referenced by slug so all media still resolves through this module.
+export const teamPhoto = (slug: string) => `${BASE}/team/${slug}.webp`;

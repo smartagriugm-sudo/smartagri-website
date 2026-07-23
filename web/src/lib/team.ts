@@ -1,4 +1,5 @@
 import { PUBLICATIONS, type Publication } from "./publications";
+import { teamPhoto } from "./assets";
 
 export type TeamCategory = "Lecturer" | "Researcher" | "Student" | "Past Member";
 
@@ -217,7 +218,42 @@ export const TEAM: TeamMember[] = [
     expertise: ["Multispectral data analysis", "Crop monitoring"],
     projects: ["UAV-VTOL multispectral monitoring for precision agriculture"],
   },
+  {
+    slug: "muhammad-fajar-ridho-ilham",
+    name: "Muhammad Fajar Ridho Ilham",
+    fullName: "Muhammad Fajar Ridho Ilham",
+    role: "Researcher",
+    category: "Researcher",
+    core: true,
+    bio: "Researcher at the Smart Agriculture Research Center working on smart farming systems and precision agriculture field research.",
+    expertise: ["Smart farming systems", "Precision agriculture"],
+    projects: ["Smart farming research programs"],
+  },
 ];
+
+// Members with a white-background portrait in public/brand/team/<slug>.webp.
+// Listed explicitly so a member without a photo file falls back to initials
+// instead of pointing at a missing image.
+const SLUGS_WITH_PHOTO = new Set<string>([
+  "andri-prima-nugroho",
+  "lilik-sutiarso",
+  "muhammad-fajar-ridho-ilham",
+  "prieskarinda-lestari",
+  "ardan-wiratmoko",
+  "muhammad-athala-fawwaz-dzaky",
+  "fadel-arya-pradana",
+  "samuel-gatot-marseno",
+  "saifuddin-afif",
+  "diena-itaul-mufida",
+  "fahmi-arsyad",
+  "mutiara-alifia-ramadhanty",
+]);
+
+for (const member of TEAM) {
+  if (SLUGS_WITH_PHOTO.has(member.slug)) {
+    member.photo = teamPhoto(member.slug);
+  }
+}
 
 export function findMember(slug: string): TeamMember | undefined {
   return TEAM.find((member) => member.slug === slug);
