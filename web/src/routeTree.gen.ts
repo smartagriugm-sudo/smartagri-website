@@ -17,6 +17,7 @@ import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PublicationsRouteImport } from './routes/publications'
 import { Route as LinksRouteImport } from './routes/links'
 import { Route as ImpactRouteImport } from './routes/impact'
+import { Route as GuestbookRouteImport } from './routes/guestbook'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as FieldNotesRouteImport } from './routes/field-notes'
 import { Route as ExhibitionRouteImport } from './routes/exhibition'
@@ -30,6 +31,7 @@ import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
 import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
 import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
 import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
+import { Route as GuestbookAdminRouteImport } from './routes/guestbook_.admin'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
 import { Route as AiProfileRouteImport } from './routes/ai/profile'
 import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
@@ -74,6 +76,11 @@ const LinksRoute = LinksRouteImport.update({
 const ImpactRoute = ImpactRouteImport.update({
   id: '/impact',
   path: '/impact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuestbookRoute = GuestbookRouteImport.update({
+  id: '/guestbook',
+  path: '/guestbook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GalleryRoute = GalleryRouteImport.update({
@@ -141,6 +148,11 @@ const LinksInsightsRoute = LinksInsightsRouteImport.update({
   path: '/links/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuestbookAdminRoute = GuestbookAdminRouteImport.update({
+  id: '/guestbook_/admin',
+  path: '/guestbook/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FieldNotesSlugRoute = FieldNotesSlugRouteImport.update({
   id: '/field-notes_/$slug',
   path: '/field-notes/$slug',
@@ -176,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/exhibition': typeof ExhibitionRoute
   '/field-notes': typeof FieldNotesRoute
   '/gallery': typeof GalleryRoute
+  '/guestbook': typeof GuestbookRoute
   '/impact': typeof ImpactRoute
   '/links': typeof LinksRoute
   '/publications': typeof PublicationsRoute
@@ -189,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
+  '/guestbook/admin': typeof GuestbookAdminRoute
   '/links/insights': typeof LinksInsightsRoute
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
@@ -203,6 +217,7 @@ export interface FileRoutesByTo {
   '/exhibition': typeof ExhibitionRoute
   '/field-notes': typeof FieldNotesRoute
   '/gallery': typeof GalleryRoute
+  '/guestbook': typeof GuestbookRoute
   '/impact': typeof ImpactRoute
   '/links': typeof LinksRoute
   '/publications': typeof PublicationsRoute
@@ -216,6 +231,7 @@ export interface FileRoutesByTo {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
+  '/guestbook/admin': typeof GuestbookAdminRoute
   '/links/insights': typeof LinksInsightsRoute
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
@@ -232,6 +248,7 @@ export interface FileRoutesById {
   '/exhibition': typeof ExhibitionRoute
   '/field-notes': typeof FieldNotesRoute
   '/gallery': typeof GalleryRoute
+  '/guestbook': typeof GuestbookRoute
   '/impact': typeof ImpactRoute
   '/links': typeof LinksRoute
   '/publications': typeof PublicationsRoute
@@ -245,6 +262,7 @@ export interface FileRoutesById {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
+  '/guestbook_/admin': typeof GuestbookAdminRoute
   '/links_/insights': typeof LinksInsightsRoute
   '/publications_/$slug': typeof PublicationsSlugRoute
   '/research_/$slug': typeof ResearchSlugRoute
@@ -262,6 +280,7 @@ export interface FileRouteTypes {
     | '/exhibition'
     | '/field-notes'
     | '/gallery'
+    | '/guestbook'
     | '/impact'
     | '/links'
     | '/publications'
@@ -275,6 +294,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/field-notes/$slug'
+    | '/guestbook/admin'
     | '/links/insights'
     | '/publications/$slug'
     | '/research/$slug'
@@ -289,6 +309,7 @@ export interface FileRouteTypes {
     | '/exhibition'
     | '/field-notes'
     | '/gallery'
+    | '/guestbook'
     | '/impact'
     | '/links'
     | '/publications'
@@ -302,6 +323,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/field-notes/$slug'
+    | '/guestbook/admin'
     | '/links/insights'
     | '/publications/$slug'
     | '/research/$slug'
@@ -317,6 +339,7 @@ export interface FileRouteTypes {
     | '/exhibition'
     | '/field-notes'
     | '/gallery'
+    | '/guestbook'
     | '/impact'
     | '/links'
     | '/publications'
@@ -330,6 +353,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/field-notes_/$slug'
+    | '/guestbook_/admin'
     | '/links_/insights'
     | '/publications_/$slug'
     | '/research_/$slug'
@@ -346,6 +370,7 @@ export interface RootRouteChildren {
   ExhibitionRoute: typeof ExhibitionRoute
   FieldNotesRoute: typeof FieldNotesRoute
   GalleryRoute: typeof GalleryRoute
+  GuestbookRoute: typeof GuestbookRoute
   ImpactRoute: typeof ImpactRoute
   LinksRoute: typeof LinksRoute
   PublicationsRoute: typeof PublicationsRoute
@@ -355,6 +380,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRoute
   TechnologyRoute: typeof TechnologyRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
+  GuestbookAdminRoute: typeof GuestbookAdminRoute
   LinksInsightsRoute: typeof LinksInsightsRoute
   PublicationsSlugRoute: typeof PublicationsSlugRoute
   ResearchSlugRoute: typeof ResearchSlugRoute
@@ -417,6 +443,13 @@ declare module '@tanstack/react-router' {
       path: '/impact'
       fullPath: '/impact'
       preLoaderRoute: typeof ImpactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guestbook': {
+      id: '/guestbook'
+      path: '/guestbook'
+      fullPath: '/guestbook'
+      preLoaderRoute: typeof GuestbookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gallery': {
@@ -510,6 +543,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LinksInsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guestbook_/admin': {
+      id: '/guestbook_/admin'
+      path: '/guestbook/admin'
+      fullPath: '/guestbook/admin'
+      preLoaderRoute: typeof GuestbookAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/field-notes_/$slug': {
       id: '/field-notes_/$slug'
       path: '/field-notes/$slug'
@@ -576,6 +616,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExhibitionRoute: ExhibitionRoute,
   FieldNotesRoute: FieldNotesRoute,
   GalleryRoute: GalleryRoute,
+  GuestbookRoute: GuestbookRoute,
   ImpactRoute: ImpactRoute,
   LinksRoute: LinksRoute,
   PublicationsRoute: PublicationsRoute,
@@ -585,6 +626,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRoute,
   TechnologyRoute: TechnologyRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
+  GuestbookAdminRoute: GuestbookAdminRoute,
   LinksInsightsRoute: LinksInsightsRoute,
   PublicationsSlugRoute: PublicationsSlugRoute,
   ResearchSlugRoute: ResearchSlugRoute,

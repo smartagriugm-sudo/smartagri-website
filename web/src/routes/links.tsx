@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Globe, Instagram, Linkedin, Mail, MessageSquare } from "lucide-react";
+import { Globe, Instagram, Linkedin, Mail, MessageSquare, PenLine } from "lucide-react";
 import { A } from "../lib/assets";
 import { body, display } from "../lib/fonts";
 import { trackClick, trackView } from "../lib/links-analytics";
@@ -107,6 +107,34 @@ function LinksPage() {
             smartagri
           </h1>
         </motion.div>
+
+        {/* Highlighted, hard-to-miss guest book CTA for the exhibition. */}
+        <motion.a
+          href="/guestbook"
+          onClick={() => trackClick("INAGRITECH Guest Book")}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+          whileHover={{ y: -2, scale: 1.01 }}
+          whileTap={{ scale: 0.985 }}
+          style={body}
+          className="relative mt-8 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#45DFB1] px-5 py-4 text-center text-[15px] font-semibold text-[#0B2A22] shadow-[0_12px_34px_-8px_rgba(69,223,177,0.7)] transition-colors hover:bg-[#80ED99] sm:mt-10"
+        >
+          {/* Pulsing ring to draw the eye. */}
+          <motion.span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-2xl"
+            animate={{
+              boxShadow: [
+                "0 0 0 0 rgba(128,237,153,0.55)",
+                "0 0 0 10px rgba(128,237,153,0)",
+              ],
+            }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+          />
+          <PenLine size={19} strokeWidth={2} className="shrink-0" />
+          INAGRITECH 2026 - Sign Guest Book
+        </motion.a>
 
         <nav className="mt-9 flex w-full flex-col gap-4 sm:mt-11">
           {LINKS.map((item, i) => (
