@@ -51,6 +51,10 @@ const detail: Detail[] = [
   { icon: Store, label: "Find us at", value: EVENT.booth, href: EVENT.floorPlan },
 ];
 
+// Hide the Downloads section (and the hero "Get the leaflet" button) until the
+// documents are ready. Flip to true once files are in place.
+const SHOW_DOWNLOADS = false;
+
 function ExhibitionPage() {
   const eventNotes = notes
     .filter((note) => note.tags?.includes(EVENT_TAG))
@@ -161,14 +165,16 @@ function ExhibitionPage() {
                 Contact us
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <a
-                href="#documents"
-                className="h-12 px-7 rounded-2xl border border-white/40 text-white text-base font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
-                style={body}
-              >
-                <Download className="w-4 h-4" />
-                Get the leaflet
-              </a>
+              {SHOW_DOWNLOADS && (
+                <a
+                  href="#documents"
+                  className="h-12 px-7 rounded-2xl border border-white/40 text-white text-base font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+                  style={body}
+                >
+                  <Download className="w-4 h-4" />
+                  Get the leaflet
+                </a>
+              )}
             </div>
           </motion.div>
         </div>
@@ -328,7 +334,7 @@ function ExhibitionPage() {
             </h2>
           </div>
           {SPONSORS.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="flex flex-wrap justify-center gap-4">
               {SPONSORS.map((s, i) => (
                 <motion.div
                   key={s.name}
@@ -336,7 +342,7 @@ function ExhibitionPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.3 }}
                   transition={{ delay: (i % 6) * 0.06, duration: 0.45, ease: "easeOut" }}
-                  className="rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-28 flex items-center justify-center p-5"
+                  className="w-[calc(50%-0.5rem)] sm:w-[220px] rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-28 flex items-center justify-center p-5"
                 >
                   <img
                     src={s.logo}
@@ -361,7 +367,8 @@ function ExhibitionPage() {
         </div>
       </section>
 
-      {/* Documents / downloads */}
+      {/* Documents / downloads — hidden until content is ready */}
+      {SHOW_DOWNLOADS && (
       <section id="documents" className="bg-[#F3F7F6] scroll-mt-24">
         <div className="max-w-[1360px] mx-auto px-6 md:px-12 py-16 md:py-20">
           <div className="mb-12">
@@ -428,6 +435,7 @@ function ExhibitionPage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* News, daily reports, after report */}
       <section className="bg-white">
