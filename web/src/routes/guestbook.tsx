@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowLeft, Check, Loader2 } from "lucide-react";
@@ -43,16 +43,6 @@ function GuestbookPage() {
   const [error, setError] = useState<string | null>(null);
 
   const configured = guestbookEnabled();
-
-  // Kiosk mode: after a successful sign, reset for the next visitor.
-  useEffect(() => {
-    if (status !== "done") return;
-    const t = setTimeout(() => {
-      setForm(EMPTY);
-      setStatus("idle");
-    }, 6000);
-    return () => clearTimeout(t);
-  }, [status]);
 
   const set = (key: keyof GuestbookInput) => (v: string) =>
     setForm((f) => ({ ...f, [key]: v }));
@@ -113,10 +103,6 @@ function GuestbookPage() {
         >
           Sign our <span style={{ ...accent, color: "#80ED99" }}>guest book</span>
         </h1>
-        <p className="mt-2 text-[15px] leading-relaxed text-white/75" style={body}>
-          Thanks for visiting smartagri at INAGRITECH 2026. Leave your details and
-          we will keep in touch.
-        </p>
 
         <div className="mt-7 rounded-3xl bg-white p-6 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.5)] sm:p-7">
           {status === "done" ? (
@@ -130,26 +116,16 @@ function GuestbookPage() {
               </div>
               <div>
                 <div
-                  className="text-xl font-semibold text-neutral-900"
+                  className="text-2xl font-semibold text-neutral-900"
                   style={display}
                 >
-                  Thank you!
+                  Thank you for visiting!
                 </div>
-                <p className="mt-1 text-sm text-neutral-500" style={body}>
-                  Your visit has been recorded. Resetting for the next guest...
+                <p className="mt-2 text-sm leading-relaxed text-neutral-500" style={body}>
+                  Your visit has been recorded and our team will keep in touch.
+                  We hope you enjoy INAGRITECH 2026.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setForm(EMPTY);
-                  setStatus("idle");
-                }}
-                style={body}
-                className="mt-1 h-11 rounded-2xl bg-[#0B6477] px-6 text-sm font-medium text-white hover:bg-[#14919B] transition-colors"
-              >
-                Sign another
-              </button>
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
