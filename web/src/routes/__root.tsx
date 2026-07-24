@@ -16,7 +16,7 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'smartagri: Intelligent farming through AI and data',
+        title: 'smartagri: sense. analyze. grow.',
       },
       {
         name: 'description',
@@ -25,7 +25,7 @@ export const Route = createRootRoute({
       },
       {
         property: 'og:title',
-        content: 'smartagri: Intelligent farming through AI and data',
+        content: 'smartagri: sense. analyze. grow.',
       },
       {
         property: 'og:description',
@@ -34,6 +34,21 @@ export const Route = createRootRoute({
       },
     ],
     links: [
+      {
+        rel: 'icon',
+        type: 'image/svg+xml',
+        href: '/favicon.svg',
+      },
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '96x96',
+        href: '/favicon-96.png',
+      },
+      {
+        rel: 'apple-touch-icon',
+        href: '/apple-touch-icon.png',
+      },
       {
         rel: 'preconnect',
         href: 'https://fonts.googleapis.com',
