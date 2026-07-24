@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   BookOpen,
   FlaskConical,
+  GraduationCap,
   Linkedin,
   Mail,
   Sparkles,
@@ -92,7 +93,10 @@ function MemberPage() {
                 <div className="aspect-[4/5] rounded-3xl overflow-hidden border border-[#0B6477]/10">
                   <MemberPhoto member={member} index={memberIndex} />
                 </div>
-                {(member.email || member.linkedin) && (
+                {(member.email ||
+                  member.linkedin ||
+                  member.acadstaff ||
+                  member.scholar) && (
                   <div className="flex flex-col gap-2">
                     {member.email && (
                       <a
@@ -102,6 +106,30 @@ function MemberPage() {
                       >
                         <Mail className="w-4 h-4" />
                         Email
+                      </a>
+                    )}
+                    {member.acadstaff && (
+                      <a
+                        href={member.acadstaff}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-2 h-11 rounded-2xl border border-[#0B6477] text-[#0B6477] font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
+                        style={body}
+                      >
+                        <GraduationCap className="w-4 h-4" />
+                        Academic Staff
+                      </a>
+                    )}
+                    {member.scholar && (
+                      <a
+                        href={member.scholar}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-2 h-11 rounded-2xl border border-[#0B6477] text-[#0B6477] font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
+                        style={body}
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        Google Scholar
                       </a>
                     )}
                     {member.linkedin && (

@@ -32,6 +32,10 @@ export type TeamMember = {
   /** Optional; buttons appear on the profile page when filled */
   email?: string;
   linkedin?: string;
+  /** UGM academic staff profile (acadstaff.ugm.ac.id) */
+  acadstaff?: string;
+  /** Google Scholar profile */
+  scholar?: string;
 };
 
 export const TEAM: TeamMember[] = [
@@ -44,18 +48,21 @@ export const TEAM: TeamMember[] = [
     category: "Lecturer",
     coordinator: true,
     core: true,
-    bio: "Coordinator of the Smart Agriculture Research Center and lecturer at the Department of Agricultural and Biosystems Engineering, UGM. His work spans smart farming systems, IoT-based field monitoring, and precision agriculture, supervising research from UAV multispectral monitoring to plant-factory environmental control.",
+    bio: "Coordinator of the Smart Agriculture Research Center and lecturer at the Department of Agricultural and Biosystems Engineering, UGM. His work centers on agricultural informatics and precision agriculture, from precision livestock farming and smart greenhouses to IoT and big-data estimation of crop water requirements.",
     expertise: [
-      "Smart farming systems",
-      "IoT sensing",
+      "Agricultural informatics",
       "Precision agriculture",
-      "Plant factory",
+      "IoT sensing",
+      "Smart farming systems",
     ],
     projects: [
-      "UAV-VTOL multispectral monitoring for precision agriculture",
-      "EIS-based plant physiological sensing",
-      "Smart greenhouse and plant factory systems",
+      "Precision livestock farming and decision-support systems",
+      "IoT and big-data crop water requirement estimation",
+      "Smart estate technology for oil-palm land management",
     ],
+    acadstaff: "https://acadstaff.ugm.ac.id/andrew",
+    scholar:
+      "https://scholar.google.com/citations?user=OcZOXugAAAAJ&hl=en&oi=ao",
   },
   {
     slug: "lilik-sutiarso",
@@ -64,16 +71,39 @@ export const TEAM: TeamMember[] = [
     role: "Lecturer",
     category: "Lecturer",
     core: true,
-    bio: "Professor of agricultural and biosystems engineering at UGM with decades of work on agricultural systems engineering, mechanization, and decision-support modeling for sustainable agricultural production.",
+    bio: "Professor of agricultural and biosystems engineering at UGM. His work centers on agricultural systems, precision farming, and intelligent control systems, from integrated smart farming systems to precision agricultural technology for sustainable production.",
     expertise: [
-      "Agricultural systems engineering",
-      "Mechanization",
-      "Decision support modeling",
+      "Agricultural systems",
+      "Precision farming",
+      "Intelligent control systems",
     ],
     projects: [
-      "Decision-support systems for sustainable production",
-      "Precision agriculture research supervision",
+      "Integrated smart farming systems",
+      "Precision agricultural technology for horticulture",
     ],
+    acadstaff: "https://acadstaff.ugm.ac.id/Soetiarso",
+    scholar: "https://scholar.google.com/citations?user=JHLikMoAAAAJ&hl=en",
+  },
+  {
+    slug: "murtiningrum",
+    name: "Murtiningrum",
+    fullName: "Dr. Ir. Murtiningrum, S.T.P., M.Eng., IPU., ASEAN Eng.",
+    role: "Lecturer",
+    category: "Lecturer",
+    core: true,
+    bio: "Lecturer at the Department of Agricultural and Biosystems Engineering, UGM, specializing in irrigation engineering and irrigation management. Her work spans smart irrigation water management, drip and mist irrigation for vegetables, irrigation modernization, and cloud-integrated soil moisture and water-level monitoring.",
+    expertise: [
+      "Irrigation engineering",
+      "Irrigation management",
+      "Smart water management",
+    ],
+    projects: [
+      "Smart irrigation water management in the Kedung Putri irrigation area",
+      "Drip and mist irrigation for vegetable crops",
+      "Cloud-integrated soil moisture and water-level monitoring",
+    ],
+    acadstaff: "https://acadstaff.ugm.ac.id/tiningm",
+    scholar: "https://scholar.google.com/citations?user=MMtGyvQAAAAJ&hl=en",
   },
   {
     slug: "mohammad-affan-fajar-falah",
@@ -92,6 +122,9 @@ export const TEAM: TeamMember[] = [
       "Vapor pressure deficit (VPD) control in micro-plant factories",
       "Urban mini-plant factory production systems",
     ],
+    acadstaff: "https://acadstaff.ugm.ac.id/MTk3NTA0MTAxOTk5MDMxMDAx",
+    scholar:
+      "https://scholar.google.com/citations?user=U4-hOxAAAAAJ&hl=en&oi=ao",
   },
   {
     slug: "prieskarinda-lestari",
@@ -100,13 +133,19 @@ export const TEAM: TeamMember[] = [
     role: "Lecturer",
     category: "Lecturer",
     core: true,
-    bio: "Lecturer at the Department of Agricultural and Biosystems Engineering, UGM, working on environmental engineering and water-resource systems for agriculture.",
+    bio: "Lecturer at the Department of Agricultural and Biosystems Engineering, UGM, working on environmental engineering, solid and agricultural waste management, and the valorization of agro-industrial waste, including microplastic pollution and water-quality monitoring.",
     expertise: [
       "Environmental engineering",
-      "Water resources",
-      "Irrigation systems",
+      "Agricultural waste management",
+      "Plastic pollution",
     ],
-    projects: ["Irrigation modernization research"],
+    projects: [
+      "Biodegradable products from tropical agro-industrial waste",
+      "Microplastic pollution and water-quality monitoring",
+    ],
+    acadstaff: "https://acadstaff.ugm.ac.id/prieskarindalestari",
+    scholar:
+      "https://scholar.google.com/citations?user=wpZYUaMAAAAJ&hl=en&oi=ao",
   },
   {
     slug: "ardan-wiratmoko",
@@ -115,16 +154,18 @@ export const TEAM: TeamMember[] = [
     role: "Lecturer",
     category: "Lecturer",
     core: true,
-    bio: "Lecturer and researcher specializing in spectral sensing for agriculture, from UAV-based multispectral mapping to hyperspectral analysis of crops in controlled environments, paired with machine learning.",
+    bio: "Lecturer and researcher at UGM working on agricultural energy and machinery, smart estate technology, and smart farming systems, from plant-factory monitoring to integrated land management and smart water management.",
     expertise: [
-      "Hyperspectral sensing",
-      "UAV remote sensing",
-      "Machine learning",
+      "Agricultural energy & machinery",
+      "Smart estate technology",
+      "Smart farming systems",
     ],
     projects: [
-      "Hyperspectral monitoring of microgreens in plant factories",
-      "UAV-VTOL multispectral monitoring of horticultural crops",
+      "Smart estate technology for oil-palm land management",
+      "Smart water management in irrigation areas",
     ],
+    scholar:
+      "https://scholar.google.com/citations?user=xsdMesgAAAAJ&hl=en&oi=ao",
   },
   {
     slug: "muhammad-athala-fawwaz-dzaky",
@@ -139,6 +180,8 @@ export const TEAM: TeamMember[] = [
       "VPD control in micro-plant factories",
       "Smart greenhouse climate systems",
     ],
+    scholar:
+      "https://scholar.google.com/citations?user=MrA1hJYAAAAJ&hl=en&oi=ao",
   },
   {
     slug: "fadel-arya-pradana",
@@ -150,6 +193,8 @@ export const TEAM: TeamMember[] = [
     bio: "Researcher working on remote sensing and data analysis for precision agriculture, including UAV multispectral monitoring of crop physiological performance.",
     expertise: ["Precision Agricultural Systems Engineering"],
     projects: ["UAV-VTOL multispectral monitoring for precision agriculture"],
+    scholar:
+      "https://scholar.google.com/citations?user=RiNC6lUAAAAJ&hl=en&oi=ao",
   },
   {
     slug: "samuel-gatot-marseno",
@@ -172,6 +217,19 @@ export const TEAM: TeamMember[] = [
     bio: "Researcher focusing on sensor development and instrumentation, including electrical impedance spectroscopy (EIS) approaches for non-destructive plant physiological measurement.",
     expertise: ["Plant Electrophysiology & Electrical Spectroscopy"],
     projects: ["EIS-based chlorophyll estimation in leafy crops"],
+    scholar:
+      "https://scholar.google.com/citations?user=AJP86NUAAAAJ&hl=en&oi=ao",
+  },
+  {
+    slug: "fathuzaky-setyawan",
+    name: "Fathuzaky Setyawan",
+    fullName: "Fathuzaky Setyawan",
+    role: "Researcher",
+    category: "Researcher",
+    core: true,
+    bio: "Researcher at the Smart Agriculture Research Center working on agricultural data systems engineering.",
+    expertise: ["Agricultural Data Systems Engineering"],
+    projects: ["Smart farming research programs"],
   },
   {
     slug: "diena-itaul-mufida",
@@ -217,17 +275,6 @@ export const TEAM: TeamMember[] = [
     expertise: ["Spectral Data Analytics"],
     projects: ["Smart farming research programs"],
   },
-  {
-    slug: "fathuzaky-setyawan",
-    name: "Fathuzaky Setyawan",
-    fullName: "Fathuzaky Setyawan",
-    role: "Researcher",
-    category: "Researcher",
-    core: true,
-    bio: "Researcher at the Smart Agriculture Research Center working on agricultural data systems engineering.",
-    expertise: ["Agricultural Data Systems Engineering"],
-    projects: ["Smart farming research programs"],
-  },
 ];
 
 // Members with a white-background portrait in public/brand/team/<slug>.webp.
@@ -236,6 +283,7 @@ export const TEAM: TeamMember[] = [
 const SLUGS_WITH_PHOTO = new Set<string>([
   "andri-prima-nugroho",
   "lilik-sutiarso",
+  "murtiningrum",
   "mohammad-affan-fajar-falah",
   "muhammad-fajar-ridho-ilham",
   "prieskarinda-lestari",
