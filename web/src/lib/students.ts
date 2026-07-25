@@ -62,6 +62,7 @@ export const STUDENTS: Student[] = [
   { name: "Rega Arya Piradiansyah", year: 2017, level: U },
   { name: "Siwi Yuwanita", year: 2017, level: U },
   { name: "Rio Hatta Prayogi", year: 2017, level: U },
+  { name: "Yusdi Ikhlasul Ariq", year: 2017, level: U },
   // 2018
   { name: "Muhammad Athala Fawwaz Dzaky", year: 2018, level: U },
   { name: "Nabila Salma", year: 2018, level: U },
@@ -71,6 +72,7 @@ export const STUDENTS: Student[] = [
   { name: "Ilham Muhammad Ridho", year: 2018, level: U },
   { name: "Raditya Suwardana", year: 2018, level: U },
   // 2019
+  { name: "Guyup Mahardhian Dwi Putra", year: 2019, level: D },
   { name: "Rido Saputra", year: 2019, level: P },
   { name: "Muhammad Salman Ibnu Chaer", year: 2019, level: P },
   { name: "Nada Berliana Kusumawati", year: 2019, level: U },
@@ -89,6 +91,7 @@ export const STUDENTS: Student[] = [
   { name: "Malyasandi Firdaus", year: 2019, level: U },
   { name: "Ardan Jaenuri", year: 2019, level: U },
   // 2020
+  { name: "Deffa Rahadiyan", year: 2020, level: D },
   { name: "Muhdan Syarovy", year: 2020, level: P },
   { name: "Dwiki Nugraha", year: 2020, level: U },
   { name: "Samuel Gatot Marseno", year: 2020, level: U },
@@ -111,6 +114,8 @@ export const STUDENTS: Student[] = [
   { name: "Diena Ita'ul Mufida", year: 2021, level: U },
   { name: "Fahmi Arsyad", year: 2021, level: U },
   { name: "Kevin Ezekiel Manik", year: 2021, level: U },
+  { name: "Muhammad Ilham Kholid", year: 2021, level: U },
+  { name: "Muhammad Ilham Al Marda", year: 2021, level: U },
   // 2022
   { name: "Iva Khairunnisa", year: 2022, level: U },
   { name: "Muhammad Fajar Ridho Ilham", year: 2022, level: U },
@@ -126,9 +131,9 @@ export const STUDENTS: Student[] = [
   { name: "Faiz Ridwan Pratama", year: 2022, level: U },
   { name: "Shidqon Fathul Muqorrobin", year: 2022, level: U },
   { name: "Ardan Desta Vaunendra", year: 2022, level: U },
-  { name: "Muhammad Ilham Al Marda", year: 2022, level: U },
   { name: "Rizqi Asy'ari Ramadhan", year: 2022, level: U },
   { name: "Fajrian Anggit Hidayatulloh", year: 2022, level: U },
+  { name: "Cahyo Putro Dwi Nugroho", year: 2022, level: U },
   // 2023
   { name: "Saifuddin Afif", year: 2023, level: P },
   { name: "Muhammad Furqon Al-Ashry", year: 2023, level: U },
