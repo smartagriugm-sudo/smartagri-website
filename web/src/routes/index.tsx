@@ -57,7 +57,7 @@ function Hero() {
           className="text-[13px] md:text-sm font-medium tracking-[0.03em] text-[#45DFB1]"
           style={body}
         >
-          Smart Agriculture Research Center, UGM
+          Smart Agriculture Research Center UGM
         </motion.div>
         <h1
           className="text-white text-[52px] sm:text-[68px] md:text-[88px] font-semibold tracking-[-0.04em] leading-[1.02]"
