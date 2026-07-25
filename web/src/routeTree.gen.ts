@@ -9,12 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsOfUseRouteImport } from './routes/terms-of-use'
 import { Route as TechnologyRouteImport } from './routes/technology'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PublicationsRouteImport } from './routes/publications'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as LinksRouteImport } from './routes/links'
 import { Route as ImpactRouteImport } from './routes/impact'
 import { Route as GuestbookRouteImport } from './routes/guestbook'
@@ -38,6 +40,11 @@ import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
 import { Route as AiGenerateRouteImport } from './routes/ai/generate'
 import { Route as AiChatRouteImport } from './routes/ai/chat'
 
+const TermsOfUseRoute = TermsOfUseRouteImport.update({
+  id: '/terms-of-use',
+  path: '/terms-of-use',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TechnologyRoute = TechnologyRouteImport.update({
   id: '/technology',
   path: '/technology',
@@ -66,6 +73,11 @@ const ResearchRoute = ResearchRouteImport.update({
 const PublicationsRoute = PublicationsRouteImport.update({
   id: '/publications',
   path: '/publications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LinksRoute = LinksRouteImport.update({
@@ -191,12 +203,14 @@ export interface FileRoutesByFullPath {
   '/guestbook': typeof GuestbookRoute
   '/impact': typeof ImpactRoute
   '/links': typeof LinksRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
+  '/terms-of-use': typeof TermsOfUseRoute
   '/ai/chat': typeof AiChatRoute
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
@@ -220,12 +234,14 @@ export interface FileRoutesByTo {
   '/guestbook': typeof GuestbookRoute
   '/impact': typeof ImpactRoute
   '/links': typeof LinksRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
+  '/terms-of-use': typeof TermsOfUseRoute
   '/ai/chat': typeof AiChatRoute
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
@@ -251,12 +267,14 @@ export interface FileRoutesById {
   '/guestbook': typeof GuestbookRoute
   '/impact': typeof ImpactRoute
   '/links': typeof LinksRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
+  '/terms-of-use': typeof TermsOfUseRoute
   '/ai/chat': typeof AiChatRoute
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
@@ -283,12 +301,14 @@ export interface FileRouteTypes {
     | '/guestbook'
     | '/impact'
     | '/links'
+    | '/privacy-policy'
     | '/publications'
     | '/research'
     | '/sign-in'
     | '/sign-up'
     | '/team'
     | '/technology'
+    | '/terms-of-use'
     | '/ai/chat'
     | '/ai/generate'
     | '/ai/knowledge'
@@ -312,12 +332,14 @@ export interface FileRouteTypes {
     | '/guestbook'
     | '/impact'
     | '/links'
+    | '/privacy-policy'
     | '/publications'
     | '/research'
     | '/sign-in'
     | '/sign-up'
     | '/team'
     | '/technology'
+    | '/terms-of-use'
     | '/ai/chat'
     | '/ai/generate'
     | '/ai/knowledge'
@@ -342,12 +364,14 @@ export interface FileRouteTypes {
     | '/guestbook'
     | '/impact'
     | '/links'
+    | '/privacy-policy'
     | '/publications'
     | '/research'
     | '/sign-in'
     | '/sign-up'
     | '/team'
     | '/technology'
+    | '/terms-of-use'
     | '/ai/chat'
     | '/ai/generate'
     | '/ai/knowledge'
@@ -373,12 +397,14 @@ export interface RootRouteChildren {
   GuestbookRoute: typeof GuestbookRoute
   ImpactRoute: typeof ImpactRoute
   LinksRoute: typeof LinksRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   PublicationsRoute: typeof PublicationsRoute
   ResearchRoute: typeof ResearchRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   TeamRoute: typeof TeamRoute
   TechnologyRoute: typeof TechnologyRoute
+  TermsOfUseRoute: typeof TermsOfUseRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   GuestbookAdminRoute: typeof GuestbookAdminRoute
   LinksInsightsRoute: typeof LinksInsightsRoute
@@ -389,6 +415,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms-of-use': {
+      id: '/terms-of-use'
+      path: '/terms-of-use'
+      fullPath: '/terms-of-use'
+      preLoaderRoute: typeof TermsOfUseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/technology': {
       id: '/technology'
       path: '/technology'
@@ -429,6 +462,13 @@ declare module '@tanstack/react-router' {
       path: '/publications'
       fullPath: '/publications'
       preLoaderRoute: typeof PublicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/links': {
@@ -619,12 +659,14 @@ const rootRouteChildren: RootRouteChildren = {
   GuestbookRoute: GuestbookRoute,
   ImpactRoute: ImpactRoute,
   LinksRoute: LinksRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
   PublicationsRoute: PublicationsRoute,
   ResearchRoute: ResearchRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   TeamRoute: TeamRoute,
   TechnologyRoute: TechnologyRoute,
+  TermsOfUseRoute: TermsOfUseRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   GuestbookAdminRoute: GuestbookAdminRoute,
   LinksInsightsRoute: LinksInsightsRoute,

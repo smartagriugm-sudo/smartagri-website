@@ -120,6 +120,10 @@ export const SPONSORS: Sponsor[] = [
     name: "Cendekia Prima Inovasi",
     logo: partnerLogo("cendekia-prima-inovasi.png"),
   },
+  {
+    name: "Hidronav Tehnikatama",
+    logo: partnerLogo("hidronav-tehnikatama.png"),
+  },
   { name: "PERTETA Yogyakarta", logo: partnerLogo("perteta-jogja.webp") },
 ];
 

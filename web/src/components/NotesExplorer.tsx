@@ -86,9 +86,11 @@ function ReadMore() {
 export default function NotesExplorer({
   limit,
   showViewAll = false,
+  showFilters = true,
 }: {
   limit?: number;
   showViewAll?: boolean;
+  showFilters?: boolean;
 }) {
   const [filter, setFilter] = useState<NoteFilter>("All");
 
@@ -99,22 +101,24 @@ export default function NotesExplorer({
 
   return (
     <div>
-      <div className="flex flex-wrap justify-center gap-2 mb-10">
-        {NOTE_FILTERS.map((item) => (
-          <button
-            key={item}
-            onClick={() => setFilter(item)}
-            className={
-              filter === item
-                ? "rounded-full px-5 py-2 text-sm font-medium bg-[#0B6477] text-white transition-colors"
-                : "rounded-full px-5 py-2 text-sm font-medium border border-[#0B6477]/20 text-neutral-600 hover:border-[#0B6477] hover:text-[#0B6477] bg-white transition-colors"
-            }
-            style={body}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
+      {showFilters && (
+        <div className="flex flex-wrap justify-center gap-2 mb-10">
+          {NOTE_FILTERS.map((item) => (
+            <button
+              key={item}
+              onClick={() => setFilter(item)}
+              className={
+                filter === item
+                  ? "rounded-full px-5 py-2 text-sm font-medium bg-[#0B6477] text-white transition-colors"
+                  : "rounded-full px-5 py-2 text-sm font-medium border border-[#0B6477]/20 text-neutral-600 hover:border-[#0B6477] hover:text-[#0B6477] bg-white transition-colors"
+              }
+              style={body}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      )}
 
       {featured && (
         <MotionLink

@@ -26,7 +26,7 @@ export default function FieldNotes() {
         </p>
         {/* 7 = 1 featured + 6 in the grid, so the 3-column grid fills evenly
             (3 + 3) with no empty slot in the bottom-right corner. */}
-        <NotesExplorer limit={7} showViewAll />
+        <NotesExplorer limit={7} showViewAll showFilters={false} />
       </div>
     </section>
   );

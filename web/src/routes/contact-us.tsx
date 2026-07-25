@@ -163,49 +163,92 @@ function reviewRows(data: InquiryData): { label: string; value: string }[] {
   return rows.filter((row) => row.value);
 }
 
-function downloadInquiryPdf(id: string, data: InquiryData) {
-  const doc = new jsPDF();
+// The branded A4 letterhead (logo, URL, faint watermark, social handles) that
+// sits behind the inquiry text on every page of the downloadable PDF.
+const LETTERHEAD_URL = "/brand/letterhead.png";
+
+async function loadDataUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string | null>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function downloadInquiryPdf(id: string, data: InquiryData) {
+  const doc = new jsPDF(); // portrait A4, mm units: 210 x 297
   const rows = reviewRows(data);
-  let y = 22;
+
+  // Load the letterhead and paint it as a full-page background; if it fails to
+  // load, the PDF still generates on a plain white page.
+  const letterhead = await loadDataUrl(LETTERHEAD_URL);
+  const paintLetterhead = () => {
+    if (letterhead) doc.addImage(letterhead, "PNG", 0, 0, 210, 297);
+  };
+
+  const LEFT = 22;
+  const TEXT_WIDTH = 150;
+  const TOP = 54; // below the letterhead's logo header
+  const BOTTOM_LIMIT = 232; // above the watermark/social band
+
+  paintLetterhead();
+  let y = TOP;
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
+  doc.setFontSize(16);
   doc.setTextColor(11, 100, 119);
-  doc.text("smartagri: Inquiry Summary", 20, y);
-  y += 9;
+  doc.text("Inquiry Summary", LEFT, y);
+  y += 8;
+
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(60, 60, 60);
-  doc.text(`Inquiry ID: ${id}`, 20, y);
-  y += 6;
+  doc.setFontSize(10.5);
+  doc.setTextColor(90, 90, 90);
+  doc.text(`Inquiry ID: ${id}`, LEFT, y);
+  y += 5.5;
   doc.text(
     `Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
-    20,
+    LEFT,
     y,
   );
-  y += 10;
+  y += 11;
+
   rows.forEach((row) => {
+    const valueLines = doc.splitTextToSize(row.value, TEXT_WIDTH);
+    const blockHeight = 5.5 + valueLines.length * 5.2 + 5;
+    if (y + blockHeight > BOTTOM_LIMIT) {
+      doc.addPage();
+      paintLetterhead();
+      y = TOP;
+    }
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
     doc.setTextColor(20, 20, 20);
-    doc.text(row.label, 20, y);
+    doc.text(row.label, LEFT, y);
     y += 5.5;
     doc.setFont("helvetica", "normal");
     doc.setTextColor(70, 70, 70);
-    const lines = doc.splitTextToSize(row.value, 170);
-    doc.text(lines, 20, y);
-    y += lines.length * 5.5 + 4;
-    if (y > 270) {
-      doc.addPage();
-      y = 22;
-    }
+    doc.text(valueLines, LEFT, y);
+    y += valueLines.length * 5.2 + 5;
   });
-  y += 4;
+
+  y += 2;
+  if (y > BOTTOM_LIMIT) {
+    doc.addPage();
+    paintLetterhead();
+    y = TOP;
+  }
   doc.setFontSize(9);
   doc.setTextColor(130, 130, 130);
-  doc.text(
-    `Keep this ID for follow-up. Smart Agriculture Research Center UGM, ${CONTACT_EMAIL}`,
-    20,
-    Math.min(y, 285),
-  );
+  doc.text("Please keep this Inquiry ID for follow-up.", LEFT, y);
+
   doc.save(`smartagri-inquiry-${id}.pdf`);
 }
 
