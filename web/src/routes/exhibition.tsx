@@ -60,6 +60,13 @@ function ExhibitionPage() {
     .filter((note) => note.tags?.includes(EVENT_TAG))
     .slice(0, 6);
 
+  // Featured layout: CPI larger on top, then PERTETA (left) and Hidronav (right).
+  const sponsorCpi = SPONSORS.find((s) => s.name === "Cendekia Prima Inovasi");
+  const sponsorPerteta = SPONSORS.find((s) => s.name === "PERTETA Yogyakarta");
+  const sponsorHidronav = SPONSORS.find(
+    (s) => s.name === "Hidronav Tehnikatama",
+  );
+
   return (
     <main>
       <SiteHeader />
@@ -334,24 +341,57 @@ function ExhibitionPage() {
             </h2>
           </div>
           {SPONSORS.length > 0 ? (
-            <div className="flex flex-wrap justify-center gap-4">
-              {SPONSORS.map((s, i) => (
+            <div className="mx-auto flex max-w-[520px] flex-col items-center gap-4">
+              {sponsorCpi && (
                 <motion.div
-                  key={s.name}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.3 }}
-                  transition={{ delay: (i % 6) * 0.06, duration: 0.45, ease: "easeOut" }}
-                  className="w-[calc(50%-0.5rem)] sm:w-[220px] rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-28 flex items-center justify-center p-5"
+                  transition={{ duration: 0.45, ease: "easeOut" }}
+                  className="w-full rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-40 flex items-center justify-center p-7"
                 >
                   <img
-                    src={s.logo}
-                    alt={s.name}
+                    src={sponsorCpi.logo}
+                    alt={sponsorCpi.name}
                     loading="lazy"
-                    className="max-h-14 max-w-full object-contain"
+                    className="max-h-24 max-w-full object-contain"
                   />
                 </motion.div>
-              ))}
+              )}
+              <div className="grid w-full grid-cols-2 gap-4">
+                {sponsorPerteta && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ delay: 0.08, duration: 0.45, ease: "easeOut" }}
+                    className="rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-28 flex items-center justify-center p-5"
+                  >
+                    <img
+                      src={sponsorPerteta.logo}
+                      alt={sponsorPerteta.name}
+                      loading="lazy"
+                      className="max-h-14 max-w-full object-contain"
+                    />
+                  </motion.div>
+                )}
+                {sponsorHidronav && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ delay: 0.14, duration: 0.45, ease: "easeOut" }}
+                    className="rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-28 flex items-center justify-center p-5"
+                  >
+                    <img
+                      src={sponsorHidronav.logo}
+                      alt={sponsorHidronav.name}
+                      loading="lazy"
+                      className="max-h-14 max-w-full object-contain"
+                    />
+                  </motion.div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="rounded-3xl border border-dashed border-[#0B6477]/25 bg-[#F3F7F6] p-10 text-center">
