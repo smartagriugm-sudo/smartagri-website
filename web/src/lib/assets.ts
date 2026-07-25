@@ -12,6 +12,7 @@ export const A = {
   backgroundCard: `${BASE}/field.jpg`,
   farmerPhoto: `${BASE}/farmer.jpg`,
   inagritechHero: `${BASE}/inagritech-hero.webp`,
+  heroPhoto: `${BASE}/hero.webp`,
 };
 
 // Partner logos live in public/brand/partners/, referenced via this helper
