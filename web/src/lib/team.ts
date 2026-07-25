@@ -154,16 +154,20 @@ export const TEAM: TeamMember[] = [
     role: "Lecturer",
     category: "Lecturer",
     core: true,
-    bio: "Lecturer and researcher at UGM working on agricultural energy and machinery, smart estate technology, and smart farming systems, from plant-factory monitoring to integrated land management and smart water management.",
+    bio: "Lecturer and researcher at UGM working on agricultural energy and machinery, smart estate technology, and smart farming systems. His work uses UAV platforms for multispectral mapping, crop scouting, and precision spraying across fields and estates, alongside plant-factory monitoring, integrated land management, and smart water management.",
     expertise: [
+      "UAV mapping & remote sensing",
+      "Multispectral crop monitoring",
       "Agricultural energy & machinery",
       "Smart estate technology",
       "Smart farming systems",
     ],
     projects: [
+      "UAV multispectral mapping for crop monitoring",
       "Smart estate technology for oil-palm land management",
       "Smart water management in irrigation areas",
     ],
+    acadstaff: "https://acadstaff.ugm.ac.id/ardanw",
     scholar:
       "https://scholar.google.com/citations?user=xsdMesgAAAAJ&hl=en&oi=ao",
   },
