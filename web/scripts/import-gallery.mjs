@@ -137,11 +137,29 @@ for (const album of albumFolders) {
   const outDir = join(UPLOADS, slug);
   await mkdir(outDir, { recursive: true });
 
-  const images = (
-    await driveList(
-      `'${curated.id}' in parents and mimeType contains 'image/' and trashed = false`,
-    )
-  ).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  // List everything in the curated folder, resolving Drive shortcuts to their
+  // target image (curation is often done with "Add shortcut"). Skip videos and
+  // non-image files.
+  const rawItems = await driveList(
+    `'${curated.id}' in parents and trashed = false`,
+    "files(id,name,mimeType,createdTime,shortcutDetails),nextPageToken",
+  );
+  const images = rawItems
+    .map((f) => {
+      const mt = f.mimeType || "";
+      if (mt.startsWith("image/")) {
+        return { id: f.id, name: f.name, createdTime: f.createdTime };
+      }
+      if (mt === "application/vnd.google-apps.shortcut") {
+        const tmt = f.shortcutDetails?.targetMimeType || "";
+        if (tmt.startsWith("image/")) {
+          return { id: f.shortcutDetails.targetId, name: f.name, createdTime: f.createdTime };
+        }
+      }
+      return null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
   const photos = [];
   let earliest = "";
