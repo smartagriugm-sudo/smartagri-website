@@ -55,7 +55,27 @@ const detail: Detail[] = [
 // documents are ready. Flip to true once files are in place.
 const SHOW_DOWNLOADS = false;
 
+// Hand-picked Instagram posts/reels featured under News & reports.
+const INSTAGRAM_POSTS = [
+  "https://www.instagram.com/p/Da167P1RkZh/",
+  "https://www.instagram.com/p/DaxlpwkARBO/",
+  "https://www.instagram.com/p/DaxlxQjgfBu/",
+  "https://www.instagram.com/p/Da160C5keiu/",
+  "https://www.instagram.com/p/DbTRT79S2rZ/",
+  "https://www.instagram.com/reel/DbTiN0cy545/",
+];
+
+// Instagram's official /embed endpoint renders a public post/reel in an iframe,
+// no third-party script or access token needed.
+function instagramEmbedUrl(url: string): string | null {
+  const m = url.match(/instagram\.com\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);
+  return m ? `https://www.instagram.com/${m[1]}/${m[2]}/embed` : null;
+}
+
 function ExhibitionPage() {
+  const instagramEmbeds = INSTAGRAM_POSTS.map(instagramEmbedUrl).filter(
+    (u): u is string => Boolean(u),
+  );
   const eventNotes = notes
     .filter((note) => note.tags?.includes(EVENT_TAG))
     .slice(0, 6);
@@ -572,6 +592,46 @@ function ExhibitionPage() {
                 during {EVENT.name}. Follow along as we post updates from the
                 show floor.
               </p>
+            </div>
+          )}
+
+          {instagramEmbeds.length > 0 && (
+            <div className="mt-16">
+              <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+                <h3
+                  className="text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-neutral-900"
+                  style={display}
+                >
+                  From our <span style={accent}>Instagram</span>
+                </h3>
+                <a
+                  href="https://www.instagram.com/smartagri.ugm/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#0B6477] font-medium hover:underline inline-flex items-center gap-1.5"
+                  style={body}
+                >
+                  @smartagri.ugm
+                  <ArrowUpRight className="w-4 h-4" />
+                </a>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {instagramEmbeds.map((src) => (
+                  <div
+                    key={src}
+                    className="rounded-3xl overflow-hidden border border-[#0B6477]/10 bg-white"
+                  >
+                    <iframe
+                      src={src}
+                      title="Instagram post"
+                      loading="lazy"
+                      scrolling="no"
+                      className="w-full block"
+                      style={{ height: 640, border: 0 }}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
