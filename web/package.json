@@ -10,6 +10,7 @@
     "generate-routes": "tsr generate",
     "build": "vite build",
     "ingest": "node scripts/ingest.mjs",
+    "import-gallery": "node scripts/import-gallery.mjs",
     "preview": "vite preview",
     "test": "vitest run"
   },
