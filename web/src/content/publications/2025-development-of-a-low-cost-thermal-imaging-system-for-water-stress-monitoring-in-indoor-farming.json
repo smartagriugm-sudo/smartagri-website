@@ -1,9 +1,10 @@
 {
   "year": "2025",
   "title": "Development of a low-cost thermal imaging system for water stress monitoring in indoor farming",
-  "authors": "Andri Prima Nugroho,  Ardan Wiratmoko,  Dwiki Nugraha,  Sri Markumningsih,  Lilik Sutiarso,  Mohammad Affan Fajar Falah, Takashi Okayasu",
+  "authors": "Andri Prima Nugroho, Ardan Wiratmoko, Dwiki Nugraha, Sri Markumningsih, Lilik Sutiarso, Mohammad Affan Fajar Falah, Takashi Okayasu",
   "venue": "Smart Agricultural Technology",
   "link": "https://doi.org/10.1016/j.atech.2025.101048",
   "abstract": "Indoor farming has emerged as a promising strategy to address the global demand for food production, offering controlled environments and year-round cultivation. This approach holds potential to mitigate food security concerns and climate change impacts. However, optimizing plant health and resource management, particularly water, remains a challenge in controlled environment agriculture (CEA) systems. Traditional plant health and water stress assessment methods are often laborious and lack real-time insights. This study aims to address these limitations by developing a cost-effective thermal imaging system for continuous plant water stress monitoring in indoor farming. The system integrates a thermal camera, MLX90640, which captures thermal radiation emitted by plants, and an environmental sensor, DHT22, for humidity and temperature detection. By analysing thermal data and estimating the Crop Water Stress Index (CWSI), the system provides insights into plant water relations and vascular function. The CWSI, ranging from 0 to 1, quantifies water stress levels, with lower values indicating optimal plant growth conditions and higher values signifying water deficiency. Recent advancements in thermal imaging technology and machine learning algorithms enable more accurate and accessible water stress detection. This study contributes to the growing body of research by developing a low-cost thermal imaging system tailored for indoor farming, combining thermal imaging with environmental data for comprehensive plant health assessments. The system aims to provide growers with real-time information for informed decision-making, ultimately enhancing the sustainability and productivity of indoor farming practices.",
-  "cover": "/brand/uploads/X27723755.webp"
+  "cover": "/brand/uploads/X27723755.webp",
+  "citations": 3
 }

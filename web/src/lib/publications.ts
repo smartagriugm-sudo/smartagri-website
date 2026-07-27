@@ -11,6 +11,8 @@ export type Publication = {
   abstract?: string;
   /** Optional cover/figure image for the detail page */
   cover?: string;
+  /** Citation count snapshot from Crossref (is-referenced-by-count) */
+  citations?: number;
 };
 
 type PublicationFile = Omit<Publication, "slug">;
