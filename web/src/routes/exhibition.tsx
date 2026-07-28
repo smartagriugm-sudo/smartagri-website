@@ -101,18 +101,25 @@ function InstagramFeed({ urls }: { urls: string[] }) {
     document.body.appendChild(s);
   }, [urls]);
 
+  // Row-major grid (newest reads left-to-right, top-to-bottom) inside a bounded
+  // scroll box, so the section stays compact instead of stretching the page.
   return (
-    <div className="columns-1 md:columns-2 lg:columns-3 [column-gap:1.5rem]">
-      {urls.map((url) => (
-        <div key={url} className="mb-6 break-inside-avoid">
-          <blockquote
-            className="instagram-media"
-            data-instgrm-permalink={url}
-            data-instgrm-version="14"
-            style={{ margin: 0, width: "100%", minWidth: 0, maxWidth: "100%" }}
-          />
+    <div className="relative">
+      <div className="max-h-[1150px] overflow-y-auto overscroll-contain rounded-2xl pr-2 [scrollbar-color:rgba(11,100,119,0.35)_transparent] [scrollbar-width:thin]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+          {urls.map((url) => (
+            <div key={url} className="min-w-0">
+              <blockquote
+                className="instagram-media"
+                data-instgrm-permalink={url}
+                data-instgrm-version="14"
+                style={{ margin: 0, width: "100%", minWidth: 0, maxWidth: "100%" }}
+              />
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 rounded-b-2xl bg-gradient-to-t from-white to-transparent" />
     </div>
   );
 }
