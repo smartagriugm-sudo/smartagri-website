@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { useEffect } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
@@ -55,27 +56,68 @@ const detail: Detail[] = [
 // documents are ready. Flip to true once files are in place.
 const SHOW_DOWNLOADS = false;
 
-// Hand-picked Instagram posts/reels featured under News & reports.
+// Hand-picked Instagram posts/reels featured under News & reports, newest first.
 const INSTAGRAM_POSTS = [
-  "https://www.instagram.com/p/Da167P1RkZh/",
-  "https://www.instagram.com/p/DaxlpwkARBO/",
-  "https://www.instagram.com/p/DaxlxQjgfBu/",
-  "https://www.instagram.com/p/Da160C5keiu/",
-  "https://www.instagram.com/p/DbTRT79S2rZ/",
   "https://www.instagram.com/reel/DbTiN0cy545/",
+  "https://www.instagram.com/p/DbTRT79S2rZ/",
+  "https://www.instagram.com/p/DbTQOkWSbez/",
+  "https://www.instagram.com/p/DbQ5cjKhh5W/",
+  "https://www.instagram.com/p/DbQ2mVkBdfE/",
+  "https://www.instagram.com/p/DbNlpFThTZi/",
+  "https://www.instagram.com/p/DbNlUStBkmv/",
+  "https://www.instagram.com/p/DbDNn_0gW6k/",
+  "https://www.instagram.com/p/DbDNayTARZ_/",
+  "https://www.instagram.com/p/DbDNMHkAejj/",
+  "https://www.instagram.com/p/Da167P1RkZh/",
+  "https://www.instagram.com/p/Da160C5keiu/",
+  "https://www.instagram.com/p/DaxlxQjgfBu/",
+  "https://www.instagram.com/p/DaxlpwkARBO/",
 ];
 
-// Instagram's official /embed endpoint renders a public post/reel in an iframe,
-// no third-party script or access token needed.
-function instagramEmbedUrl(url: string): string | null {
-  const m = url.match(/instagram\.com\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);
-  return m ? `https://www.instagram.com/${m[1]}/${m[2]}/embed` : null;
+// Instagram's official embed.js renders each public post/reel at its natural
+// height (no clipping), then we lay them out as a tidy masonry. No access token
+// or third-party service needed.
+function InstagramFeed({ urls }: { urls: string[] }) {
+  useEffect(() => {
+    const w = window as unknown as {
+      instgrm?: { Embeds: { process: () => void } };
+    };
+    if (w.instgrm) {
+      w.instgrm.Embeds.process();
+      return;
+    }
+    const id = "instagram-embed-js";
+    const run = () => w.instgrm?.Embeds.process();
+    const existing = document.getElementById(id);
+    if (existing) {
+      existing.addEventListener("load", run);
+      return;
+    }
+    const s = document.createElement("script");
+    s.id = id;
+    s.async = true;
+    s.src = "https://www.instagram.com/embed.js";
+    s.addEventListener("load", run);
+    document.body.appendChild(s);
+  }, [urls]);
+
+  return (
+    <div className="columns-1 md:columns-2 lg:columns-3 [column-gap:1.5rem]">
+      {urls.map((url) => (
+        <div key={url} className="mb-6 break-inside-avoid">
+          <blockquote
+            className="instagram-media"
+            data-instgrm-permalink={url}
+            data-instgrm-version="14"
+            style={{ margin: 0, width: "100%", minWidth: 0, maxWidth: "100%" }}
+          />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function ExhibitionPage() {
-  const instagramEmbeds = INSTAGRAM_POSTS.map(instagramEmbedUrl).filter(
-    (u): u is string => Boolean(u),
-  );
   const eventNotes = notes
     .filter((note) => note.tags?.includes(EVENT_TAG))
     .slice(0, 6);
@@ -595,7 +637,7 @@ function ExhibitionPage() {
             </div>
           )}
 
-          {instagramEmbeds.length > 0 && (
+          {INSTAGRAM_POSTS.length > 0 && (
             <div className="mt-16">
               <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
                 <h3
@@ -615,23 +657,7 @@ function ExhibitionPage() {
                   <ArrowUpRight className="w-4 h-4" />
                 </a>
               </div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {instagramEmbeds.map((src) => (
-                  <div
-                    key={src}
-                    className="rounded-3xl overflow-hidden border border-[#0B6477]/10 bg-white"
-                  >
-                    <iframe
-                      src={src}
-                      title="Instagram post"
-                      loading="lazy"
-                      scrolling="no"
-                      className="w-full block"
-                      style={{ height: 640, border: 0 }}
-                    />
-                  </div>
-                ))}
-              </div>
+              <InstagramFeed urls={INSTAGRAM_POSTS} />
             </div>
           )}
         </div>
