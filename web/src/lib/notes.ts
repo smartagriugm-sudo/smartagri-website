@@ -28,6 +28,12 @@ export type Note = {
   date: string;
   title: string;
   excerpt: string;
+  /** Optional one-line dek shown under the headline on the article page */
+  subtitle?: string;
+  /** Optional eyebrow label above the headline (defaults to the category) */
+  eyebrow?: string;
+  /** Optional place of reporting, prefixed to the date (e.g. "Jakarta") */
+  dateline?: string;
   /** Optional author name shown on the article page */
   author?: string;
   /** Optional topic tags shown on the article page */
@@ -69,6 +75,9 @@ type NoteFile = {
   date: string;
   title: string;
   excerpt: string;
+  subtitle?: string;
+  eyebrow?: string;
+  dateline?: string;
   author?: string;
   tags?: string[];
   cover?: string;
