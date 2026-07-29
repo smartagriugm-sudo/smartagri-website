@@ -4,7 +4,7 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { body, display } from "../lib/fonts";
-import { categoryChip, findNote } from "../lib/notes";
+import { findNote } from "../lib/notes";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 
@@ -96,6 +96,58 @@ function ArticleParagraph({
   return <p>{children}</p>;
 }
 
+function hastText(node?: HastNode): string {
+  if (!node) return "";
+  if (node.value) return node.value;
+  return (node.children ?? []).map(hastText).join("");
+}
+
+// A blockquote whose first line is `[!LABEL] Title` renders as a soft, rounded
+// callout box (used for the "About" boilerplate); every other blockquote keeps
+// the default pull-quote styling (teal vertical rule).
+function ArticleBlockquote({
+  node,
+  children,
+}: {
+  node?: HastNode;
+  children?: React.ReactNode;
+}) {
+  const firstP = (node?.children ?? []).find((kid) => kid.tagName === "p");
+  const marker = hastText(firstP).match(/^\[!(\w+)\]\s*(.*)$/);
+  if (marker) {
+    const title = marker[2];
+    const rest = (Array.isArray(children) ? children : [children]).filter(
+      (child) => typeof child !== "string" || child.trim(),
+    );
+    rest.shift(); // drop the marker paragraph
+    return (
+      <aside className="not-prose my-8 rounded-2xl border border-[#0B6477]/15 bg-[#F3F7F6] p-6 sm:p-8">
+        {title && (
+          <p
+            className="mb-3 text-[13px] font-medium tracking-[0.03em] text-[#0B6477]"
+            style={body}
+          >
+            {title}
+          </p>
+        )}
+        <div
+          className="text-[15px] font-normal leading-relaxed text-neutral-600 [&_em]:italic"
+          style={body}
+        >
+          {rest}
+        </div>
+      </aside>
+    );
+  }
+  return <blockquote>{children}</blockquote>;
+}
+
+// ~200 words per minute, rounded, never below 1.
+function readingMinutes(markdown?: string): number {
+  const words = (markdown ?? "").trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+}
+
 function NoteDetailPage() {
   const note = Route.useLoaderData();
 
@@ -146,34 +198,42 @@ function NoteDetailPage() {
               <ArrowLeft className="w-4 h-4" />
               All field notes
             </Link>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-5">
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${categoryChip(note.category)}`}
-                style={body}
-              >
-                {note.category}
-              </span>
-              <span className="text-sm font-normal text-neutral-400" style={body}>
-                {note.date}
-              </span>
-              {note.author && (
-                <span
-                  className="text-sm font-normal text-neutral-400"
-                  style={body}
-                >
-                  · By{" "}
-                  <span className="font-medium text-neutral-600">
-                    {note.author}
-                  </span>
-                </span>
-              )}
-            </div>
+            <p
+              className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477] mb-4"
+              style={body}
+            >
+              {note.eyebrow || note.category}
+            </p>
             <h1
-              className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900 mb-8"
+              className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900"
               style={display}
             >
               {note.title}
             </h1>
+            {note.subtitle && (
+              <p
+                className="mt-5 text-lg md:text-xl font-normal italic text-neutral-500 leading-relaxed"
+                style={body}
+              >
+                {note.subtitle}
+              </p>
+            )}
+            <div
+              className="mt-6 mb-8 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-normal text-neutral-400"
+              style={body}
+            >
+              <span className="font-medium text-neutral-600">
+                {note.dateline ? `${note.dateline}, ${note.date}` : note.date}
+              </span>
+              {note.author && (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>{note.author}</span>
+                </>
+              )}
+              <span aria-hidden>·</span>
+              <span>± {readingMinutes(note.body)} min read</span>
+            </div>
             {note.cover && (
               <img
                 src={note.cover}
@@ -182,13 +242,17 @@ function NoteDetailPage() {
               />
             )}
             <div
-              className="prose prose-neutral prose-lg max-w-none prose-headings:font-semibold prose-headings:tracking-[-0.02em] prose-a:text-[#0B6477] prose-blockquote:border-l-[#14919B] prose-blockquote:text-neutral-600 prose-li:marker:text-[#14919B] [&::after]:content-[''] [&::after]:block [&::after]:clear-both"
+              className="prose prose-neutral prose-lg max-w-none prose-headings:font-semibold prose-headings:tracking-[-0.02em] prose-a:text-[#0B6477] prose-blockquote:border-l-[#14919B] prose-blockquote:not-italic prose-blockquote:font-normal prose-blockquote:text-neutral-700 prose-li:marker:text-[#14919B] [&::after]:content-[''] [&::after]:block [&::after]:clear-both"
               style={body}
             >
               {note.body ? (
                 <Markdown
                   remarkPlugins={[remarkGfm]}
-                  components={{ img: ArticleImage, p: ArticleParagraph }}
+                  components={{
+                    img: ArticleImage,
+                    p: ArticleParagraph,
+                    blockquote: ArticleBlockquote,
+                  }}
                 >
                   {note.body}
                 </Markdown>
