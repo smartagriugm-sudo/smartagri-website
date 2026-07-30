@@ -58,6 +58,7 @@ const SHOW_DOWNLOADS = false;
 
 // Hand-picked Instagram posts/reels featured under News & reports, newest first.
 const INSTAGRAM_POSTS = [
+  "https://www.instagram.com/p/DbYCfZUAQR6/",
   "https://www.instagram.com/reel/DbVh4pKy7kg/",
   "https://www.instagram.com/reel/DbTiN0cy545/",
   "https://www.instagram.com/p/DbTRT79S2rZ/",
@@ -136,6 +137,7 @@ function ExhibitionPage() {
   const sponsorHidronav = SPONSORS.find(
     (s) => s.name === "Hidronav Tehnikatama",
   );
+  const sponsorPuapt = SPONSORS.find((s) => s.name === "PUAPT UGM");
 
   return (
     <main>
@@ -411,57 +413,97 @@ function ExhibitionPage() {
             </h2>
           </div>
           {SPONSORS.length > 0 ? (
-            <div className="mx-auto flex max-w-[520px] flex-col items-center gap-4">
-              {sponsorCpi && (
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.45, ease: "easeOut" }}
-                  className="w-full rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-40 flex items-center justify-center p-7"
+            <div className="mx-auto flex max-w-[520px] flex-col items-center gap-12">
+              <div className="w-full flex flex-col items-center gap-4">
+                <div
+                  className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]"
+                  style={body}
                 >
-                  <img
-                    src={sponsorCpi.logo}
-                    alt={sponsorCpi.name}
-                    loading="lazy"
-                    className="max-h-24 max-w-full object-contain"
-                  />
-                </motion.div>
-              )}
-              <div className="grid w-full grid-cols-2 gap-4">
-                {sponsorPerteta && (
+                  Funding partners
+                </div>
+                {sponsorCpi && (
                   <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.3 }}
-                    transition={{ delay: 0.08, duration: 0.45, ease: "easeOut" }}
-                    className="rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-28 flex items-center justify-center p-5"
+                    transition={{ duration: 0.45, ease: "easeOut" }}
+                    className="w-full rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-40 flex items-center justify-center p-7"
                   >
                     <img
-                      src={sponsorPerteta.logo}
-                      alt={sponsorPerteta.name}
+                      src={sponsorCpi.logo}
+                      alt={sponsorCpi.name}
                       loading="lazy"
-                      className="max-h-14 max-w-full object-contain"
+                      className="max-h-24 max-w-full object-contain"
                     />
                   </motion.div>
                 )}
-                {sponsorHidronav && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 16 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{ delay: 0.14, duration: 0.45, ease: "easeOut" }}
-                    className="rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-28 flex items-center justify-center p-5"
-                  >
-                    <img
-                      src={sponsorHidronav.logo}
-                      alt={sponsorHidronav.name}
-                      loading="lazy"
-                      className="max-h-14 max-w-full object-contain"
-                    />
-                  </motion.div>
-                )}
+                <div className="grid w-full grid-cols-2 gap-4">
+                  {sponsorPerteta && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 16 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.3 }}
+                      transition={{ delay: 0.08, duration: 0.45, ease: "easeOut" }}
+                      className="rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-28 flex items-center justify-center p-5"
+                    >
+                      <img
+                        src={sponsorPerteta.logo}
+                        alt={sponsorPerteta.name}
+                        loading="lazy"
+                        className="max-h-14 max-w-full object-contain"
+                      />
+                    </motion.div>
+                  )}
+                  {sponsorHidronav && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 16 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.3 }}
+                      transition={{ delay: 0.14, duration: 0.45, ease: "easeOut" }}
+                      className="rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-28 flex items-center justify-center p-5"
+                    >
+                      <img
+                        src={sponsorHidronav.logo}
+                        alt={sponsorHidronav.name}
+                        loading="lazy"
+                        className="max-h-14 max-w-full object-contain"
+                      />
+                    </motion.div>
+                  )}
+                </div>
               </div>
+              {sponsorPuapt && (
+                <div className="w-full flex flex-col items-center gap-4">
+                  <div className="text-center">
+                    <div
+                      className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]"
+                      style={body}
+                    >
+                      Research support
+                    </div>
+                    <div
+                      className="text-sm font-normal text-neutral-400 mt-1"
+                      style={body}
+                    >
+                      Equipment and research materials
+                    </div>
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ duration: 0.45, ease: "easeOut" }}
+                    className="w-full rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] h-32 flex items-center justify-center px-8 py-6"
+                  >
+                    <img
+                      src={sponsorPuapt.logo}
+                      alt={sponsorPuapt.name}
+                      loading="lazy"
+                      className="max-h-16 max-w-full object-contain"
+                    />
+                  </motion.div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="rounded-3xl border border-dashed border-[#0B6477]/25 bg-[#F3F7F6] p-10 text-center">
