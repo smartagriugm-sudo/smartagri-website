@@ -111,6 +111,8 @@ export const ARCH_ACCENT_ICONS: LucideIcon[] = [Gauge, Satellite, Cpu];
 export type Sponsor = {
   name: string;
   logo: string;
+  // "funding": financial sponsor; "in-kind": support in equipment/materials.
+  kind: "funding" | "in-kind";
 };
 
 // Sponsors and supporting organizations.
@@ -119,12 +121,23 @@ export const SPONSORS: Sponsor[] = [
   {
     name: "Cendekia Prima Inovasi",
     logo: partnerLogo("cendekia-prima-inovasi.png"),
+    kind: "funding",
   },
   {
     name: "Hidronav Tehnikatama",
     logo: partnerLogo("hidronav-tehnikatama.png"),
+    kind: "funding",
   },
-  { name: "PERTETA Yogyakarta", logo: partnerLogo("perteta-jogja.webp") },
+  {
+    name: "PERTETA Yogyakarta",
+    logo: partnerLogo("perteta-jogja.webp"),
+    kind: "funding",
+  },
+  {
+    name: "PUAPT UGM",
+    logo: partnerLogo("puapt-ugm.png"),
+    kind: "in-kind",
+  },
 ];
 
 export type ExhibitionDoc = {
