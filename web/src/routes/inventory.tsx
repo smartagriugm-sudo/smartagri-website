@@ -111,16 +111,24 @@ function InventoryContent() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (rows ?? []).filter((r) => {
-      if (lab !== "All" && r.lab !== lab) return false;
-      if (category !== "All" && r.category !== category) return false;
-      if (status !== "All" && r.status !== status) return false;
-      if (q) {
-        const hay = `${r.code} ${r.name} ${r.brand ?? ""}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
+    return (rows ?? [])
+      .filter((r) => {
+        if (lab !== "All" && r.lab !== lab) return false;
+        if (category !== "All" && r.category !== category) return false;
+        if (status !== "All" && r.status !== status) return false;
+        if (q) {
+          const hay = `${r.code} ${r.name} ${r.brand ?? ""}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      })
+      // Order by WGFS number, smallest to largest.
+      .sort(
+        (a, b) =>
+          wgfsNum(a.code) - wgfsNum(b.code) ||
+          (a.ord ?? 0) - (b.ord ?? 0) ||
+          a.name.localeCompare(b.name),
+      );
   }, [rows, query, lab, category, status]);
 
   const counts = useMemo(() => {
@@ -396,4 +404,10 @@ function Td({
 
 function uniq(arr: string[]): string[] {
   return [...new Set(arr)].sort();
+}
+
+// Numeric part of a WGFS code ("WGFS 91" -> 91), for smallest-to-largest sort.
+function wgfsNum(code: string): number {
+  const m = code.match(/(\d+)/);
+  return m ? parseInt(m[1], 10) : 9999;
 }
