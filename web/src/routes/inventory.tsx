@@ -238,15 +238,29 @@ function InventoryContent() {
                         {r.code}
                       </Td>
                       <Td>
-                        <Link
-                          to="/inventory/$slug"
-                          params={{ slug: r.slug }}
-                          className="font-medium text-neutral-900 hover:text-[#0B6477]"
-                        >
-                          {r.name}
-                        </Link>
-                        <div className="text-xs text-neutral-400 mt-0.5">
-                          {r.brand} · {r.category}
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 shrink-0 rounded-lg border border-[#0B6477]/10 bg-white overflow-hidden">
+                            {r.photo && (
+                              <img
+                                src={r.photo}
+                                alt=""
+                                loading="lazy"
+                                className="w-full h-full object-contain p-1"
+                              />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <Link
+                              to="/inventory/$slug"
+                              params={{ slug: r.slug }}
+                              className="font-medium text-neutral-900 hover:text-[#0B6477]"
+                            >
+                              {r.name}
+                            </Link>
+                            <div className="text-xs text-neutral-400 mt-0.5">
+                              {r.brand} · {r.category}
+                            </div>
+                          </div>
                         </div>
                       </Td>
                       <Td className="whitespace-nowrap text-neutral-600">{r.lab}</Td>

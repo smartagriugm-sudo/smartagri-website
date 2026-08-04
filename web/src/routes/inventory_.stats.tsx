@@ -6,7 +6,7 @@ import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import { supabase } from "../lib/auth/supabase";
 import { useAuth } from "../lib/auth/auth";
-import { type Instrument, type UsageLog, formatIDR } from "../lib/inventory";
+import { type Instrument, type UsageLog } from "../lib/inventory";
 
 export const Route = createFileRoute("/inventory_/stats")({
   component: StatsPage,
@@ -138,9 +138,7 @@ function StatsContent() {
         return { label, value: v } as Row;
       });
 
-    const totalCost = logs.reduce((s, l) => s + (l.cost ?? 0), 0);
-
-    return { kpi, byInstrument, byBorrower, byLab, byCategory, byMonth, totalCost };
+    return { kpi, byInstrument, byBorrower, byLab, byCategory, byMonth };
   }, [instruments, logs]);
 
   return (
@@ -215,17 +213,6 @@ function StatsContent() {
                 <BarList rows={stats.byCategory} color="#0AD1C8" />
               </Card>
             </div>
-
-            {stats.totalCost > 0 && (
-              <Card title="Logged usage value">
-                <div className="text-3xl font-semibold text-neutral-900" style={display}>
-                  {formatIDR(stats.totalCost)}
-                </div>
-                <p className="text-sm text-neutral-500 mt-1" style={body}>
-                  Sum of computed cost across all logged usage.
-                </p>
-              </Card>
-            )}
           </div>
         )}
       </div>
@@ -304,19 +291,33 @@ function MonthlyChart({ data }: { data: Row[] }) {
   }
   return (
     <div className="overflow-x-auto">
-      <div className="flex items-end gap-2 h-44 min-w-full" style={{ minWidth: data.length * 34 }}>
+      <div
+        className="flex items-end gap-2 h-56"
+        style={{ minWidth: data.length * 40 }}
+      >
         {data.map((d) => (
-          <div key={d.label} className="flex-1 flex flex-col items-center gap-1.5 min-w-[26px]">
-            <div className="text-[11px] font-medium text-neutral-500 tabular-nums" style={body}>
+          <div
+            key={d.label}
+            className="flex-1 min-w-[30px] h-full flex flex-col items-center"
+          >
+            <div
+              className="text-[11px] font-medium text-neutral-500 tabular-nums mb-1"
+              style={body}
+            >
               {d.value}
             </div>
-            <div className="w-full flex items-end" style={{ height: "100%" }}>
+            {/* flex-1 track gives the bar a real height to scale against */}
+            <div className="flex-1 w-full flex items-end min-h-0">
               <div
-                className="w-full rounded-t-md bg-gradient-to-t from-[#0B6477] to-[#14919B]"
-                style={{ height: `${(d.value / max) * 100}%`, minHeight: 4 }}
+                className="w-full rounded-t-md bg-gradient-to-t from-[#0B6477] to-[#45DFB1] transition-[height]"
+                style={{ height: `${Math.max(2, (d.value / max) * 100)}%` }}
+                title={`${d.label}: ${d.value}`}
               />
             </div>
-            <div className="text-[10px] text-neutral-400 whitespace-nowrap" style={body}>
+            <div
+              className="text-[10px] text-neutral-400 whitespace-nowrap mt-1.5"
+              style={body}
+            >
               {d.label}
             </div>
           </div>
