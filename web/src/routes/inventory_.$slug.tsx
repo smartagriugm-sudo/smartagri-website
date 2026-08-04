@@ -150,6 +150,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
 
   const activeLog = logs.find((l) => l.status === "ongoing") ?? null;
   const meta = statusMeta[instrument.status as InstrumentStatus];
+  const installed = instrument.kind === "installed";
 
   return (
     <Shell>
@@ -181,29 +182,36 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
             {instrument.brand} · {instrument.category}
           </p>
         </div>
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${meta.chip}`}
-        >
-          <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
-          {meta.label}
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          {installed && (
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium bg-[#0B6477]/10 text-[#0B6477]">
+              Permanently installed
+            </span>
+          )}
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${meta.chip}`}
+          >
+            <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
+            {meta.label}
+          </span>
+        </div>
       </div>
 
-      {/* Rate card */}
-      <div className="mt-8 grid sm:grid-cols-3 gap-3">
-        <RateCard label="Internal, self" value={instrument.rate_internal_self} unit={instrument.unit} />
-        <RateCard label="Internal, technician" value={instrument.rate_internal_tech} unit={instrument.unit} />
-        <RateCard label="External" value={instrument.rate_external} unit={instrument.unit} />
-      </div>
+      {/* Rate card — portable instruments only */}
+      {!installed && (
+        <div className="mt-8 grid sm:grid-cols-3 gap-3">
+          <RateCard label="Internal, self" value={instrument.rate_internal_self} unit={instrument.unit} />
+          <RateCard label="Internal, technician" value={instrument.rate_internal_tech} unit={instrument.unit} />
+          <RateCard label="External" value={instrument.rate_external} unit={instrument.unit} />
+        </div>
+      )}
 
       {/* Action panel */}
       <div className="mt-10">
-        {activeLog ? (
-          <ReturnPanel
-            instrument={instrument}
-            log={activeLog}
-            onDone={refresh}
-          />
+        {installed ? (
+          <InspectionPanel instrument={instrument} userId={userId} onDone={refresh} />
+        ) : activeLog ? (
+          <ReturnPanel instrument={instrument} log={activeLog} onDone={refresh} />
         ) : instrument.status === "available" ? (
           <CheckoutPanel instrument={instrument} userId={userId} onDone={refresh} />
         ) : (
@@ -221,11 +229,44 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
           className="text-xl font-semibold tracking-[-0.025em] text-neutral-900 mb-4"
           style={display}
         >
-          Usage <span style={accent}>history</span>
+          {installed ? (
+            <>
+              Inspection <span style={accent}>log</span>
+            </>
+          ) : (
+            <>
+              Usage <span style={accent}>history</span>
+            </>
+          )}
         </h2>
         {logs.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[#0B6477]/25 bg-[#F3F7F6] p-6 text-center text-sm text-neutral-500" style={body}>
-            No usage logged yet.
+            {installed ? "No inspections logged yet." : "No usage logged yet."}
+          </div>
+        ) : installed ? (
+          <div className="overflow-x-auto rounded-2xl border border-[#0B6477]/10">
+            <table className="w-full text-left border-collapse min-w-[680px]">
+              <thead>
+                <tr className="bg-[#F3F7F6] text-neutral-500">
+                  <Th>Date</Th>
+                  <Th>Checked by</Th>
+                  <Th>Type</Th>
+                  <Th>Result</Th>
+                  <Th>Notes</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((l) => (
+                  <tr key={l.id} className="border-t border-[#0B6477]/8 align-top">
+                    <Td className="whitespace-nowrap text-neutral-600">{fmtDate(l.checkout_at)}</Td>
+                    <Td className="font-medium text-neutral-800">{l.borrower_name}</Td>
+                    <Td className="text-neutral-600">{l.purpose || "-"}</Td>
+                    <Td className="text-neutral-600">{l.condition_in || l.condition_out || "-"}</Td>
+                    <Td className="text-neutral-600">{l.notes || "-"}</Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-[#0B6477]/10">
@@ -235,8 +276,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
                   <Th>Borrower</Th>
                   <Th>Out</Th>
                   <Th>Returned</Th>
-                  <Th>Rate</Th>
-                  <Th className="text-right">Qty</Th>
+                  <Th>Purpose</Th>
                   <Th className="text-right">Cost</Th>
                   <Th>Status</Th>
                 </tr>
@@ -253,11 +293,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
                     </Td>
                     <Td className="whitespace-nowrap text-neutral-600">{fmtDate(l.checkout_at)}</Td>
                     <Td className="whitespace-nowrap text-neutral-600">{l.returned_at ? fmtDate(l.returned_at) : "-"}</Td>
-                    <Td className="text-neutral-600">
-                      {l.rate_type ? rateTypeLabel[l.rate_type] : "-"}
-                      <div className="text-xs text-neutral-400">{formatIDR(l.unit_rate)} {l.unit}</div>
-                    </Td>
-                    <Td className="text-right text-neutral-700">{l.quantity ?? "-"}</Td>
+                    <Td className="text-neutral-600">{l.purpose || "-"}</Td>
                     <Td className="text-right font-medium text-neutral-800">{formatIDR(l.cost)}</Td>
                     <Td>
                       <span
@@ -278,6 +314,111 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
         )}
       </div>
     </Shell>
+  );
+}
+
+function InspectionPanel({
+  instrument,
+  userId,
+  onDone,
+}: {
+  instrument: Instrument;
+  userId: string | null;
+  onDone: () => void;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [inspector, setInspector] = useState("");
+  const [date, setDate] = useState(today);
+  const [type, setType] = useState("Routine functional check");
+  const [result, setResult] = useState("All functions normal");
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const submit = async () => {
+    if (!supabase) return;
+    if (!inspector.trim()) {
+      setErr("Please enter who carried out the check.");
+      return;
+    }
+    setSaving(true);
+    setErr(null);
+    const at = new Date(`${date}T00:00:00`).toISOString();
+    const { error } = await supabase.from("usage_logs").insert({
+      instrument_id: instrument.id,
+      log_type: "check",
+      borrower_name: inspector.trim(),
+      user_type: "internal",
+      operator: "self",
+      checkout_at: at,
+      returned_at: at,
+      status: "returned",
+      purpose: type,
+      condition_out: result,
+      condition_in: result,
+      notes: notes.trim() || null,
+      created_by: userId,
+    });
+    if (error) {
+      setErr(error.message);
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
+    onDone();
+  };
+
+  return (
+    <Panel title="Log an inspection / maintenance check">
+      <div className="grid sm:grid-cols-2 gap-4">
+        <Field label="Checked by" required>
+          <Input value={inspector} onChange={setInspector} placeholder="Name" />
+        </Field>
+        <Field label="Date">
+          <Input value={date} onChange={setDate} type="date" />
+        </Field>
+        <Field label="Type">
+          <SelectInput
+            value={type}
+            onChange={setType}
+            options={[
+              ["Routine functional check", "Routine functional check"],
+              ["Periodic inspection", "Periodic inspection"],
+              ["Troubleshooting", "Troubleshooting"],
+              ["Data retrieval & health check", "Data retrieval & health check"],
+              ["Preventive maintenance", "Preventive maintenance"],
+              ["Calibration check", "Calibration check"],
+            ]}
+          />
+        </Field>
+        <Field label="Result">
+          <SelectInput
+            value={result}
+            onChange={setResult}
+            options={[
+              ["All functions normal", "All functions normal"],
+              ["Minor issue resolved", "Minor issue resolved"],
+              ["Needs attention", "Needs attention"],
+            ]}
+          />
+        </Field>
+        <Field label="Notes / findings" full>
+          <Input value={notes} onChange={setNotes} placeholder="What was checked, any issues, actions taken" />
+        </Field>
+      </div>
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={submit}
+          disabled={saving}
+          className="inline-flex items-center gap-2 h-11 px-6 bg-[#45DFB1] rounded-xl text-[#0B2A22] text-sm font-medium hover:bg-[#80ED99] transition-colors disabled:opacity-60"
+          style={body}
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          Save inspection
+        </button>
+      </div>
+      {err && <p className="mt-2 text-sm text-[#B42318]" style={body}>{err}</p>}
+    </Panel>
   );
 }
 

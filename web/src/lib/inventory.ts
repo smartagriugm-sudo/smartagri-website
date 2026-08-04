@@ -27,6 +27,9 @@ export type Instrument = {
   rate_external: number | null;
   unit: string | null;
   status: InstrumentStatus;
+  // "portable": booked/checked out; "installed": permanently sited, logged via
+  // periodic inspection/maintenance checks instead of borrowing.
+  kind: "portable" | "installed" | null;
   pic: string | null;
   notes: string | null;
   photo: string | null;
@@ -55,6 +58,8 @@ export type UsageLog = {
   condition_in: string | null;
   notes: string | null;
   status: "ongoing" | "returned";
+  // "borrow": checkout/return; "check": inspection/maintenance of an installed unit.
+  log_type: "borrow" | "check" | null;
   created_by: string | null;
 };
 

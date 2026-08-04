@@ -265,12 +265,19 @@ function InventoryContent() {
                       </Td>
                       <Td className="whitespace-nowrap text-neutral-600">{r.lab}</Td>
                       <Td>
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${meta.chip}`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
-                          {meta.label}
-                        </span>
+                        {r.kind === "installed" ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-[#0B6477]/10 text-[#0B6477]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#0B6477]" />
+                            Installed
+                          </span>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${meta.chip}`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+                            {meta.label}
+                          </span>
+                        )}
                       </Td>
                       <Td className="whitespace-nowrap text-right text-neutral-700">
                         {formatIDR(rate)}

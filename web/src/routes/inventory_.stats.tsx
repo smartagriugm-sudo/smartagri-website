@@ -178,21 +178,20 @@ function StatsContent() {
           </div>
         ) : stats.kpi.borrows === 0 ? (
           <div className="rounded-2xl border border-dashed border-[#0B6477]/25 bg-[#F3F7F6] p-8 text-center text-neutral-500 text-sm" style={body}>
-            No usage has been logged yet. Statistics will appear here once
-            instruments are checked out.
+            No activity has been logged yet. Statistics will appear here once instruments are used or inspected.
           </div>
         ) : (
           <div className="flex flex-col gap-8">
             {/* KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <Kpi label="Total borrows" value={stats.kpi.borrows} />
+              <Kpi label="Total log entries" value={stats.kpi.borrows} />
               <Kpi label="Instruments used" value={stats.kpi.instrumentsUsed} tone="#14919B" />
-              <Kpi label="Unique borrowers" value={stats.kpi.borrowers} tone="#0B6477" />
+              <Kpi label="People involved" value={stats.kpi.borrowers} tone="#0B6477" />
               <Kpi label="Currently out" value={stats.kpi.ongoing} tone="#F59E0B" />
             </div>
 
             {/* time series */}
-            <Card title="Borrows over time">
+            <Card title="Activity over time">
               <MonthlyChart data={stats.byMonth} />
             </Card>
 
@@ -200,16 +199,16 @@ function StatsContent() {
               <Card title="Most-used instruments">
                 <BarList rows={stats.byInstrument} />
               </Card>
-              <Card title="Top borrowers">
+              <Card title="Most active people">
                 <BarList rows={stats.byBorrower} color="#0B6477" />
               </Card>
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6">
-              <Card title="Borrows by lab">
+              <Card title="Activity by lab / location">
                 <BarList rows={stats.byLab} color="#14919B" />
               </Card>
-              <Card title="Borrows by category">
+              <Card title="Activity by category">
                 <BarList rows={stats.byCategory} color="#0AD1C8" />
               </Card>
             </div>
