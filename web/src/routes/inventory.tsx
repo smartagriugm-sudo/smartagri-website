@@ -70,6 +70,7 @@ function InventoryContent() {
   const [lab, setLab] = useState("All");
   const [category, setCategory] = useState("All");
   const [status, setStatus] = useState("All");
+  const [rate, setRate] = useState("All");
 
   useEffect(() => {
     let active = true;
@@ -116,6 +117,14 @@ function InventoryContent() {
         if (lab !== "All" && r.lab !== lab) return false;
         if (category !== "All" && r.category !== category) return false;
         if (status !== "All" && r.status !== status) return false;
+        if (rate !== "All") {
+          const hasRate =
+            r.rate_internal_self != null ||
+            r.rate_internal_tech != null ||
+            r.rate_external != null;
+          if (rate === "With rate" && !hasRate) return false;
+          if (rate === "No rate" && hasRate) return false;
+        }
         if (q) {
           const hay = `${r.code} ${r.name} ${r.brand ?? ""}`.toLowerCase();
           if (!hay.includes(q)) return false;
@@ -129,7 +138,7 @@ function InventoryContent() {
           (a.ord ?? 0) - (b.ord ?? 0) ||
           a.name.localeCompare(b.name),
       );
-  }, [rows, query, lab, category, status]);
+  }, [rows, query, lab, category, status, rate]);
 
   const counts = useMemo(() => {
     const c = { total: rows?.length ?? 0, available: 0, in_use: 0, other: 0 };
@@ -199,6 +208,7 @@ function InventoryContent() {
           </div>
           <Select value={lab} onChange={setLab} options={labs} />
           <Select value={category} onChange={setCategory} options={categories} />
+          <Select value={rate} onChange={setRate} options={["All", "With rate", "No rate"]} />
           <Select
             value={status}
             onChange={setStatus}

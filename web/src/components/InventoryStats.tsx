@@ -3,6 +3,7 @@
 // state. All numbers come in as props (computed by lib/inventory-stats.ts); no
 // component fetches or fabricates data.
 import type { ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
   ArrowDownLeft,
@@ -24,6 +25,28 @@ import {
 } from "../lib/inventory-stats";
 
 /* ---------------- shared primitives ---------------- */
+
+// An instrument name that links to its detail page when a slug is known.
+function InstrumentLink({
+  slug,
+  className,
+  children,
+}: {
+  slug?: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  if (!slug) return <span className={className}>{children}</span>;
+  return (
+    <Link
+      to="/inventory/$slug"
+      params={{ slug }}
+      className={`${className ?? ""} hover:text-[#0B6477] hover:underline`}
+    >
+      {children}
+    </Link>
+  );
+}
 
 export function Card({
   title,
@@ -293,7 +316,11 @@ export function CurrentlyOutPanel({
                     r.overdueDays ? "bg-[#F59E0B]/5" : ""
                   }`}
                 >
-                  <td className="py-2 pr-3 font-medium text-neutral-800" style={body}>{r.instrument}</td>
+                  <td className="py-2 pr-3 font-medium text-neutral-800" style={body}>
+                    <InstrumentLink slug={r.slug} className="text-neutral-800">
+                      {r.instrument}
+                    </InstrumentLink>
+                  </td>
                   <td className="py-2 pr-3 text-neutral-600" style={body}>{r.borrower}</td>
                   <td className="py-2 pr-3 text-neutral-600 whitespace-nowrap" style={body}>{fmt(r.checkoutAt)}</td>
                   <td className="py-2 pr-3 text-neutral-600 whitespace-nowrap" style={body}>{r.due ? fmt(r.due) : "-"}</td>
@@ -360,7 +387,9 @@ export function ActivityFeed({
                   <p className="text-sm text-neutral-700 leading-snug" style={body}>
                     <span className="font-medium text-neutral-900">{e.person}</span>{" "}
                     {m.verb}{" "}
-                    <span className="font-medium text-neutral-900">{e.instrument}</span>
+                    <InstrumentLink slug={e.slug} className="font-medium text-neutral-900">
+                      {e.instrument}
+                    </InstrumentLink>
                   </p>
                   <p className="text-xs text-neutral-400" style={body}>
                     {relativeTime(e.at, now)}
@@ -450,7 +479,9 @@ export function BarList({
       {rows.map((r) => (
         <div key={r.label} className="flex items-center gap-3">
           <div className="w-[42%] shrink-0 text-sm text-neutral-700 truncate" style={body} title={r.label}>
-            {r.label}
+            <InstrumentLink slug={r.slug} className="text-neutral-700">
+              {r.label}
+            </InstrumentLink>
           </div>
           <div className="flex-1 h-6 rounded-md bg-[#F3F7F6] overflow-hidden">
             <div
