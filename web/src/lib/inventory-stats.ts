@@ -13,16 +13,18 @@ export type Delta = {
   pct: number | null;
   dir: "up" | "down" | "flat";
 };
-export type NamedCount = { label: string; value: number };
+export type NamedCount = { label: string; value: number; slug?: string };
 export type MonthPoint = { key: string; label: string; value: number };
 export type ActivityEvent = {
   at: string;
   type: "borrow" | "return" | "check";
   person: string;
   instrument: string;
+  slug: string;
 };
 export type OutRow = {
   instrument: string;
+  slug: string;
   borrower: string;
   checkoutAt: string;
   due: string | null;
@@ -96,6 +98,7 @@ export function computeInventoryStats(
 ): InventoryStats {
   const byId = new Map(instruments.map((i) => [i.id, i]));
   const nameOf = (id: string) => byId.get(id)?.name ?? "Unknown instrument";
+  const slugOf = (id: string) => byId.get(id)?.slug ?? "";
   const borrow = logs.filter(isBorrow);
   const checks = logs.filter((l) => l.log_type === "check");
 
@@ -168,6 +171,7 @@ export function computeInventoryStats(
         dueMs != null ? Math.floor((now.getTime() - dueMs) / DAY) : null;
       return {
         instrument: nameOf(l.instrument_id),
+        slug: slugOf(l.instrument_id),
         borrower: l.borrower_name,
         checkoutAt: l.checkout_at,
         due: l.expected_return,
@@ -187,6 +191,7 @@ export function computeInventoryStats(
         type: "borrow",
         person: l.borrower_name,
         instrument: nameOf(l.instrument_id),
+        slug: slugOf(l.instrument_id),
       });
     if (l.returned_at)
       events.push({
@@ -194,6 +199,7 @@ export function computeInventoryStats(
         type: "return",
         person: l.borrower_name,
         instrument: nameOf(l.instrument_id),
+        slug: slugOf(l.instrument_id),
       });
   }
   for (const l of checks) {
@@ -203,6 +209,7 @@ export function computeInventoryStats(
         type: "check",
         person: l.borrower_name,
         instrument: nameOf(l.instrument_id),
+        slug: slugOf(l.instrument_id),
       });
   }
   const recentActivity = events
@@ -227,6 +234,7 @@ export function computeInventoryStats(
   const portableCounts: NamedCount[] = portable.map((i) => ({
     label: i.name,
     value: borrowCount.get(i.id) ?? 0,
+    slug: i.slug,
   }));
   const mostUsed = [...portableCounts].sort((a, b) => b.value - a.value).slice(0, 10);
   const underused = [...portableCounts].sort((a, b) => a.value - b.value).slice(0, 8);
