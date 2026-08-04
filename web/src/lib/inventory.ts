@@ -29,6 +29,7 @@ export type Instrument = {
   status: InstrumentStatus;
   pic: string | null;
   notes: string | null;
+  photo: string | null;
   created_at: string;
 };
 

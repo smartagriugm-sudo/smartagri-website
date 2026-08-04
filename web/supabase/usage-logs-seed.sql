@@ -1,22 +1,6 @@
--- PUAPT logbook: usage history import (run once in the Supabase SQL editor).
--- Adds instruments that appear in the logbook but not in the WGFS rate card,
--- then inserts every borrow record. Idempotent (deterministic ids / on conflict).
+-- PUAPT logbook: usage history import for the WGFS rate-card instruments.
+-- Run once in the Supabase SQL editor. Idempotent (deterministic ids).
 
--- 1. Instruments present in the logbook but not in the rate card ------------
-insert into public.instruments (slug, code, name, brand, lab, category, status)
-values
-  ('ph-meter-digital', '2024-5A-012', 'pH Meter Digital', 'Smart Sensor', 'Lab TLBP', 'Field & Lab Meters', 'available'),
-  ('water-quality-5-in-1', '2024-5A-014', '5-in-1 Water Quality Meter', '', 'Lab TLBP', 'Field & Lab Meters', 'available'),
-  ('thermohygrometer', '2024-5A-016', 'Thermohygrometer', 'Habotest HT618', 'Lab TLBP', 'Weather & Environment', 'available'),
-  ('sound-level-meter', '2024-5A-018', 'Sound Level Meter', 'Habotest', 'Lab TLBP', 'Field & Lab Meters', 'available'),
-  ('water-sampler-van-dorn', '2024-5A-026', 'Water Sampler (Van Dorn)', '', 'Lab TLBP', 'Field & Lab Meters', 'available'),
-  ('turbidity-meter', '2024-5A-027', 'Turbidity Meter', 'B-ONE', 'Lab TLBP', 'Field & Lab Meters', 'available'),
-  ('pulse-environmental-monitoring', '2024-5A-028', 'Pulse Environmental Monitoring', 'Pulse Pro', 'Lab TLBP', 'Weather & Environment', 'available'),
-  ('pulse-hub', '2024-5A-030', 'Pulse Hub', 'Pulse Pro', 'Lab TLBP', 'Weather & Environment', 'available'),
-  ('colormeter-fru', 'PUAPT WGFS', 'Colormeter', 'Fru', 'Lab TLBP', 'Field & Lab Meters', 'available')
-on conflict (slug) do nothing;
-
--- 2. Usage logs (historical borrows, all marked returned) -------------------
 insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
 select '8b104f5e-1d2f-5aee-8c15-94688b659534', i.id, 'Saifuddin Afif', 'internal', 'self', '2025-04-13 00:00:00+07', '2025-04-13 00:00:00+07', 'returned', 'Masih bagus, masih bisa auto kaliberasi dan akuisisi data', 'Masih bagus, masih bisa auto kaliberasi dan akuisisi data', 'Imported from PUAPT logbook (unit 2024-5A-001)', '2025-04-13 00:00:00+07'
 from public.instruments i where i.slug = 'wgfs-118-soil-measurement-ph-portable-meter'
@@ -862,34 +846,6 @@ select '70477d86-c55b-5cc2-8b8d-d527ab280932', i.id, 'Muhammad Fajar Ridho Ilham
 from public.instruments i where i.slug = 'wgfs-109-hyperspectral-imaging-system'
 on conflict (id) do nothing;
 insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '28b8ef74-0759-58fa-b4c1-cc2f67773921', i.id, 'Arinda Fadea Pramaesela', 'internal', 'self', '2025-11-06 00:00:00+07', '2025-11-06 00:00:00+07', 'returned', 'baik', 'baik', 'Imported from PUAPT logbook (unit 2024-5A-012)', '2025-11-06 00:00:00+07'
-from public.instruments i where i.slug = 'ph-meter-digital'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '8cd54970-1179-5979-b279-9cb2f364ddc3', i.id, 'Devi Ramdani', 'internal', 'self', '2025-07-27 00:00:00+07', '2025-07-27 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-012)', '2025-07-27 00:00:00+07'
-from public.instruments i where i.slug = 'ph-meter-digital'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '65ce723a-3e8f-527b-b28a-463f9dfd627f', i.id, 'Dananjaya Khoirudin', 'internal', 'self', '2025-07-18 00:00:00+07', '2025-08-04 00:00:00+07', 'returned', 'Baik', 'baik', 'Imported from PUAPT logbook (unit 2024-5A-014)', '2025-07-18 00:00:00+07'
-from public.instruments i where i.slug = 'water-quality-5-in-1'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '945588f0-c4bf-5f89-99f3-f712cc48ad9b', i.id, 'Zuhrotul Maulidah', 'internal', 'self', '2025-01-04 00:00:00+07', '2025-02-18 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-016)', '2025-01-04 00:00:00+07'
-from public.instruments i where i.slug = 'thermohygrometer'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '2b5f7933-05d2-5654-8483-490c5a829cc6', i.id, 'Zuhrotul Maulidah', 'internal', 'self', '2024-12-24 00:00:00+07', '2025-02-28 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-016)', '2024-12-24 00:00:00+07'
-from public.instruments i where i.slug = 'thermohygrometer'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '1837880b-533d-5bfc-8f61-f9acbfb0cce2', i.id, 'Zuhrotul Maulidah', 'internal', 'self', '2025-01-08 00:00:00+07', '2025-02-26 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-017)', '2025-01-08 00:00:00+07'
-from public.instruments i where i.slug = 'thermohygrometer'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '9a98a723-9900-57c1-badc-6cbc8868ce3b', i.id, 'Ania Emilia Dewi', 'internal', 'self', '2025-01-21 00:00:00+07', '2025-04-22 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-018)', '2025-01-21 00:00:00+07'
-from public.instruments i where i.slug = 'sound-level-meter'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
 select '849d7916-7aab-5d8e-a9b0-9c531836afd0', i.id, 'Muhammad Athala Fawwaz Dzaky', 'internal', 'self', '2025-01-14 00:00:00+07', '2025-01-21 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-020)', '2025-01-14 00:00:00+07'
 from public.instruments i where i.slug = 'wgfs-123-spectrometer'
 on conflict (id) do nothing;
@@ -1012,80 +968,4 @@ on conflict (id) do nothing;
 insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
 select 'a0877e18-9e89-53a8-b615-b97b014bc977', i.id, 'Samuel Gatot Marseno', 'internal', 'self', '2026-04-29 00:00:00+07', '2026-05-01 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-025)', '2026-04-29 00:00:00+07'
 from public.instruments i where i.slug = 'wgfs-116-portable-photosynthesis-system'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select 'ffa6f9c2-41c6-5522-8a36-3db74d132be0', i.id, 'Dananjaya Khoirudin', 'internal', 'self', '2025-07-18 00:00:00+07', '2025-08-04 00:00:00+07', 'returned', 'aman', 'aman', 'Imported from PUAPT logbook (unit 2024-5A-026)', '2025-07-18 00:00:00+07'
-from public.instruments i where i.slug = 'water-sampler-van-dorn'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select 'fb802525-f763-5a95-af6b-77e353c4c467', i.id, 'Arinda Fadea Pramaesela', 'internal', 'self', '2025-03-06 00:00:00+07', '2025-02-06 00:00:00+07', 'returned', 'baik', 'baik', 'Imported from PUAPT logbook (unit 2024-5A-027)', '2025-03-06 00:00:00+07'
-from public.instruments i where i.slug = 'turbidity-meter'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '5cb66e31-5b4e-51b7-927b-bc5aeb509949', i.id, 'Arinda Fadea Pramaesela', 'internal', 'self', '2025-11-06 00:00:00+07', '2025-11-06 00:00:00+07', 'returned', 'baik', 'baik', 'Imported from PUAPT logbook (unit 2024-5A-027)', '2025-11-06 00:00:00+07'
-from public.instruments i where i.slug = 'turbidity-meter'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '322c81a8-eae5-5709-be05-1f332ce5fd65', i.id, 'Novita Dyah Pitaloka', 'internal', 'self', '2025-07-23 00:00:00+07', '2025-07-23 00:00:00+07', 'returned', 'Baik', 'baik', 'Imported from PUAPT logbook (unit 2024-5A-027)', '2025-07-23 00:00:00+07'
-from public.instruments i where i.slug = 'turbidity-meter'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '2ec76f98-39ea-50a9-bcc5-2ba799a29589', i.id, 'Dani tri julinanto', 'internal', 'self', '2026-06-01 00:00:00+07', '2026-08-01 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-027)', '2026-06-01 00:00:00+07'
-from public.instruments i where i.slug = 'turbidity-meter'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '334ea121-f3d6-5025-b2da-b4bab2774d22', i.id, 'Arifah Haryani', 'internal', 'self', '2025-03-02 00:00:00+07', '2025-03-21 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-028)', '2025-03-02 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-environmental-monitoring'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select 'e9a04d6f-67ed-5305-83c1-aad6b4a42408', i.id, 'Hafidz Ebril Perdana', 'internal', 'self', '2025-04-17 00:00:00+07', '2025-05-06 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-028)', '2025-04-17 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-environmental-monitoring'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select 'c13468f7-a8b8-5baf-95fc-eb43ff92391e', i.id, 'Muhammad Athala Fawwaz Dzaky', 'internal', 'self', '2025-07-30 00:00:00+07', '2025-08-04 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-028)', '2025-07-30 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-environmental-monitoring'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select 'df6eed0e-ee28-56a2-ae93-a1af010f92a0', i.id, 'Zuhrotul Maulidah', 'internal', 'self', '2025-08-11 00:00:00+07', '2025-08-18 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-028)', '2025-08-11 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-environmental-monitoring'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '7b6a9f3f-ce3a-5beb-8da9-e60fcfb0f823', i.id, 'Hafidz Ebril Perdana', 'internal', 'self', '2025-08-19 00:00:00+07', '2025-08-19 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-028)', '2025-08-19 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-environmental-monitoring'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select 'a70761b3-93be-5fb7-9ccc-182ed001353b', i.id, 'Ilva Khairunnisa', 'internal', 'self', '2026-01-05 00:00:00+07', '2026-02-05 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-028)', '2026-01-05 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-environmental-monitoring'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '82f7113d-d353-536f-91ca-0296a97021be', i.id, 'Aisyah Ramadhani', 'internal', 'self', '2026-01-05 00:00:00+07', '2026-01-05 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-028)', '2026-01-05 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-environmental-monitoring'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select 'fd420f61-c897-513d-81f1-561ddd44ac42', i.id, 'Muhammad Athala Fawwaz Dzaky', 'internal', 'self', '2025-08-16 00:00:00+07', '2025-08-16 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-029)', '2025-08-16 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-environmental-monitoring'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select 'caa33c43-da7b-5c8f-aceb-103b893d8c87', i.id, 'Ilva Khairunnisa', 'internal', 'self', '2026-01-05 00:00:00+07', '2026-02-05 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-029)', '2026-01-05 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-environmental-monitoring'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select 'd72f3a98-36df-5f4a-8c10-da0dd9e36eac', i.id, 'Hafidz Ebril Perdana', 'internal', 'self', '2025-04-12 00:00:00+07', '2025-04-12 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-030)', '2025-04-12 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-hub'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '99b4f69e-b64b-5406-ab06-4c2a111abc66', i.id, 'Muhammad Athala Fawwaz Dzaky', 'internal', 'self', '2025-01-12 00:00:00+07', '2025-02-04 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-031)', '2025-01-12 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-hub'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select 'd0996cbe-1140-52ee-a907-bf2fdf79f076', i.id, 'Zuhrotul Maulidah', 'internal', 'self', '2025-03-19 00:00:00+07', '2025-03-25 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-031)', '2025-03-19 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-hub'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select 'fd51ae34-df0d-54fa-83cb-3fa13c6c90a2', i.id, 'Hafidz Ebril Perdana', 'internal', 'self', '2025-03-26 00:00:00+07', '2025-03-26 00:00:00+07', 'returned', 'Baik', 'Baik', 'Imported from PUAPT logbook (unit 2024-5A-031)', '2025-03-26 00:00:00+07'
-from public.instruments i where i.slug = 'pulse-hub'
-on conflict (id) do nothing;
-insert into public.usage_logs (id, instrument_id, borrower_name, user_type, operator, checkout_at, returned_at, status, condition_out, condition_in, notes, created_at)
-select '2528921b-44c4-50fe-b4a4-c4e4e4502559', i.id, 'Ahmad Saifullah', 'internal', 'self', '2026-03-10 00:00:00+07', '2026-03-25 00:00:00+07', 'returned', 'Bisa', null, 'Imported from PUAPT logbook', '2026-03-10 00:00:00+07'
-from public.instruments i where i.slug = 'colormeter-fru'
 on conflict (id) do nothing;

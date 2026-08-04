@@ -153,6 +153,16 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
 
   return (
     <Shell>
+      {instrument.photo && (
+        <div className="mb-8 rounded-3xl border border-[#0B6477]/10 bg-white overflow-hidden">
+          <img
+            src={instrument.photo}
+            alt={instrument.name}
+            loading="lazy"
+            className="w-full h-56 sm:h-72 object-contain p-6"
+          />
+        </div>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div
