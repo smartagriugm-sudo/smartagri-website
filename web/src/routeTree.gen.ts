@@ -34,6 +34,7 @@ import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
 import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
 import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
 import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
+import { Route as InventoryStatsRouteImport } from './routes/inventory_.stats'
 import { Route as InventorySlugRouteImport } from './routes/inventory_.$slug'
 import { Route as GuestbookAdminRouteImport } from './routes/guestbook_.admin'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
@@ -167,6 +168,11 @@ const LinksInsightsRoute = LinksInsightsRouteImport.update({
   path: '/links/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InventoryStatsRoute = InventoryStatsRouteImport.update({
+  id: '/inventory_/stats',
+  path: '/inventory/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InventorySlugRoute = InventorySlugRouteImport.update({
   id: '/inventory_/$slug',
   path: '/inventory/$slug',
@@ -231,6 +237,7 @@ export interface FileRoutesByFullPath {
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
   '/inventory/$slug': typeof InventorySlugRoute
+  '/inventory/stats': typeof InventoryStatsRoute
   '/links/insights': typeof LinksInsightsRoute
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
@@ -264,6 +271,7 @@ export interface FileRoutesByTo {
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
   '/inventory/$slug': typeof InventorySlugRoute
+  '/inventory/stats': typeof InventoryStatsRoute
   '/links/insights': typeof LinksInsightsRoute
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
@@ -299,6 +307,7 @@ export interface FileRoutesById {
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
   '/guestbook_/admin': typeof GuestbookAdminRoute
   '/inventory_/$slug': typeof InventorySlugRoute
+  '/inventory_/stats': typeof InventoryStatsRoute
   '/links_/insights': typeof LinksInsightsRoute
   '/publications_/$slug': typeof PublicationsSlugRoute
   '/research_/$slug': typeof ResearchSlugRoute
@@ -335,6 +344,7 @@ export interface FileRouteTypes {
     | '/field-notes/$slug'
     | '/guestbook/admin'
     | '/inventory/$slug'
+    | '/inventory/stats'
     | '/links/insights'
     | '/publications/$slug'
     | '/research/$slug'
@@ -368,6 +378,7 @@ export interface FileRouteTypes {
     | '/field-notes/$slug'
     | '/guestbook/admin'
     | '/inventory/$slug'
+    | '/inventory/stats'
     | '/links/insights'
     | '/publications/$slug'
     | '/research/$slug'
@@ -402,6 +413,7 @@ export interface FileRouteTypes {
     | '/field-notes_/$slug'
     | '/guestbook_/admin'
     | '/inventory_/$slug'
+    | '/inventory_/stats'
     | '/links_/insights'
     | '/publications_/$slug'
     | '/research_/$slug'
@@ -433,6 +445,7 @@ export interface RootRouteChildren {
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   GuestbookAdminRoute: typeof GuestbookAdminRoute
   InventorySlugRoute: typeof InventorySlugRoute
+  InventoryStatsRoute: typeof InventoryStatsRoute
   LinksInsightsRoute: typeof LinksInsightsRoute
   PublicationsSlugRoute: typeof PublicationsSlugRoute
   ResearchSlugRoute: typeof ResearchSlugRoute
@@ -616,6 +629,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LinksInsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inventory_/stats': {
+      id: '/inventory_/stats'
+      path: '/inventory/stats'
+      fullPath: '/inventory/stats'
+      preLoaderRoute: typeof InventoryStatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/inventory_/$slug': {
       id: '/inventory_/$slug'
       path: '/inventory/$slug'
@@ -711,6 +731,7 @@ const rootRouteChildren: RootRouteChildren = {
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   GuestbookAdminRoute: GuestbookAdminRoute,
   InventorySlugRoute: InventorySlugRoute,
+  InventoryStatsRoute: InventoryStatsRoute,
   LinksInsightsRoute: LinksInsightsRoute,
   PublicationsSlugRoute: PublicationsSlugRoute,
   ResearchSlugRoute: ResearchSlugRoute,

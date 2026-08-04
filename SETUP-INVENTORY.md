@@ -39,6 +39,27 @@ idempotent (safe to re-run; the seed uses `on conflict (slug) do nothing`).
 The `/inventory` pages ship with the site. Once the SQL has been run and you are
 signed in (`/sign-in`), open `/inventory`.
 
+## Step 3 — Import the logbook history (optional, run once)
+
+To load the existing borrow history from `LogBook Alat PUAPT.xlsx`, run:
+
+```
+web/supabase/usage-logs-seed.sql
+```
+
+It adds the 9 instruments that appear in the logbook but not in the WGFS rate
+card (pH Meter Digital, Thermohygrometer, Pulse monitoring, etc.), then inserts
+268 historical borrow records (all marked returned). It is idempotent
+(deterministic ids + `on conflict do nothing`), so re-running does not
+duplicate. Three logbook rows with no recorded date were skipped.
+
+## Statistics
+
+`/inventory/stats` (linked from the inventory header, "View statistics") shows
+usage analytics computed from the logbook: total borrows, instruments used,
+unique borrowers, borrows over time, most-used instruments, top borrowers, and
+breakdowns by lab and category.
+
 ## How costs are computed
 
 Each checkout picks a rate automatically from the instrument's rate card:

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import { ArrowRight, Loader2, Search } from "lucide-react";
+import { ArrowRight, BarChart3, Loader2, Search } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
@@ -136,27 +136,37 @@ function InventoryContent() {
   return (
     <section className="bg-white">
       <div className="max-w-[1200px] mx-auto px-6 md:px-12 pt-12 md:pt-16 pb-16 md:pb-24">
-        <div className="mb-8">
-          <div
-            className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-3"
-            style={body}
-          >
-            PUAPT · WGFS
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div
+              className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-3"
+              style={body}
+            >
+              PUAPT · WGFS
+            </div>
+            <h1
+              className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.035em] leading-[1.05] text-neutral-900"
+              style={display}
+            >
+              Instrument <span style={accent}>inventory</span> and logbook
+            </h1>
+            <p
+              className="mt-4 text-base md:text-lg font-normal text-neutral-500 max-w-[640px] leading-relaxed"
+              style={body}
+            >
+              Track PUAPT research instruments, their status and rates, and log
+              every checkout and return. Pick an instrument to see its details
+              and usage history.
+            </p>
           </div>
-          <h1
-            className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.035em] leading-[1.05] text-neutral-900"
-            style={display}
-          >
-            Instrument <span style={accent}>inventory</span> and logbook
-          </h1>
-          <p
-            className="mt-4 text-base md:text-lg font-normal text-neutral-500 max-w-[640px] leading-relaxed"
+          <Link
+            to="/inventory/stats"
+            className="inline-flex items-center gap-2 h-11 px-5 rounded-xl border border-[#0B6477]/20 bg-white text-[#0B6477] text-sm font-medium hover:bg-[#F3F7F6] transition-colors shrink-0"
             style={body}
           >
-            Track PUAPT research instruments, their status and rates, and log
-            every checkout and return. Pick an instrument to see its details and
-            usage history.
-          </p>
+            <BarChart3 className="w-4 h-4" />
+            View statistics
+          </Link>
         </div>
 
         {/* Summary */}
