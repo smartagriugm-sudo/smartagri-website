@@ -58,6 +58,9 @@ const SHOW_DOWNLOADS = false;
 
 // Hand-picked Instagram posts/reels featured under News & reports, newest first.
 const INSTAGRAM_POSTS = [
+  "https://www.instagram.com/p/DbkJKhqkfaG/",
+  "https://www.instagram.com/p/DbfCStokeI_/",
+  "https://www.instagram.com/reel/Dbes1pxBb7Y/",
   "https://www.instagram.com/reel/DbcLoj1h7QO/",
   "https://www.instagram.com/p/DbYCfZUAQR6/",
   "https://www.instagram.com/reel/DbVh4pKy7kg/",
