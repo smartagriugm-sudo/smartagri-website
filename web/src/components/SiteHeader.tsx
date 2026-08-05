@@ -19,6 +19,7 @@ type NavLink = { label: string; to: string; highlight?: boolean };
 const leadLinks: NavLink[] = [
   { label: "Research", to: "/research" },
   { label: "Technology", to: "/technology" },
+  { label: "Indoor Farming", to: "/indoor-farming" },
 ];
 // Grouped under a "Media" dropdown on narrow desktops (see MediaDropdown).
 const mediaLinks: NavLink[] = [
