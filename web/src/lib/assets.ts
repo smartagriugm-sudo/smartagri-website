@@ -13,7 +13,14 @@ export const A = {
   farmerPhoto: `${BASE}/farmer.jpg`,
   inagritechHero: `${BASE}/inagritech-hero.webp`,
   heroPhoto: `${BASE}/hero.webp`,
+  indoorFarmingHero: `${BASE}/indoor-farming/hero.webp`,
 };
+
+// Indoor Farming section imagery lives in public/brand/indoor-farming/.
+// Files that are not in place yet fall back to a brand-colored placeholder in
+// the UI (see PhotoSlot), so they can be dropped in later with no code change.
+export const indoorFarmingPhoto = (file: string) =>
+  `${BASE}/indoor-farming/${file}`;
 
 // Partner logos live in public/brand/partners/, referenced via this helper
 // so all media still resolves through this module.

@@ -19,6 +19,7 @@ import { Route as PublicationsRouteImport } from './routes/publications'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as LinksRouteImport } from './routes/links'
 import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as IndoorFarmingRouteImport } from './routes/indoor-farming'
 import { Route as ImpactRouteImport } from './routes/impact'
 import { Route as GuestbookRouteImport } from './routes/guestbook'
 import { Route as GalleryRouteImport } from './routes/gallery'
@@ -36,12 +37,15 @@ import { Route as PublicationsSlugRouteImport } from './routes/publications_.$sl
 import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
 import { Route as InventoryStatsRouteImport } from './routes/inventory_.stats'
 import { Route as InventorySlugRouteImport } from './routes/inventory_.$slug'
+import { Route as IndoorFarmingKnowledgeRouteImport } from './routes/indoor-farming_.knowledge'
+import { Route as IndoorFarmingSectionRouteImport } from './routes/indoor-farming_.$section'
 import { Route as GuestbookAdminRouteImport } from './routes/guestbook_.admin'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
 import { Route as AiProfileRouteImport } from './routes/ai/profile'
 import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
 import { Route as AiGenerateRouteImport } from './routes/ai/generate'
 import { Route as AiChatRouteImport } from './routes/ai/chat'
+import { Route as IndoorFarmingSectionGroupRouteImport } from './routes/indoor-farming_.$section_.$group'
 
 const TermsOfUseRoute = TermsOfUseRouteImport.update({
   id: '/terms-of-use',
@@ -91,6 +95,11 @@ const LinksRoute = LinksRouteImport.update({
 const InventoryRoute = InventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndoorFarmingRoute = IndoorFarmingRouteImport.update({
+  id: '/indoor-farming',
+  path: '/indoor-farming',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ImpactRoute = ImpactRouteImport.update({
@@ -178,6 +187,16 @@ const InventorySlugRoute = InventorySlugRouteImport.update({
   path: '/inventory/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IndoorFarmingKnowledgeRoute = IndoorFarmingKnowledgeRouteImport.update({
+  id: '/indoor-farming_/knowledge',
+  path: '/indoor-farming/knowledge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndoorFarmingSectionRoute = IndoorFarmingSectionRouteImport.update({
+  id: '/indoor-farming_/$section',
+  path: '/indoor-farming/$section',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuestbookAdminRoute = GuestbookAdminRouteImport.update({
   id: '/guestbook_/admin',
   path: '/guestbook/admin',
@@ -208,6 +227,12 @@ const AiChatRoute = AiChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AiRouteRoute,
 } as any)
+const IndoorFarmingSectionGroupRoute =
+  IndoorFarmingSectionGroupRouteImport.update({
+    id: '/indoor-farming_/$section_/$group',
+    path: '/indoor-farming/$section/$group',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -220,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/gallery': typeof GalleryRoute
   '/guestbook': typeof GuestbookRoute
   '/impact': typeof ImpactRoute
+  '/indoor-farming': typeof IndoorFarmingRoute
   '/inventory': typeof InventoryRoute
   '/links': typeof LinksRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
@@ -236,6 +262,8 @@ export interface FileRoutesByFullPath {
   '/ai/profile': typeof AiProfileRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
+  '/indoor-farming/$section': typeof IndoorFarmingSectionRoute
+  '/indoor-farming/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory/$slug': typeof InventorySlugRoute
   '/inventory/stats': typeof InventoryStatsRoute
   '/links/insights': typeof LinksInsightsRoute
@@ -243,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
+  '/indoor-farming/$section/$group': typeof IndoorFarmingSectionGroupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -254,6 +283,7 @@ export interface FileRoutesByTo {
   '/gallery': typeof GalleryRoute
   '/guestbook': typeof GuestbookRoute
   '/impact': typeof ImpactRoute
+  '/indoor-farming': typeof IndoorFarmingRoute
   '/inventory': typeof InventoryRoute
   '/links': typeof LinksRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
@@ -270,6 +300,8 @@ export interface FileRoutesByTo {
   '/ai/profile': typeof AiProfileRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
+  '/indoor-farming/$section': typeof IndoorFarmingSectionRoute
+  '/indoor-farming/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory/$slug': typeof InventorySlugRoute
   '/inventory/stats': typeof InventoryStatsRoute
   '/links/insights': typeof LinksInsightsRoute
@@ -277,6 +309,7 @@ export interface FileRoutesByTo {
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
   '/ai': typeof AiIndexRoute
+  '/indoor-farming/$section/$group': typeof IndoorFarmingSectionGroupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -290,6 +323,7 @@ export interface FileRoutesById {
   '/gallery': typeof GalleryRoute
   '/guestbook': typeof GuestbookRoute
   '/impact': typeof ImpactRoute
+  '/indoor-farming': typeof IndoorFarmingRoute
   '/inventory': typeof InventoryRoute
   '/links': typeof LinksRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
@@ -306,6 +340,8 @@ export interface FileRoutesById {
   '/ai/profile': typeof AiProfileRoute
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
   '/guestbook_/admin': typeof GuestbookAdminRoute
+  '/indoor-farming_/$section': typeof IndoorFarmingSectionRoute
+  '/indoor-farming_/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory_/$slug': typeof InventorySlugRoute
   '/inventory_/stats': typeof InventoryStatsRoute
   '/links_/insights': typeof LinksInsightsRoute
@@ -313,6 +349,7 @@ export interface FileRoutesById {
   '/research_/$slug': typeof ResearchSlugRoute
   '/team_/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
+  '/indoor-farming_/$section_/$group': typeof IndoorFarmingSectionGroupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -327,6 +364,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/guestbook'
     | '/impact'
+    | '/indoor-farming'
     | '/inventory'
     | '/links'
     | '/privacy-policy'
@@ -343,6 +381,8 @@ export interface FileRouteTypes {
     | '/ai/profile'
     | '/field-notes/$slug'
     | '/guestbook/admin'
+    | '/indoor-farming/$section'
+    | '/indoor-farming/knowledge'
     | '/inventory/$slug'
     | '/inventory/stats'
     | '/links/insights'
@@ -350,6 +390,7 @@ export interface FileRouteTypes {
     | '/research/$slug'
     | '/team/$slug'
     | '/ai/'
+    | '/indoor-farming/$section/$group'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -361,6 +402,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/guestbook'
     | '/impact'
+    | '/indoor-farming'
     | '/inventory'
     | '/links'
     | '/privacy-policy'
@@ -377,6 +419,8 @@ export interface FileRouteTypes {
     | '/ai/profile'
     | '/field-notes/$slug'
     | '/guestbook/admin'
+    | '/indoor-farming/$section'
+    | '/indoor-farming/knowledge'
     | '/inventory/$slug'
     | '/inventory/stats'
     | '/links/insights'
@@ -384,6 +428,7 @@ export interface FileRouteTypes {
     | '/research/$slug'
     | '/team/$slug'
     | '/ai'
+    | '/indoor-farming/$section/$group'
   id:
     | '__root__'
     | '/'
@@ -396,6 +441,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/guestbook'
     | '/impact'
+    | '/indoor-farming'
     | '/inventory'
     | '/links'
     | '/privacy-policy'
@@ -412,6 +458,8 @@ export interface FileRouteTypes {
     | '/ai/profile'
     | '/field-notes_/$slug'
     | '/guestbook_/admin'
+    | '/indoor-farming_/$section'
+    | '/indoor-farming_/knowledge'
     | '/inventory_/$slug'
     | '/inventory_/stats'
     | '/links_/insights'
@@ -419,6 +467,7 @@ export interface FileRouteTypes {
     | '/research_/$slug'
     | '/team_/$slug'
     | '/ai/'
+    | '/indoor-farming_/$section_/$group'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -432,6 +481,7 @@ export interface RootRouteChildren {
   GalleryRoute: typeof GalleryRoute
   GuestbookRoute: typeof GuestbookRoute
   ImpactRoute: typeof ImpactRoute
+  IndoorFarmingRoute: typeof IndoorFarmingRoute
   InventoryRoute: typeof InventoryRoute
   LinksRoute: typeof LinksRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
@@ -444,12 +494,15 @@ export interface RootRouteChildren {
   TermsOfUseRoute: typeof TermsOfUseRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   GuestbookAdminRoute: typeof GuestbookAdminRoute
+  IndoorFarmingSectionRoute: typeof IndoorFarmingSectionRoute
+  IndoorFarmingKnowledgeRoute: typeof IndoorFarmingKnowledgeRoute
   InventorySlugRoute: typeof InventorySlugRoute
   InventoryStatsRoute: typeof InventoryStatsRoute
   LinksInsightsRoute: typeof LinksInsightsRoute
   PublicationsSlugRoute: typeof PublicationsSlugRoute
   ResearchSlugRoute: typeof ResearchSlugRoute
   TeamSlugRoute: typeof TeamSlugRoute
+  IndoorFarmingSectionGroupRoute: typeof IndoorFarmingSectionGroupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -522,6 +575,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory'
       fullPath: '/inventory'
       preLoaderRoute: typeof InventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/indoor-farming': {
+      id: '/indoor-farming'
+      path: '/indoor-farming'
+      fullPath: '/indoor-farming'
+      preLoaderRoute: typeof IndoorFarmingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/impact': {
@@ -643,6 +703,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventorySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/indoor-farming_/knowledge': {
+      id: '/indoor-farming_/knowledge'
+      path: '/indoor-farming/knowledge'
+      fullPath: '/indoor-farming/knowledge'
+      preLoaderRoute: typeof IndoorFarmingKnowledgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/indoor-farming_/$section': {
+      id: '/indoor-farming_/$section'
+      path: '/indoor-farming/$section'
+      fullPath: '/indoor-farming/$section'
+      preLoaderRoute: typeof IndoorFarmingSectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guestbook_/admin': {
       id: '/guestbook_/admin'
       path: '/guestbook/admin'
@@ -685,6 +759,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiChatRouteImport
       parentRoute: typeof AiRouteRoute
     }
+    '/indoor-farming_/$section_/$group': {
+      id: '/indoor-farming_/$section_/$group'
+      path: '/indoor-farming/$section/$group'
+      fullPath: '/indoor-farming/$section/$group'
+      preLoaderRoute: typeof IndoorFarmingSectionGroupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -718,6 +799,7 @@ const rootRouteChildren: RootRouteChildren = {
   GalleryRoute: GalleryRoute,
   GuestbookRoute: GuestbookRoute,
   ImpactRoute: ImpactRoute,
+  IndoorFarmingRoute: IndoorFarmingRoute,
   InventoryRoute: InventoryRoute,
   LinksRoute: LinksRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
@@ -730,12 +812,15 @@ const rootRouteChildren: RootRouteChildren = {
   TermsOfUseRoute: TermsOfUseRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   GuestbookAdminRoute: GuestbookAdminRoute,
+  IndoorFarmingSectionRoute: IndoorFarmingSectionRoute,
+  IndoorFarmingKnowledgeRoute: IndoorFarmingKnowledgeRoute,
   InventorySlugRoute: InventorySlugRoute,
   InventoryStatsRoute: InventoryStatsRoute,
   LinksInsightsRoute: LinksInsightsRoute,
   PublicationsSlugRoute: PublicationsSlugRoute,
   ResearchSlugRoute: ResearchSlugRoute,
   TeamSlugRoute: TeamSlugRoute,
+  IndoorFarmingSectionGroupRoute: IndoorFarmingSectionGroupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

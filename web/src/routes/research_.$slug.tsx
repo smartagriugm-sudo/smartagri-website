@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle2, Cpu, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Cpu, Sparkles } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import { findResearchArea, RESEARCH_AREAS } from "../lib/research";
 import SiteHeader from "../components/SiteHeader";
@@ -191,6 +191,45 @@ function ResearchDetailPage() {
               ))}
             </div>
           </motion.div>
+
+          {/* Indoor Farming has a section of its own; point readers there
+              instead of duplicating the material on this page. */}
+          {area.slug === "indoor-farming-technology" && (
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
+              className="mt-6 rounded-3xl bg-[#08313A] p-7 md:p-9 flex flex-col md:flex-row md:items-center justify-between gap-6"
+            >
+              <div>
+                <h2
+                  className="text-xl sm:text-2xl font-semibold tracking-[-0.025em] text-white"
+                  style={display}
+                >
+                  Go deeper in the{" "}
+                  <span style={{ ...accent, color: "#80ED99" }}>
+                    Indoor Farming section
+                  </span>
+                </h2>
+                <p
+                  className="mt-2 text-base font-normal text-white/70 max-w-[560px]"
+                  style={body}
+                >
+                  Approach, crops, technology, and greenhouse types, written up
+                  for controlled-environment growing in the tropics.
+                </p>
+              </div>
+              <Link
+                to="/indoor-farming"
+                className="inline-flex items-center gap-2 h-12 px-7 shrink-0 bg-[#45DFB1] rounded-2xl text-[#0B2A22] text-base font-medium hover:bg-[#80ED99] transition-colors"
+                style={body}
+              >
+                Explore Indoor Farming
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+          )}
         </div>
       </section>
 
