@@ -1,4 +1,4 @@
-import { createFileRoute, createLink } from "@tanstack/react-router";
+import { Link, createFileRoute, createLink } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
@@ -82,6 +82,14 @@ function ResearchPage() {
                   style={display}
                 >
                   {area.label}
+                  {area.slug === "indoor-farming-technology" && (
+                    <span
+                      className="ml-2 align-middle rounded-full bg-[#45DFB1]/25 px-2.5 py-1 text-[11px] font-medium text-[#0B6477]"
+                      style={body}
+                    >
+                      Full section
+                    </span>
+                  )}
                 </h2>
                 <p
                   className="text-sm md:text-base font-normal text-neutral-500 leading-relaxed"
@@ -92,6 +100,42 @@ function ResearchPage() {
               </MotionLink>
             ))}
           </div>
+
+          {/* Indoor Farming is developed as a section of its own, so it gets an
+              entry point here rather than a slot in the site header. */}
+          <Link
+            to="/indoor-farming"
+            className="group mt-6 flex flex-col md:flex-row md:items-center justify-between gap-5 rounded-3xl bg-[#08313A] p-7 md:p-9 hover:bg-[#0B6477] transition-colors"
+          >
+            <div>
+              <div
+                className="text-[13px] font-medium tracking-[0.03em] text-[#45DFB1] mb-2"
+                style={body}
+              >
+                In depth
+              </div>
+              <h2
+                className="text-xl sm:text-2xl font-medium text-white leading-snug"
+                style={display}
+              >
+                Indoor Farming has a section of its own
+              </h2>
+              <p
+                className="mt-2 text-sm md:text-base font-normal text-white/70 max-w-[620px]"
+                style={body}
+              >
+                Approach, crops, technology, and greenhouse types, written up for
+                controlled-environment growing in the tropics.
+              </p>
+            </div>
+            <span
+              className="inline-flex items-center gap-2 h-12 px-6 shrink-0 rounded-2xl bg-[#45DFB1] text-[#0B2A22] text-base font-medium"
+              style={body}
+            >
+              Explore
+              <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </span>
+          </Link>
         </div>
       </section>
 

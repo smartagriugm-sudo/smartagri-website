@@ -11,7 +11,6 @@ import {
 } from "../lib/indoor-farming";
 import { notes } from "../lib/notes";
 import SiteHeader from "../components/SiteHeader";
-import IndoorFarmingNav from "../components/IndoorFarmingNav";
 import PhotoSlot from "../components/PhotoSlot";
 import Footer from "../components/Footer";
 
@@ -35,7 +34,6 @@ function IndoorFarmingLanding() {
   return (
     <main>
       <SiteHeader />
-      <IndoorFarmingNav />
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-[#08313A]">
@@ -72,8 +70,8 @@ function IndoorFarmingLanding() {
               style={body}
             >
               Greenhouses and plant factories designed for heat, humidity, and
-              year-round pest pressure. Not a temperate blueprint moved to the
-              equator, but systems built for the climate we actually grow in.
+              year-round pest pressure. Systems shaped by the climate we
+              actually grow in.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Link
@@ -127,11 +125,12 @@ function IndoorFarmingLanding() {
                   to the weather.
                 </p>
                 <p>
-                  The catch is that most greenhouse engineering was written for
-                  cold climates, where the goal is holding heat in. Our work at
-                  the Smart Agriculture Research Center starts from the opposite
-                  problem, and from hardware that an Indonesian grower can
-                  actually afford, maintain, and repair.
+                  Doing that here means solving a tropical problem: shedding
+                  heat and moisture, holding a stable vapour pressure deficit,
+                  and keeping pests out all year. Our work at the Smart
+                  Agriculture Research Center starts from those conditions, and
+                  from hardware an Indonesian grower can afford, maintain, and
+                  repair.
                 </p>
               </div>
               <Link
@@ -228,15 +227,15 @@ function IndoorFarmingLanding() {
               className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900"
               style={display}
             >
-              Why a Dutch blueprint does not simply{" "}
-              <span style={accent}>transfer</span>
+              What growing near the equator{" "}
+              <span style={accent}>changes</span>
             </h2>
             <p
               className="mt-5 text-base md:text-lg font-normal text-neutral-500 leading-relaxed"
               style={body}
             >
-              The physics changes when you move to the equator. These four
-              differences drive nearly every design decision we make.
+              Four conditions define tropical growing, and between them they
+              drive nearly every design decision we make.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 gap-5">

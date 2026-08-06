@@ -45,8 +45,13 @@ export type IFTopic = {
 export type IFGroup = {
   slug: string;
   title: string;
+  /** Short blurb shown on the section overview row. */
   intro: string;
+  /** Call to action on the overview row, e.g. "Crop feasibility". */
+  linkLabel: string;
   icon: LucideIcon;
+  /** Longer opening paragraph on the group's own page. */
+  lede?: string;
   topics: IFTopic[];
 };
 
@@ -77,6 +82,7 @@ export const IF_SECTIONS: IFSection[] = [
         title: "What to grow",
         intro:
           "Crop choice drives everything downstream: the structure, the climate strategy, the irrigation design, and whether the numbers work at all.",
+        linkLabel: "Crop feasibility",
         icon: Sprout,
         topics: [
           {
@@ -130,6 +136,7 @@ export const IF_SECTIONS: IFSection[] = [
         title: "Where to grow",
         intro:
           "Site selection quietly sets your operating cost for the next decade. Altitude, water, power, and distance to market matter more than the shape of the roof.",
+        linkLabel: "Location analysis",
         icon: MapPin,
         topics: [
           {
@@ -183,6 +190,7 @@ export const IF_SECTIONS: IFSection[] = [
         title: "How to grow",
         intro:
           "There is a spectrum between an open field and a fully closed plant factory. The right point on it is the one your crop, climate, and team can actually sustain.",
+        linkLabel: "Growing systems",
         icon: Target,
         topics: [
           {
@@ -198,9 +206,9 @@ export const IF_SECTIONS: IFSection[] = [
           },
           {
             slug: "design-for-tropics",
-            title: "Design for the tropics, not a temperate copy",
+            title: "Design for the tropics from the start",
             summary:
-              "Most greenhouse engineering literature was written for climates where the problem is keeping heat in. Here the problem is getting heat and moisture out.",
+              "Here the problem is getting heat and moisture out, not holding them in. That single difference reshapes ventilation, screening, and the control strategy.",
             points: [
               "Humidity management, not heating, is the central design challenge",
               "Vapour pressure deficit as the control target rather than temperature alone",
@@ -248,6 +256,7 @@ export const IF_SECTIONS: IFSection[] = [
         title: "Vegetables",
         intro:
           "Fruiting vegetables reward tight climate and nutrition control. They are demanding, and they are where controlled-environment growing shows its value most clearly.",
+        linkLabel: "Vegetable crops",
         icon: Sprout,
         topics: [
           {
@@ -269,6 +278,7 @@ export const IF_SECTIONS: IFSection[] = [
         title: "Indoor produce",
         intro:
           "Short-cycle crops grown in greenhouses and plant factories, where light recipe, root-zone control, and hygiene do most of the work.",
+        linkLabel: "Indoor produce",
         icon: Leaf,
         topics: [
           {
@@ -322,6 +332,7 @@ export const IF_SECTIONS: IFSection[] = [
         title: "Crop protection",
         intro:
           "A sealed structure is the first line of defence. Everything after that is discipline: watch closely, act early, and keep the house clean.",
+        linkLabel: "Crop protection",
         icon: ShieldCheck,
         topics: [
           {
@@ -387,6 +398,7 @@ export const IF_SECTIONS: IFSection[] = [
         title: "Structure",
         intro:
           "The building is a climate instrument. Its height, venting, and covering decide how much work the machinery has to do afterwards.",
+        linkLabel: "Structure systems",
         icon: Building2,
         topics: [
           {
@@ -473,6 +485,7 @@ export const IF_SECTIONS: IFSection[] = [
         title: "Climate",
         intro:
           "The goal is not a cool greenhouse, it is a crop that transpires steadily all day. That means managing heat, humidity, and carbon dioxide together.",
+        linkLabel: "Climate systems",
         icon: Thermometer,
         topics: [
           {
@@ -526,6 +539,7 @@ export const IF_SECTIONS: IFSection[] = [
         title: "Irrigation",
         intro:
           "Water quality in, nutrition dialled in, drain water recovered. A closed water strategy is both the sustainable option and the economical one.",
+        linkLabel: "Irrigation systems",
         icon: Droplets,
         topics: [
           {
@@ -601,6 +615,7 @@ export const IF_SECTIONS: IFSection[] = [
         title: "More technology",
         intro:
           "The layer that ties the rest together: control software, energy and water strategy, and fully closed production.",
+        linkLabel: "Automation and more",
         icon: Cpu,
         topics: [
           {
@@ -654,56 +669,221 @@ export const IF_SECTIONS: IFSection[] = [
     lede: "From a low-cost screenhouse to a fully closed plant factory. Each step buys more control, and asks for more capital and more skill in return.",
     groups: [
       {
-        slug: "greenhouse-horticulture",
-        title: "Greenhouse horticulture",
+        slug: "steel-greenhouse",
+        title: "Steel greenhouse",
         intro:
-          "There is no single right structure. There is the one that matches your crop, your climate, your budget, and the team who will run it.",
-        icon: Warehouse,
+          "The durable standard: a galvanised steel frame carrying film, polycarbonate, or glass. Built for decades of service and for the equipment a controlled climate needs.",
+        linkLabel: "Steel structures",
+        icon: Building2,
+        lede: "A steel greenhouse is the long-term option. It costs more at the start and gives back a structure that holds its shape, carries screens and irrigation, and can be upgraded rather than replaced.",
         topics: [
           {
-            slug: "steel-greenhouse",
-            title: "Steel greenhouse",
+            slug: "frame-and-lifespan",
+            title: "Frame and service life",
             summary:
-              "The durable standard: a galvanised steel frame with film, polycarbonate, or glass. Built for decades of service and for carrying screens, gutters, and equipment.",
+              "Hot-dip galvanised steel is specified for humid, sometimes coastal conditions where corrosion, not load, is what ends a structure's life.",
             points: [
-              "Long service life with low structural maintenance",
-              "High gutters for thermal buffering and even light",
-              "Ready to carry screening, irrigation, and automation",
+              "Decades of service with low structural maintenance",
+              "Corrosion protection specified for humidity and salt air",
+              "Components replaceable without dismantling whole bays",
             ],
           },
           {
-            slug: "bamboo-greenhouse",
-            title: "Bamboo and low-cost structures",
+            slug: "gutter-height",
+            title: "Gutter height and climate",
             summary:
-              "Locally sourced structures cut capital cost dramatically and put protected cultivation within reach of smallholders and farmer groups.",
+              "Height is the cheapest climate control there is. A taller house holds a larger air buffer, which softens the midday peak before any machinery runs.",
             points: [
-              "Local materials and local skills, so repairs stay affordable",
-              "Rain exclusion and insect netting, the two highest-return protections",
-              "A realistic first step towards protected cultivation",
-              "Shorter service life and lower climate control than steel",
+              "Large air volume that buffers temperature swings",
+              "Better light distribution across the canopy",
+              "Room for screens, gutters, and high-wire crops",
             ],
           },
           {
-            slug: "controlled-environment-agriculture",
-            title: "Controlled-environment agriculture",
+            slug: "covering-choice",
+            title: "Covering choice",
             summary:
-              "The full discipline: structure, climate, irrigation, and control designed together so the growing environment becomes a set of decisions rather than a forecast.",
+              "Film, polycarbonate, and glass differ in light transmission, lifespan, and cost. The right pick depends on the crop and how long the facility must last.",
             points: [
-              "Climate steered to a crop target, not to yesterday's weather",
-              "Sensing and data at the centre of daily operation",
-              "Year-round production with predictable quality and volume",
+              "Film: lowest cost, periodic replacement",
+              "Polycarbonate: durable, good diffusion, mid cost",
+              "Glass: highest transmission and longest life, highest cost",
             ],
           },
           {
-            slug: "plant-factories",
-            title: "Plant factories",
+            slug: "upgrade-path",
+            title: "Room to upgrade",
             summary:
-              "Closed, stacked, artificially lit production with no dependence on sunlight or land. The most controlled option available, and the most energy intensive.",
+              "A steel frame is worth specifying when you expect the operation to grow into more control than it starts with.",
             points: [
-              "Complete environmental control, independent of climate and season",
-              "Highest yield per square metre of footprint",
-              "Suited to leafy greens, herbs, seedlings, and research",
-              "Energy strategy is the make-or-break economic factor",
+              "Screens, cooling, and CO2 added later without rebuilding",
+              "Loads for irrigation, lighting, and sensing designed in from the start",
+              "Staged investment as the operation proves itself",
+            ],
+          },
+        ],
+      },
+      {
+        slug: "bamboo-greenhouse",
+        title: "Bamboo and low-cost structures",
+        intro:
+          "Locally sourced structures cut capital cost dramatically and put protected cultivation within reach of smallholders and farmer groups.",
+        linkLabel: "Low-cost structures",
+        icon: Sprout,
+        lede: "Not every grower needs, or can finance, a steel greenhouse. A well-built bamboo or timber structure delivers the two protections that matter most, rain exclusion and insect exclusion, at a fraction of the cost.",
+        topics: [
+          {
+            slug: "local-materials",
+            title: "Local materials, local repair",
+            summary:
+              "A structure built from materials available nearby can be maintained by the people who use it, without waiting on a supplier.",
+            points: [
+              "Bamboo and timber sourced and worked locally",
+              "Repairs affordable and quick after storm damage",
+              "Construction skills that stay in the community",
+            ],
+          },
+          {
+            slug: "highest-return-protections",
+            title: "The two highest-return protections",
+            summary:
+              "Most of the yield and quality gain from growing under cover comes from keeping rain off the crop and insects out of it. Both are achievable cheaply.",
+            points: [
+              "Rain exclusion, which cuts foliar disease sharply",
+              "Insect netting, which reduces pest pressure and spraying",
+              "Shade management during the hottest part of the day",
+            ],
+          },
+          {
+            slug: "honest-limits",
+            title: "Honest limits",
+            summary:
+              "A low-cost structure is a first step, not a small greenhouse. It is important to be clear about what it will not do.",
+            points: [
+              "Shorter service life than steel, with periodic rebuilding",
+              "Limited climate control beyond ventilation and shading",
+              "Lower gutter height, so less thermal buffering",
+            ],
+          },
+          {
+            slug: "first-step",
+            title: "A realistic first step",
+            summary:
+              "For many farmer groups the right sequence is to learn protected cultivation cheaply, prove the market, and reinvest into a more capable structure.",
+            points: [
+              "Lower capital risk while the operation learns",
+              "Protocols and habits that transfer to a larger facility later",
+              "Evidence for financing the next stage",
+            ],
+          },
+        ],
+      },
+      {
+        slug: "controlled-environment-agriculture",
+        title: "Controlled-environment agriculture",
+        intro:
+          "The full discipline: structure, climate, irrigation, and control designed together, so the growing environment becomes a set of decisions rather than a forecast.",
+        linkLabel: "The CEA discipline",
+        icon: Settings2,
+        lede: "Controlled-environment agriculture is not a building type, it is a way of working. The structure, the climate system, the irrigation, and the data all serve one goal: putting the grower in charge of the environment instead of reacting to it.",
+        topics: [
+          {
+            slug: "designed-as-one-system",
+            title: "Designed as one system",
+            summary:
+              "Structure, climate, and irrigation constrain each other. Designing them separately is how facilities end up fighting themselves.",
+            points: [
+              "Ventilation capacity matched to the covering and the solar load",
+              "Irrigation strategy matched to the climate the house can actually hold",
+              "Control system specified alongside the hardware, not after it",
+            ],
+          },
+          {
+            slug: "steer-to-a-target",
+            title: "Steer to a crop target",
+            summary:
+              "The setpoint is not a comfortable number, it is the condition the crop needs in order to transpire and grow steadily through the day.",
+            points: [
+              "Vapour pressure deficit held in the crop's working range",
+              "Root zone and canopy managed together, not in isolation",
+              "Strategy adjusted by crop stage rather than left fixed",
+            ],
+          },
+          {
+            slug: "data-at-the-centre",
+            title: "Data at the centre",
+            summary:
+              "Continuous measurement is what turns a growing season into something you can review, explain, and improve.",
+            points: [
+              "Climate, root-zone, and light logged continuously",
+              "Non-destructive plant measurement to catch stress early",
+              "Season reviews where the data sets the next plan",
+            ],
+          },
+          {
+            slug: "predictable-output",
+            title: "Predictable output",
+            summary:
+              "The commercial value of control is not only higher yield, it is being able to promise a buyer a volume and a grade on a date.",
+            points: [
+              "Year-round production independent of the season",
+              "Consistent grade and quality that holds contracts",
+              "Planning that a cold chain and a buyer can rely on",
+            ],
+          },
+        ],
+      },
+      {
+        slug: "plant-factories",
+        title: "Plant factories",
+        intro:
+          "Closed, stacked, artificially lit production with no dependence on sunlight or land. The most controlled option available, and the most energy intensive.",
+        linkLabel: "Plant factories",
+        icon: Layers,
+        lede: "A plant factory removes the weather from the equation entirely. Every input is chosen: light spectrum and duration, temperature, humidity, carbon dioxide, and nutrition. What you gain in control, you pay for in energy.",
+        topics: [
+          {
+            slug: "stacked-production",
+            title: "Stacked production",
+            summary:
+              "Growing in layers multiplies the output of a footprint, which is what makes production viable on expensive land close to the consumer.",
+            points: [
+              "Multiple growing layers within one building",
+              "Highest yield per square metre of any system",
+              "No dependence on land quality or drainage",
+            ],
+          },
+          {
+            slug: "light-recipes",
+            title: "Light recipes",
+            summary:
+              "With artificial light, the spectrum and photoperiod become adjustable inputs that shape yield, colour, texture, and flavour.",
+            points: [
+              "Spectrum tuned per crop and per growth stage",
+              "Photoperiod set to drive development on a schedule",
+              "Uniform light across every layer",
+            ],
+          },
+          {
+            slug: "energy-strategy",
+            title: "Energy strategy",
+            summary:
+              "Energy is the deciding economic factor. A plant factory only works when the crop value and the energy plan are considered together from day one.",
+            points: [
+              "Lighting and cooling as the dominant loads",
+              "Heat from lighting recovered rather than simply rejected",
+              "Solar generation matched to the daytime load",
+            ],
+          },
+          {
+            slug: "best-fit-crops",
+            title: "Where it fits best",
+            summary:
+              "Plant factories reward short-cycle, high-value, compact crops. They are also an excellent research instrument.",
+            points: [
+              "Leafy greens, herbs, and microgreens",
+              "Seedling and transplant production at consistent quality",
+              "Research where every variable has to be held steady",
             ],
           },
         ],
@@ -763,7 +943,7 @@ export const IF_TROPICAL_POINTS: {
 }[] = [
   {
     title: "Humidity, not cold, is the constraint",
-    body: "Temperate greenhouse design is built around keeping heat in. Here the task is getting heat and moisture out, so vapour pressure deficit becomes the control target.",
+    body: "The task here is getting heat and moisture out rather than holding them in, so vapour pressure deficit, not temperature alone, becomes the control target.",
     icon: Wind,
   },
   {

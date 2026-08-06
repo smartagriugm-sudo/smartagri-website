@@ -45,6 +45,7 @@ import { Route as AiProfileRouteImport } from './routes/ai/profile'
 import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
 import { Route as AiGenerateRouteImport } from './routes/ai/generate'
 import { Route as AiChatRouteImport } from './routes/ai/chat'
+import { Route as IndoorFarmingSectionGroupRouteImport } from './routes/indoor-farming_.$section_.$group'
 
 const TermsOfUseRoute = TermsOfUseRouteImport.update({
   id: '/terms-of-use',
@@ -226,6 +227,12 @@ const AiChatRoute = AiChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AiRouteRoute,
 } as any)
+const IndoorFarmingSectionGroupRoute =
+  IndoorFarmingSectionGroupRouteImport.update({
+    id: '/indoor-farming_/$section_/$group',
+    path: '/indoor-farming/$section/$group',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -264,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
+  '/indoor-farming/$section/$group': typeof IndoorFarmingSectionGroupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -301,6 +309,7 @@ export interface FileRoutesByTo {
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
   '/ai': typeof AiIndexRoute
+  '/indoor-farming/$section/$group': typeof IndoorFarmingSectionGroupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -340,6 +349,7 @@ export interface FileRoutesById {
   '/research_/$slug': typeof ResearchSlugRoute
   '/team_/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
+  '/indoor-farming_/$section_/$group': typeof IndoorFarmingSectionGroupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/research/$slug'
     | '/team/$slug'
     | '/ai/'
+    | '/indoor-farming/$section/$group'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -417,6 +428,7 @@ export interface FileRouteTypes {
     | '/research/$slug'
     | '/team/$slug'
     | '/ai'
+    | '/indoor-farming/$section/$group'
   id:
     | '__root__'
     | '/'
@@ -455,6 +467,7 @@ export interface FileRouteTypes {
     | '/research_/$slug'
     | '/team_/$slug'
     | '/ai/'
+    | '/indoor-farming_/$section_/$group'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -489,6 +502,7 @@ export interface RootRouteChildren {
   PublicationsSlugRoute: typeof PublicationsSlugRoute
   ResearchSlugRoute: typeof ResearchSlugRoute
   TeamSlugRoute: typeof TeamSlugRoute
+  IndoorFarmingSectionGroupRoute: typeof IndoorFarmingSectionGroupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -745,6 +759,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiChatRouteImport
       parentRoute: typeof AiRouteRoute
     }
+    '/indoor-farming_/$section_/$group': {
+      id: '/indoor-farming_/$section_/$group'
+      path: '/indoor-farming/$section/$group'
+      fullPath: '/indoor-farming/$section/$group'
+      preLoaderRoute: typeof IndoorFarmingSectionGroupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -799,6 +820,7 @@ const rootRouteChildren: RootRouteChildren = {
   PublicationsSlugRoute: PublicationsSlugRoute,
   ResearchSlugRoute: ResearchSlugRoute,
   TeamSlugRoute: TeamSlugRoute,
+  IndoorFarmingSectionGroupRoute: IndoorFarmingSectionGroupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
