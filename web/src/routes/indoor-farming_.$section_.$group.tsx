@@ -2,8 +2,10 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
+import { indoorFarmingPhoto } from "../lib/assets";
 import { findIFSection } from "../lib/indoor-farming";
 import SiteHeader from "../components/SiteHeader";
+import IndoorFarmingNav from "../components/IndoorFarmingNav";
 import IndoorFarmingCrumb from "../components/IndoorFarmingCrumb";
 import PhotoSlot from "../components/PhotoSlot";
 import Footer from "../components/Footer";
@@ -78,6 +80,7 @@ function IndoorFarmingGroupPage() {
   return (
     <main>
       <SiteHeader />
+      <IndoorFarmingNav />
 
       {/* Header */}
       <section className="bg-white">
@@ -114,6 +117,8 @@ function IndoorFarmingGroupPage() {
               </p>
             </div>
             <PhotoSlot
+              src={indoorFarmingPhoto(`${section.slug}-${group.slug}.webp`)}
+              alt={group.title}
               icon={group.icon}
               caption={`Photo: ${group.title.toLowerCase()}`}
               ratio="aspect-[4/3]"

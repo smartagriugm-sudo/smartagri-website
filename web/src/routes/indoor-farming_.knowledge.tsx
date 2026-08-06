@@ -5,7 +5,7 @@ import { accent, body, display } from "../lib/fonts";
 import { IF_NOTE_TAGS } from "../lib/indoor-farming";
 import { categoryChip, notes } from "../lib/notes";
 import SiteHeader from "../components/SiteHeader";
-import IndoorFarmingCrumb from "../components/IndoorFarmingCrumb";
+import IndoorFarmingNav from "../components/IndoorFarmingNav";
 import Footer from "../components/Footer";
 
 export const Route = createFileRoute("/indoor-farming_/knowledge")({
@@ -51,15 +51,14 @@ function IndoorFarmingKnowledge() {
   return (
     <main>
       <SiteHeader />
+      <IndoorFarmingNav />
 
       <section className="bg-white border-b border-[#0B6477]/10">
         <div className="max-w-[1360px] mx-auto px-6 md:px-12 pt-12 md:pt-16 pb-10 md:pb-14">
-          <IndoorFarmingCrumb current="Knowledge" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: "easeOut" }}
-            className="mt-6"
           >
             <div
               className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-3"

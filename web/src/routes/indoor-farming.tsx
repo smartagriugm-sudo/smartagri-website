@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowRight, ArrowUpRight, Sprout } from "lucide-react";
-import { A } from "../lib/assets";
+import { A, indoorFarmingPhoto } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
 import {
   IF_CAPABILITIES,
@@ -11,6 +11,7 @@ import {
 } from "../lib/indoor-farming";
 import { notes } from "../lib/notes";
 import SiteHeader from "../components/SiteHeader";
+import IndoorFarmingNav from "../components/IndoorFarmingNav";
 import PhotoSlot from "../components/PhotoSlot";
 import Footer from "../components/Footer";
 
@@ -34,6 +35,7 @@ function IndoorFarmingLanding() {
   return (
     <main>
       <SiteHeader />
+      <IndoorFarmingNav />
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-[#08313A]">
@@ -144,8 +146,10 @@ function IndoorFarmingLanding() {
               </Link>
             </div>
             <PhotoSlot
+              src={indoorFarmingPhoto("overview.webp")}
+              alt="Researchers working inside a smartagri greenhouse"
               icon={Sprout}
-              caption="Photo: plant factory / greenhouse interior"
+              caption="Photo: greenhouse interior"
               ratio="aspect-[4/3]"
               className="w-full"
             />

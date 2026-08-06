@@ -2,9 +2,10 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
+import { indoorFarmingPhoto } from "../lib/assets";
 import { findIFSection } from "../lib/indoor-farming";
 import SiteHeader from "../components/SiteHeader";
-import IndoorFarmingCrumb from "../components/IndoorFarmingCrumb";
+import IndoorFarmingNav from "../components/IndoorFarmingNav";
 import PhotoSlot from "../components/PhotoSlot";
 import Footer from "../components/Footer";
 
@@ -73,16 +74,15 @@ function IndoorFarmingSectionPage() {
   return (
     <main>
       <SiteHeader />
+      <IndoorFarmingNav />
 
       {/* Header */}
       <section className="bg-white">
         <div className="max-w-[1100px] mx-auto px-6 md:px-12 pt-8 md:pt-10 pb-10 md:pb-14">
-          <IndoorFarmingCrumb current={section.label} />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: "easeOut" }}
-            className="mt-6"
           >
             <div
               className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-3"
@@ -123,6 +123,8 @@ function IndoorFarmingSectionPage() {
                 }`}
               >
                 <PhotoSlot
+                  src={indoorFarmingPhoto(`${section.slug}-${group.slug}.webp`)}
+                  alt={group.title}
                   icon={group.icon}
                   caption={`Photo: ${group.title.toLowerCase()}`}
                   ratio="aspect-[4/3]"

@@ -2,10 +2,12 @@ import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { body } from "../lib/fonts";
 
-// A photo slot that degrades gracefully. When `src` is missing (or the file is
-// not in public/brand/ yet) it renders a brand-colored placeholder with an icon
-// instead of a broken image, so real photos can be dropped in later with no
-// code change.
+// A photo slot that degrades gracefully.
+//
+// The brand-colored placeholder is always rendered underneath; the real photo
+// is layered on top and only becomes visible once it has actually loaded. A
+// file that is not in public/brand/ yet therefore shows the placeholder rather
+// than a broken image, and photos can be dropped in later with no code change.
 export default function PhotoSlot({
   src,
   alt,
@@ -18,31 +20,15 @@ export default function PhotoSlot({
   src?: string;
   alt?: string;
   icon?: LucideIcon;
-  /** Small label shown on the placeholder to describe the intended photo. */
+  /** Small label on the placeholder describing the intended photo. */
   caption?: string;
   className?: string;
   ratio?: string;
   tone?: "light" | "dark";
 }) {
-  const [failed, setFailed] = useState(false);
-  const showPhoto = Boolean(src) && !failed;
-
-  if (showPhoto) {
-    return (
-      <div className={`${ratio} overflow-hidden rounded-2xl ${className}`}>
-        <img
-          src={src}
-          alt={alt ?? ""}
-          loading="lazy"
-          decoding="async"
-          onError={() => setFailed(true)}
-          className="w-full h-full object-cover"
-        />
-      </div>
-    );
-  }
-
+  const [loaded, setLoaded] = useState(false);
   const dark = tone === "dark";
+
   return (
     <div
       className={`${ratio} relative overflow-hidden rounded-2xl border ${
@@ -53,7 +39,6 @@ export default function PhotoSlot({
           ? "linear-gradient(135deg, #08313A 0%, #0B6477 70%, #14919B 100%)"
           : "linear-gradient(135deg, #EAF4F2 0%, #DCEFEA 55%, #CDE9E4 100%)",
       }}
-      aria-hidden={!caption}
     >
       {/* soft brand blooms so the placeholder still reads as designed */}
       <div
@@ -84,6 +69,19 @@ export default function PhotoSlot({
           </span>
         )}
       </div>
+
+      {src && (
+        <img
+          src={src}
+          alt={alt ?? ""}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
+            loaded ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      )}
     </div>
   );
 }
