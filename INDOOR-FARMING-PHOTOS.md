@@ -71,9 +71,9 @@ dan sensor rapi terpasang. Menekankan sistem terinstrumentasi dan terkendali.
 
 | # | Nama file | Rasio | Judul di halaman |
 |---|---|---|---|
-| 5 | `cultivation-vegetables.webp` | 4:3 | Vegetables |
-| 6 | `cultivation-indoor-produce.webp` | 4:3 | Indoor produce |
-| 7 | `cultivation-crop-protection.webp` | 4:3 | Crop protection |
+| 5 | `cultivation-fruiting-crops.webp` | 4:3 | Fruiting crops |
+| 6 | `cultivation-salad-herbs-berries.webp` | 4:3 | Salad, herbs, and berries |
+| 7 | `cultivation-plant-health.webp` | 4:3 | Plant health |
 
 **5. Vegetables (Sayuran buah).** Lorong tanaman tomat sistem high-wire di dalam
 greenhouse: batang tinggi dililit tali, tandan buah dalam berbagai tingkat
@@ -96,10 +96,10 @@ di antara tanaman. Menekankan pencegahan, bukan penyemprotan.
 
 | # | Nama file | Rasio | Judul di halaman |
 |---|---|---|---|
-| 8 | `technology-structure.webp` | 4:3 | Structure |
-| 9 | `technology-climate.webp` | 4:3 | Climate |
-| 10 | `technology-irrigation.webp` | 4:3 | Irrigation |
-| 11 | `technology-more-technology.webp` | 4:3 | More technology |
+| 8 | `technology-structure-and-envelope.webp` | 4:3 | Structure and envelope |
+| 9 | `technology-heat-humidity-air.webp` | 4:3 | Heat, humidity, and air |
+| 10 | `technology-water-and-nutrition.webp` | 4:3 | Water and nutrition |
+| 11 | `technology-control-and-closed-systems.webp` | 4:3 | Control and closed systems |
 
 **8. Structure (Struktur).** Pandangan ke atas pada rangka baja greenhouse:
 kuda-kuda galvanis, talang, atap polycarbonate/plastik, langit tropis terang di
@@ -125,10 +125,10 @@ berbasis data.
 
 | # | Nama file | Rasio | Judul di halaman |
 |---|---|---|---|
-| 12 | `greenhouses-steel-greenhouse.webp` | 4:3 | Steel greenhouse |
-| 13 | `greenhouses-bamboo-greenhouse.webp` | 4:3 | Bamboo and low-cost structures |
-| 14 | `greenhouses-controlled-environment-agriculture.webp` | 4:3 | Controlled-environment agriculture |
-| 15 | `greenhouses-plant-factories.webp` | 4:3 | Plant factories |
+| 12 | `greenhouses-permanent-structures.webp` | 4:3 | Permanent steel structures |
+| 13 | `greenhouses-local-material-structures.webp` | 4:3 | Local-material structures |
+| 14 | `greenhouses-fully-managed-environments.webp` | 4:3 | Fully managed environments |
+| 15 | `greenhouses-closed-plant-factories.webp` | 4:3 | Closed plant factories |
 
 **12. Steel greenhouse.** Tampak luar greenhouse rangka baja modern di lokasi
 tropis, atap venlo/gothic, dinding terang, halaman rapi, vegetasi tropis di
