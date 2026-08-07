@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, ArrowUpRight, BookOpen } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import { IF_NOTE_TAGS } from "../lib/indoor-farming";
-import { categoryChip, notes } from "../lib/notes";
+import { categoryChip, covers, notes } from "../lib/notes";
 import SiteHeader from "../components/SiteHeader";
 import IndoorFarmingNav from "../components/IndoorFarmingNav";
 import Footer from "../components/Footer";
@@ -143,8 +143,27 @@ function IndoorFarmingKnowledge() {
                     <Link
                       to="/field-notes/$slug"
                       params={{ slug: note.slug }}
-                      className="group flex h-full flex-col gap-3 rounded-3xl border border-[#0B6477]/10 bg-white p-7 transition-colors hover:border-[#14919B]/40"
+                      className="group flex h-full flex-col overflow-hidden rounded-3xl border border-[#0B6477]/10 bg-white transition-colors hover:border-[#14919B]/40"
                     >
+                      <div
+                        className="aspect-[16/10] w-full overflow-hidden"
+                        style={
+                          note.cover
+                            ? undefined
+                            : { background: covers[i % covers.length] }
+                        }
+                      >
+                        {note.cover && (
+                          <img
+                            src={note.cover}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                          />
+                        )}
+                      </div>
+                      <div className="flex flex-1 flex-col gap-3 p-7">
                       <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-semibold ${categoryChip(note.category)}`}
@@ -171,6 +190,7 @@ function IndoorFarmingKnowledge() {
                       >
                         {note.excerpt}
                       </p>
+                      </div>
                     </Link>
                   </motion.div>
                 ))}

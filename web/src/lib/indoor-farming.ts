@@ -73,13 +73,13 @@ export const IF_SECTIONS: IFSection[] = [
     slug: "approach",
     label: "Approach",
     eyebrow: "Approach",
-    title: "What, where, and",
-    accent: "how to grow",
-    lede: "Every controlled-environment project comes down to three decisions. Get them right and the system earns its keep. Get them wrong and no amount of technology will rescue it.",
+    title: "The decisions that come",
+    accent: "before the build",
+    lede: "Feasibility is worked out, not assumed. Three things decide whether a controlled environment will pay for itself here: the crop, the site, and how much control you actually need.",
     groups: [
       {
-        slug: "what-to-grow",
-        title: "What to grow",
+        slug: "crop-and-market",
+        title: "Crop and market fit",
         intro:
           "Crop choice drives everything downstream: the structure, the climate strategy, the irrigation design, and whether the numbers work at all.",
         linkLabel: "Crop feasibility",
@@ -132,11 +132,11 @@ export const IF_SECTIONS: IFSection[] = [
         ],
       },
       {
-        slug: "where-to-grow",
-        title: "Where to grow",
+        slug: "site-and-climate",
+        title: "Site and climate",
         intro:
           "Site selection quietly sets your operating cost for the next decade. Altitude, water, power, and distance to market matter more than the shape of the roof.",
-        linkLabel: "Location analysis",
+        linkLabel: "Site assessment",
         icon: MapPin,
         topics: [
           {
@@ -186,11 +186,11 @@ export const IF_SECTIONS: IFSection[] = [
         ],
       },
       {
-        slug: "how-to-grow",
-        title: "How to grow",
+        slug: "level-of-control",
+        title: "Level of control",
         intro:
           "There is a spectrum between an open field and a fully closed plant factory. The right point on it is the one your crop, climate, and team can actually sustain.",
-        linkLabel: "Growing systems",
+        linkLabel: "System design",
         icon: Target,
         topics: [
           {
@@ -908,7 +908,7 @@ export const IF_PILLARS: {
     slug: "approach",
     label: "Approach",
     blurb:
-      "What to grow, where to grow it, and how much control the crop and the business case actually justify.",
+      "Which crop, which site, and how much control the crop and the business case actually justify.",
     icon: Target,
   },
   {

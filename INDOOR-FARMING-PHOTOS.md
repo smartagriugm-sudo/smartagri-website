@@ -46,22 +46,22 @@ cahaya lembut. Suasana kerja, bukan berpose.
 
 | # | Nama file | Rasio | Judul di halaman |
 |---|---|---|---|
-| 2 | `approach-what-to-grow.webp` | 4:3 | What to grow |
-| 3 | `approach-where-to-grow.webp` | 4:3 | Where to grow |
-| 4 | `approach-how-to-grow.webp` | 4:3 | How to grow |
+| 2 | `approach-crop-and-market.webp` | 4:3 | Crop and market fit |
+| 3 | `approach-site-and-climate.webp` | 4:3 | Site and climate |
+| 4 | `approach-level-of-control.webp` | 4:3 | Level of control |
 
-**2. What to grow (Apa yang ditanam).** Close-up beragam hasil panen bernilai
+**2. Crop and market fit (Kecocokan komoditas dan pasar).** Close-up beragam hasil panen bernilai
 tinggi hasil greenhouse tropis, ditata di keranjang panen: selada, tomat ceri,
 aneka herba, stroberi. Tangan seseorang sedang menyortir/menilai kualitas.
 Fokus pada kualitas dan keseragaman produk, bukan pada bangunannya.
 
-**3. Where to grow (Di mana lokasinya).** Pemandangan udara/agak tinggi sebuah
+**3. Site and climate (Lokasi dan iklim).** Pemandangan udara/agak tinggi sebuah
 greenhouse di lereng dataran tinggi tropis Indonesia: sawah bertingkat dan hutan
 di sekitarnya, gunung berkabut di kejauhan, cahaya pagi. Menunjukkan bahwa
 pemilihan lokasi dan ketinggian itu penting. (Mirip hero, tapi ambil dari sudut
 lebih lebar dan lanskapnya lebih dominan.)
 
-**4. How to grow (Bagaimana caranya).** Peneliti Indonesia sedang menyetel panel
+**4. Level of control (Tingkat kendali).** Peneliti Indonesia sedang menyetel panel
 kontrol/kotak sensor di dalam greenhouse, layar menampilkan grafik iklim, kabel
 dan sensor rapi terpasang. Menekankan sistem terinstrumentasi dan terkendali.
 
