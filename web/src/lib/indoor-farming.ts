@@ -247,16 +247,16 @@ export const IF_SECTIONS: IFSection[] = [
     slug: "cultivation",
     label: "Cultivation",
     eyebrow: "Cultivation",
-    title: "Crops, systems, and",
-    accent: "crop protection",
-    lede: "What we grow under cover, how we grow it, and how we keep it healthy without leaning on chemistry.",
+    title: "The crops, and how we",
+    accent: "keep them healthy",
+    lede: "What earns its place under cover here, how each crop is grown, and the plant-health discipline that keeps chemistry as the last resort rather than the routine.",
     groups: [
       {
-        slug: "vegetables",
-        title: "Vegetables",
+        slug: "fruiting-crops",
+        title: "Fruiting crops",
         intro:
           "Fruiting vegetables reward tight climate and nutrition control. They are demanding, and they are where controlled-environment growing shows its value most clearly.",
-        linkLabel: "Vegetable crops",
+        linkLabel: "Tomato growing",
         icon: Sprout,
         topics: [
           {
@@ -274,11 +274,11 @@ export const IF_SECTIONS: IFSection[] = [
         ],
       },
       {
-        slug: "indoor-produce",
-        title: "Indoor produce",
+        slug: "salad-herbs-berries",
+        title: "Salad, herbs, and berries",
         intro:
           "Short-cycle crops grown in greenhouses and plant factories, where light recipe, root-zone control, and hygiene do most of the work.",
-        linkLabel: "Indoor produce",
+        linkLabel: "Short-cycle crops",
         icon: Leaf,
         topics: [
           {
@@ -328,11 +328,11 @@ export const IF_SECTIONS: IFSection[] = [
         ],
       },
       {
-        slug: "crop-protection",
-        title: "Crop protection",
+        slug: "plant-health",
+        title: "Plant health",
         intro:
           "A sealed structure is the first line of defence. Everything after that is discipline: watch closely, act early, and keep the house clean.",
-        linkLabel: "Crop protection",
+        linkLabel: "Protection strategy",
         icon: ShieldCheck,
         topics: [
           {
@@ -394,11 +394,11 @@ export const IF_SECTIONS: IFSection[] = [
     lede: "Structure, climate, water, and control. Each one is a discipline in its own right, and they only work when designed as a single system.",
     groups: [
       {
-        slug: "structure",
-        title: "Structure",
+        slug: "structure-and-envelope",
+        title: "Structure and envelope",
         intro:
           "The building is a climate instrument. Its height, venting, and covering decide how much work the machinery has to do afterwards.",
-        linkLabel: "Structure systems",
+        linkLabel: "Building design",
         icon: Building2,
         topics: [
           {
@@ -481,11 +481,11 @@ export const IF_SECTIONS: IFSection[] = [
         ],
       },
       {
-        slug: "climate",
-        title: "Climate",
+        slug: "heat-humidity-air",
+        title: "Heat, humidity, and air",
         intro:
           "The goal is not a cool greenhouse, it is a crop that transpires steadily all day. That means managing heat, humidity, and carbon dioxide together.",
-        linkLabel: "Climate systems",
+        linkLabel: "Climate strategy",
         icon: Thermometer,
         topics: [
           {
@@ -535,11 +535,11 @@ export const IF_SECTIONS: IFSection[] = [
         ],
       },
       {
-        slug: "irrigation",
-        title: "Irrigation",
+        slug: "water-and-nutrition",
+        title: "Water and nutrition",
         intro:
           "Water quality in, nutrition dialled in, drain water recovered. A closed water strategy is both the sustainable option and the economical one.",
-        linkLabel: "Irrigation systems",
+        linkLabel: "Water strategy",
         icon: Droplets,
         topics: [
           {
@@ -611,11 +611,11 @@ export const IF_SECTIONS: IFSection[] = [
         ],
       },
       {
-        slug: "more-technology",
-        title: "More technology",
+        slug: "control-and-closed-systems",
+        title: "Control and closed systems",
         intro:
           "The layer that ties the rest together: control software, energy and water strategy, and fully closed production.",
-        linkLabel: "Automation and more",
+        linkLabel: "Control systems",
         icon: Cpu,
         topics: [
           {
@@ -669,11 +669,11 @@ export const IF_SECTIONS: IFSection[] = [
     lede: "From a low-cost screenhouse to a fully closed plant factory. Each step buys more control, and asks for more capital and more skill in return.",
     groups: [
       {
-        slug: "steel-greenhouse",
-        title: "Steel greenhouse",
+        slug: "permanent-structures",
+        title: "Permanent steel structures",
         intro:
           "The durable standard: a galvanised steel frame carrying film, polycarbonate, or glass. Built for decades of service and for the equipment a controlled climate needs.",
-        linkLabel: "Steel structures",
+        linkLabel: "Built to last",
         icon: Building2,
         lede: "A steel greenhouse is the long-term option. It costs more at the start and gives back a structure that holds its shape, carries screens and irrigation, and can be upgraded rather than replaced.",
         topics: [
@@ -724,11 +724,11 @@ export const IF_SECTIONS: IFSection[] = [
         ],
       },
       {
-        slug: "bamboo-greenhouse",
-        title: "Bamboo and low-cost structures",
+        slug: "local-material-structures",
+        title: "Local-material structures",
         intro:
           "Locally sourced structures cut capital cost dramatically and put protected cultivation within reach of smallholders and farmer groups.",
-        linkLabel: "Low-cost structures",
+        linkLabel: "Affordable builds",
         icon: Sprout,
         lede: "Not every grower needs, or can finance, a steel greenhouse. A well-built bamboo or timber structure delivers the two protections that matter most, rain exclusion and insect exclusion, at a fraction of the cost.",
         topics: [
@@ -779,11 +779,11 @@ export const IF_SECTIONS: IFSection[] = [
         ],
       },
       {
-        slug: "controlled-environment-agriculture",
-        title: "Controlled-environment agriculture",
+        slug: "fully-managed-environments",
+        title: "Fully managed environments",
         intro:
           "The full discipline: structure, climate, irrigation, and control designed together, so the growing environment becomes a set of decisions rather than a forecast.",
-        linkLabel: "The CEA discipline",
+        linkLabel: "The full discipline",
         icon: Settings2,
         lede: "Controlled-environment agriculture is not a building type, it is a way of working. The structure, the climate system, the irrigation, and the data all serve one goal: putting the grower in charge of the environment instead of reacting to it.",
         topics: [
@@ -834,11 +834,11 @@ export const IF_SECTIONS: IFSection[] = [
         ],
       },
       {
-        slug: "plant-factories",
-        title: "Plant factories",
+        slug: "closed-plant-factories",
+        title: "Closed plant factories",
         intro:
           "Closed, stacked, artificially lit production with no dependence on sunlight or land. The most controlled option available, and the most energy intensive.",
-        linkLabel: "Plant factories",
+        linkLabel: "Stacked production",
         icon: Layers,
         lede: "A plant factory removes the weather from the equation entirely. Every input is chosen: light spectrum and duration, temperature, humidity, carbon dioxide, and nutrition. What you gain in control, you pay for in energy.",
         topics: [
@@ -915,21 +915,21 @@ export const IF_PILLARS: {
     slug: "cultivation",
     label: "Cultivation",
     blurb:
-      "Crops under cover, from tomato to leafy greens and strawberries, and the crop protection that keeps them clean.",
+      "Crops under cover, from tomato to salad, herbs, and berries, plus the plant-health discipline that keeps them clean.",
     icon: Leaf,
   },
   {
     slug: "technology",
     label: "Technology",
     blurb:
-      "Structure, climate, irrigation, and control, designed as one system for tropical conditions.",
+      "The building, the air, the water, and the control layer, designed as one system for tropical conditions.",
     icon: Cpu,
   },
   {
     slug: "greenhouses",
     label: "Greenhouses",
     blurb:
-      "From low-cost bamboo structures to steel greenhouses and fully closed plant factories.",
+      "From affordable local-material builds to permanent steel structures and fully closed plant factories.",
     icon: Warehouse,
   },
 ];
