@@ -4,9 +4,9 @@ import { body } from "../lib/fonts";
 
 // A photo slot that degrades gracefully.
 //
-// The brand-colored placeholder is always rendered underneath; the real photo
-// is layered on top and only becomes visible once it has actually loaded. A
-// file that is not in public/brand/ yet therefore shows the placeholder rather
+// The brand-colored placeholder is always rendered underneath and the photo
+// paints on top of it, so there is nothing to toggle and no dependency on load
+// events firing. A file that is not in public/brand/ yet shows the placeholder rather
 // than a broken image, and photos can be dropped in later with no code change.
 export default function PhotoSlot({
   src,
@@ -26,7 +26,7 @@ export default function PhotoSlot({
   ratio?: string;
   tone?: "light" | "dark";
 }) {
-  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   const dark = tone === "dark";
 
   return (
@@ -70,16 +70,16 @@ export default function PhotoSlot({
         )}
       </div>
 
-      {src && (
+      {/* The photo paints on top of the placeholder. If the file is missing,
+          onError drops the img so the placeholder underneath shows through. */}
+      {src && !failed && (
         <img
           src={src}
           alt={alt ?? ""}
           loading="lazy"
           decoding="async"
-          onLoad={() => setLoaded(true)}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
-            loaded ? "opacity-100" : "opacity-0"
-          }`}
+          onError={() => setFailed(true)}
+          className="absolute inset-0 h-full w-full object-cover"
         />
       )}
     </div>
