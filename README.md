@@ -58,7 +58,16 @@ Di produksi, nilai-nilai ini diatur di dashboard Vercel, bukan di repo.
 
 ## Alur deploy
 
-Branch kerja saat ini: `design-sync/ui-kit`.
+`main` adalah sumber kebenaran dan yang di-deploy. Konten berita juga bisa masuk
+ke `main` lewat importer otomatis, jadi **selalu mulai dari `main` yang terbaru**
+sebelum bekerja:
+
+```bash
+git checkout design-sync/ui-kit
+git merge --ff-only origin/main      # samakan dulu dengan main
+```
+
+Lalu seperti biasa:
 
 ```bash
 git add <file>
@@ -70,6 +79,10 @@ gh pr merge <nomor> --merge
 
 Merge ke `main` memicu deploy Vercel. Butuh sekitar 1 sampai 2 menit sampai
 perubahannya tayang.
+
+> Kalau branch kerja tertinggal dari `main` lalu dipakai membuat PR, perubahan
+> yang sudah ada di `main` bisa ikut terbalik. Karena itu langkah `merge
+> --ff-only origin/main` di atas penting, terutama saat berpindah komputer.
 
 ## Dokumentasi lain
 
