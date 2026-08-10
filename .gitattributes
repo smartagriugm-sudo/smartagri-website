@@ -1,0 +1,15 @@
+# Keep line endings as LF everywhere. The site is built on Linux (Vercel), and
+# Git for Windows would otherwise check files out as CRLF, which shows up as
+# whole-file diffs whenever a script rewrites one.
+* text=auto eol=lf
+
+# Binary assets: never touch them.
+*.webp binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.avif binary
+*.mp4  binary
+*.pdf  binary
+*.xlsx binary
+*.ico  binary
