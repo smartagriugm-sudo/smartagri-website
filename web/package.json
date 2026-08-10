@@ -1,5 +1,8 @@
 {
   "name": "web",
+  "engines": {
+    "node": ">=20"
+  },
   "private": true,
   "type": "module",
   "imports": {
