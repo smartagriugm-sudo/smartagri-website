@@ -1103,6 +1103,7 @@ export default function IndoorDashboard() {
           {/* system flow + event log */}
           <div className="grid xl:grid-cols-[1.55fr_1fr] gap-3">
             <Panel
+              className="flex flex-col"
               title="System flow"
               action={
                 <span className="text-[11px] text-neutral-400" style={body}>
@@ -1114,7 +1115,11 @@ export default function IndoorDashboard() {
                   with what feeds it on the left and what it drives on the
                   right, so the panel reads as a loop rather than a list. On a
                   narrow screen it collapses to illustration then cards. */}
-              <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)] sm:items-center gap-3">
+              {/* The panel stretches to match the taller Event log beside it,
+                  so the flow row is centred in whatever height it is given
+                  rather than sitting against the top with dead space below. */}
+              <div className="flex flex-1 items-center">
+              <div className="w-full flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)] sm:items-center gap-3">
                 <div className="order-2 sm:order-1 grid grid-cols-2 sm:grid-cols-1 gap-2">
                   {[
                     {
@@ -1141,7 +1146,10 @@ export default function IndoorDashboard() {
                     alt="Illustration of the greenhouse climate and irrigation loop"
                     icon={Workflow}
                     caption="Illustration: climate and irrigation loop"
-                    ratio="aspect-[4/3]"
+                    // 16:9 rather than 4:3: the artwork is a wide isometric
+                    // scene, and a taller slot would just pad it with empty
+                    // space and shrink the building.
+                    ratio="aspect-[16/9]"
                     fit="contain"
                   />
                 </div>
@@ -1162,6 +1170,7 @@ export default function IndoorDashboard() {
                     <FlowNode key={n.label} {...n} />
                   ))}
                 </div>
+              </div>
               </div>
             </Panel>
 
