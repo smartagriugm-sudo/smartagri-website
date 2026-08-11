@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useAuth } from "../lib/auth/auth";
 import { body } from "../lib/fonts";
 import { IF_SECTIONS } from "../lib/indoor-farming";
 
@@ -8,6 +9,13 @@ import { IF_SECTIONS } from "../lib/indoor-farming";
 // the section name sits on the left so the bar reads as "you are inside Indoor
 // Farming" instead of repeating the site navigation above it.
 export default function IndoorFarmingNav() {
+  // The dashboard is an internal demo tool. Hide the link the same way the
+  // site header hides "AI Assistant": visible when auth is switched off, and
+  // otherwise only once signed in. The route itself is what enforces access;
+  // this is only so visitors are not shown a door they cannot open.
+  const { user, isConfigured } = useAuth();
+  const showDashboard = !isConfigured || !!user;
+
   const linkClass =
     "whitespace-nowrap rounded-full px-3 py-1 text-[13px] font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors";
   const activeClass =
@@ -48,14 +56,16 @@ export default function IndoorFarmingNav() {
                 {section.label}
               </Link>
             ))}
-            <Link
-              to="/indoor-farming/dashboard"
-              className={linkClass}
-              activeProps={{ className: `${linkClass} ${activeClass}` }}
-              style={body}
-            >
-              Dashboard
-            </Link>
+            {showDashboard && (
+              <Link
+                to="/indoor-farming/dashboard"
+                className={linkClass}
+                activeProps={{ className: `${linkClass} ${activeClass}` }}
+                style={body}
+              >
+                Dashboard
+              </Link>
+            )}
             <Link
               to="/indoor-farming/knowledge"
               className={linkClass}

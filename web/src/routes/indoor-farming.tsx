@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowRight, ArrowUpRight, Gauge, Sprout } from "lucide-react";
 import { A, indoorFarmingPhoto } from "../lib/assets";
+import { useAuth } from "../lib/auth/auth";
 import { accent, body, display } from "../lib/fonts";
 import {
   IF_CAPABILITIES,
@@ -31,6 +32,10 @@ export const Route = createFileRoute("/indoor-farming")({
 
 function IndoorFarmingLanding() {
   const relatedNotes = notes.slice(0, 3);
+  // Same rule as the sub-nav: do not advertise the gated dashboard to visitors
+  // who cannot open it.
+  const { user, isConfigured } = useAuth();
+  const showDashboard = !isConfigured || !!user;
 
   return (
     <main>
@@ -218,6 +223,7 @@ function IndoorFarmingLanding() {
       </section>
 
       {/* Dashboard */}
+      {showDashboard && (
       <section className="bg-white">
         <div className="max-w-[1360px] mx-auto px-6 md:px-12 pb-4 md:pb-8">
           <Link
@@ -262,6 +268,7 @@ function IndoorFarmingLanding() {
           </Link>
         </div>
       </section>
+      )}
 
       {/* Tropical difference */}
       <section className="bg-white">

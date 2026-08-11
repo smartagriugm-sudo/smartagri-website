@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   Bell,
@@ -22,7 +23,7 @@ import {
 } from "lucide-react";
 import { indoorDashboardImage } from "../lib/assets";
 import PhotoSlot from "./PhotoSlot";
-import { body, display } from "../lib/fonts";
+import { accent, body, display } from "../lib/fonts";
 import {
   AERIAL_KEYS,
   CHART_KEYS,
@@ -32,6 +33,7 @@ import {
   POINTS_PER_DAY,
   ROOT_KEYS,
   STATUS_TONE,
+  STEP_MINUTES,
   ZONES,
   type MetricKey,
   type Zone,
@@ -527,6 +529,33 @@ function KpiCard({ zone, metricKey, tick }: { zone: Zone; metricKey: MetricKey; 
   );
 }
 
+/* ---------------------------------------------------------- flow node card */
+
+function FlowNode({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+}) {
+  return (
+    <div className="min-w-0 rounded-xl border border-[#0B6477]/10 bg-[#F3F7F6] px-3 py-2.5">
+      <Icon className="w-4 h-4 text-[#14919B] mb-1" />
+      <div className="text-[10px] text-neutral-400 truncate" style={body}>
+        {label}
+      </div>
+      <div
+        className="text-[13px] font-semibold text-neutral-900 tabular-nums truncate"
+        style={display}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------ the shell */
 
 export default function IndoorDashboard() {
@@ -650,45 +679,38 @@ export default function IndoorDashboard() {
 
         {/* ------------------------------------------------ main */}
         <div className="min-w-0 flex-1 bg-[#F3F7F6] p-3 sm:p-4 flex flex-col gap-3">
-          {/* top bar */}
+          {/* top bar: utilities only. The greeting and headline live on the
+              hero photo below, so the photo carries the top of the screen. */}
           <div className="flex items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="text-[12px] font-medium text-neutral-400" style={body}>
-                Smart Agriculture Research Center · Yogyakarta
-              </div>
-              <h2
-                className="text-[17px] sm:text-xl font-semibold tracking-[-0.025em] text-neutral-900 truncate"
-                style={display}
-              >
-                {inBand} of {onlineZones.length} zones are{" "}
-                <span style={{ color: "#14919B" }}>inside their target envelope</span>
-              </h2>
-            </div>
-            <div className="hidden xl:flex items-center gap-2 h-9 w-[220px] rounded-xl border border-[#0B6477]/10 bg-white px-3">
-              <Search className="w-4 h-4 text-neutral-300" />
-              <span className="text-[13px] text-neutral-300" style={body}>
+            <div className="hidden sm:flex min-w-0 flex-1 items-center gap-2 h-9 max-w-[280px] rounded-xl border border-[#0B6477]/10 bg-white px-3">
+              <Search className="w-4 h-4 shrink-0 text-neutral-300" />
+              <span className="truncate text-[13px] text-neutral-300" style={body}>
                 Search zones, sensors
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => setPlaying((p) => !p)}
-              className="flex items-center gap-1.5 h-9 rounded-xl border border-[#0B6477]/10 bg-white px-3 text-[12px] font-medium text-[#0B6477] hover:bg-[#F3F7F6] transition-colors"
-              style={body}
-            >
-              {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-              {playing ? "Pause" : "Play"}
-            </button>
-            <span className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border border-[#0B6477]/10 bg-white">
-              <Bell className="w-4 h-4 text-neutral-400" />
-            </span>
-            <span className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border border-[#0B6477]/10 bg-white">
-              <Settings className="w-4 h-4 text-neutral-400" />
-            </span>
+            <div className="flex flex-1 items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPlaying((p) => !p)}
+                className="flex items-center gap-1.5 h-9 rounded-xl border border-[#0B6477]/10 bg-white px-3 text-[12px] font-medium text-[#0B6477] hover:bg-[#F3F7F6] transition-colors"
+                style={body}
+              >
+                {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                {playing ? "Pause" : "Play"}
+              </button>
+              <span className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border border-[#0B6477]/10 bg-white">
+                <Bell className="w-4 h-4 text-neutral-400" />
+              </span>
+              <span className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border border-[#0B6477]/10 bg-white">
+                <Settings className="w-4 h-4 text-neutral-400" />
+              </span>
+            </div>
           </div>
 
-          {/* hero strip: facility summary, photo, weather station */}
-          <div className="relative overflow-hidden rounded-2xl bg-[#08313A] min-h-[150px]">
+          {/* Hero strip. Structured after the reference: the photo carries the
+              band, the headline sits on it, and the summary and weather cards
+              float over the image rather than beside it. */}
+          <div className="relative overflow-hidden rounded-2xl bg-[#08313A] min-h-[210px]">
             <img
               src={indoorDashboardImage("facility-hero.webp")}
               alt=""
@@ -699,78 +721,123 @@ export default function IndoorDashboard() {
                 e.currentTarget.style.display = "none";
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#08313A]/95 via-[#08313A]/70 to-[#08313A]/35" />
-            <div className="relative flex flex-wrap items-center justify-between gap-3 p-4">
-              <div className="flex items-center gap-4">
-                <div>
-                  <div className="text-[11px] font-medium text-[#45DFB1]" style={body}>
-                    Live facility
-                  </div>
-                  <div
-                    className="text-[22px] font-semibold tracking-[-0.03em] text-white leading-tight"
-                    style={display}
-                  >
-                    {onlineZones.length} zones online
-                  </div>
-                  <div className="text-[11px] text-white/55" style={body}>
-                    {totalArea.toLocaleString("en-US")} m² under control · 1 zone in maintenance
-                  </div>
+            {/* Two overlays: a left-to-right wash so the headline stays legible
+                over any photo, and a bottom lift so the glass cards separate
+                from a bright canopy underneath them. */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#08313A]/95 via-[#08313A]/70 to-[#08313A]/25" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#08313A]/80 via-transparent to-transparent" />
+
+            <div className="relative flex min-h-[210px] flex-col justify-between gap-4 p-4 sm:p-5">
+              <div className="max-w-[560px]">
+                <div className="text-[11px] font-medium text-[#45DFB1]" style={body}>
+                  Smart Agriculture Research Center · Yogyakarta
                 </div>
-                <div className="hidden sm:block h-12 w-px bg-white/15" />
-                <div className="hidden sm:block">
-                  <div className="text-[11px] text-white/55" style={body}>
-                    Facility clock
-                  </div>
-                  <div
-                    className="text-[22px] font-semibold tracking-[-0.03em] text-white tabular-nums leading-tight"
-                    style={display}
-                  >
-                    {clockLabel(tick)}
-                  </div>
-                  <div className="text-[11px] text-white/55" style={body}>
-                    Sampling every {15} minutes
-                  </div>
-                </div>
+                <h2
+                  className="mt-1 text-[19px] sm:text-[23px] font-semibold tracking-[-0.03em] leading-[1.15] text-white"
+                  style={display}
+                >
+                  {inBand} of {onlineZones.length} zones are{" "}
+                  <span style={{ ...accent, color: "#80ED99" }}>
+                    inside their target envelope
+                  </span>
+                </h2>
               </div>
 
-              {/* AWS card */}
-              <div className="rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm px-4 py-3 min-w-[210px]">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-[11px] text-white/60" style={body}>
-                      Weather station · outdoor
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                {/* facility summary */}
+                <div className="rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm px-4 py-3">
+                  <div className="flex items-center gap-4 sm:gap-5">
+                    <div>
+                      <div className="text-[11px] text-white/60" style={body}>
+                        Zones online
+                      </div>
+                      <div
+                        className="text-[21px] font-semibold tracking-[-0.03em] text-white tabular-nums leading-tight"
+                        style={display}
+                      >
+                        {onlineZones.length}
+                        <span className="text-[13px] font-normal text-white/50">
+                          {" "}
+                          / {ZONES.length}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-white/50" style={body}>
+                        1 in maintenance
+                      </div>
                     </div>
-                    <div
-                      className="text-[19px] font-semibold text-white tabular-nums leading-tight"
-                      style={display}
-                    >
-                      {weather.airTemp.toFixed(1)} °C
+                    <div className="h-10 w-px bg-white/15" />
+                    <div>
+                      <div className="text-[11px] text-white/60" style={body}>
+                        Under control
+                      </div>
+                      <div
+                        className="text-[21px] font-semibold tracking-[-0.03em] text-white tabular-nums leading-tight"
+                        style={display}
+                      >
+                        {totalArea.toLocaleString("en-US")}
+                        <span className="text-[13px] font-normal text-white/50"> m²</span>
+                      </div>
+                      <div className="text-[10px] text-white/50" style={body}>
+                        across {onlineZones.length} zones
+                      </div>
                     </div>
-                    <div className="text-[11px] text-white/60" style={body}>
-                      {weather.condition}
+                    <div className="hidden sm:block h-10 w-px bg-white/15" />
+                    <div className="hidden sm:block">
+                      <div className="text-[11px] text-white/60" style={body}>
+                        Facility clock
+                      </div>
+                      <div
+                        className="text-[21px] font-semibold tracking-[-0.03em] text-white tabular-nums leading-tight"
+                        style={display}
+                      >
+                        {clockLabel(tick)}
+                      </div>
+                      <div className="text-[10px] text-white/50" style={body}>
+                        sampling every {STEP_MINUTES} min
+                      </div>
                     </div>
                   </div>
-                  <WeatherIcon className="w-8 h-8 text-[#45DFB1]" strokeWidth={1.5} />
                 </div>
-                <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1">
-                  {[
-                    { label: "Solar", value: `${Math.round(weather.solar)} W/m²` },
-                    { label: "Humidity", value: `${Math.round(weather.rh)} %` },
-                    { label: "Wind", value: `${weather.wind.toFixed(1)} m/s` },
-                    { label: "Rain today", value: `${rain.toFixed(1)} mm` },
-                  ].map((row) => (
-                    <div key={row.label} className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] text-white/50" style={body}>
-                        {row.label}
-                      </span>
-                      <span
-                        className="text-[11px] font-medium text-white tabular-nums"
-                        style={body}
+
+                {/* weather station */}
+                <div className="rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm px-4 py-3 min-w-[210px]">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-[11px] text-white/60" style={body}>
+                        Weather station · outdoor
+                      </div>
+                      <div
+                        className="text-[19px] font-semibold text-white tabular-nums leading-tight"
+                        style={display}
                       >
-                        {row.value}
-                      </span>
+                        {weather.airTemp.toFixed(1)} °C
+                      </div>
+                      <div className="text-[11px] text-white/60" style={body}>
+                        {weather.condition}
+                      </div>
                     </div>
-                  ))}
+                    <WeatherIcon className="w-8 h-8 text-[#45DFB1]" strokeWidth={1.5} />
+                  </div>
+                  <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1">
+                    {[
+                      { label: "Solar", value: `${Math.round(weather.solar)} W/m²` },
+                      { label: "Humidity", value: `${Math.round(weather.rh)} %` },
+                      { label: "Wind", value: `${weather.wind.toFixed(1)} m/s` },
+                      { label: "Rain today", value: `${rain.toFixed(1)} mm` },
+                    ].map((row) => (
+                      <div key={row.label} className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] text-white/50" style={body}>
+                          {row.label}
+                        </span>
+                        <span
+                          className="text-[11px] font-medium text-white tabular-nums"
+                          style={body}
+                        >
+                          {row.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1043,39 +1110,55 @@ export default function IndoorDashboard() {
                 </span>
               }
             >
-              <div className="relative">
-                {/* PhotoSlot rather than a bare img: this illustration carries
-                    meaning, so while the file is missing it should degrade to a
-                    branded placeholder instead of broken-image alt text. */}
-                <PhotoSlot
-                  src={indoorDashboardImage("system-3d.webp")}
-                  alt="Cutaway illustration of the greenhouse climate and irrigation loop"
-                  icon={Workflow}
-                  caption="Illustration: climate and irrigation loop"
-                  ratio="aspect-[16/7]"
-                />
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+              {/* Laid out after the reference: the building sits in the middle
+                  with what feeds it on the left and what it drives on the
+                  right, so the panel reads as a loop rather than a list. On a
+                  narrow screen it collapses to illustration then cards. */}
+              <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)] sm:items-center gap-3">
+                <div className="order-2 sm:order-1 grid grid-cols-2 sm:grid-cols-1 gap-2">
                   {[
-                    { label: "Weather station", value: `${Math.round(weather.solar)} W/m²`, icon: CloudSun },
-                    { label: "Climate control", value: `${reading.airTemp.toFixed(1)} °C`, icon: Wind },
-                    { label: "Dosing unit", value: `EC ${reading.ec.toFixed(2)}`, icon: Droplets },
-                    { label: "To canopy", value: `${reading.flow.toFixed(1)} L/min`, icon: Gauge },
+                    {
+                      label: "Weather station",
+                      value: `${Math.round(weather.solar)} W/m²`,
+                      icon: CloudSun,
+                    },
+                    {
+                      label: "Nutrient tank",
+                      value: `EC ${reading.ec.toFixed(2)}`,
+                      icon: Droplets,
+                    },
                   ].map((n) => (
-                    <div
-                      key={n.label}
-                      className="rounded-xl border border-[#0B6477]/10 bg-[#F3F7F6] px-3 py-2.5"
-                    >
-                      <n.icon className="w-4 h-4 text-[#14919B] mb-1" />
-                      <div className="text-[10px] text-neutral-400 truncate" style={body}>
-                        {n.label}
-                      </div>
-                      <div
-                        className="text-[13px] font-semibold text-neutral-900 tabular-nums"
-                        style={display}
-                      >
-                        {n.value}
-                      </div>
-                    </div>
+                    <FlowNode key={n.label} {...n} />
+                  ))}
+                </div>
+
+                <div className="order-1 sm:order-2">
+                  {/* PhotoSlot rather than a bare img: this illustration carries
+                      meaning, so while the file is missing it should degrade to
+                      a branded placeholder instead of broken-image alt text. */}
+                  <PhotoSlot
+                    src={indoorDashboardImage("system-3d.webp")}
+                    alt="Cutaway illustration of the greenhouse climate and irrigation loop"
+                    icon={Workflow}
+                    caption="Illustration: climate and irrigation loop"
+                    ratio="aspect-[4/3]"
+                  />
+                </div>
+
+                <div className="order-3 grid grid-cols-2 sm:grid-cols-1 gap-2">
+                  {[
+                    {
+                      label: "Climate control",
+                      value: `${reading.airTemp.toFixed(1)} °C`,
+                      icon: Wind,
+                    },
+                    {
+                      label: "To canopy",
+                      value: `${reading.flow.toFixed(1)} L/min`,
+                      icon: Gauge,
+                    },
+                  ].map((n) => (
+                    <FlowNode key={n.label} {...n} />
                   ))}
                 </div>
               </div>

@@ -17,8 +17,8 @@ gambar langsung muncul menggantikan placeholder, tanpa perlu ubah kode.
 
 | # | Nama file | Rasio | Prioritas | Dipakai di |
 |---|---|---|---|---|
-| 1 | `facility-hero.webp` | 16:5 (panorama) | **Tinggi** | Strip header di dalam dashboard |
-| 2 | `system-3d.webp` | 16:7 | **Tinggi** | Panel "System flow" |
+| 1 | `facility-hero.webp` | 16:5 (panorama) | **Tinggi** | Latar strip header di dalam dashboard |
+| 2 | `system-3d.webp` | 4:3 | **Tinggi** | Panel "System flow" (tengah, diapit kartu) |
 | 3 | `promo-card.webp` | 4:3 | Sedang | Kartu promo di sidebar dashboard |
 | 4 | `sensor-node.webp` | 4:3 | Sedang | Seksi "Instruments we built" |
 | 5 | `control-cabinet.webp` | 4:3 | Sedang | Seksi "Instruments we built" |
@@ -50,60 +50,97 @@ Sama dengan `INDOOR-FARMING-PHOTOS.md`, ditambah catatan khusus dashboard:
 
 ## 1. `facility-hero.webp` (16:5, panorama)
 
-**Dipakai:** latar strip header di dalam dashboard, di belakang teks "4 zones
-online" dan kartu weather station.
+**Dipakai:** latar strip header di dalam dashboard. Di atasnya ada judul besar
+("4 of 4 zones are inside their target envelope") di kiri atas, lalu dua kartu
+kaca di bawah: ringkasan fasilitas (kiri) dan weather station (kanan).
 
-**Penting:** gambar ini tertutup gradasi gelap `#08313A` dari kiri (95%) ke
-kanan (35%). Jadi **sisi kiri hampir tidak terlihat**, dan komposisi menarik
-harus ada di **sepertiga kanan**. Hindari objek penting di tengah-kiri.
+**Aturan komposisi, ini yang paling menentukan berhasil atau tidaknya:**
+
+- Gambar tertutup gradasi gelap `#08313A` dari kiri (95%) ke kanan (25%), plus
+  gradasi gelap dari bawah. Jadi yang benar-benar terlihat adalah **bagian
+  kanan atas**.
+- Taruh objek menarik di **sepertiga kanan**. Sisi kiri dan bawah akan tertutup
+  teks dan kartu.
+- Pilih foto yang **terang dan lapang**. Foto gelap akan jadi lumpur begitu
+  kena gradasi.
+- Hindari objek penting tepat di tengah bawah.
 
 **Prompt (EN, untuk Nano Banana / GPT Image):**
 
 ```
 Wide panoramic interior photograph of a modern tropical research greenhouse in
-Indonesia, shot at 16:5 aspect ratio. Long rows of leafy green hydroponic
-lettuce and tomato plants in white gutter channels recede toward the right side
-of the frame. White powder-coated steel truss structure overhead, diffuse
-polycarbonate roof panels letting in soft bright equatorial daylight. Thin
-white irrigation pipes and drip lines visible along the rows. Clean, well
-maintained, humid tropical atmosphere with a faint haze of light. Natural
-lighting, soft depth of field, documentary photography style, no people, no
-text, no signage, no logos, no computer screens. Colour palette of fresh green
-foliage, white structure, and soft teal shadows. Photorealistic, high detail.
+Indonesia, 16:5 aspect ratio, bright and airy. Long rows of vivid green
+hydroponic lettuce and tomato plants in white gutter channels sweep from the
+centre toward the upper right of the frame. White powder-coated steel truss
+structure overhead with diffuse polycarbonate roof panels, bright equatorial
+daylight streaming through and creating soft light rays. The left third of the
+image is simpler and less busy, mostly open walkway and soft light. Clean, well
+maintained, high-key lighting, fresh and optimistic mood. Documentary
+photography style, no people, no text, no signage, no logos, no computer
+screens. Colour palette of fresh green foliage, white structure, and pale
+daylight. Photorealistic, high detail, sharp.
 ```
+
+> Kalau hasilnya terlalu gelap atau padat, minta ulang dengan tambahan:
+> *"brighter, more open space on the left, high-key lighting"*.
 
 ---
 
-## 2. `system-3d.webp` (16:7) · ilustrasi, bukan foto
+## 2. `system-3d.webp` (4:3) · ilustrasi, bukan foto
 
-**Dipakai:** panel "System flow", di atas empat kartu kecil (Weather station,
-Climate control, Dosing unit, To canopy).
+**Dipakai:** panel "System flow". Ilustrasi ini duduk di **tengah**, diapit
+empat kartu kecil: Weather station dan Nutrient tank di kiri, Climate control
+dan To canopy di kanan. Persis seperti referensi "Energy Flow" yang Anda kirim.
 
-**Penting:** **latar putih atau transparan**, karena ditaruh di atas kartu
-putih. Kalau bisa PNG transparan, kirim PNG (nanti saya konversi ke WebP
-dengan alpha).
+**Penting:**
 
-**Prompt (EN):**
+- **Latar putih polos atau transparan.** Kalau bisa PNG transparan, kirim PNG,
+  nanti saya konversi ke WebP dengan alpha.
+- **Tanpa label, teks, angka, atau panah** di dalam gambar. Semua label sudah
+  dirender sebagai kartu HTML di kiri dan kanan. Kalau gambarnya sudah berisi
+  label, hasilnya akan bentrok dan terlihat seperti UI rusak.
+- Objek harus **berdiri sendiri di tengah** dengan ruang kosong di sekelilingnya.
+
+**Prompt versi greenhouse (EN):**
 
 ```
-Isometric 3D render of a modern tropical greenhouse growing system, cutaway
-style, on a pure white background. The structure is a white steel-framed
-greenhouse with a translucent roof, cut away so the interior is visible. Inside:
-two rows of hydroponic growing gutters with small green lettuce plants, and a
-vertical rack of LED-lit growing shelves on one side glowing soft mint green.
-Beside the greenhouse, connected by clean pipes: a cylindrical nutrient mixing
-tank, a small dosing cabinet, and a rooftop weather station mast with an
-anemometer and a solar radiation sensor. Pipes and airflow ducts drawn as
-smooth rounded tubes connecting the components, suggesting a closed
-recirculating loop. Soft studio lighting, gentle ambient occlusion shadows,
-matte surfaces. Colour palette strictly teal (#0B6477, #14919B), mint (#45DFB1),
-fresh leaf green, and white. Clean minimal product-illustration style, like a
-premium SaaS landing page diagram. No text, no numbers, no labels, no arrows,
-no logos, no people. Isometric 3/4 view, high detail, white background.
+Isometric 3D render of a modern tropical greenhouse, cutaway style, centred on
+a pure white background with generous empty space around it. A white
+steel-framed greenhouse with a translucent curved polycarbonate roof, one side
+cut away so the interior is visible. Inside: two neat rows of hydroponic
+growing gutters holding small vivid green lettuce plants, and slim white
+irrigation pipes running along them. Attached to one side: a cylindrical
+nutrient mixing tank and a compact dosing cabinet, connected by smooth rounded
+pipes. On the roof, a small weather station mast with an anemometer and a flat
+solar radiation sensor. Soft studio lighting, gentle ambient occlusion shadows,
+matte surfaces, subtle glass transparency. Colour palette strictly deep teal
+(#0B6477), mid teal (#14919B), mint green (#45DFB1), fresh leaf green, and
+white. Clean minimal product-illustration style, like a premium SaaS landing
+page diagram. No text, no numbers, no labels, no arrows, no logos, no people.
+Isometric three-quarter view, high detail, white background.
 ```
 
-> Kalau hasilnya terlalu ramai, minta ulang dengan tambahan: *"simpler, fewer
-> components, more negative space"*.
+**Prompt versi plant factory (EN), kalau lebih ingin menonjolkan rak vertikal:**
+
+```
+Isometric 3D render of a modern vertical farming plant factory module, cutaway
+style, centred on a pure white background with generous empty space around it.
+A clean white insulated box building with one wall cut away, revealing four
+stacked levels of hydroponic growing shelves inside. Each shelf holds rows of
+small vivid green lettuce plants and is lit from above by slim LED bars casting
+a soft mint-green glow. To one side, connected by smooth rounded pipes: a
+cylindrical nutrient mixing tank and a compact climate control unit with a
+visible fan grille. Soft studio lighting, gentle ambient occlusion shadows,
+matte surfaces. Colour palette strictly deep teal (#0B6477), mid teal
+(#14919B), mint green (#45DFB1), fresh leaf green, and white. Clean minimal
+product-illustration style, like a premium SaaS landing page diagram. No text,
+no numbers, no labels, no arrows, no logos, no people. Isometric three-quarter
+view, high detail, white background.
+```
+
+> Pilih salah satu, atau generate keduanya lalu pilih yang paling enak dilihat.
+> Kalau hasilnya terlalu ramai, tambahkan: *"simpler, fewer components, more
+> negative space, minimal"*.
 
 ---
 

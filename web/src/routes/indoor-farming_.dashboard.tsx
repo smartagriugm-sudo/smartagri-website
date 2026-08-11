@@ -22,6 +22,7 @@ import SiteHeader from "../components/SiteHeader";
 import IndoorFarmingNav from "../components/IndoorFarmingNav";
 import IndoorDashboard from "../components/IndoorDashboard";
 import PhotoSlot from "../components/PhotoSlot";
+import RequireAuth from "../components/RequireAuth";
 import Footer from "../components/Footer";
 
 export const Route = createFileRoute("/indoor-farming_/dashboard")({
@@ -34,6 +35,8 @@ export const Route = createFileRoute("/indoor-farming_/dashboard")({
         content:
           "A live demo of the smartagri controlled-environment dashboard: air temperature, humidity, VPD, CO2, PPFD and DLI, pH, EC, dissolved oxygen, nutrient temperature, and an outdoor weather station, in one screen.",
       },
+      // Internal demo tool: keep it out of search results the way /ai is.
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
 });
@@ -45,6 +48,14 @@ export const Route = createFileRoute("/indoor-farming_/dashboard")({
 // visitor sees is the real shape of a tropical growing day.
 
 function IndoorFarmingDashboardPage() {
+  return (
+    <RequireAuth>
+      <DashboardContent />
+    </RequireAuth>
+  );
+}
+
+function DashboardContent() {
   return (
     <main>
       <SiteHeader />
