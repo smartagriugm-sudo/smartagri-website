@@ -501,15 +501,32 @@ function lightsOn(zone: Zone, index: number): boolean {
   return hour >= on && hour < off;
 }
 
+/**
+ * Slow day-to-day weather drift, so one day differs from the next.
+ *
+ * `day` counts backwards from today: 0 is today, -1 yesterday, and so on. The
+ * functions are chosen so day 0 returns exactly { warm: 0, cloud: 1 }, which
+ * leaves today's readings identical to what they were before history existed.
+ *
+ * `cloud` scales the solar term, so an overcast day cools the greenhouse and
+ * dims its light together, the way a real one does.
+ */
+function dayDrift(day: number): { warm: number; cloud: number } {
+  const warm = 1.5 * (Math.sin(day * 1.7) + 0.5 * Math.sin(day * 0.6));
+  const cloud = 0.82 + 0.18 * (Math.cos(day * 1.1) + 0.4 * Math.sin(day * 2.3));
+  return { warm, cloud: Math.min(1, Math.max(0.55, cloud)) };
+}
+
 export type Sample = Record<MetricKey, number>;
 
 /**
  * All readings for one zone at one sample index. Pure: same input, same output,
  * on the server and in the browser.
  */
-export function sampleZone(zone: Zone, index: number): Sample {
+export function sampleZone(zone: Zone, index: number, day = 0): Sample {
   const i = ((index % POINTS_PER_DAY) + POINTS_PER_DAY) % POINTS_PER_DAY;
-  const solar = solarNormalised(i);
+  const { warm, cloud } = dayDrift(day);
+  const solar = solarNormalised(i) * cloud;
   const lit = lightsOn(zone, i);
   const s = zone.seed;
 
@@ -520,7 +537,7 @@ export function sampleZone(zone: Zone, index: number): Sample {
 
   if (zone.kind === "greenhouse") {
     // Sun drives the house. Cooling holds the peak down but cannot erase it.
-    airTemp = 23.2 + 5.6 * solar + 0.5 * wobble(i, s, 7);
+    airTemp = 23.2 + warm + 5.6 * solar + 0.5 * wobble(i, s, 7);
     rh = 88 - 21 * solar + 3 * wobble(i, s + 11, 6);
     // Ambient outside is around 420 ppm. The crop draws the house down through
     // the morning until the vents open and partly refill it.
@@ -531,7 +548,7 @@ export function sampleZone(zone: Zone, index: number): Sample {
     // Sealed room: the lamps are the weather. Temperature tracks the lamp load
     // with a lag, humidity climbs while the crop transpires under light.
     const load = lit ? 1 : 0;
-    airTemp = 21.4 + 1.9 * load + 0.35 * wobble(i, s, 8);
+    airTemp = 21.4 + 0.3 * warm + 1.9 * load + 0.35 * wobble(i, s, 8);
     rh = 64 + 8 * load + 3.2 * wobble(i, s + 13, 7);
     // Enriched to setpoint under light, drawn down by photosynthesis.
     co2 = lit ? 905 - 95 * Math.max(0, wobble(i, s + 23, 10)) : 470 + 20 * wobble(i, s + 23, 10);
@@ -539,7 +556,7 @@ export function sampleZone(zone: Zone, index: number): Sample {
   } else {
     // Nursery: gentler light, deliberately humid to protect young roots.
     const load = lit ? 1 : 0;
-    airTemp = 24 + 1.2 * load + 0.4 * wobble(i, s, 9);
+    airTemp = 24 + 0.5 * warm + 1.2 * load + 0.4 * wobble(i, s, 9);
     rh = 80 + 6 * load + 2.5 * wobble(i, s + 17, 6);
     co2 = lit ? 690 - 40 * Math.max(0, wobble(i, s + 27, 9)) : 460 + 18 * wobble(i, s + 27, 9);
     ppfd = lit ? 152 + 6 * wobble(i, s + 37, 11) : 0;
@@ -597,13 +614,78 @@ export function sampleZone(zone: Zone, index: number): Sample {
   };
 }
 
-/** A full day of one metric for one zone. */
-export function seriesFor(zone: Zone, key: MetricKey): number[] {
+/** A full day of one metric for one room. `day` is 0 for today, -1 yesterday. */
+export function seriesFor(zone: Zone, key: MetricKey, day = 0): number[] {
   if (key === "dli") {
-    const ppfd = seriesFor(zone, "ppfd");
+    const ppfd = seriesFor(zone, "ppfd", day);
     return ppfd.map((_, i) => dailyLightIntegral(ppfd, i));
   }
-  return Array.from({ length: POINTS_PER_DAY }, (_, i) => sampleZone(zone, i)[key]);
+  return Array.from({ length: POINTS_PER_DAY }, (_, i) => sampleZone(zone, i, day)[key]);
+}
+
+/* ------------------------------------------------------------ time ranges */
+
+export type RangeKey = "daily" | "weekly" | "monthly";
+
+export const RANGES: { key: RangeKey; label: string; days: number }[] = [
+  { key: "daily", label: "Daily", days: 1 },
+  { key: "weekly", label: "Weekly", days: 7 },
+  { key: "monthly", label: "Monthly", days: 30 },
+];
+
+/**
+ * One representative number for a whole day.
+ *
+ * A mean for everything except DLI. Daily light integral accumulates through
+ * the day, so its meaningful daily figure is where it finishes, not the average
+ * of a curve that starts at zero every morning.
+ */
+function daySummary(zone: Zone, key: MetricKey, day: number): number {
+  const series = seriesFor(zone, key, day);
+  if (key === "dli") return series[series.length - 1];
+  return series.reduce((sum, v) => sum + v, 0) / series.length;
+}
+
+/**
+ * A metric over the chosen range.
+ *
+ * Daily keeps the full 15 minute resolution. Weekly and monthly collapse each
+ * day to one point, because 30 days at 15 minutes is 2880 samples and drawing
+ * them all produces a solid smear rather than a trend anyone can read.
+ */
+export function seriesForRange(zone: Zone, key: MetricKey, range: RangeKey): number[] {
+  if (range === "daily") return seriesFor(zone, key);
+  const days = RANGES.find((r) => r.key === range)!.days;
+  // Oldest first so the line reads left to right, ending on today.
+  return Array.from({ length: days }, (_, n) => daySummary(zone, key, -(days - 1 - n)));
+}
+
+/** Where to put x axis labels for a range, and what to write on them. */
+export function rangeAxis(range: RangeKey): {
+  points: number;
+  ticks: number[];
+  labelAt: (i: number) => string;
+} {
+  if (range === "daily") {
+    return {
+      points: POINTS_PER_DAY,
+      ticks: [0, 24, 48, 72, POINTS_PER_DAY - 1],
+      labelAt: (i) => (i === POINTS_PER_DAY - 1 ? "24:00" : clockLabel(i)),
+    };
+  }
+  const days = RANGES.find((r) => r.key === range)!.days;
+  const step = range === "weekly" ? 1 : 6;
+  const ticks: number[] = [];
+  for (let i = 0; i < days; i += step) ticks.push(i);
+  if (ticks[ticks.length - 1] !== days - 1) ticks.push(days - 1);
+  return {
+    points: days,
+    ticks,
+    labelAt: (i) => {
+      const ago = days - 1 - i;
+      return ago === 0 ? "today" : `${ago}d ago`;
+    },
+  };
 }
 
 /** Reading of every metric at one instant, with DLI resolved properly. */
@@ -669,9 +751,9 @@ export function rainfallToDate(upTo: number): number {
 export type Status = "optimal" | "watch" | "alert";
 
 export const STATUS_TONE: Record<Status, { color: string; label: string; bg: string }> = {
-  optimal: { color: "#0E9F6E", label: "In band", bg: "rgba(14,159,110,0.12)" },
-  watch: { color: "#B26205", label: "Drifting", bg: "rgba(245,158,11,0.15)" },
-  alert: { color: "#C4342F", label: "Out of band", bg: "rgba(229,72,77,0.13)" },
+  optimal: { color: "#0E9F6E", label: "Active", bg: "rgba(14,159,110,0.12)" },
+  watch: { color: "#B26205", label: "Warning", bg: "rgba(245,158,11,0.15)" },
+  alert: { color: "#C4342F", label: "Critical", bg: "rgba(229,72,77,0.13)" },
 };
 
 /**
@@ -736,62 +818,163 @@ export function deltaOver(zone: Zone, key: MetricKey, index: number, back = 8) {
 
 /* ------------------------------------------------------------ device stack */
 
-export type DeviceRow = {
+export type ActuatorState = "on" | "off" | "maintenance";
+
+/**
+ * How each actuator state is written and coloured.
+ *
+ * Three states, not five: an operator glancing at this panel needs to know
+ * whether a machine is working, resting, or unavailable. "Idle" and "standby"
+ * both meant "not running right now" and forced the reader to remember which
+ * was which, so they are one OFF state now. How hard a running machine is
+ * working is a separate question, answered by its load figure.
+ */
+export const ACTUATOR_TONE: Record<
+  ActuatorState,
+  { label: string; color: string; bg: string }
+> = {
+  on: { label: "ON", color: "#0E9F6E", bg: "rgba(14,159,110,0.12)" },
+  off: { label: "OFF", color: "#6B7280", bg: "rgba(107,114,128,0.12)" },
+  maintenance: { label: "MAINTENANCE", color: "#B26205", bg: "rgba(245,158,11,0.15)" },
+};
+
+export type ActuatorRow = {
   name: string;
-  detail: string;
+  /** Which room it serves, so a fault can be traced to a space. */
+  room: string;
   icon: LucideIcon;
-  /** Reads as a percentage of capacity, or a plain state for on/off gear. */
-  state: "running" | "idle" | "standby";
+  state: ActuatorState;
+  /** Output while running, as a percentage of capacity. Zero unless ON. */
   load: number;
 };
 
-export function devicesAt(index: number): DeviceRow[] {
+export function actuatorsAt(index: number): ActuatorRow[] {
   const w = sampleWeather(index);
   const hot = w.airTemp > 28;
+  const warm = w.airTemp > 26;
   const hour = (index * STEP_MINUTES) / 60;
   const lit = hour >= 6 && hour < 22;
+  const dosing = index % 8 < 2;
   return [
     {
       name: "Exhaust and circulation fans",
-      detail: "Greenhouse 1, six units",
+      room: "Greenhouse 1 · Bay A",
       icon: Fan,
-      state: hot ? "running" : "idle",
-      load: hot ? 78 : 24,
+      state: hot ? "on" : "off",
+      load: hot ? 78 : 0,
     },
     {
       name: "Evaporative cooling wall",
-      detail: "Pad and fan, west elevation",
+      room: "Greenhouse 1 · Bay A",
       icon: AirVent,
-      state: hot ? "running" : "standby",
+      state: hot ? "on" : "off",
       load: hot ? 64 : 0,
     },
     {
       name: "LED lighting",
-      detail: "Plant factory racks A and B",
+      room: "Plant Factory · Rack A and B",
       icon: Lightbulb,
-      state: lit ? "running" : "idle",
+      state: lit ? "on" : "off",
       load: lit ? 92 : 0,
     },
     {
       name: "Nutrient dosing unit",
-      detail: "Acid, A and B stock tanks",
+      room: "Mixing tank, shared",
       icon: Beaker,
-      state: index % 8 < 2 ? "running" : "standby",
-      load: index % 8 < 2 ? 46 : 0,
+      state: dosing ? "on" : "off",
+      load: dosing ? 46 : 0,
     },
     {
       name: "Chiller and aeration",
-      detail: "Mixing tank, 2,000 L",
+      room: "Mixing tank, shared",
       icon: Waves,
-      state: w.airTemp > 26 ? "running" : "idle",
-      load: w.airTemp > 26 ? 58 : 18,
+      state: warm ? "on" : "off",
+      load: warm ? 58 : 0,
     },
     {
       name: "Dehumidifier",
-      detail: "Plant factory, two units",
+      room: "Plant Factory · two units",
       icon: Droplets,
-      state: "standby",
+      state: "off",
       load: 0,
+    },
+    {
+      // Tied to the room that reports offline, so the two panels tell the same
+      // story rather than each inventing its own.
+      name: "Climate controller",
+      room: "Greenhouse 2 · Trial bay",
+      icon: AirVent,
+      state: "maintenance",
+      load: 0,
+    },
+  ];
+}
+
+/* ------------------------------------------------------- resource use */
+
+export type ResourceRow = {
+  label: string;
+  value: string;
+  /** Share of the day's budget already used, 0 to 1, for the meter. */
+  share: number;
+  detail: string;
+  icon: LucideIcon;
+};
+
+/**
+ * What the facility has consumed since midnight.
+ *
+ * Everything here is derived from the same schedules that drive the actuators,
+ * so the figures move when the machines do rather than drifting on their own.
+ */
+export function resourceUseAt(index: number): ResourceRow[] {
+  const hours = (index * STEP_MINUTES) / 60;
+
+  // Lamps dominate the bill in a plant factory: two racks at 3.1 kW, running
+  // only inside the photoperiod.
+  const litHours = Math.max(0, Math.min(hours, 22) - 6);
+  const lampKwh = litHours * 6.2;
+  const otherKwh = hours * 1.9;
+  const kwh = lampKwh + otherKwh;
+
+  // Irrigation runs in shots, so water tracks the number of shots so far
+  // rather than elapsed time.
+  const shots = Math.floor(index / 6) + Math.floor(index / 8);
+  const water = shots * 41;
+
+  // Stock solution is drawn down by dosing, refilled manually each morning.
+  const stockLeft = Math.max(0, 100 - (index / POINTS_PER_DAY) * 62);
+
+  const co2 = litHours * 0.72;
+
+  return [
+    {
+      label: "Electricity",
+      value: `${kwh.toFixed(0)} kWh`,
+      share: Math.min(1, kwh / 190),
+      detail: "Lighting, climate, pumps",
+      icon: Zap,
+    },
+    {
+      label: "Irrigation water",
+      value: `${water.toLocaleString("en-US")} L`,
+      share: Math.min(1, water / 1400),
+      detail: "Delivered to canopy",
+      icon: Droplets,
+    },
+    {
+      label: "Nutrient stock",
+      value: `${stockLeft.toFixed(0)} %`,
+      share: stockLeft / 100,
+      detail: "A and B tanks remaining",
+      icon: Beaker,
+    },
+    {
+      label: "CO2 injected",
+      value: `${co2.toFixed(1)} kg`,
+      share: Math.min(1, co2 / 14),
+      detail: "Plant factory enrichment",
+      icon: Wind,
     },
   ];
 }
@@ -876,13 +1059,13 @@ export const DASHBOARD_NAV: {
     label: "Overview",
     icon: Gauge,
     to: "/indoor-farming/dashboard",
-    blurb: "The facility at a glance: every zone, the current day, and anything asking for attention.",
+    blurb: "The facility at a glance: every room, the current day, and anything asking for attention.",
   },
   {
-    label: "Zones",
+    label: "Rooms",
     icon: Sprout,
-    to: "/indoor-farming/dashboard/zones",
-    blurb: "Every growing space, what it holds, and how its climate and nutrition are tracking.",
+    to: "/indoor-farming/dashboard/rooms",
+    blurb: "Every growing room, what it holds, and how its climate and nutrition are tracking.",
   },
   {
     label: "Sensors",
@@ -940,7 +1123,7 @@ export function alertsAt(index: number): AlertRow[] {
     },
     {
       zone: "Greenhouse 2 · Trial bay",
-      message: "Zone offline, controller in maintenance since 06:10",
+      message: "Room offline, controller in maintenance since 06:10",
       level: "alert",
       ago: "3 h ago",
     },

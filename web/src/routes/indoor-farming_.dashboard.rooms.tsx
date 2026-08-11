@@ -17,19 +17,19 @@ import { Panel, StatusDot } from "../components/dashboard/parts";
 import { ScreenHeading } from "../components/dashboard/AppShell";
 import { DASHBOARD_NAV } from "../lib/indoor-dashboard";
 
-export const Route = createFileRoute("/indoor-farming_/dashboard/zones")({
+export const Route = createFileRoute("/indoor-farming_/dashboard/rooms")({
   component: ZonesScreen,
-  head: () => ({ meta: [{ title: "Zones · Dashboard | smartagri" }] }),
+  head: () => ({ meta: [{ title: "Rooms · Dashboard | smartagri" }] }),
 });
 
-const NAV = DASHBOARD_NAV.find((n) => n.label === "Zones")!;
+const NAV = DASHBOARD_NAV.find((n) => n.label === "Rooms")!;
 
 function ZonesScreen() {
   const { tick, zoneId, setZoneId, zoneStatus } = useDashboard();
 
   return (
     <>
-      <ScreenHeading title="Zones" blurb={NAV.blurb} />
+      <ScreenHeading title="Rooms" blurb={NAV.blurb} />
 
       {/* One card per zone. Selecting a card sets the facility-wide selection,
           so returning to Overview or Climate lands on the same zone. */}
@@ -134,7 +134,7 @@ function ZoneDetail() {
     >
       {!zone.online ? (
         <p className="py-6 text-center text-[13px] text-neutral-400" style={body}>
-          This zone is offline, so there is nothing to report.
+          This room is offline, so there is nothing to report.
         </p>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">

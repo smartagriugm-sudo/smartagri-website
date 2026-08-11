@@ -118,7 +118,7 @@ export function DashboardTopBar() {
       <div className="hidden sm:flex min-w-0 flex-1 items-center gap-2 h-9 max-w-[280px] rounded-xl border border-[#0B6477]/10 bg-white px-3">
         <Search className="w-4 h-4 shrink-0 text-neutral-300" />
         <span className="truncate text-[13px] text-neutral-300" style={body}>
-          Search zones, sensors
+          Search rooms, sensors
         </span>
       </div>
       <div className="flex flex-1 items-center justify-end gap-2">

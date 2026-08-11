@@ -14,14 +14,17 @@ import {
   type WeatherSample,
   type Zone,
   alertsAt,
-  devicesAt,
+  actuatorsAt,
+  resourceUseAt,
+  seriesForRange,
   rainfallToDate,
   readingAt,
   sampleWeather,
-  seriesFor,
   statusOf,
   type AlertRow,
-  type DeviceRow,
+  type ActuatorRow,
+  type ResourceRow,
+  type RangeKey,
 } from "./indoor-dashboard";
 
 // Shared state for the dashboard application.
@@ -50,19 +53,24 @@ type DashboardState = {
   metricKey: MetricKey;
   setMetricKey: (k: MetricKey) => void;
 
+  /** Which time range the main chart is showing. */
+  range: RangeKey;
+  setRange: (r: RangeKey) => void;
+
   reading: Sample;
   chartSeries: number[];
   weather: WeatherSample;
   WeatherIcon: LucideIcon;
   rain: number;
-  devices: DeviceRow[];
+  actuators: ActuatorRow[];
+  resources: ResourceRow[];
   alerts: AlertRow[];
 
   onlineZones: Zone[];
   totalArea: number;
   /** Overall status of a zone, rolled up from its metrics. */
   zoneStatus: (z: Zone) => Status;
-  /** How many online zones are fully inside their bands right now. */
+  /** How many online rooms are fully inside their bands right now. */
   inBand: number;
 };
 
@@ -71,6 +79,7 @@ const Ctx = createContext<DashboardState | null>(null);
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [zoneId, setZoneId] = useState(ZONES[0].id);
   const [metricKey, setMetricKey] = useState<MetricKey>("vpd");
+  const [range, setRange] = useState<RangeKey>("daily");
   const [tick, setTick] = useState(INITIAL_TICK);
   const [playing, setPlaying] = useState(true);
 
@@ -86,10 +95,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }, [playing]);
 
   const reading = useMemo(() => readingAt(zone, tick), [zone, tick]);
-  const chartSeries = useMemo(() => seriesFor(zone, metricKey), [zone, metricKey]);
+  const chartSeries = useMemo(
+    () => seriesForRange(zone, metricKey, range),
+    [zone, metricKey, range],
+  );
   const weather = useMemo(() => sampleWeather(tick), [tick]);
   const rain = useMemo(() => rainfallToDate(tick), [tick]);
-  const devices = useMemo(() => devicesAt(tick), [tick]);
+  const actuators = useMemo(() => actuatorsAt(tick), [tick]);
+  const resources = useMemo(() => resourceUseAt(tick), [tick]);
   const alerts = useMemo(() => alertsAt(tick), [tick]);
 
   const onlineZones = ZONES.filter((z) => z.online);
@@ -125,12 +138,15 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     zone,
     metricKey,
     setMetricKey,
+    range,
+    setRange,
     reading,
     chartSeries,
     weather,
     WeatherIcon,
     rain,
-    devices,
+    actuators,
+    resources,
     alerts,
     onlineZones,
     totalArea,

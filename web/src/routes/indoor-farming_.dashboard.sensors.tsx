@@ -8,6 +8,7 @@ import {
   formatValue,
   readingAt,
   statusOf,
+  ACTUATOR_TONE,
 } from "../lib/indoor-dashboard";
 import { useDashboard } from "../lib/dashboard-state";
 import { Panel } from "../components/dashboard/parts";
@@ -26,7 +27,7 @@ const NAV = DASHBOARD_NAV.find((n) => n.label === "Sensors")!;
 // produces it, so this screen is generated from the same METRICS table the
 // rest of the dashboard reads: there is no second list to keep in step.
 function SensorsScreen() {
-  const { tick, devices } = useDashboard();
+  const { tick, actuators } = useDashboard();
   const keys = [...AERIAL_KEYS, ...ROOT_KEYS];
   const online = ZONES.filter((z) => z.online);
 
@@ -38,7 +39,7 @@ function SensorsScreen() {
         title="Deployed instruments"
         action={
           <span className="text-[11px] text-neutral-400" style={body}>
-            {keys.length} parameters · {online.length} zones reporting
+            {keys.length} parameters · {online.length} rooms reporting
           </span>
         }
       >
@@ -93,7 +94,7 @@ function SensorsScreen() {
       </Panel>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <Panel title="Zone reporting status">
+        <Panel title="Room reporting status">
           <div className="flex flex-col gap-2.5">
             {ZONES.map((z) => (
               <div key={z.id} className="flex items-center gap-3">
@@ -115,9 +116,9 @@ function SensorsScreen() {
           </div>
         </Panel>
 
-        <Panel title="Actuators and plant">
+        <Panel title="Actuators">
           <div className="flex flex-col gap-2.5">
-            {devices.map((d) => (
+            {actuators.map((d) => (
               <div key={d.name} className="flex items-center gap-3">
                 <d.icon className="w-4 h-4 shrink-0 text-[#14919B]" />
                 <div className="min-w-0 flex-1">
@@ -125,11 +126,18 @@ function SensorsScreen() {
                     {d.name}
                   </div>
                   <div className="text-[11px] text-neutral-400 truncate" style={body}>
-                    {d.detail}
+                    {d.room}
                   </div>
                 </div>
-                <span className="text-[12px] font-medium text-neutral-500 tabular-nums shrink-0" style={body}>
-                  {d.state}
+                <span
+                  className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                  style={{
+                    ...body,
+                    color: ACTUATOR_TONE[d.state].color,
+                    backgroundColor: ACTUATOR_TONE[d.state].bg,
+                  }}
+                >
+                  {ACTUATOR_TONE[d.state].label}
                 </span>
               </div>
             ))}

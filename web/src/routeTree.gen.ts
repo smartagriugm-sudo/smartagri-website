@@ -48,8 +48,8 @@ import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
 import { Route as AiGenerateRouteImport } from './routes/ai/generate'
 import { Route as AiChatRouteImport } from './routes/ai/chat'
 import { Route as IndoorFarmingDashboardIndexRouteImport } from './routes/indoor-farming_.dashboard.index'
-import { Route as IndoorFarmingDashboardZonesRouteImport } from './routes/indoor-farming_.dashboard.zones'
 import { Route as IndoorFarmingDashboardSensorsRouteImport } from './routes/indoor-farming_.dashboard.sensors'
+import { Route as IndoorFarmingDashboardRoomsRouteImport } from './routes/indoor-farming_.dashboard.rooms'
 import { Route as IndoorFarmingDashboardNutritionRouteImport } from './routes/indoor-farming_.dashboard.nutrition'
 import { Route as IndoorFarmingDashboardClimateRouteImport } from './routes/indoor-farming_.dashboard.climate'
 import { Route as IndoorFarmingDashboardCalibrationRouteImport } from './routes/indoor-farming_.dashboard.calibration'
@@ -253,16 +253,16 @@ const IndoorFarmingDashboardIndexRoute =
     path: '/',
     getParentRoute: () => IndoorFarmingDashboardRoute,
   } as any)
-const IndoorFarmingDashboardZonesRoute =
-  IndoorFarmingDashboardZonesRouteImport.update({
-    id: '/zones',
-    path: '/zones',
-    getParentRoute: () => IndoorFarmingDashboardRoute,
-  } as any)
 const IndoorFarmingDashboardSensorsRoute =
   IndoorFarmingDashboardSensorsRouteImport.update({
     id: '/sensors',
     path: '/sensors',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
+const IndoorFarmingDashboardRoomsRoute =
+  IndoorFarmingDashboardRoomsRouteImport.update({
+    id: '/rooms',
+    path: '/rooms',
     getParentRoute: () => IndoorFarmingDashboardRoute,
   } as any)
 const IndoorFarmingDashboardNutritionRoute =
@@ -340,8 +340,8 @@ export interface FileRoutesByFullPath {
   '/indoor-farming/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
   '/indoor-farming/dashboard/climate': typeof IndoorFarmingDashboardClimateRoute
   '/indoor-farming/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
+  '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
-  '/indoor-farming/dashboard/zones': typeof IndoorFarmingDashboardZonesRoute
   '/indoor-farming/dashboard/': typeof IndoorFarmingDashboardIndexRoute
 }
 export interface FileRoutesByTo {
@@ -386,8 +386,8 @@ export interface FileRoutesByTo {
   '/indoor-farming/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
   '/indoor-farming/dashboard/climate': typeof IndoorFarmingDashboardClimateRoute
   '/indoor-farming/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
+  '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
-  '/indoor-farming/dashboard/zones': typeof IndoorFarmingDashboardZonesRoute
   '/indoor-farming/dashboard': typeof IndoorFarmingDashboardIndexRoute
 }
 export interface FileRoutesById {
@@ -435,8 +435,8 @@ export interface FileRoutesById {
   '/indoor-farming_/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
   '/indoor-farming_/dashboard/climate': typeof IndoorFarmingDashboardClimateRoute
   '/indoor-farming_/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
+  '/indoor-farming_/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming_/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
-  '/indoor-farming_/dashboard/zones': typeof IndoorFarmingDashboardZonesRoute
   '/indoor-farming_/dashboard/': typeof IndoorFarmingDashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -485,8 +485,8 @@ export interface FileRouteTypes {
     | '/indoor-farming/dashboard/calibration'
     | '/indoor-farming/dashboard/climate'
     | '/indoor-farming/dashboard/nutrition'
+    | '/indoor-farming/dashboard/rooms'
     | '/indoor-farming/dashboard/sensors'
-    | '/indoor-farming/dashboard/zones'
     | '/indoor-farming/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -531,8 +531,8 @@ export interface FileRouteTypes {
     | '/indoor-farming/dashboard/calibration'
     | '/indoor-farming/dashboard/climate'
     | '/indoor-farming/dashboard/nutrition'
+    | '/indoor-farming/dashboard/rooms'
     | '/indoor-farming/dashboard/sensors'
-    | '/indoor-farming/dashboard/zones'
     | '/indoor-farming/dashboard'
   id:
     | '__root__'
@@ -579,8 +579,8 @@ export interface FileRouteTypes {
     | '/indoor-farming_/dashboard/calibration'
     | '/indoor-farming_/dashboard/climate'
     | '/indoor-farming_/dashboard/nutrition'
+    | '/indoor-farming_/dashboard/rooms'
     | '/indoor-farming_/dashboard/sensors'
-    | '/indoor-farming_/dashboard/zones'
     | '/indoor-farming_/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -896,18 +896,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndoorFarmingDashboardIndexRouteImport
       parentRoute: typeof IndoorFarmingDashboardRoute
     }
-    '/indoor-farming_/dashboard/zones': {
-      id: '/indoor-farming_/dashboard/zones'
-      path: '/zones'
-      fullPath: '/indoor-farming/dashboard/zones'
-      preLoaderRoute: typeof IndoorFarmingDashboardZonesRouteImport
-      parentRoute: typeof IndoorFarmingDashboardRoute
-    }
     '/indoor-farming_/dashboard/sensors': {
       id: '/indoor-farming_/dashboard/sensors'
       path: '/sensors'
       fullPath: '/indoor-farming/dashboard/sensors'
       preLoaderRoute: typeof IndoorFarmingDashboardSensorsRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
+    '/indoor-farming_/dashboard/rooms': {
+      id: '/indoor-farming_/dashboard/rooms'
+      path: '/rooms'
+      fullPath: '/indoor-farming/dashboard/rooms'
+      preLoaderRoute: typeof IndoorFarmingDashboardRoomsRouteImport
       parentRoute: typeof IndoorFarmingDashboardRoute
     }
     '/indoor-farming_/dashboard/nutrition': {
@@ -972,8 +972,8 @@ interface IndoorFarmingDashboardRouteChildren {
   IndoorFarmingDashboardCalibrationRoute: typeof IndoorFarmingDashboardCalibrationRoute
   IndoorFarmingDashboardClimateRoute: typeof IndoorFarmingDashboardClimateRoute
   IndoorFarmingDashboardNutritionRoute: typeof IndoorFarmingDashboardNutritionRoute
+  IndoorFarmingDashboardRoomsRoute: typeof IndoorFarmingDashboardRoomsRoute
   IndoorFarmingDashboardSensorsRoute: typeof IndoorFarmingDashboardSensorsRoute
-  IndoorFarmingDashboardZonesRoute: typeof IndoorFarmingDashboardZonesRoute
   IndoorFarmingDashboardIndexRoute: typeof IndoorFarmingDashboardIndexRoute
 }
 
@@ -984,8 +984,8 @@ const IndoorFarmingDashboardRouteChildren: IndoorFarmingDashboardRouteChildren =
       IndoorFarmingDashboardCalibrationRoute,
     IndoorFarmingDashboardClimateRoute: IndoorFarmingDashboardClimateRoute,
     IndoorFarmingDashboardNutritionRoute: IndoorFarmingDashboardNutritionRoute,
+    IndoorFarmingDashboardRoomsRoute: IndoorFarmingDashboardRoomsRoute,
     IndoorFarmingDashboardSensorsRoute: IndoorFarmingDashboardSensorsRoute,
-    IndoorFarmingDashboardZonesRoute: IndoorFarmingDashboardZonesRoute,
     IndoorFarmingDashboardIndexRoute: IndoorFarmingDashboardIndexRoute,
   }
 

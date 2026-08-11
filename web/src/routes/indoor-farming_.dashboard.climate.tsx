@@ -12,7 +12,7 @@ import { useDashboard } from "../lib/dashboard-state";
 import { Panel } from "../components/dashboard/parts";
 import { ScreenHeading } from "../components/dashboard/AppShell";
 import { DayChart } from "../components/dashboard/parts";
-import { CHART_KEYS, AERIAL_KEYS } from "../lib/indoor-dashboard";
+import { CHART_KEYS, AERIAL_KEYS, RANGES, rangeAxis } from "../lib/indoor-dashboard";
 import { Pill } from "../components/dashboard/parts";
 
 export const Route = createFileRoute("/indoor-farming_/dashboard/climate")({
@@ -26,8 +26,10 @@ const NAV = DASHBOARD_NAV.find((n) => n.label === "Climate")!;
 // driving it. The pairing is the point: a rising VPD at midday reads very
 // differently when the solar figure beside it explains why.
 function ClimateScreen() {
-  const { zone, tick, metricKey, setMetricKey, chartSeries, reading, weather, WeatherIcon, rain } =
+  const { zone, tick, metricKey, setMetricKey, chartSeries, reading, weather, WeatherIcon, rain, range, setRange } =
     useDashboard();
+  const axis = rangeAxis(range);
+  const playhead = range === "daily" ? tick : chartSeries.length - 1;
 
   return (
     <>
@@ -39,7 +41,12 @@ function ClimateScreen() {
           action={
             <div className="flex flex-wrap gap-1.5">
               {CHART_KEYS.filter((k) => AERIAL_KEYS.includes(k)).map((k) => (
-                <Pill key={k} active={k === metricKey} onClick={() => setMetricKey(k)}>
+                <Pill
+                  key={k}
+                  active={k === metricKey}
+                  onClick={() => setMetricKey(k)}
+                  tone={METRICS[k].tone}
+                >
                   {METRICS[k].short}
                 </Pill>
               ))}
@@ -47,10 +54,26 @@ function ClimateScreen() {
           }
         >
           {zone.online ? (
-            <DayChart series={chartSeries} metricKey={metricKey} tick={tick} zone={zone} />
+            <>
+              <div className="mb-2 flex items-center gap-1">
+                {RANGES.map((r) => (
+                  <Pill key={r.key} active={r.key === range} onClick={() => setRange(r.key)}>
+                    {r.label}
+                  </Pill>
+                ))}
+              </div>
+              <DayChart
+                series={chartSeries}
+                metricKey={metricKey}
+                tick={playhead}
+                zone={zone}
+                ticks={axis.ticks}
+                labelAt={axis.labelAt}
+              />
+            </>
           ) : (
             <p className="py-10 text-center text-[13px] text-neutral-400" style={body}>
-              {zone.name} is offline. Pick another zone to see its climate.
+              {zone.name} is offline. Pick another room to see its climate.
             </p>
           )}
         </Panel>
@@ -119,7 +142,7 @@ function ClimateScreen() {
               </div>
             ) : (
               <p className="py-6 text-center text-[13px] text-neutral-400" style={body}>
-                Zone offline.
+                Room offline.
               </p>
             )}
           </Panel>

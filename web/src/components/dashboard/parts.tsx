@@ -9,12 +9,10 @@ import {
 import { body, display } from "../../lib/fonts";
 import {
   METRICS,
-  POINTS_PER_DAY,
   STATUS_TONE,
   type MetricKey,
   type Zone,
   axisPercent,
-  clockLabel,
   deltaOver,
   formatValue,
   round,
@@ -75,23 +73,28 @@ export function Panel({
 
 export function Pill({
   active,
-  children,
   onClick,
+  children,
+  tone,
 }: {
   active?: boolean;
-  children: ReactNode;
   onClick?: () => void;
+  children: ReactNode;
+  /** The parameter's own colour. Given one, the pill carries it so the reader
+      can tell parameters apart before reading a single label. */
+  tone?: string;
 }) {
+  const accentTone = tone ?? "#0B6477";
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-        active
-          ? "bg-[#0B6477] text-white"
-          : "bg-[#F3F7F6] text-neutral-500 hover:text-[#0B6477] hover:bg-[#E4EFEC]"
-      }`}
-      style={body}
+      className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
+      style={{
+        ...body,
+        backgroundColor: active ? accentTone : `${accentTone}14`,
+        color: active ? "#FFFFFF" : accentTone,
+      }}
     >
       {children}
     </button>
@@ -142,11 +145,20 @@ export function Sparkline({
   const lo = Math.min(...values);
   const hi = Math.max(...values);
   const span = hi - lo || 1;
-  const pts = values.map((v, i) => {
-    const x = (i / (values.length - 1)) * width;
-    const y = height - 2 - ((v - lo) / span) * (height - 4);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
+  const xy = values.map((v, i) => ({
+    x: (i / (values.length - 1)) * width,
+    // Leave a little headroom top and bottom so the stroke is never clipped.
+    y: height - 3 - ((v - lo) / span) * (height - 6),
+  }));
+  const line = xy.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  // Closing the path down to the baseline is what turns the trend line into a
+  // filled area: the eye reads the shaded mass as "how much", which a bare
+  // stroke at this size does not carry.
+  const area = `${line} L${width} ${height} L0 ${height} Z`;
+  // Derived from the colour rather than random, so the id is identical on the
+  // server and in the browser and hydration stays quiet.
+  const gradientId = `spark-${tone.replace("#", "")}`;
+
   return (
     <svg
       width={width}
@@ -155,20 +167,22 @@ export function Sparkline({
       className="shrink-0 overflow-visible"
       aria-hidden="true"
     >
-      <polyline
-        points={pts.join(" ")}
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={tone} stopOpacity="0.32" />
+          <stop offset="100%" stopColor={tone} stopOpacity="0.03" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill={`url(#${gradientId})`} />
+      <path
+        d={line}
         fill="none"
         stroke={tone}
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle
-        cx={width}
-        cy={Number(pts[pts.length - 1].split(",")[1])}
-        r="2.4"
-        fill={tone}
-      />
+      <circle cx={xy[xy.length - 1].x} cy={xy[xy.length - 1].y} r="2.4" fill={tone} />
     </svg>
   );
 }
@@ -186,20 +200,26 @@ const H = 240;
 const INSET_T = 8;
 const INSET_B = 8;
 const PLOT_H = H - INSET_T - INSET_B;
-/** Sample indices that get an hour label: 00:00, 06:00, 12:00, 18:00, 24:00. */
-const HOUR_TICKS = [0, 24, 48, 72, POINTS_PER_DAY - 1];
-
+// The chart no longer assumes a day. It plots whatever series it is handed and
+// labels the x axis from the caller's tick list, which is what lets the same
+// component draw 96 quarter-hour samples or 30 daily means.
 export function DayChart({
   series,
   metricKey,
   tick,
   zone,
+  ticks,
+  labelAt,
 }: {
   series: number[];
   metricKey: MetricKey;
   tick: number;
   zone: Zone;
+  /** Indices that get an x axis label. */
+  ticks: number[];
+  labelAt: (i: number) => string;
 }) {
+  const n = series.length;
   const metric = METRICS[metricKey];
   const [lo, hi] = metric.axis;
   const [hover, setHover] = useState<number | null>(null);
@@ -208,7 +228,7 @@ export function DayChart({
   // Rounded at the source: it keeps the serialised SVG small and keeps every
   // derived percentage short enough to survive the browser's CSS round trip,
   // which is what the absolutely positioned labels and tooltip depend on.
-  const x = (i: number) => round((i / (POINTS_PER_DAY - 1)) * W, 1);
+  const x = (i: number) => round((i / Math.max(1, n - 1)) * W, 1);
   const y = (v: number) =>
     round(INSET_T + PLOT_H - ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo)) * PLOT_H, 1);
 
@@ -249,8 +269,8 @@ export function DayChart({
     const rect = plotRef.current?.getBoundingClientRect();
     if (!rect || rect.width === 0) return;
     const ratio = (event.clientX - rect.left) / rect.width;
-    const i = Math.round(ratio * (POINTS_PER_DAY - 1));
-    setHover(Math.min(POINTS_PER_DAY - 1, Math.max(0, i)));
+    const i = Math.round(ratio * (n - 1));
+    setHover(Math.min(n - 1, Math.max(0, i)));
   }
 
   const axisLabel = (v: number) =>
@@ -283,7 +303,7 @@ export function DayChart({
             preserveAspectRatio="none"
             className="h-full w-full touch-none"
             role="img"
-            aria-label={`${metric.label} across the day, in ${metric.unit || "index units"}`}
+            aria-label={`${metric.label}, in ${metric.unit || "index units"}`}
           >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -370,7 +390,7 @@ export function DayChart({
                 {formatValue(metricKey, series[marker])}
                 <span className="text-[11px] font-normal text-neutral-400"> {metric.unit}</span>
               </div>
-              <div className="text-[10px] text-neutral-400 tabular-nums">{clockLabel(marker)}</div>
+              <div className="text-[10px] text-neutral-400 tabular-nums">{labelAt(marker)}</div>
             </div>
           </div>
         </div>
@@ -378,19 +398,15 @@ export function DayChart({
 
       {/* x axis */}
       <div className="relative ml-9 mt-1.5 h-4">
-        {HOUR_TICKS.map((i, n) => (
+        {ticks.map((i, m) => (
           <span
             key={i}
             className={`absolute text-[10px] text-neutral-400 tabular-nums ${
-              n === 0
-                ? ""
-                : n === HOUR_TICKS.length - 1
-                  ? "-translate-x-full"
-                  : "-translate-x-1/2"
+              m === 0 ? "" : m === ticks.length - 1 ? "-translate-x-full" : "-translate-x-1/2"
             }`}
             style={{ ...body, left: `${pct(x(i), W)}%` }}
           >
-            {i === POINTS_PER_DAY - 1 ? "24:00" : clockLabel(i)}
+            {labelAt(i)}
           </span>
         ))}
       </div>
@@ -476,8 +492,15 @@ export function KpiCard({ zone, metricKey, tick }: { zone: Zone; metricKey: Metr
         </div>
         <div className="flex items-baseline gap-1">
           <span
-            className="text-[19px] font-semibold tracking-[-0.02em] text-neutral-900 tabular-nums"
-            style={display}
+            className="text-[19px] font-semibold tracking-[-0.02em] tabular-nums"
+            style={{
+              ...display,
+              // Neutral while the reading is where it should be, coloured only
+              // when it is not. Removing the status chip freed the card, but a
+              // card with no status signal at all would read as healthy even
+              // while drifting, so the number itself carries it now.
+              color: status === "optimal" ? "#171717" : STATUS_TONE[status].color,
+            }}
           >
             {formatValue(metricKey, value)}
           </span>
@@ -492,9 +515,8 @@ export function KpiCard({ zone, metricKey, tick }: { zone: Zone; metricKey: Metr
           />
         </div>
       </div>
-      <div className="hidden sm:flex flex-col items-end gap-1.5">
-        <Sparkline values={window} tone={metric.tone} />
-        <StatusDot status={status} />
+      <div className="hidden sm:flex shrink-0 items-center">
+        <Sparkline values={window} tone={metric.tone} width={104} height={38} />
       </div>
     </div>
   );
@@ -527,3 +549,79 @@ export function FlowNode({
   );
 }
 
+
+
+/* -------------------------------------------------------- metric bar row */
+
+/**
+ * One parameter as a horizontal bar.
+ *
+ * Each row is scaled to its own axis, not a shared one. pH 5.8, EC 2.4 and
+ * dissolved oxygen 8.2 mg/L have nothing in common numerically, so putting them
+ * on one axis would make the pH bar a stub and say nothing true about any of
+ * them. Per-row scaling means the bar answers the only question that matters:
+ * where does this reading sit inside its own working range.
+ *
+ * The target band is shaded on the track, so "inside the band" is something the
+ * reader sees rather than something they have to work out from the numbers.
+ */
+export function MetricBar({
+  metricKey,
+  value,
+  zone,
+}: {
+  metricKey: MetricKey;
+  value: number;
+  zone: Zone;
+}) {
+  const metric = METRICS[metricKey];
+  const [lo, hi] = metric.axis;
+  const span = hi - lo || 1;
+  const at = (v: number) => round(((Math.min(hi, Math.max(lo, v)) - lo) / span) * 100, 1);
+
+  const [bandLo, bandHi] = targetFor(metricKey, zone);
+  const bandLeft = at(bandLo);
+  const bandWidth = round(Math.max(0, at(bandHi) - bandLeft), 1);
+  const status = statusOf(metricKey, value, zone);
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: metric.tone }} />
+          <span className="truncate text-[12px] text-neutral-600" style={body}>
+            {metric.label}
+          </span>
+        </span>
+        <span className="shrink-0 tabular-nums" style={body}>
+          <span
+            className="text-[14px] font-semibold"
+            style={{ ...display, color: STATUS_TONE[status].color }}
+          >
+            {formatValue(metricKey, value)}
+          </span>
+          <span className="text-[10px] text-neutral-400"> {metric.unit}</span>
+        </span>
+      </div>
+
+      <div className="relative mt-1.5 h-2.5 overflow-hidden rounded-full bg-[#F3F7F6]">
+        <span
+          className="absolute inset-y-0 bg-[#45DFB1]/25"
+          style={{ left: `${bandLeft}%`, width: `${bandWidth}%` }}
+        />
+        <span
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{ width: `${at(value)}%`, backgroundColor: metric.tone, opacity: 0.85 }}
+        />
+      </div>
+
+      <div className="mt-1 flex justify-between text-[10px] text-neutral-400 tabular-nums" style={body}>
+        <span>{lo}</span>
+        <span>
+          Target {bandLo} to {bandHi}
+        </span>
+        <span>{hi}</span>
+      </div>
+    </div>
+  );
+}
