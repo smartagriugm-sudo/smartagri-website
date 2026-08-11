@@ -22,6 +22,12 @@ export const A = {
 export const indoorFarmingPhoto = (file: string) =>
   `${BASE}/indoor-farming/${file}`;
 
+// Imagery for the Indoor Farming dashboard demo, kept in its own folder so the
+// dashboard art (screens, renders, product shots) stays separate from the
+// documentary photography used by the rest of the section.
+export const indoorDashboardImage = (file: string) =>
+  `${BASE}/indoor-farming/dashboard/${file}`;
+
 // Partner logos live in public/brand/partners/, referenced via this helper
 // so all media still resolves through this module.
 export const partnerLogo = (file: string) => `${BASE}/partners/${file}`;

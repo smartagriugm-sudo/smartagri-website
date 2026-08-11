@@ -38,6 +38,8 @@ import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
 import { Route as InventoryStatsRouteImport } from './routes/inventory_.stats'
 import { Route as InventorySlugRouteImport } from './routes/inventory_.$slug'
 import { Route as IndoorFarmingKnowledgeRouteImport } from './routes/indoor-farming_.knowledge'
+import { Route as IndoorFarmingInstrumentationRouteImport } from './routes/indoor-farming_.instrumentation'
+import { Route as IndoorFarmingDashboardRouteImport } from './routes/indoor-farming_.dashboard'
 import { Route as IndoorFarmingSectionRouteImport } from './routes/indoor-farming_.$section'
 import { Route as GuestbookAdminRouteImport } from './routes/guestbook_.admin'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
@@ -45,6 +47,13 @@ import { Route as AiProfileRouteImport } from './routes/ai/profile'
 import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
 import { Route as AiGenerateRouteImport } from './routes/ai/generate'
 import { Route as AiChatRouteImport } from './routes/ai/chat'
+import { Route as IndoorFarmingDashboardIndexRouteImport } from './routes/indoor-farming_.dashboard.index'
+import { Route as IndoorFarmingDashboardZonesRouteImport } from './routes/indoor-farming_.dashboard.zones'
+import { Route as IndoorFarmingDashboardSensorsRouteImport } from './routes/indoor-farming_.dashboard.sensors'
+import { Route as IndoorFarmingDashboardNutritionRouteImport } from './routes/indoor-farming_.dashboard.nutrition'
+import { Route as IndoorFarmingDashboardClimateRouteImport } from './routes/indoor-farming_.dashboard.climate'
+import { Route as IndoorFarmingDashboardCalibrationRouteImport } from './routes/indoor-farming_.dashboard.calibration'
+import { Route as IndoorFarmingDashboardAnalyticsRouteImport } from './routes/indoor-farming_.dashboard.analytics'
 import { Route as IndoorFarmingSectionGroupRouteImport } from './routes/indoor-farming_.$section_.$group'
 
 const TermsOfUseRoute = TermsOfUseRouteImport.update({
@@ -192,6 +201,17 @@ const IndoorFarmingKnowledgeRoute = IndoorFarmingKnowledgeRouteImport.update({
   path: '/indoor-farming/knowledge',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IndoorFarmingInstrumentationRoute =
+  IndoorFarmingInstrumentationRouteImport.update({
+    id: '/indoor-farming_/instrumentation',
+    path: '/indoor-farming/instrumentation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const IndoorFarmingDashboardRoute = IndoorFarmingDashboardRouteImport.update({
+  id: '/indoor-farming_/dashboard',
+  path: '/indoor-farming/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndoorFarmingSectionRoute = IndoorFarmingSectionRouteImport.update({
   id: '/indoor-farming_/$section',
   path: '/indoor-farming/$section',
@@ -227,6 +247,48 @@ const AiChatRoute = AiChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AiRouteRoute,
 } as any)
+const IndoorFarmingDashboardIndexRoute =
+  IndoorFarmingDashboardIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
+const IndoorFarmingDashboardZonesRoute =
+  IndoorFarmingDashboardZonesRouteImport.update({
+    id: '/zones',
+    path: '/zones',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
+const IndoorFarmingDashboardSensorsRoute =
+  IndoorFarmingDashboardSensorsRouteImport.update({
+    id: '/sensors',
+    path: '/sensors',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
+const IndoorFarmingDashboardNutritionRoute =
+  IndoorFarmingDashboardNutritionRouteImport.update({
+    id: '/nutrition',
+    path: '/nutrition',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
+const IndoorFarmingDashboardClimateRoute =
+  IndoorFarmingDashboardClimateRouteImport.update({
+    id: '/climate',
+    path: '/climate',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
+const IndoorFarmingDashboardCalibrationRoute =
+  IndoorFarmingDashboardCalibrationRouteImport.update({
+    id: '/calibration',
+    path: '/calibration',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
+const IndoorFarmingDashboardAnalyticsRoute =
+  IndoorFarmingDashboardAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
 const IndoorFarmingSectionGroupRoute =
   IndoorFarmingSectionGroupRouteImport.update({
     id: '/indoor-farming_/$section_/$group',
@@ -263,6 +325,8 @@ export interface FileRoutesByFullPath {
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
   '/indoor-farming/$section': typeof IndoorFarmingSectionRoute
+  '/indoor-farming/dashboard': typeof IndoorFarmingDashboardRouteWithChildren
+  '/indoor-farming/instrumentation': typeof IndoorFarmingInstrumentationRoute
   '/indoor-farming/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory/$slug': typeof InventorySlugRoute
   '/inventory/stats': typeof InventoryStatsRoute
@@ -272,6 +336,13 @@ export interface FileRoutesByFullPath {
   '/team/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
   '/indoor-farming/$section/$group': typeof IndoorFarmingSectionGroupRoute
+  '/indoor-farming/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
+  '/indoor-farming/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
+  '/indoor-farming/dashboard/climate': typeof IndoorFarmingDashboardClimateRoute
+  '/indoor-farming/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
+  '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
+  '/indoor-farming/dashboard/zones': typeof IndoorFarmingDashboardZonesRoute
+  '/indoor-farming/dashboard/': typeof IndoorFarmingDashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -301,6 +372,7 @@ export interface FileRoutesByTo {
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
   '/indoor-farming/$section': typeof IndoorFarmingSectionRoute
+  '/indoor-farming/instrumentation': typeof IndoorFarmingInstrumentationRoute
   '/indoor-farming/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory/$slug': typeof InventorySlugRoute
   '/inventory/stats': typeof InventoryStatsRoute
@@ -310,6 +382,13 @@ export interface FileRoutesByTo {
   '/team/$slug': typeof TeamSlugRoute
   '/ai': typeof AiIndexRoute
   '/indoor-farming/$section/$group': typeof IndoorFarmingSectionGroupRoute
+  '/indoor-farming/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
+  '/indoor-farming/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
+  '/indoor-farming/dashboard/climate': typeof IndoorFarmingDashboardClimateRoute
+  '/indoor-farming/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
+  '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
+  '/indoor-farming/dashboard/zones': typeof IndoorFarmingDashboardZonesRoute
+  '/indoor-farming/dashboard': typeof IndoorFarmingDashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -341,6 +420,8 @@ export interface FileRoutesById {
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
   '/guestbook_/admin': typeof GuestbookAdminRoute
   '/indoor-farming_/$section': typeof IndoorFarmingSectionRoute
+  '/indoor-farming_/dashboard': typeof IndoorFarmingDashboardRouteWithChildren
+  '/indoor-farming_/instrumentation': typeof IndoorFarmingInstrumentationRoute
   '/indoor-farming_/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory_/$slug': typeof InventorySlugRoute
   '/inventory_/stats': typeof InventoryStatsRoute
@@ -350,6 +431,13 @@ export interface FileRoutesById {
   '/team_/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
   '/indoor-farming_/$section_/$group': typeof IndoorFarmingSectionGroupRoute
+  '/indoor-farming_/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
+  '/indoor-farming_/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
+  '/indoor-farming_/dashboard/climate': typeof IndoorFarmingDashboardClimateRoute
+  '/indoor-farming_/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
+  '/indoor-farming_/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
+  '/indoor-farming_/dashboard/zones': typeof IndoorFarmingDashboardZonesRoute
+  '/indoor-farming_/dashboard/': typeof IndoorFarmingDashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -382,6 +470,8 @@ export interface FileRouteTypes {
     | '/field-notes/$slug'
     | '/guestbook/admin'
     | '/indoor-farming/$section'
+    | '/indoor-farming/dashboard'
+    | '/indoor-farming/instrumentation'
     | '/indoor-farming/knowledge'
     | '/inventory/$slug'
     | '/inventory/stats'
@@ -391,6 +481,13 @@ export interface FileRouteTypes {
     | '/team/$slug'
     | '/ai/'
     | '/indoor-farming/$section/$group'
+    | '/indoor-farming/dashboard/analytics'
+    | '/indoor-farming/dashboard/calibration'
+    | '/indoor-farming/dashboard/climate'
+    | '/indoor-farming/dashboard/nutrition'
+    | '/indoor-farming/dashboard/sensors'
+    | '/indoor-farming/dashboard/zones'
+    | '/indoor-farming/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -420,6 +517,7 @@ export interface FileRouteTypes {
     | '/field-notes/$slug'
     | '/guestbook/admin'
     | '/indoor-farming/$section'
+    | '/indoor-farming/instrumentation'
     | '/indoor-farming/knowledge'
     | '/inventory/$slug'
     | '/inventory/stats'
@@ -429,6 +527,13 @@ export interface FileRouteTypes {
     | '/team/$slug'
     | '/ai'
     | '/indoor-farming/$section/$group'
+    | '/indoor-farming/dashboard/analytics'
+    | '/indoor-farming/dashboard/calibration'
+    | '/indoor-farming/dashboard/climate'
+    | '/indoor-farming/dashboard/nutrition'
+    | '/indoor-farming/dashboard/sensors'
+    | '/indoor-farming/dashboard/zones'
+    | '/indoor-farming/dashboard'
   id:
     | '__root__'
     | '/'
@@ -459,6 +564,8 @@ export interface FileRouteTypes {
     | '/field-notes_/$slug'
     | '/guestbook_/admin'
     | '/indoor-farming_/$section'
+    | '/indoor-farming_/dashboard'
+    | '/indoor-farming_/instrumentation'
     | '/indoor-farming_/knowledge'
     | '/inventory_/$slug'
     | '/inventory_/stats'
@@ -468,6 +575,13 @@ export interface FileRouteTypes {
     | '/team_/$slug'
     | '/ai/'
     | '/indoor-farming_/$section_/$group'
+    | '/indoor-farming_/dashboard/analytics'
+    | '/indoor-farming_/dashboard/calibration'
+    | '/indoor-farming_/dashboard/climate'
+    | '/indoor-farming_/dashboard/nutrition'
+    | '/indoor-farming_/dashboard/sensors'
+    | '/indoor-farming_/dashboard/zones'
+    | '/indoor-farming_/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -495,6 +609,8 @@ export interface RootRouteChildren {
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   GuestbookAdminRoute: typeof GuestbookAdminRoute
   IndoorFarmingSectionRoute: typeof IndoorFarmingSectionRoute
+  IndoorFarmingDashboardRoute: typeof IndoorFarmingDashboardRouteWithChildren
+  IndoorFarmingInstrumentationRoute: typeof IndoorFarmingInstrumentationRoute
   IndoorFarmingKnowledgeRoute: typeof IndoorFarmingKnowledgeRoute
   InventorySlugRoute: typeof InventorySlugRoute
   InventoryStatsRoute: typeof InventoryStatsRoute
@@ -710,6 +826,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndoorFarmingKnowledgeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/indoor-farming_/instrumentation': {
+      id: '/indoor-farming_/instrumentation'
+      path: '/indoor-farming/instrumentation'
+      fullPath: '/indoor-farming/instrumentation'
+      preLoaderRoute: typeof IndoorFarmingInstrumentationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/indoor-farming_/dashboard': {
+      id: '/indoor-farming_/dashboard'
+      path: '/indoor-farming/dashboard'
+      fullPath: '/indoor-farming/dashboard'
+      preLoaderRoute: typeof IndoorFarmingDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/indoor-farming_/$section': {
       id: '/indoor-farming_/$section'
       path: '/indoor-farming/$section'
@@ -759,6 +889,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiChatRouteImport
       parentRoute: typeof AiRouteRoute
     }
+    '/indoor-farming_/dashboard/': {
+      id: '/indoor-farming_/dashboard/'
+      path: '/'
+      fullPath: '/indoor-farming/dashboard/'
+      preLoaderRoute: typeof IndoorFarmingDashboardIndexRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
+    '/indoor-farming_/dashboard/zones': {
+      id: '/indoor-farming_/dashboard/zones'
+      path: '/zones'
+      fullPath: '/indoor-farming/dashboard/zones'
+      preLoaderRoute: typeof IndoorFarmingDashboardZonesRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
+    '/indoor-farming_/dashboard/sensors': {
+      id: '/indoor-farming_/dashboard/sensors'
+      path: '/sensors'
+      fullPath: '/indoor-farming/dashboard/sensors'
+      preLoaderRoute: typeof IndoorFarmingDashboardSensorsRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
+    '/indoor-farming_/dashboard/nutrition': {
+      id: '/indoor-farming_/dashboard/nutrition'
+      path: '/nutrition'
+      fullPath: '/indoor-farming/dashboard/nutrition'
+      preLoaderRoute: typeof IndoorFarmingDashboardNutritionRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
+    '/indoor-farming_/dashboard/climate': {
+      id: '/indoor-farming_/dashboard/climate'
+      path: '/climate'
+      fullPath: '/indoor-farming/dashboard/climate'
+      preLoaderRoute: typeof IndoorFarmingDashboardClimateRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
+    '/indoor-farming_/dashboard/calibration': {
+      id: '/indoor-farming_/dashboard/calibration'
+      path: '/calibration'
+      fullPath: '/indoor-farming/dashboard/calibration'
+      preLoaderRoute: typeof IndoorFarmingDashboardCalibrationRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
+    '/indoor-farming_/dashboard/analytics': {
+      id: '/indoor-farming_/dashboard/analytics'
+      path: '/analytics'
+      fullPath: '/indoor-farming/dashboard/analytics'
+      preLoaderRoute: typeof IndoorFarmingDashboardAnalyticsRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
     '/indoor-farming_/$section_/$group': {
       id: '/indoor-farming_/$section_/$group'
       path: '/indoor-farming/$section/$group'
@@ -788,6 +967,33 @@ const AiRouteRouteChildren: AiRouteRouteChildren = {
 const AiRouteRouteWithChildren =
   AiRouteRoute._addFileChildren(AiRouteRouteChildren)
 
+interface IndoorFarmingDashboardRouteChildren {
+  IndoorFarmingDashboardAnalyticsRoute: typeof IndoorFarmingDashboardAnalyticsRoute
+  IndoorFarmingDashboardCalibrationRoute: typeof IndoorFarmingDashboardCalibrationRoute
+  IndoorFarmingDashboardClimateRoute: typeof IndoorFarmingDashboardClimateRoute
+  IndoorFarmingDashboardNutritionRoute: typeof IndoorFarmingDashboardNutritionRoute
+  IndoorFarmingDashboardSensorsRoute: typeof IndoorFarmingDashboardSensorsRoute
+  IndoorFarmingDashboardZonesRoute: typeof IndoorFarmingDashboardZonesRoute
+  IndoorFarmingDashboardIndexRoute: typeof IndoorFarmingDashboardIndexRoute
+}
+
+const IndoorFarmingDashboardRouteChildren: IndoorFarmingDashboardRouteChildren =
+  {
+    IndoorFarmingDashboardAnalyticsRoute: IndoorFarmingDashboardAnalyticsRoute,
+    IndoorFarmingDashboardCalibrationRoute:
+      IndoorFarmingDashboardCalibrationRoute,
+    IndoorFarmingDashboardClimateRoute: IndoorFarmingDashboardClimateRoute,
+    IndoorFarmingDashboardNutritionRoute: IndoorFarmingDashboardNutritionRoute,
+    IndoorFarmingDashboardSensorsRoute: IndoorFarmingDashboardSensorsRoute,
+    IndoorFarmingDashboardZonesRoute: IndoorFarmingDashboardZonesRoute,
+    IndoorFarmingDashboardIndexRoute: IndoorFarmingDashboardIndexRoute,
+  }
+
+const IndoorFarmingDashboardRouteWithChildren =
+  IndoorFarmingDashboardRoute._addFileChildren(
+    IndoorFarmingDashboardRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AiRouteRoute: AiRouteRouteWithChildren,
@@ -813,6 +1019,8 @@ const rootRouteChildren: RootRouteChildren = {
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   GuestbookAdminRoute: GuestbookAdminRoute,
   IndoorFarmingSectionRoute: IndoorFarmingSectionRoute,
+  IndoorFarmingDashboardRoute: IndoorFarmingDashboardRouteWithChildren,
+  IndoorFarmingInstrumentationRoute: IndoorFarmingInstrumentationRoute,
   IndoorFarmingKnowledgeRoute: IndoorFarmingKnowledgeRoute,
   InventorySlugRoute: InventorySlugRoute,
   InventoryStatsRoute: InventoryStatsRoute,
