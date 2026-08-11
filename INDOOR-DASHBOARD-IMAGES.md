@@ -46,6 +46,21 @@ Sama dengan `INDOOR-FARMING-PHOTOS.md`, ditambah catatan khusus dashboard:
   Dashboard-nya sudah kita render sendiri dengan HTML. Foto berisi dashboard
   palsu akan bentrok.
 
+### Negative prompt umum (untuk semua FOTO, nomor 1, 3, 4, 5)
+
+Kata "greenhouse" secara bawaan menarik model ke rumah kaca Victorian Eropa:
+dinding batu, rangka besi tua, dan koleksi pakis atau tanaman hias. Itu bukan
+yang kita bangun. Tempelkan daftar ini di kolom negative, atau sambung di akhir
+prompt utama:
+
+```
+stone wall, brick wall, concrete block, masonry, rustic, weathered, Victorian
+glasshouse, conservatory, botanical garden, orangery, ferns, palms, monstera,
+ornamental foliage, houseplants, potted plants, flower pots, soil beds, moss,
+temperate climate, autumn colours, text, letters, numbers, labels, watermark,
+logo, brand marks
+```
+
 ---
 
 ## 1. `facility-hero.webp` (16:5, panorama)
@@ -218,7 +233,10 @@ weatherproof enclosure on a slim stainless steel stand, with a white radiation
 shield (stacked plate style) for the air temperature and humidity probe, and a
 small flat quantum PAR sensor on a short arm above it. A thin cable runs down
 the stand. Behind it, slightly out of focus, rows of green leafy hydroponic
-crops and white greenhouse structure in bright soft daylight. The sensor is
+crops, specifically butterhead lettuce and pak choi in white hydroponic NFT
+gutters, with a clean white powder-coated steel greenhouse structure in bright
+soft daylight. Modern tropical commercial greenhouse, not an old stone
+glasshouse. The sensor is
 sharp and in focus, filling the left half of the frame. Practical research
 equipment, real and slightly used rather than showroom perfect. No text, no
 brand logos, no display screens showing numbers. Natural light, photorealistic,
@@ -232,20 +250,52 @@ shallow depth of field.
 **Dipakai:** seksi "Instruments we built, and maintain ourselves", di bawah
 gambar 4.
 
-**Prompt (EN):**
+### Apa yang salah di hasil pertama
+
+Tiga hal, dan yang pertama murni kesalahan prompt saya:
+
+1. **Ada peristaltic pump.** Prompt lama meminta *"two small dosing pump heads
+   and clear tubing"*. Itu keliru: pompa dosing adalah bagian dari unit
+   nutrisi, bukan isi panel listrik. Sudah dihapus, dan dimasukkan ke daftar
+   larangan.
+2. **Dindingnya batu.** Prompt lama tidak menyebut dinding sama sekali, jadi
+   model memakai asosiasi bawaannya: rumah kaca tua Eropa berdinding batu.
+   Sekarang dinding dan tiangnya disebut eksplisit.
+3. **Tanamannya pakis dan tanaman hias**, bukan hortikultura. Latar belakangnya
+   sekarang disebut spesifik: selada dan pakcoy di talang hidroponik putih.
+
+### Prompt (EN)
 
 ```
 Documentary photograph of an open electrical control cabinet for a greenhouse
-automation system, 4:3. Inside the grey metal enclosure: a DIN rail with a
-small industrial controller, neat rows of terminal blocks, relays, and a few
-circuit breakers, with tidy colour-coded wiring bundled and routed cleanly.
-Two small dosing pump heads and clear tubing visible at the lower edge. Mounted
-on a wall inside a tropical greenhouse service area, with soft daylight from
-the side and a hint of green plants blurred in the background. Real working
-research equipment, well organised, slightly used. No text, no labels, no brand
-logos, no screens displaying data. Photorealistic, natural lighting, sharp
-detail on the wiring.
+automation system, 4:3, inside a MODERN TROPICAL commercial greenhouse in
+Indonesia. The grey steel cabinet is mounted on a clean white powder-coated
+steel structural post, next to a smooth white composite panel wall. Inside the
+cabinet: a DIN rail carrying a small industrial PLC controller, neat rows of
+terminal blocks, several relays, and a row of miniature circuit breakers, with
+tidy colour-coded wiring bundled and routed cleanly through white trunking.
+Nothing hangs outside the cabinet. In the background, softly out of focus:
+long rows of fresh green leafy vegetables, butterhead lettuce and pak choi,
+growing in white hydroponic NFT gutters under a bright diffuse polycarbonate
+roof. Bright equatorial daylight, clean and well maintained, real working
+research equipment rather than a showroom. Photorealistic, natural lighting,
+sharp detail on the wiring, shallow depth of field.
 ```
+
+### Negative prompt (khusus gambar ini)
+
+Pakai negative prompt umum di atas, **ditambah**:
+
+```
+peristaltic pump, dosing pump, pump head, hoses, coiled tubing, flexible pipe,
+water tubing, plumbing, stone wall, concrete block wall, ferns, ornamental
+plants
+```
+
+> Kalau tanaman latarnya masih salah, naikkan bobotnya dengan menyebut lebih
+> awal di prompt: mulai kalimat pertama dengan *"Inside a modern tropical
+> hydroponic vegetable greenhouse growing lettuce and pak choi, ..."* baru
+> lanjut ke kabinetnya.
 
 ---
 
