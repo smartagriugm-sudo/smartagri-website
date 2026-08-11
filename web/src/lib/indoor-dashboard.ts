@@ -859,14 +859,61 @@ export const DASHBOARD_STACK: StackItem[] = [
 export type NavItem = { label: string; icon: LucideIcon };
 
 /** Sidebar of the demo application shell. Presentational only. */
-export const DASHBOARD_NAV: { label: string; icon: LucideIcon }[] = [
-  { label: "Overview", icon: Gauge },
-  { label: "Zones", icon: Sprout },
-  { label: "Sensors", icon: Radio },
-  { label: "Nutrition", icon: FlaskConical },
-  { label: "Climate", icon: Wind },
-  { label: "Analytics", icon: Activity },
-  { label: "Calibration", icon: Ruler },
+// Sidebar navigation for the dashboard application.
+//
+// `to` is the route each item opens. Overview is the index of the dashboard
+// area, so it carries the bare path; the rest are children of it. Adding a
+// screen means adding a row here and a route file with the matching path,
+// nothing else.
+export const DASHBOARD_NAV: {
+  label: string;
+  icon: LucideIcon;
+  to: string;
+  /** One line describing the screen, used as its page lede. */
+  blurb: string;
+}[] = [
+  {
+    label: "Overview",
+    icon: Gauge,
+    to: "/indoor-farming/dashboard",
+    blurb: "The facility at a glance: every zone, the current day, and anything asking for attention.",
+  },
+  {
+    label: "Zones",
+    icon: Sprout,
+    to: "/indoor-farming/dashboard/zones",
+    blurb: "Every growing space, what it holds, and how its climate and nutrition are tracking.",
+  },
+  {
+    label: "Sensors",
+    icon: Radio,
+    to: "/indoor-farming/dashboard/sensors",
+    blurb: "The instruments behind the numbers: what is deployed, where, and whether it is reporting.",
+  },
+  {
+    label: "Nutrition",
+    icon: FlaskConical,
+    to: "/indoor-farming/dashboard/nutrition",
+    blurb: "Root zone chemistry across the facility: pH, conductivity, dissolved oxygen, and dosing.",
+  },
+  {
+    label: "Climate",
+    icon: Wind,
+    to: "/indoor-farming/dashboard/climate",
+    blurb: "Air temperature, humidity, vapour pressure deficit, and CO2, against the outdoor weather driving them.",
+  },
+  {
+    label: "Analytics",
+    icon: Activity,
+    to: "/indoor-farming/dashboard/analytics",
+    blurb: "How the facility has behaved over the day: time in band, extremes, and where the effort went.",
+  },
+  {
+    label: "Calibration",
+    icon: Ruler,
+    to: "/indoor-farming/dashboard/calibration",
+    blurb: "When each instrument was last checked against a reference, and what is coming due.",
+  },
 ];
 
 export type AlertRow = {
