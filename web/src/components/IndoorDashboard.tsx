@@ -1138,10 +1138,11 @@ export default function IndoorDashboard() {
                       a branded placeholder instead of broken-image alt text. */}
                   <PhotoSlot
                     src={indoorDashboardImage("system-3d.webp")}
-                    alt="Cutaway illustration of the greenhouse climate and irrigation loop"
+                    alt="Illustration of the greenhouse climate and irrigation loop"
                     icon={Workflow}
                     caption="Illustration: climate and irrigation loop"
                     ratio="aspect-[4/3]"
+                    fit="contain"
                   />
                 </div>
 

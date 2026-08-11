@@ -86,61 +86,101 @@ daylight. Photorealistic, high detail, sharp.
 
 ---
 
-## 2. `system-3d.webp` (4:3) · ilustrasi, bukan foto
+## 2. `system-3d.webp` · ilustrasi, bukan foto
 
 **Dipakai:** panel "System flow". Ilustrasi ini duduk di **tengah**, diapit
 empat kartu kecil: Weather station dan Nutrient tank di kiri, Climate control
-dan To canopy di kanan. Persis seperti referensi "Energy Flow" yang Anda kirim.
+dan To canopy di kanan. Persis seperti referensi "Energy Flow".
 
-**Penting:**
+### Kenapa hasil pertama pecah
 
-- **Latar putih polos atau transparan.** Kalau bisa PNG transparan, kirim PNG,
-  nanti saya konversi ke WebP dengan alpha.
-- **Tanpa label, teks, angka, atau panah** di dalam gambar. Semua label sudah
-  dirender sebagai kartu HTML di kiri dan kanan. Kalau gambarnya sudah berisi
-  label, hasilnya akan bentrok dan terlihat seperti UI rusak.
-- Objek harus **berdiri sendiri di tengah** dengan ruang kosong di sekelilingnya.
+Prompt versi lama memakai kata **"cutaway"** dan "one side cut away". Untuk
+bangunan berdinding kaca, instruksi itu menyesatkan: model menafsirkannya
+sebagai bangunan yang dipotong dan pecah, sehingga atapnya terlepas dan
+dindingnya retak. Padahal kaca sudah transparan, isinya terlihat tanpa perlu
+dipotong sama sekali.
 
-**Prompt versi greenhouse (EN):**
+Semua kata "cutaway" sudah dihapus dari prompt di bawah, dan diganti penegasan
+bahwa bangunannya **utuh**, plus daftar larangan yang eksplisit.
+
+### Syarat wajib
+
+- **Latar putih polos atau transparan.** Kalau bisa PNG transparan, kirim PNG.
+- **Tanpa teks, label, angka, atau panah** di dalam gambar. Semua label sudah
+  dirender sebagai kartu HTML di kiri dan kanan ilustrasi.
+- **Bangunan harus utuh.** Tanpa retak, tanpa panel hilang, tanpa atap terbuka.
+- Rasio bebas. Slot-nya sekarang memakai mode "contain", jadi gambar tidak akan
+  terpotong berapa pun rasionya. Idealnya tetap mendekati 4:3 atau 1:1 supaya
+  ruang kosongnya tidak terlalu banyak.
+
+### Prompt versi greenhouse (EN)
 
 ```
-Isometric 3D render of a modern tropical greenhouse, cutaway style, centred on
-a pure white background with generous empty space around it. A white
-steel-framed greenhouse with a translucent curved polycarbonate roof, one side
-cut away so the interior is visible. Inside: two neat rows of hydroponic
-growing gutters holding small vivid green lettuce plants, and slim white
-irrigation pipes running along them. Attached to one side: a cylindrical
-nutrient mixing tank and a compact dosing cabinet, connected by smooth rounded
-pipes. On the roof, a small weather station mast with an anemometer and a flat
-solar radiation sensor. Soft studio lighting, gentle ambient occlusion shadows,
-matte surfaces, subtle glass transparency. Colour palette strictly deep teal
-(#0B6477), mid teal (#14919B), mint green (#45DFB1), fresh leaf green, and
+Isometric 3D render of a modern tropical greenhouse, centred on a pure white
+background with generous empty space around it. The greenhouse is COMPLETE,
+INTACT and FULLY ENCLOSED: every wall and every roof panel is in place, made of
+clear transparent glass held in a slim white steel frame, so the interior is
+visible THROUGH the glass, not through any opening. A symmetrical gable roof,
+unbroken from ridge to eaves. Inside, seen through the glass: two neat rows of
+white hydroponic growing gutters holding small vivid green lettuce plants, with
+slim white irrigation pipes running alongside them. The greenhouse sits on a
+low deep-teal base platform. Beside it on the same platform: a cylindrical mint
+green nutrient mixing tank and a compact teal control cabinet, joined to the
+greenhouse by smooth rounded pipes that loop back into it. A slim white weather
+station mast stands at one corner with a small anemometer and a little solar
+panel. Soft studio lighting, one gentle ambient occlusion shadow beneath the
+platform, matte surfaces, clean untinted glass. Colour palette strictly deep
+teal (#0B6477), mid teal (#14919B), mint green (#45DFB1), fresh leaf green and
 white. Clean minimal product-illustration style, like a premium SaaS landing
-page diagram. No text, no numbers, no labels, no arrows, no logos, no people.
-Isometric three-quarter view, high detail, white background.
+page diagram. Isometric three-quarter view, high detail, white background.
 ```
 
-**Prompt versi plant factory (EN), kalau lebih ingin menonjolkan rak vertikal:**
+**Negative prompt** (tempelkan di kolom negative kalau tool-nya punya; kalau
+tidak ada, sambung saja di akhir prompt utama):
 
 ```
-Isometric 3D render of a modern vertical farming plant factory module, cutaway
-style, centred on a pure white background with generous empty space around it.
-A clean white insulated box building with one wall cut away, revealing four
-stacked levels of hydroponic growing shelves inside. Each shelf holds rows of
-small vivid green lettuce plants and is lit from above by slim LED bars casting
-a soft mint-green glow. To one side, connected by smooth rounded pipes: a
-cylindrical nutrient mixing tank and a compact climate control unit with a
-visible fan grille. Soft studio lighting, gentle ambient occlusion shadows,
-matte surfaces. Colour palette strictly deep teal (#0B6477), mid teal
-(#14919B), mint green (#45DFB1), fresh leaf green, and white. Clean minimal
-product-illustration style, like a premium SaaS landing page diagram. No text,
-no numbers, no labels, no arrows, no logos, no people. Isometric three-quarter
-view, high detail, white background.
+cutaway, cross-section, exploded view, broken glass, cracked, shattered,
+missing panels, detached roof, open roof, gaps in the structure, damaged,
+ruined, under construction, scaffolding, text, letters, numbers, labels,
+arrows, callouts, watermark, logo, people, coloured background
 ```
 
-> Pilih salah satu, atau generate keduanya lalu pilih yang paling enak dilihat.
-> Kalau hasilnya terlalu ramai, tambahkan: *"simpler, fewer components, more
-> negative space, minimal"*.
+### Prompt versi plant factory (EN)
+
+Kalau lebih ingin menonjolkan rak vertikal. Perhatikan: dindingnya tetap kaca,
+bukan dipotong, supaya tidak terulang masalah yang sama.
+
+```
+Isometric 3D render of a modern vertical farming plant factory module, centred
+on a pure white background with generous empty space around it. The building is
+COMPLETE, INTACT and FULLY ENCLOSED: a clean rectangular module with a slim
+white steel frame and clear transparent glass walls on every side, so the
+interior is visible THROUGH the glass, not through any opening. Every panel is
+in place and the flat roof is unbroken. Inside, seen through the glass: four
+stacked levels of hydroponic growing shelves, each holding rows of small vivid
+green lettuce plants and lit from above by slim LED bars casting a soft mint
+green glow. The module sits on a low deep-teal base platform. Beside it on the
+same platform: a cylindrical mint green nutrient mixing tank and a compact teal
+climate control unit with a visible fan grille, joined to the module by smooth
+rounded pipes. Soft studio lighting, one gentle ambient occlusion shadow
+beneath the platform, matte surfaces, clean untinted glass. Colour palette
+strictly deep teal (#0B6477), mid teal (#14919B), mint green (#45DFB1), fresh
+leaf green and white. Clean minimal product-illustration style, like a premium
+SaaS landing page diagram. Isometric three-quarter view, high detail, white
+background.
+```
+
+Pakai negative prompt yang sama seperti di atas.
+
+### Kalau masih pecah juga
+
+Tambahkan di akhir prompt utama, tekankan berulang:
+
+```
+The building must be structurally perfect and completely sealed. Do not remove,
+cut, crack, or detach any part of it. Show the interior only through the
+transparent glass.
+```
 
 ---
 
