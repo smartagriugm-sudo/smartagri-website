@@ -49,6 +49,14 @@ export default function IndoorFarmingNav() {
               </Link>
             ))}
             <Link
+              to="/indoor-farming/dashboard"
+              className={linkClass}
+              activeProps={{ className: `${linkClass} ${activeClass}` }}
+              style={body}
+            >
+              Dashboard
+            </Link>
+            <Link
               to="/indoor-farming/knowledge"
               className={linkClass}
               activeProps={{ className: `${linkClass} ${activeClass}` }}

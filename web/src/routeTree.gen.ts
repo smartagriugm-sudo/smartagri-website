@@ -38,6 +38,7 @@ import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
 import { Route as InventoryStatsRouteImport } from './routes/inventory_.stats'
 import { Route as InventorySlugRouteImport } from './routes/inventory_.$slug'
 import { Route as IndoorFarmingKnowledgeRouteImport } from './routes/indoor-farming_.knowledge'
+import { Route as IndoorFarmingDashboardRouteImport } from './routes/indoor-farming_.dashboard'
 import { Route as IndoorFarmingSectionRouteImport } from './routes/indoor-farming_.$section'
 import { Route as GuestbookAdminRouteImport } from './routes/guestbook_.admin'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
@@ -192,6 +193,11 @@ const IndoorFarmingKnowledgeRoute = IndoorFarmingKnowledgeRouteImport.update({
   path: '/indoor-farming/knowledge',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IndoorFarmingDashboardRoute = IndoorFarmingDashboardRouteImport.update({
+  id: '/indoor-farming_/dashboard',
+  path: '/indoor-farming/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndoorFarmingSectionRoute = IndoorFarmingSectionRouteImport.update({
   id: '/indoor-farming_/$section',
   path: '/indoor-farming/$section',
@@ -263,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
   '/indoor-farming/$section': typeof IndoorFarmingSectionRoute
+  '/indoor-farming/dashboard': typeof IndoorFarmingDashboardRoute
   '/indoor-farming/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory/$slug': typeof InventorySlugRoute
   '/inventory/stats': typeof InventoryStatsRoute
@@ -301,6 +308,7 @@ export interface FileRoutesByTo {
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
   '/indoor-farming/$section': typeof IndoorFarmingSectionRoute
+  '/indoor-farming/dashboard': typeof IndoorFarmingDashboardRoute
   '/indoor-farming/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory/$slug': typeof InventorySlugRoute
   '/inventory/stats': typeof InventoryStatsRoute
@@ -341,6 +349,7 @@ export interface FileRoutesById {
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
   '/guestbook_/admin': typeof GuestbookAdminRoute
   '/indoor-farming_/$section': typeof IndoorFarmingSectionRoute
+  '/indoor-farming_/dashboard': typeof IndoorFarmingDashboardRoute
   '/indoor-farming_/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory_/$slug': typeof InventorySlugRoute
   '/inventory_/stats': typeof InventoryStatsRoute
@@ -382,6 +391,7 @@ export interface FileRouteTypes {
     | '/field-notes/$slug'
     | '/guestbook/admin'
     | '/indoor-farming/$section'
+    | '/indoor-farming/dashboard'
     | '/indoor-farming/knowledge'
     | '/inventory/$slug'
     | '/inventory/stats'
@@ -420,6 +430,7 @@ export interface FileRouteTypes {
     | '/field-notes/$slug'
     | '/guestbook/admin'
     | '/indoor-farming/$section'
+    | '/indoor-farming/dashboard'
     | '/indoor-farming/knowledge'
     | '/inventory/$slug'
     | '/inventory/stats'
@@ -459,6 +470,7 @@ export interface FileRouteTypes {
     | '/field-notes_/$slug'
     | '/guestbook_/admin'
     | '/indoor-farming_/$section'
+    | '/indoor-farming_/dashboard'
     | '/indoor-farming_/knowledge'
     | '/inventory_/$slug'
     | '/inventory_/stats'
@@ -495,6 +507,7 @@ export interface RootRouteChildren {
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   GuestbookAdminRoute: typeof GuestbookAdminRoute
   IndoorFarmingSectionRoute: typeof IndoorFarmingSectionRoute
+  IndoorFarmingDashboardRoute: typeof IndoorFarmingDashboardRoute
   IndoorFarmingKnowledgeRoute: typeof IndoorFarmingKnowledgeRoute
   InventorySlugRoute: typeof InventorySlugRoute
   InventoryStatsRoute: typeof InventoryStatsRoute
@@ -710,6 +723,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndoorFarmingKnowledgeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/indoor-farming_/dashboard': {
+      id: '/indoor-farming_/dashboard'
+      path: '/indoor-farming/dashboard'
+      fullPath: '/indoor-farming/dashboard'
+      preLoaderRoute: typeof IndoorFarmingDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/indoor-farming_/$section': {
       id: '/indoor-farming_/$section'
       path: '/indoor-farming/$section'
@@ -813,6 +833,7 @@ const rootRouteChildren: RootRouteChildren = {
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   GuestbookAdminRoute: GuestbookAdminRoute,
   IndoorFarmingSectionRoute: IndoorFarmingSectionRoute,
+  IndoorFarmingDashboardRoute: IndoorFarmingDashboardRoute,
   IndoorFarmingKnowledgeRoute: IndoorFarmingKnowledgeRoute,
   InventorySlugRoute: InventorySlugRoute,
   InventoryStatsRoute: InventoryStatsRoute,

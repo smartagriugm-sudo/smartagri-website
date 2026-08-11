@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowRight, ArrowUpRight, Sprout } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Gauge, Sprout } from "lucide-react";
 import { A, indoorFarmingPhoto } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
 import {
@@ -214,6 +214,52 @@ function IndoorFarmingLanding() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Dashboard */}
+      <section className="bg-white">
+        <div className="max-w-[1360px] mx-auto px-6 md:px-12 pb-4 md:pb-8">
+          <Link
+            to="/indoor-farming/dashboard"
+            className="group flex flex-col md:flex-row md:items-center justify-between gap-6 rounded-3xl border border-[#0B6477]/10 bg-[#F3F7F6] p-8 md:p-10 transition-colors hover:border-[#14919B]/40"
+          >
+            <div className="flex gap-4">
+              <div className="w-12 h-12 shrink-0 rounded-2xl bg-white flex items-center justify-center">
+                <Gauge className="w-5 h-5 text-[#0B6477]" />
+              </div>
+              <div>
+                <div
+                  className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-2"
+                  style={body}
+                >
+                  Live demo
+                </div>
+                <h2
+                  className="text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-neutral-900"
+                  style={display}
+                >
+                  See the control{" "}
+                  <span style={accent}>dashboard</span>
+                </h2>
+                <p
+                  className="mt-3 text-base font-normal text-neutral-500 leading-relaxed max-w-[620px]"
+                  style={body}
+                >
+                  Temperature, humidity, VPD, CO2, light, and the full nutrient
+                  picture from our sensor stack, on one screen. Play a tropical
+                  growing day through from midnight to midnight.
+                </p>
+              </div>
+            </div>
+            <span
+              className="inline-flex items-center gap-2 h-12 px-7 shrink-0 rounded-2xl bg-[#45DFB1] text-[#0B2A22] text-base font-medium group-hover:bg-[#80ED99] transition-colors"
+              style={body}
+            >
+              Open the dashboard
+              <ArrowRight className="w-4 h-4" />
+            </span>
+          </Link>
         </div>
       </section>
 
