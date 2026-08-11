@@ -1,19 +1,14 @@
 import {
   ArrowRight,
   CircleDot,
-  CloudSun,
-  Droplets,
-  Gauge,
-  Wind,
-  Workflow,
 } from "lucide-react";
 import { indoorDashboardImage } from "../../lib/assets";
-import PhotoSlot from "../PhotoSlot";
 import { accent, body, display } from "../../lib/fonts";
 import {
   CHART_KEYS,
   METRICS,
   STATUS_TONE,
+  ACTUATOR_TONE,
   STEP_MINUTES,
   ZONES,
   axisPercent,
@@ -22,10 +17,12 @@ import {
   readingAt,
   statusOf,
   targetFor,
+  rangeAxis,
+  RANGES,
   type MetricKey,
 } from "../../lib/indoor-dashboard";
 import { useDashboard } from "../../lib/dashboard-state";
-import { DayChart, KpiCard, Panel, Pill, Ring, StatusDot, FlowNode } from "./parts";
+import { DayChart, KpiCard, MetricBar, Panel, Pill, StatusDot } from "./parts";
 
 // The Overview screen: the facility at a glance. Everything it draws comes from
 // the shared dashboard context, so the playhead and the selected zone stay in
@@ -38,18 +35,26 @@ export default function DashboardOverview() {
     setZoneId,
     metricKey,
     setMetricKey,
+    range,
+    setRange,
     reading,
     chartSeries,
     weather,
     WeatherIcon,
     rain,
-    devices,
+    actuators,
+    resources,
     alerts,
     onlineZones,
     totalArea,
     zoneStatus,
     inBand,
   } = useDashboard();
+
+  // Weekly and monthly series are entirely in the past, so the playhead sits on
+  // the last point. Only the daily view has a "rest of the day" still to come.
+  const axis = rangeAxis(range);
+  const playhead = range === "daily" ? tick : chartSeries.length - 1;
 
   return (
     <>
@@ -82,7 +87,7 @@ export default function DashboardOverview() {
           className="mt-1 text-[19px] sm:text-[23px] font-semibold tracking-[-0.03em] leading-[1.15] text-white"
           style={display}
         >
-          {inBand} of {onlineZones.length} zones are{" "}
+          {inBand} of {onlineZones.length} rooms are{" "}
           <span style={{ ...accent, color: "#80ED99" }}>
             inside their target envelope
           </span>
@@ -95,7 +100,7 @@ export default function DashboardOverview() {
           <div className="flex items-center gap-4 sm:gap-5">
             <div>
               <div className="text-[11px] text-white/60" style={body}>
-                Zones online
+                Rooms online
               </div>
               <div
                 className="text-[21px] font-semibold tracking-[-0.03em] text-white tabular-nums leading-tight"
@@ -231,6 +236,7 @@ export default function DashboardOverview() {
               key={key}
               active={key === metricKey}
               onClick={() => setMetricKey(key)}
+              tone={METRICS[key].tone}
             >
               {METRICS[key].short}
             </Pill>
@@ -243,22 +249,39 @@ export default function DashboardOverview() {
           className="text-[30px] font-semibold tracking-[-0.03em] text-neutral-900 tabular-nums leading-none"
           style={display}
         >
-          {formatValue(metricKey, chartSeries[tick])}
+          {formatValue(metricKey, chartSeries[playhead])}
         </span>
         <span className="text-[13px] text-neutral-400" style={body}>
           {METRICS[metricKey].unit}
         </span>
-        <StatusDot status={statusOf(metricKey, chartSeries[tick], zone)} />
+        <StatusDot status={statusOf(metricKey, chartSeries[playhead], zone)} />
         <span className="text-[12px] text-neutral-400" style={body}>
           Target band {targetFor(metricKey, zone)[0]} to {targetFor(metricKey, zone)[1]}
         </span>
+        <div className="ml-auto flex shrink-0 items-center gap-1">
+          {RANGES.map((r) => (
+            <Pill key={r.key} active={r.key === range} onClick={() => setRange(r.key)}>
+              {r.label}
+            </Pill>
+          ))}
+        </div>
       </div>
       <div className="flex-1 min-h-[250px]">
-        <DayChart series={chartSeries} metricKey={metricKey} tick={tick} zone={zone} />
+        <DayChart
+          series={chartSeries}
+          metricKey={metricKey}
+          tick={playhead}
+          zone={zone}
+          ticks={axis.ticks}
+          labelAt={axis.labelAt}
+        />
       </div>
       <p className="mt-1 text-[11px] text-neutral-400" style={body}>
-        Solid line is measured to the playhead. The dashed continuation is the modelled
-        rest of the day.
+        {range === "daily"
+          ? "Solid line is measured to the playhead. The dashed continuation is the modelled rest of the day."
+          : `One point per day, each the day's average. ${
+              range === "weekly" ? "Last 7 days" : "Last 30 days"
+            }, ending today.`}
       </p>
     </Panel>
 
@@ -271,9 +294,9 @@ export default function DashboardOverview() {
           </span>
         }
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4">
           {(["ph", "ec", "dissolvedOxygen", "waterTemp"] as MetricKey[]).map((key) => (
-            <Ring key={key} metricKey={key} value={reading[key]} zone={zone} />
+            <MetricBar key={key} metricKey={key} value={reading[key]} zone={zone} />
           ))}
         </div>
       </Panel>
@@ -320,15 +343,23 @@ export default function DashboardOverview() {
     </div>
   </div>
 
-  {/* zones table + equipment */}
+  {/* room comparison + actuators */}
   <div className="grid xl:grid-cols-[1.55fr_1fr] gap-3">
-    <Panel title="Zone performance" padded={false}>
+    <Panel
+      title="Room comparison"
+      action={
+        <span className="text-[11px] text-neutral-400" style={body}>
+          {inBand} of {onlineZones.length} rooms active
+        </span>
+      }
+      padded={false}
+    >
       <div className="overflow-x-auto px-5 pb-5">
         <table className="w-full min-w-[520px] border-collapse text-left">
           <thead>
             <tr className="text-[11px] text-neutral-400">
               <th className="pb-2 pr-3 font-medium" style={body}>
-                Zone
+                Room
               </th>
               <th className="pb-2 pr-3 font-medium" style={body}>
                 Crop
@@ -408,116 +439,106 @@ export default function DashboardOverview() {
       </div>
     </Panel>
 
-    <Panel title="Equipment">
+    <Panel
+      title="Actuators"
+      action={
+        <span className="text-[11px] text-neutral-400" style={body}>
+          {actuators.filter((a) => a.state === "on").length} of {actuators.length} running
+        </span>
+      }
+    >
       <div className="flex flex-col gap-2.5">
-        {devices.map((d) => (
-          <div key={d.name} className="flex items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F3F7F6]">
-              <d.icon className="w-4 h-4 text-[#0B6477]" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="text-[12px] font-medium text-neutral-800 truncate" style={body}>
-                {d.name}
-              </div>
-              <div className="text-[11px] text-neutral-400 truncate" style={body}>
-                {d.detail}
-              </div>
-            </div>
-            <div className="w-16 shrink-0">
-              <div className="h-1.5 w-full rounded-full bg-[#F3F7F6] overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-[width] duration-700"
-                  style={{
-                    width: `${d.load}%`,
-                    backgroundColor: d.state === "running" ? "#14919B" : "#C7D5D2",
-                  }}
-                />
-              </div>
-              <div
-                className="mt-1 text-right text-[10px] text-neutral-400 tabular-nums"
-                style={body}
+        {actuators.map((a) => {
+          const tone = ACTUATOR_TONE[a.state];
+          return (
+            <div key={a.name} className="flex items-center gap-3">
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                style={{ backgroundColor: tone.bg }}
               >
-                {d.state === "running" ? `${d.load}%` : d.state}
+                <a.icon className="w-4 h-4" style={{ color: tone.color }} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-[12px] font-medium text-neutral-800 truncate" style={body}>
+                  {a.name}
+                </div>
+                <div className="text-[11px] text-neutral-400 truncate" style={body}>
+                  {a.room}
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-0.5">
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-[0.02em]"
+                  style={{ ...body, color: tone.color, backgroundColor: tone.bg }}
+                >
+                  {tone.label}
+                </span>
+                {/* How hard it is working is a separate question from whether it
+                    is working, so the load only appears when there is a load. */}
+                {a.state === "on" && (
+                  <span className="text-[10px] text-neutral-400 tabular-nums" style={body}>
+                    {a.load}% load
+                  </span>
+                )}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Panel>
   </div>
 
-  {/* system flow + event log */}
+  {/* resource use + event log */}
   <div className="grid xl:grid-cols-[1.55fr_1fr] gap-3">
     <Panel
       className="flex flex-col"
-      title="System flow"
+      title="Resource use today"
       action={
         <span className="text-[11px] text-neutral-400" style={body}>
-          Closed loop · recirculating
+          Since midnight
         </span>
       }
     >
-      {/* Laid out after the reference: the building sits in the middle
-          with what feeds it on the left and what it drives on the
-          right, so the panel reads as a loop rather than a list. On a
-          narrow screen it collapses to illustration then cards. */}
-      {/* The panel stretches to match the taller Event log beside it,
-          so the flow row is centred in whatever height it is given
-          rather than sitting against the top with dead space below. */}
-      <div className="flex flex-1 items-center">
-      <div className="w-full flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)] sm:items-center gap-3">
-        <div className="order-2 sm:order-1 grid grid-cols-2 sm:grid-cols-1 gap-2">
-          {[
-            {
-              label: "Weather station",
-              value: `${Math.round(weather.solar)} W/m²`,
-              icon: CloudSun,
-            },
-            {
-              label: "Nutrient tank",
-              value: `EC ${reading.ec.toFixed(2)}`,
-              icon: Droplets,
-            },
-          ].map((n) => (
-            <FlowNode key={n.label} {...n} />
-          ))}
-        </div>
-
-        <div className="order-1 sm:order-2">
-          {/* PhotoSlot rather than a bare img: this illustration carries
-              meaning, so while the file is missing it should degrade to
-              a branded placeholder instead of broken-image alt text. */}
-          <PhotoSlot
-            src={indoorDashboardImage("system-3d.webp")}
-            alt="Illustration of the greenhouse climate and irrigation loop"
-            icon={Workflow}
-            caption="Illustration: climate and irrigation loop"
-            // 16:9 rather than 4:3: the artwork is a wide isometric
-            // scene, and a taller slot would just pad it with empty
-            // space and shrink the building.
-            ratio="aspect-[16/9]"
-            fit="contain"
-          />
-        </div>
-
-        <div className="order-3 grid grid-cols-2 sm:grid-cols-1 gap-2">
-          {[
-            {
-              label: "Climate control",
-              value: `${reading.airTemp.toFixed(1)} °C`,
-              icon: Wind,
-            },
-            {
-              label: "To canopy",
-              value: `${reading.flow.toFixed(1)} L/min`,
-              icon: Gauge,
-            },
-          ].map((n) => (
-            <FlowNode key={n.label} {...n} />
-          ))}
-        </div>
+      {/* What the facility has consumed so far. This replaced a schematic of
+          the water loop, which looked like a diagram but only ever showed two
+          live numbers. Consumption is the thing an operator has to act on and
+          nothing else on this screen reports it. */}
+      <div className="flex flex-1 flex-col justify-center gap-4">
+        {resources.map((r) => (
+          <div key={r.label}>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="flex min-w-0 items-center gap-2">
+                <r.icon className="w-4 h-4 shrink-0 text-[#14919B]" />
+                <span className="truncate text-[13px] text-neutral-700" style={body}>
+                  {r.label}
+                </span>
+                <span className="hidden sm:inline truncate text-[11px] text-neutral-400" style={body}>
+                  {r.detail}
+                </span>
+              </span>
+              <span
+                className="shrink-0 text-[15px] font-semibold text-neutral-900 tabular-nums"
+                style={display}
+              >
+                {r.value}
+              </span>
+            </div>
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#F3F7F6]">
+              <div
+                className="h-full rounded-full transition-[width] duration-700 ease-out"
+                style={{
+                  width: `${Math.round(r.share * 100)}%`,
+                  backgroundColor: r.share > 0.85 ? "#B26205" : "#14919B",
+                }}
+              />
+            </div>
+          </div>
+        ))}
       </div>
-      </div>
+      <p className="mt-3 text-[11px] text-neutral-400" style={body}>
+        Meters read against the day's planned budget. Nutrient stock counts down
+        from a full tank rather than up.
+      </p>
     </Panel>
 
     <Panel

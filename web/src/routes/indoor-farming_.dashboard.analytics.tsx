@@ -88,12 +88,12 @@ function AnalyticsScreen() {
         )}
       </Panel>
 
-      <Panel title="Day extremes by zone">
+      <Panel title="Day extremes by room">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[620px] border-collapse text-left">
             <thead>
               <tr className="text-[11px] text-neutral-400">
-                <th className="pb-2 pr-3 font-medium" style={body}>Zone</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>Room</th>
                 <th className="pb-2 pr-3 font-medium" style={body}>Air temp min</th>
                 <th className="pb-2 pr-3 font-medium" style={body}>Air temp max</th>
                 <th className="pb-2 pr-3 font-medium" style={body}>VPD max</th>

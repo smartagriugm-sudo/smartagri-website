@@ -62,7 +62,7 @@ function NutritionScreen() {
           <table className="w-full min-w-[560px] border-collapse text-left">
             <thead>
               <tr className="text-[11px] text-neutral-400">
-                <th className="pb-2 pr-3 font-medium" style={body}>Zone</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>Room</th>
                 <th className="pb-2 pr-3 font-medium" style={body}>Feed strength</th>
                 <th className="pb-2 pr-3 font-medium" style={body}>pH</th>
                 <th className="pb-2 pr-3 font-medium" style={body}>Dissolved O2</th>
