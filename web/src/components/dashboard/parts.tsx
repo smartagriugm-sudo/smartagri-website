@@ -312,8 +312,29 @@ export function DayChart({
               </linearGradient>
             </defs>
 
-            {/* target band */}
-            <rect x="0" y={bandTop} width={W} height={bandHeight} fill="#45DFB1" opacity="0.12" />
+            {/* Target band, tinted with the parameter's own colour so the band
+                and the line it judges read as one thing. It was mint for every
+                parameter before, which put a red trace on a green field and
+                made the two look unrelated.
+
+                The area fill under the line shares that hue, so the band would
+                dissolve into it on its own. The dashed edges are what keep it
+                legible as a region rather than a wash. */}
+            <rect x="0" y={bandTop} width={W} height={bandHeight} fill={metric.tone} opacity="0.10" />
+            {[bandTop, bandTop + bandHeight].map((yy, i) => (
+              <line
+                key={i}
+                x1="0"
+                y1={yy}
+                x2={W}
+                y2={yy}
+                stroke={metric.tone}
+                strokeOpacity="0.4"
+                strokeWidth="1"
+                strokeDasharray="4 4"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
 
             {gridValues.map((v) => (
               <line
@@ -605,9 +626,17 @@ export function MetricBar({
       </div>
 
       <div className="relative mt-1.5 h-2.5 overflow-hidden rounded-full bg-[#F3F7F6]">
+        {/* Same rule as the chart: the band wears the parameter's colour, not a
+            fixed mint, so a magenta pH bar is not judged against a green field.
+            It sits well below the bar's own opacity so the two stay apart. */}
         <span
-          className="absolute inset-y-0 bg-[#45DFB1]/25"
-          style={{ left: `${bandLeft}%`, width: `${bandWidth}%` }}
+          className="absolute inset-y-0"
+          style={{
+            left: `${bandLeft}%`,
+            width: `${bandWidth}%`,
+            backgroundColor: metric.tone,
+            opacity: 0.22,
+          }}
         />
         <span
           className="absolute inset-y-0 left-0 rounded-full"
