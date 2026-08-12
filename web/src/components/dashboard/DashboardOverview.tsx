@@ -129,7 +129,7 @@ export default function DashboardOverview() {
                 <span className="text-[13px] font-normal text-white/50"> m²</span>
               </div>
               <div className="text-[10px] text-white/50" style={body}>
-                across {onlineZones.length} zones
+                across {onlineZones.length} rooms
               </div>
             </div>
             <div className="hidden sm:block h-10 w-px bg-white/15" />
@@ -194,10 +194,10 @@ export default function DashboardOverview() {
     </div>
   </div>
 
-  {/* zone switcher */}
+  {/* room switcher */}
   <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
     <span className="text-[12px] font-medium text-neutral-400 shrink-0" style={body}>
-      Zone
+      Room
     </span>
     {ZONES.map((z) => (
       <Pill key={z.id} active={z.id === zoneId} onClick={() => setZoneId(z.id)}>
