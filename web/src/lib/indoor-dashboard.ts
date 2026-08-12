@@ -303,7 +303,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "aerial",
     icon: Thermometer,
     decimals: 1,
-    tone: "#0B6477",
+    tone: "#e34948",
     optimal: [22, 28],
     axis: [18, 34],
     why: "Sets the pace of every process in the crop, from photosynthesis to fruit set. In the tropics the problem is almost always shedding heat, not adding it.",
@@ -317,7 +317,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "aerial",
     icon: Droplets,
     decimals: 0,
-    tone: "#14919B",
+    tone: "#2a78d6",
     optimal: [65, 80],
     axis: [40, 100],
     why: "On its own it says little, but paired with temperature it gives VPD. Sustained high humidity is also the opening that fungal disease waits for.",
@@ -331,7 +331,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "aerial",
     icon: Wind,
     decimals: 2,
-    tone: "#0AD1C8",
+    tone: "#4a3aa7",
     optimal: [0.8, 1.2],
     axis: [0, 2.2],
     why: "The number that actually drives transpiration, and the one we steer on. Too low and the crop stops pulling water and calcium, too high and it closes its stomata and stalls.",
@@ -345,7 +345,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "aerial",
     icon: Activity,
     decimals: 0,
-    tone: "#0B6477",
+    tone: "#008300",
     optimal: [400, 1000],
     axis: [300, 1200],
     why: "Once light and temperature are right, CO2 is usually the next limit on photosynthesis. A closed house draws it down fast in the morning.",
@@ -359,7 +359,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "aerial",
     icon: Sun,
     decimals: 0,
-    tone: "#45DFB1",
+    tone: "#eda100",
     optimal: [200, 800],
     axis: [0, 1000],
     why: "Photosynthetic photon flux density: how much usable light is landing on the canopy right now, in the 400 to 700 nm band the crop can actually use.",
@@ -373,7 +373,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "aerial",
     icon: Lightbulb,
     decimals: 1,
-    tone: "#80ED99",
+    tone: "#2a78d6",
     optimal: [14, 24],
     axis: [0, 30],
     why: "The day's total light, the figure that decides yield. Running DLI is what tells you whether to top up with lamps before the day closes.",
@@ -387,7 +387,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "aerial",
     icon: Leaf,
     decimals: 1,
-    tone: "#14919B",
+    tone: "#eb6834",
     optimal: [21, 27],
     axis: [17, 33],
     why: "Leaf minus air temperature is an early read on whether the crop is still transpiring. A leaf running hot has usually already closed down.",
@@ -401,7 +401,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "root",
     icon: FlaskConical,
     decimals: 2,
-    tone: "#0B6477",
+    tone: "#e87ba4",
     optimal: [5.6, 6.2],
     axis: [4.8, 7.2],
     why: "Decides which nutrients the root can actually take up. Drift above 6.5 locks out iron and manganese long before anything shows in the leaf.",
@@ -415,7 +415,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "root",
     icon: Zap,
     decimals: 2,
-    tone: "#14919B",
+    tone: "#1baf7a",
     optimal: [1.2, 2.6],
     axis: [0.6, 3.2],
     why: "A proxy for how concentrated the feed is. Rising EC between doses means the crop is drinking faster than it is eating, which is a climate signal as much as a nutrition one.",
@@ -429,7 +429,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "root",
     icon: Waves,
     decimals: 1,
-    tone: "#0AD1C8",
+    tone: "#eb6834",
     optimal: [6, 9],
     axis: [3, 11],
     why: "Roots respire, and warm water holds less oxygen. In a tropical root zone this is the quiet failure: yield drops well before the roots look wrong.",
@@ -443,7 +443,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "root",
     icon: Container,
     decimals: 1,
-    tone: "#45DFB1",
+    tone: "#4a3aa7",
     optimal: [20, 24],
     axis: [16, 32],
     why: "Sets the oxygen ceiling and the pace of root disease. Holding the solution cool is often cheaper than cooling the whole air volume.",
@@ -457,7 +457,7 @@ export const METRICS: Record<MetricKey, Metric> = {
     group: "root",
     icon: Gauge,
     decimals: 1,
-    tone: "#0B6477",
+    tone: "#2a78d6",
     optimal: [8, 16],
     axis: [0, 24],
     why: "Confirms that a dosing event actually reached the crop. Flow that reads zero during a scheduled shot is a blocked line, not a quiet plant.",
@@ -1144,4 +1144,159 @@ export function alertsAt(index: number): AlertRow[] {
     });
   }
   return rows;
+}
+
+/* ------------------------------------------------------- room grow layout */
+
+/**
+ * The physical planting layout of a room.
+ *
+ * A room is not just a climate: it is a set of planting positions, and an
+ * operator tracing a batch from sowing to harvest needs to point at one of them.
+ * The three systems in the facility are laid out differently, so the shape is
+ * described here rather than assumed by the renderer.
+ */
+export type GrowSystem = "polybag" | "nft" | "tray";
+
+export type RoomLayout = {
+  system: GrowSystem;
+  /** How many rows, beds, or channels. */
+  rows: number;
+  /** Positions per row. */
+  perRow: number;
+  /** What one row is called in this system. */
+  rowLabel: string;
+  /** What one position is called in this system. */
+  slotLabel: string;
+  /** Where the room physically sits, for the room list. */
+  location: string;
+};
+
+export const ROOM_LAYOUTS: Record<string, RoomLayout> = {
+  "gh-1": {
+    system: "polybag", rows: 6, perRow: 20,
+    rowLabel: "Bed", slotLabel: "Bag", location: "North block · Bay A",
+  },
+  "pf-a": {
+    system: "nft", rows: 5, perRow: 18,
+    rowLabel: "Channel", slotLabel: "Hole", location: "Plant factory · Level 1",
+  },
+  "pf-b": {
+    system: "nft", rows: 5, perRow: 18,
+    rowLabel: "Channel", slotLabel: "Hole", location: "Plant factory · Level 2",
+  },
+  nur: {
+    system: "tray", rows: 4, perRow: 24,
+    rowLabel: "Tray", slotLabel: "Cell", location: "Propagation house",
+  },
+  "gh-2": {
+    system: "polybag", rows: 4, perRow: 16,
+    rowLabel: "Bed", slotLabel: "Bag", location: "South block · Trial bay",
+  },
+};
+
+export type PlantHealth = "healthy" | "watch" | "problem" | "empty";
+
+export const PLANT_HEALTH_TONE: Record<PlantHealth, { label: string; color: string; bg: string }> = {
+  healthy: { label: "Healthy", color: "#0E9F6E", bg: "rgba(14,159,110,0.14)" },
+  watch: { label: "Watch", color: "#B26205", bg: "rgba(245,158,11,0.18)" },
+  problem: { label: "Problem", color: "#C4342F", bg: "rgba(229,72,77,0.16)" },
+  empty: { label: "Empty", color: "#9CA3AF", bg: "rgba(156,163,175,0.16)" },
+};
+
+export type Plant = {
+  /** Position code an operator can read out loud, e.g. "Bed 2 · 07". */
+  id: string;
+  row: number;
+  col: number;
+  variety: string;
+  health: PlantHealth;
+  /** Days since transplant. */
+  age: number;
+  /** Days from transplant to expected harvest for this crop. */
+  cycle: number;
+  stage: string;
+  /** Batch code, shared by everything transplanted on the same day. */
+  batch: string;
+};
+
+/** Growth stage from how far through its cycle a plant is. */
+function stageFor(system: GrowSystem, progress: number): string {
+  if (system === "tray") {
+    if (progress < 0.35) return "Germination";
+    if (progress < 0.7) return "Cotyledon";
+    return "Ready to transplant";
+  }
+  if (progress < 0.2) return "Establishment";
+  if (progress < 0.5) return "Vegetative";
+  if (progress < 0.8) return "Flowering and set";
+  return "Harvest window";
+}
+
+/**
+ * Every planting position in a room.
+ *
+ * Deterministic from the room seed and the position, so a given bag always
+ * carries the same batch and history no matter when the page is rendered. A
+ * facility is never perfectly full, so a few positions come back empty and a few
+ * carry problems: a layout where everything is green teaches an operator
+ * nothing about how the screen behaves when something is wrong.
+ */
+export function plantsFor(zone: Zone): Plant[] {
+  const layout = ROOM_LAYOUTS[zone.id] ?? ROOM_LAYOUTS["gh-1"];
+  const cycle = zone.kind === "greenhouse" ? 110 : zone.kind === "nursery" ? 21 : 38;
+  const out: Plant[] = [];
+
+  for (let r = 0; r < layout.rows; r++) {
+    // Rows are planted in waves, so a room holds several ages at once. The
+    // offsets spread across almost the whole cycle deliberately: a facility
+    // plants in succession precisely so that something is always approaching
+    // harvest while something else has just gone in. Bunching the rows into the
+    // first half of the cycle, as an earlier version did, meant nothing ever
+    // reached its harvest window and the "ready" count was permanently zero.
+    const rowOffset = Math.round((cycle * 0.98 * r) / Math.max(1, layout.rows - 1));
+
+    for (let c = 0; c < layout.perRow; c++) {
+      const n = r * layout.perRow + c;
+      const noise = Math.abs(Math.sin((n + 1) * zone.seed * 0.37));
+
+      let health: PlantHealth;
+      if (!zone.online) health = "empty";
+      else if (noise > 0.965) health = "empty";
+      else if (noise > 0.9) health = "problem";
+      else if (noise > 0.78) health = "watch";
+      else health = "healthy";
+
+      const age = health === "empty" ? 0 : Math.min(cycle, rowOffset + Math.round(noise * 6));
+      const progress = age / cycle;
+
+      out.push({
+        id: `${layout.rowLabel} ${r + 1} · ${String(c + 1).padStart(2, "0")}`,
+        row: r,
+        col: c,
+        variety: zone.crop,
+        health,
+        age,
+        cycle,
+        stage: health === "empty" ? "Empty" : stageFor(layout.system, progress),
+        batch: `${zone.id.toUpperCase()}-B${r + 1}`,
+      });
+    }
+  }
+  return out;
+}
+
+/** Headline counts for a room's planting, for the list rail and the header. */
+export function plantingSummary(zone: Zone) {
+  const plants = plantsFor(zone);
+  const planted = plants.filter((p) => p.health !== "empty");
+  const ready = planted.filter((p) => p.age / p.cycle >= 0.8).length;
+  return {
+    total: plants.length,
+    planted: planted.length,
+    problem: plants.filter((p) => p.health === "problem").length,
+    watch: plants.filter((p) => p.health === "watch").length,
+    ready,
+    occupancy: plants.length === 0 ? 0 : planted.length / plants.length,
+  };
 }

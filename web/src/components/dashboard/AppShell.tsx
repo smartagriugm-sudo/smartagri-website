@@ -1,5 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Bell, ChevronDown, Pause, Play, Search, Settings } from "lucide-react";
+import {
+  ArrowLeft,
+  Bell,
+  ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Pause,
+  Play,
+  Search,
+  Settings,
+} from "lucide-react";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { indoorDashboardImage } from "../../lib/assets";
 import { body, display } from "../../lib/fonts";
@@ -13,61 +24,93 @@ import { useDashboard } from "../../lib/dashboard-state";
 // tool, so it fills the viewport and navigates within itself; the only way back
 // out to the site is the explicit link at the top of the sidebar.
 
-export function DashboardSidebar({ activeTo }: { activeTo: string }) {
+export function DashboardSidebar({
+  activeTo,
+  collapsed = false,
+  onToggle,
+}: {
+  activeTo: string;
+  collapsed?: boolean;
+  onToggle?: () => void;
+}) {
   return (
-    <aside className="hidden lg:flex w-[212px] shrink-0 flex-col gap-1 border-r border-[#0B6477]/8 bg-[#FAFCFB] p-4">
-      <Link
-        to="/indoor-farming"
-        className="flex items-center gap-2 px-2 py-2 mb-1 group"
-      >
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0B6477]">
-          <img
-            src="/brand/icon-white.svg"
-            alt=""
-            className="h-4 w-4"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        </span>
-        <span
-          className="text-[15px] font-semibold tracking-[-0.02em] text-neutral-900"
-          style={display}
+    <aside
+      className={`hidden lg:flex shrink-0 flex-col gap-1 border-r border-[#0B6477]/8 bg-[#FAFCFB] p-4 transition-[width] duration-200 ${
+        collapsed ? "w-[68px] items-center" : "w-[212px]"
+      }`}
+    >
+      <div className={`flex items-center mb-1 ${collapsed ? "flex-col gap-2" : "gap-2 px-2 py-2"}`}>
+        <Link to="/indoor-farming" className="flex min-w-0 items-center gap-2">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#0B6477]">
+            <img
+              src="/brand/icon-white.svg"
+              alt=""
+              className="h-4 w-4"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          </span>
+          {!collapsed && (
+            <span
+              className="truncate text-[15px] font-semibold tracking-[-0.02em] text-neutral-900"
+              style={display}
+            >
+              smartagri
+            </span>
+          )}
+        </Link>
+        {onToggle && (
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-neutral-400 hover:bg-[#0B6477]/8 hover:text-[#0B6477] transition-colors ${
+              collapsed ? "" : "ml-auto"
+            }`}
+          >
+            {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+          </button>
+        )}
+      </div>
+      {!collapsed && (
+        <Link
+          to="/indoor-farming"
+          className="flex items-center gap-1.5 px-2 pb-3 text-[11px] font-medium text-neutral-400 hover:text-[#0B6477] transition-colors"
+          style={body}
         >
-          smartagri
-        </span>
-      </Link>
-      <Link
-        to="/indoor-farming"
-        className="flex items-center gap-1.5 px-2 pb-3 text-[11px] font-medium text-neutral-400 hover:text-[#0B6477] transition-colors"
-        style={body}
-      >
-        <ArrowLeft className="w-3 h-3" />
-        Back to Indoor Farming
-      </Link>
+          <ArrowLeft className="w-3 h-3" />
+          Back to Indoor Farming
+        </Link>
+      )}
 
-      <nav className="flex flex-col gap-1">
+      <nav className="flex w-full flex-col gap-1">
         {DASHBOARD_NAV.map((item) => {
           const active = item.to === activeTo;
           return (
             <Link
               key={item.label}
               to={item.to}
-              className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium transition-colors ${
+              title={collapsed ? item.label : undefined}
+              className={`flex items-center rounded-xl py-2 text-[13px] font-medium transition-colors ${
+                collapsed ? "justify-center px-2" : "gap-2.5 px-3"
+              } ${
                 active
                   ? "bg-[#0B6477]/8 text-[#0B6477]"
                   : "text-neutral-500 hover:bg-[#0B6477]/5 hover:text-[#0B6477]"
               }`}
               style={body}
             >
-              <item.icon className="w-4 h-4" />
-              {item.label}
+              <item.icon className="w-4 h-4 shrink-0" />
+              {!collapsed && item.label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-auto pt-4">
+      <div className="mt-auto w-full pt-4">
+        {!collapsed && (
         <div className="overflow-hidden rounded-2xl bg-[#08313A]">
           <img
             src={indoorDashboardImage("promo-card.webp")}
@@ -88,23 +131,28 @@ export function DashboardSidebar({ activeTo }: { activeTo: string }) {
             </p>
           </div>
         </div>
+        )}
 
-        <div className="mt-3 flex items-center gap-2.5 rounded-xl px-2 py-2">
+        <div className={`mt-3 flex items-center rounded-xl py-2 ${collapsed ? "justify-center" : "gap-2.5 px-2"}`}>
           <span
             className="flex h-8 w-8 items-center justify-center rounded-full bg-[#45DFB1] text-[12px] font-semibold text-[#0B2A22]"
             style={display}
           >
             SA
           </span>
-          <div className="min-w-0 flex-1">
-            <div className="text-[12px] font-medium text-neutral-800 truncate" style={body}>
-              Facility operator
-            </div>
-            <div className="text-[10px] text-neutral-400" style={body}>
-              Demo account
-            </div>
-          </div>
-          <ChevronDown className="w-3.5 h-3.5 text-neutral-300" />
+          {!collapsed && (
+            <>
+              <div className="min-w-0 flex-1">
+                <div className="text-[12px] font-medium text-neutral-800 truncate" style={body}>
+                  Facility operator
+                </div>
+                <div className="text-[10px] text-neutral-400" style={body}>
+                  Demo account
+                </div>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-neutral-300" />
+            </>
+          )}
         </div>
       </div>
     </aside>
@@ -200,9 +248,18 @@ export function DashboardShell({
   activeTo: string;
   children: ReactNode;
 }) {
+  // Collapsed state lives here rather than in the sidebar so the whole shell can
+  // react to it later (a wider content area, a different chart density) without
+  // the sidebar having to publish it.
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
     <div className="flex min-h-screen bg-white">
-      <DashboardSidebar activeTo={activeTo} />
+      <DashboardSidebar
+        activeTo={activeTo}
+        collapsed={collapsed}
+        onToggle={() => setCollapsed((c) => !c)}
+      />
       <div className="min-w-0 flex-1 bg-[#F3F7F6] p-3 sm:p-4 flex flex-col gap-3">
         <DashboardTopBar />
         <DashboardMobileNav activeTo={activeTo} />
