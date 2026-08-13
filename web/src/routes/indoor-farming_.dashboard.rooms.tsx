@@ -119,7 +119,11 @@ export default function RoomsScreen() {
     <>
       <ScreenHeading title="Rooms" blurb={NAV.blurb} />
 
-      <div className="grid gap-3 lg:grid-cols-[300px_minmax(0,1fr)] items-start">
+      {/* The rail grows with the viewport instead of sitting at a fixed 300px,
+          which left it stranded on a wide screen. The 30% ceiling is the point:
+          the rail gets easier to read, and the layout still holds the larger
+          share at every width. */}
+      <div className="grid gap-3 lg:grid-cols-[minmax(320px,30%)_minmax(0,1fr)] items-start">
         <div className="flex flex-col gap-3">
           <Panel title="Facility sites">
             <FacilityMap
@@ -214,7 +218,7 @@ function RoomRail({
         </div>
       </div>
 
-      <div className="flex max-h-[620px] flex-col gap-2 overflow-y-auto p-3">
+      <div className="flex max-h-[520px] xl:max-h-[680px] flex-col gap-2 overflow-y-auto p-3">
         {rooms.length === 0 && (
           <p className="py-6 text-center text-[12px] text-neutral-400" style={body}>
             No room matches that search.
@@ -246,7 +250,7 @@ function RoomRail({
                     style={{ color: z.online ? "#0E9F6E" : "#C4342F" }}
                   />
                   <span
-                    className="truncate text-[13px] font-medium text-neutral-900"
+                    className="truncate text-[14px] font-medium text-neutral-900"
                     style={display}
                   >
                     {z.short}
@@ -264,22 +268,22 @@ function RoomRail({
                 </span>
               </div>
 
-              <div className="mt-1 truncate text-[11px] text-neutral-500" style={body}>
+              <div className="mt-1 truncate text-[12px] text-neutral-500" style={body}>
                 {z.crop}
               </div>
-              <div className="mt-0.5 truncate text-[10px] text-neutral-400" style={body}>
+              <div className="mt-0.5 truncate text-[11px] text-neutral-400" style={body}>
                 {siteOf(z.id).city} · {layout?.location} · {z.area} m²
               </div>
 
               {z.online ? (
-                <div className="mt-2 grid grid-cols-3 gap-1">
+                <div className="mt-2 grid grid-cols-3 gap-1.5">
                   {(["airTemp", "vpd", "ec"] as const).map((k) => (
-                    <div key={k} className="rounded-lg bg-[#F3F7F6] px-1.5 py-1">
-                      <div className="text-[9px] text-neutral-400 truncate" style={body}>
+                    <div key={k} className="rounded-lg bg-[#F3F7F6] px-2 py-1.5">
+                      <div className="text-[10px] text-neutral-400 truncate" style={body}>
                         {METRICS[k].short}
                       </div>
                       <div
-                        className="text-[12px] font-semibold tabular-nums"
+                        className="text-[13px] font-semibold tabular-nums"
                         style={{ ...display, color: STATUS_TONE[statusOf(k, r[k], z)].color }}
                       >
                         {formatValue(k, r[k])}
