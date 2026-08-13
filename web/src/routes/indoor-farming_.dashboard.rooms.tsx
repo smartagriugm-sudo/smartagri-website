@@ -7,7 +7,14 @@ import {
   DASHBOARD_NAV,
   METRICS,
   PLANT_HEALTH_TONE,
+  GROW_SYSTEMS,
   ROOM_LAYOUTS,
+  roomsAtSite,
+  rowLabelOf,
+  rowPluralOf,
+  slotPluralOf,
+  siteOf,
+  slotLabelOf,
   ROOT_KEYS,
   STATUS_TONE,
   ZONES,
@@ -24,6 +31,7 @@ import {
 import { useDashboard } from "../lib/dashboard-state";
 import { Panel } from "../components/dashboard/parts";
 import { ScreenHeading } from "../components/dashboard/AppShell";
+import FacilityMap from "../components/dashboard/FacilityMap";
 
 export const Route = createFileRoute("/indoor-farming_/dashboard/rooms")({
   component: RoomsScreen,
@@ -45,15 +53,38 @@ const FILTERS: { key: Filter; label: string }[] = [
 // coloured against a target band. Same exclusion the room rollup applies.
 const SCHEDULED = new Set(["flow", "ppfd", "dli"]);
 
+// How one planting position is drawn, per system. Bags and buckets are chunky
+// and square-ish, gully holes are round because they are drilled holes, rack
+// sites are small squares packed tight under a lamp, tray cells are smallest.
+const SLOT_SHAPE: Record<string, string> = {
+  polybag: "rounded-[5px] h-5",
+  "dutch-bucket": "rounded-[3px] h-6",
+  gully: "rounded-full h-4",
+  "vertical-rack": "rounded-[2px] h-4",
+  tray: "rounded-[2px] h-3.5",
+};
+
+// And how the row itself is drawn: a raised bed has a border, a gully is a
+// sloped channel, a rack tier is a shelf with a lamp line above it.
+const ROW_STYLE: Record<string, string> = {
+  polybag: "gap-1 bg-[#FAFCFB] border border-[#0B6477]/10",
+  "dutch-bucket": "gap-1.5 bg-[#FAFCFB] border border-[#0B6477]/10 border-l-4 border-l-[#14919B]/40",
+  gully: "gap-1 bg-gradient-to-r from-[#E8F4F2] to-[#F3F7F6] border-y border-[#14919B]/25",
+  "vertical-rack": "gap-0.5 bg-[#FAFCFB] border-t-2 border-t-[#eda100]/50 border-x border-b border-[#0B6477]/10",
+  tray: "gap-0.5 bg-[#FAFCFB] border border-dashed border-[#0B6477]/15",
+};
+
 export default function RoomsScreen() {
   const { tick, zone, zoneId, setZoneId, zoneStatus } = useDashboard();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
+  const [siteId, setSiteId] = useState<string | null>(null);
 
   const rooms = useMemo(() => {
     const q = query.trim().toLowerCase();
     return ZONES.filter((z) => {
+      if (siteId && ROOM_LAYOUTS[z.id]?.siteId !== siteId) return false;
       if (q && !`${z.name} ${z.short} ${z.crop} ${z.stage}`.toLowerCase().includes(q)) {
         return false;
       }
@@ -63,7 +94,7 @@ export default function RoomsScreen() {
       if (filter === "offline") return !z.online;
       return true;
     });
-  }, [query, filter, tick]);
+  }, [query, filter, siteId, tick]);
 
   // Changing rooms must clear the open plant: the position it described belongs
   // to the room the operator just left.
@@ -72,12 +103,32 @@ export default function RoomsScreen() {
     setSelectedPlant(null);
   };
 
+  // Picking a site on the map narrows the rail, and it must move the main panel
+  // too. Filtering to Magelang while the layout still drew a room in Yogyakarta
+  // left the two halves of the screen describing different places.
+  const selectSite = (next: string | null) => {
+    setSiteId(next);
+    if (!next) return;
+    const here = roomsAtSite(next);
+    if (here.length > 0 && !here.some((z) => z.id === zoneId)) {
+      selectRoom(here[0].id);
+    }
+  };
+
   return (
     <>
       <ScreenHeading title="Rooms" blurb={NAV.blurb} />
 
       <div className="grid gap-3 lg:grid-cols-[300px_minmax(0,1fr)] items-start">
-        <RoomRail
+        <div className="flex flex-col gap-3">
+          <Panel title="Facility sites">
+            <FacilityMap
+              selectedSiteId={siteId}
+              onSelectSite={selectSite}
+              zoneStatus={zoneStatus}
+            />
+          </Panel>
+          <RoomRail
           rooms={rooms}
           tick={tick}
           zoneId={zoneId}
@@ -86,8 +137,9 @@ export default function RoomsScreen() {
           setQuery={setQuery}
           filter={filter}
           setFilter={setFilter}
-          onSelect={selectRoom}
-        />
+            onSelect={selectRoom}
+          />
+        </div>
 
         <div className="flex min-w-0 flex-col gap-3">
           <RoomLayoutPanel
@@ -174,6 +226,7 @@ function RoomRail({
           const status = zoneStatus(z);
           const layout = ROOM_LAYOUTS[z.id];
           const summary = plantingSummary(z);
+          const system = GROW_SYSTEMS[layout.system];
           const selected = z.id === zoneId;
           return (
             <button
@@ -215,7 +268,7 @@ function RoomRail({
                 {z.crop}
               </div>
               <div className="mt-0.5 truncate text-[10px] text-neutral-400" style={body}>
-                {layout?.location} · {z.area} m² · {z.stage}
+                {siteOf(z.id).city} · {layout?.location} · {z.area} m²
               </div>
 
               {z.online ? (
@@ -242,7 +295,7 @@ function RoomRail({
 
               <div className="mt-2 flex items-center gap-1.5 text-[10px] text-neutral-400" style={body}>
                 <Sprout className="w-3 h-3 shrink-0" />
-                {summary.planted} of {summary.total} positions planted
+                {system.label} · {summary.planted} of {summary.total} planted
               </div>
             </button>
           );
@@ -267,15 +320,12 @@ function RoomLayoutPanel({
   const plants = useMemo(() => plantsFor(zone), [zone]);
   const summary = plantingSummary(zone);
 
-  // One shape per system. A polybag bed, an NFT channel and a propagation tray
-  // do not look alike on the floor, and an operator matching the screen to the
-  // room in front of them needs the screen to look like the room.
-  const shape =
-    layout.system === "nft"
-      ? "rounded-full"
-      : layout.system === "tray"
-        ? "rounded-[3px]"
-        : "rounded-[5px]";
+  // One drawing per system. A polybag bed, a Dutch bucket line, a trapezoid
+  // gully and a vertical rack tier do not look alike on the floor, and an
+  // operator matching the screen to the room in front of them needs the screen
+  // to look like the room.
+  const system = GROW_SYSTEMS[layout.system];
+  const shape = SLOT_SHAPE[layout.system];
 
   const rows = Array.from({ length: layout.rows }, (_, r) =>
     plants.filter((p) => p.row === r),
@@ -286,7 +336,8 @@ function RoomLayoutPanel({
       title={`${zone.name} · planting layout`}
       action={
         <span className="text-[11px] text-neutral-400" style={body}>
-          {layout.rows} {layout.rowLabel.toLowerCase()}s · {layout.perRow} {layout.slotLabel.toLowerCase()}s each
+          {system.label} · {layout.rows} {rowPluralOf(layout).toLowerCase()} ·{" "}
+          {layout.perRow} {slotPluralOf(layout).toLowerCase()} each
         </span>
       }
     >
@@ -313,12 +364,10 @@ function RoomLayoutPanel({
                 className="w-16 shrink-0 truncate text-[10px] text-neutral-400"
                 style={body}
               >
-                {layout.rowLabel} {r + 1}
+                {rowLabelOf(layout)} {r + 1}
               </span>
               <div
-                className={`flex min-w-0 flex-1 gap-1 rounded-lg p-1.5 ${
-                  layout.system === "nft" ? "bg-[#F3F7F6]" : "bg-[#FAFCFB] border border-[#0B6477]/8"
-                }`}
+                className={`flex min-w-0 flex-1 items-center rounded-lg p-1.5 ${ROW_STYLE[layout.system]}`}
               >
                 {cells.map((p) => {
                   const tone = PLANT_HEALTH_TONE[p.health];
@@ -346,7 +395,8 @@ function RoomLayoutPanel({
       </div>
 
       <p className="mt-3 text-[11px] text-neutral-400" style={body}>
-        Select any {layout.slotLabel.toLowerCase()} to trace its batch, age, and harvest window.
+        {system.note} Select any {slotLabelOf(layout).toLowerCase()} to trace its
+        batch, age, and harvest window.
       </p>
     </Panel>
   );
@@ -362,7 +412,7 @@ function PlantDetail({ zone, plant }: { zone: Zone; plant: Plant }) {
 
   return (
     <Panel
-      title={`${layout.slotLabel} ${plant.id}`}
+      title={`${slotLabelOf(layout)} ${plant.id}`}
       action={
         <span
           className="rounded-full px-2 py-0.5 text-[11px] font-medium"
