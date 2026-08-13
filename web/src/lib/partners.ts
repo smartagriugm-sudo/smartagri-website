@@ -13,6 +13,15 @@ export type Partner = {
   name: string;
   logo: string | null;
   group: PartnerGroup;
+  /**
+   * Kept in the roster but withheld from public display.
+   *
+   * Archiving rather than deleting: the relationship is still recorded here,
+   * so restoring one is a matter of removing this flag, not finding the logo
+   * and the exact name again. Anything reading the roster for display should
+   * use ACTIVE_PARTNERS.
+   */
+  archived?: boolean;
 };
 
 // Real partner roster, ordered by organization type:
@@ -96,11 +105,17 @@ export const PARTNERS: Partner[] = [
   },
 
   // Private companies
-  { name: "NVIDIA", logo: partnerLogo("nvidia.svg"), group: "Private Company" },
+  {
+    name: "NVIDIA",
+    logo: partnerLogo("nvidia.svg"),
+    group: "Private Company",
+    archived: true,
+  },
   {
     name: "Indosat Ooredoo Hutchison",
     logo: partnerLogo("indosat-ooredoo-hutchison.png"),
     group: "Private Company",
+    archived: true,
   },
   {
     name: "Wilmar International",
@@ -192,3 +207,6 @@ export const PARTNERS: Partner[] = [
     group: "Farmer Group",
   },
 ];
+
+/** The roster as shown to visitors, with archived partners withheld. */
+export const ACTIVE_PARTNERS: Partner[] = PARTNERS.filter((p) => !p.archived);
