@@ -1,5 +1,5 @@
 import { body } from "../lib/fonts";
-import { PARTNERS } from "../lib/partners";
+import { ACTIVE_PARTNERS } from "../lib/partners";
 
 // Continuous grayscale logo marquee. Sits on a white background; the side
 // gradients fade the logos in and out at the edges.
@@ -13,7 +13,7 @@ export default function PartnerMarquee() {
         className="flex w-max animate-marquee gap-14 items-center"
         style={{ animationDuration: "120s" }}
       >
-        {[...PARTNERS, ...PARTNERS].map((partner, i) => (
+        {[...ACTIVE_PARTNERS, ...ACTIVE_PARTNERS].map((partner, i) => (
           <div
             key={i}
             className="flex items-center gap-3 shrink-0 grayscale opacity-60"
