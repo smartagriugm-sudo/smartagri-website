@@ -1156,44 +1156,182 @@ export function alertsAt(index: number): AlertRow[] {
  * The three systems in the facility are laid out differently, so the shape is
  * described here rather than assumed by the renderer.
  */
-export type GrowSystem = "polybag" | "nft" | "tray";
+export type GrowSystem =
+  | "polybag"
+  | "dutch-bucket"
+  | "gully"
+  | "vertical-rack"
+  | "tray";
+
+/**
+ * How each growing system is written and drawn.
+ *
+ * The five systems are laid out differently on the floor, so the screen draws
+ * them differently too. An operator matching the screen to the building in
+ * front of them should be able to tell a polybag house from a Dutch bucket
+ * house without reading a single label.
+ */
+export const GROW_SYSTEMS: Record<
+  GrowSystem,
+  {
+    label: string;
+    rowLabel: string;
+    slotLabel: string;
+    /** Plurals are spelled out: "gully" pluralised by rule gives "gullys". */
+    rowPlural: string;
+    slotPlural: string;
+    note: string;
+  }
+> = {
+  polybag: {
+    label: "Polybag",
+    rowLabel: "Bed",
+    slotLabel: "Bag",
+    rowPlural: "Beds",
+    slotPlural: "Bags",
+    note: "Substrate bags on raised beds, drip fed per bag.",
+  },
+  "dutch-bucket": {
+    label: "Dutch bucket",
+    rowLabel: "Line",
+    slotLabel: "Bucket",
+    rowPlural: "Lines",
+    slotPlural: "Buckets",
+    note: "Paired buckets on a shared drain line, one dripper each.",
+  },
+  gully: {
+    label: "Trapezoid gully",
+    rowLabel: "Gully",
+    slotLabel: "Hole",
+    rowPlural: "Gullies",
+    slotPlural: "Holes",
+    note: "Trapezoidal channels on a slope, film of solution recirculating.",
+  },
+  "vertical-rack": {
+    label: "Vertical rack",
+    rowLabel: "Tier",
+    slotLabel: "Site",
+    rowPlural: "Tiers",
+    slotPlural: "Sites",
+    note: "Stacked tiers under fixed lamps, top tier nearest the fixture.",
+  },
+  tray: {
+    label: "Propagation tray",
+    rowLabel: "Tray",
+    slotLabel: "Cell",
+    rowPlural: "Trays",
+    slotPlural: "Cells",
+    note: "Plug trays on benches, misted on a timer.",
+  },
+};
+
+/* ------------------------------------------------------------ facilities */
+
+/**
+ * A physical site. Rooms belong to one.
+ *
+ * COORDINATES ARE PLACEHOLDERS. They put each site in roughly the right part
+ * of Java so the map is usable, but they are not surveyed positions. Replace
+ * `lat` and `lng` with the real ones before this is shown to anyone outside
+ * the team; nothing else needs to change when you do.
+ */
+export type Site = {
+  id: string;
+  name: string;
+  city: string;
+  lat: number;
+  lng: number;
+  note: string;
+};
+
+export const SITES: Site[] = [
+  {
+    id: "ugm",
+    name: "UGM Research Campus",
+    city: "Sleman, Yogyakarta",
+    lat: -7.7713,
+    lng: 110.3773,
+    note: "Main research site: greenhouses, plant factory, propagation.",
+  },
+  {
+    id: "kulonprogo",
+    name: "Kulon Progo Field Station",
+    city: "Kulon Progo, Yogyakarta",
+    lat: -7.8264,
+    lng: 110.1644,
+    note: "Lowland trial site for horticulture under plastic.",
+  },
+  {
+    id: "magelang",
+    name: "Magelang Highland Unit",
+    city: "Magelang, Central Java",
+    lat: -7.4797,
+    lng: 110.2177,
+    note: "Highland unit, cooler nights, leafy crops.",
+  },
+];
+
+/* ------------------------------------------------------- room grow layout */
 
 export type RoomLayout = {
   system: GrowSystem;
-  /** How many rows, beds, or channels. */
+  /** How many rows, beds, channels, or tiers. */
   rows: number;
   /** Positions per row. */
   perRow: number;
-  /** What one row is called in this system. */
-  rowLabel: string;
-  /** What one position is called in this system. */
-  slotLabel: string;
-  /** Where the room physically sits, for the room list. */
+  /** Which site the room stands on. */
+  siteId: string;
+  /** Where in that site it sits, for the room list. */
   location: string;
 };
+
+/** Row and slot wording follows the system, so the two are never out of step. */
+export function rowLabelOf(layout: RoomLayout): string {
+  return GROW_SYSTEMS[layout.system].rowLabel;
+}
+export function slotLabelOf(layout: RoomLayout): string {
+  return GROW_SYSTEMS[layout.system].slotLabel;
+}
+export function rowPluralOf(layout: RoomLayout): string {
+  return GROW_SYSTEMS[layout.system].rowPlural;
+}
+export function slotPluralOf(layout: RoomLayout): string {
+  return GROW_SYSTEMS[layout.system].slotPlural;
+}
 
 export const ROOM_LAYOUTS: Record<string, RoomLayout> = {
   "gh-1": {
     system: "polybag", rows: 6, perRow: 20,
-    rowLabel: "Bed", slotLabel: "Bag", location: "North block · Bay A",
+    siteId: "ugm", location: "North block · Bay A",
   },
   "pf-a": {
-    system: "nft", rows: 5, perRow: 18,
-    rowLabel: "Channel", slotLabel: "Hole", location: "Plant factory · Level 1",
+    system: "vertical-rack", rows: 5, perRow: 18,
+    siteId: "ugm", location: "Plant factory · Level 1",
   },
   "pf-b": {
-    system: "nft", rows: 5, perRow: 18,
-    rowLabel: "Channel", slotLabel: "Hole", location: "Plant factory · Level 2",
+    system: "gully", rows: 5, perRow: 18,
+    siteId: "kulonprogo", location: "Hydroponic hall · East",
   },
   nur: {
     system: "tray", rows: 4, perRow: 24,
-    rowLabel: "Tray", slotLabel: "Cell", location: "Propagation house",
+    siteId: "ugm", location: "Propagation house",
   },
   "gh-2": {
-    system: "polybag", rows: 4, perRow: 16,
-    rowLabel: "Bed", slotLabel: "Bag", location: "South block · Trial bay",
+    system: "dutch-bucket", rows: 4, perRow: 16,
+    siteId: "magelang", location: "Trial bay · South",
   },
 };
+
+/** The site a room stands on. */
+export function siteOf(zoneId: string): Site {
+  const id = ROOM_LAYOUTS[zoneId]?.siteId;
+  return SITES.find((x) => x.id === id) ?? SITES[0];
+}
+
+/** Rooms standing on one site. */
+export function roomsAtSite(siteId: string): Zone[] {
+  return ZONES.filter((z) => ROOM_LAYOUTS[z.id]?.siteId === siteId);
+}
 
 export type PlantHealth = "healthy" | "watch" | "problem" | "empty";
 
@@ -1271,7 +1409,7 @@ export function plantsFor(zone: Zone): Plant[] {
       const progress = age / cycle;
 
       out.push({
-        id: `${layout.rowLabel} ${r + 1} · ${String(c + 1).padStart(2, "0")}`,
+        id: `${rowLabelOf(layout)} ${r + 1} · ${String(c + 1).padStart(2, "0")}`,
         row: r,
         col: c,
         variety: zone.crop,
