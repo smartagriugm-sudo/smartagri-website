@@ -114,7 +114,7 @@ export default function FacilityMap({
   return (
     <div>
       <div className="relative overflow-hidden rounded-xl border border-[#0B6477]/10">
-        <div ref={holder} className="h-[260px] w-full bg-[#F3F7F6]" />
+        <div ref={holder} className="h-[280px] xl:h-[340px] w-full bg-[#F3F7F6]" />
         {!ready && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#F3F7F6]">
             <span className="text-[12px] text-neutral-400" style={body}>
@@ -147,10 +147,10 @@ export default function FacilityMap({
                 style={{ backgroundColor: tone.color }}
               />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[12px] font-medium text-neutral-800" style={display}>
+                <span className="block truncate text-[13px] font-medium text-neutral-800" style={display}>
                   {site.name}
                 </span>
-                <span className="block truncate text-[10px] text-neutral-400" style={body}>
+                <span className="block truncate text-[11px] text-neutral-400" style={body}>
                   {site.city} · {rooms.length} room{rooms.length === 1 ? "" : "s"}
                 </span>
               </span>
