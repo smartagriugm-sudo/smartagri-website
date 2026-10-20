@@ -19,7 +19,7 @@ media_folder: web/public/brand/uploads
 public_folder: /brand/uploads
 
 # Setiap gambar yang di-upload lewat CMS otomatis dikonversi ke WebP
-# (maks 2048px, kualitas 85) sebelum disimpan — menjaga repo tetap kecil
+# (maks 2048px, kualitas 85) sebelum disimpan, menjaga repo tetap kecil
 # dan halaman cepat dimuat. File lama bisa dikompres manual dengan
 # `node scripts/optimize-uploads.mjs` di folder web/.
 #
@@ -52,7 +52,7 @@ collections:
     format: json
     identifier_field: title
     slug: "{{fields.date}}-{{slug}}"
-    summary: "{{title}} — {{category}}, {{date}}"
+    summary: "{{title}} · {{category}}, {{date}}"
     sortable_fields: [date, title, category]
     fields:
       - name: category
@@ -89,13 +89,13 @@ collections:
         label: Author
         widget: string
         required: false
-        hint: "Nama penulis, mis. Fahmi Arsyad — tampil di bawah judul artikel."
+        hint: "Nama penulis, mis. Fahmi Arsyad. Tampil di bawah judul artikel."
       - name: tags
         label: Tags
         widget: select
         multiple: true
         required: false
-        hint: "Pilih satu atau beberapa tag topik (opsional) — tampil di akhir artikel."
+        hint: "Pilih satu atau beberapa tag topik (opsional), tampil di akhir artikel."
         options:
           - Smart Farming
           - Precision Agriculture
@@ -123,7 +123,7 @@ collections:
         label: Cover image
         widget: image
         required: false
-        hint: "Opsional — landscape ≥800px. Tanpa foto, kartu memakai gradien brand."
+        hint: "Opsional: landscape ≥800px. Tanpa foto, kartu memakai gradien brand."
       - name: body
         label: Body
         widget: markdown
@@ -134,7 +134,7 @@ collections:
           (rata kiri, teks mengalir di kanan), "Keterangan|right" (rata kanan),
           atau tanpa tambahan untuk lebar penuh. Galeri sejajar: tulis 2+
           gambar dalam SATU baris yang sama (mode markdown), contoh
-          "![](/a.jpg) ![](/b.jpg) ![](/c.jpg)" — otomatis tampil
+          "![](/a.jpg) ![](/b.jpg) ![](/c.jpg)", otomatis tampil
           berdampingan, maksimal 3 per baris lalu menyambung ke baris baru.
 
   - name: publications
@@ -149,7 +149,7 @@ collections:
     format: json
     identifier_field: title
     slug: "{{fields.year}}-{{slug}}"
-    summary: "{{year}} — {{title}}"
+    summary: "{{year}} · {{title}}"
     sortable_fields: [year, title]
     fields:
       - name: year
@@ -171,7 +171,7 @@ collections:
         widget: string
         required: false
         hint: >-
-          Contoh: https://doi.org/10.1016/... — tanggal terbit, volume,
+          Contoh: https://doi.org/10.1016/..., tanggal terbit, volume,
           halaman, penerbit, dan jumlah sitasi diambil OTOMATIS dari DOI ini
           (via Crossref) di halaman detail publikasi.
       - name: abstract
@@ -179,14 +179,14 @@ collections:
         widget: text
         required: false
         hint: >-
-          Abstrak/deskripsi publikasi — tampil di halaman detail. Disarankan
+          Abstrak/deskripsi publikasi, tampil di halaman detail. Disarankan
           diisi manual karena banyak penerbit tidak menyetor abstrak ke
           Crossref.
       - name: cover
         label: Cover image
         widget: image
         required: false
-        hint: "Opsional — figure/gambar utama paper untuk halaman detail."
+        hint: "Opsional: figure/gambar utama paper untuk halaman detail."
 
   - name: gallery
     label: Gallery
@@ -200,7 +200,7 @@ collections:
     format: json
     identifier_field: title
     slug: "{{fields.date}}-{{slug}}"
-    summary: "{{title}} — {{category}}, {{date}}"
+    summary: "{{title}} · {{category}}, {{date}}"
     sortable_fields: [date, title, category]
     fields:
       - name: title
@@ -235,7 +235,7 @@ collections:
         label: Cover image
         widget: image
         required: false
-        hint: "Opsional — foto sampul album (landscape). Tanpa foto, kartu memakai gradien brand."
+        hint: "Opsional: foto sampul album (landscape). Tanpa foto, kartu memakai gradien brand."
       - name: photos
         label: Photos
         widget: list

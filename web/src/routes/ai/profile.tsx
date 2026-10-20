@@ -106,14 +106,14 @@ function SaveButton({
 }
 
 function formatDate(value?: string) {
-  if (!value) return '—'
+  if (!value) return '-'
   try {
     return new Date(value).toLocaleString('en-GB', {
       dateStyle: 'medium',
       timeStyle: 'short',
     })
   } catch {
-    return '—'
+    return '-'
   }
 }
 
@@ -569,7 +569,7 @@ function ProfilePage() {
                       style={body}
                     >
                       <Mail className="h-4 w-4 text-neutral-400" />
-                      {user?.email ?? '—'}
+                      {user?.email ?? '-'}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">

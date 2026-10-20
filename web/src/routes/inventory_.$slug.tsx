@@ -197,7 +197,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
         </div>
       </div>
 
-      {/* Rate card — portable instruments only */}
+      {/* Rate card: portable instruments only */}
       {!installed && (
         <div className="mt-8 grid sm:grid-cols-3 gap-3">
           <RateCard label="Internal, self" value={instrument.rate_internal_self} unit={instrument.unit} />

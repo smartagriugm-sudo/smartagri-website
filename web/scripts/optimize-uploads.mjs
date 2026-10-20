@@ -3,7 +3,7 @@
 // update all references in src/content/**/*.json, then delete the originals.
 //
 // New uploads from the /admin CMS are converted automatically by Sveltia
-// (see public/admin/config.yml → media_libraries) — run this only for files
+// (see public/admin/config.yml → media_libraries); run this only for files
 // that entered the repo by other means:
 //   node scripts/optimize-uploads.mjs
 import { readdir, readFile, rename, rm, writeFile } from "node:fs/promises";

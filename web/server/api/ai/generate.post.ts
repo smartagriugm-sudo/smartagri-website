@@ -9,7 +9,7 @@ import type { DocumentType } from '../../../src/lib/ai/types'
 
 const VALID_DOC_TYPES = Object.keys(DOCUMENT_TYPE_CONFIGS) as DocumentType[]
 
-// POST /api/ai/generate — proxy for the document generator.
+// POST /api/ai/generate: proxy for the document generator.
 export default defineEventHandler(async (event) => {
   if (!(await isAuthorized(getRequestHeader(event, 'authorization')))) {
     return jsonResponse({ error: 'Unauthorized' }, 401)

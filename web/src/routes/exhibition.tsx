@@ -523,7 +523,7 @@ function ExhibitionPage() {
         </div>
       </section>
 
-      {/* Documents / downloads — hidden until content is ready */}
+      {/* Documents / downloads, hidden until content is ready */}
       {SHOW_DOWNLOADS && (
       <section id="documents" className="bg-[#F3F7F6] scroll-mt-24">
         <div className="max-w-[1360px] mx-auto px-6 md:px-12 py-16 md:py-20">

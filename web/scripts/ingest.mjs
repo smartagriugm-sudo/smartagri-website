@@ -4,7 +4,7 @@
 // Run from web/:  node scripts/ingest.mjs
 // Reads Supabase + AI config from web/.env; override via real env vars.
 // REQUIRED extra env: INGEST_EMAIL / INGEST_PASSWORD  (a signed-up RA account,
-// used to satisfy the row-level-security insert policy — no service_role).
+// used to satisfy the row-level-security insert policy, no service_role).
 // Point OLLAMA_URL at a server that has bge-m3 (e.g. the tunnel) if localhost
 // does not.
 import { readFileSync, readdirSync, existsSync } from 'node:fs'

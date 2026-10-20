@@ -87,6 +87,15 @@ function truncateWords(text, words = 45) {
   return parts.slice(0, words).join(" ") + "…";
 }
 
+// Brand rule: no em dashes anywhere on the site. The old site (and the
+// translator) use them mostly in datelines (a city and date, then the dash),
+// where a colon reads naturally. A closing bold marker stays attached to the
+// colon ("**Bali**:" and "**Bali:**" both keep valid Markdown).
+const EM_DASH = new RegExp(`\\s*${String.fromCharCode(0x2014)}(\\*{0,2})\\s*`, "g");
+function noEmDash(s = "") {
+  return s.replace(EM_DASH, ":$1 ");
+}
+
 function sanitize(s) {
   return s.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
 }
@@ -446,11 +455,19 @@ async function main() {
       continue;
     }
     if (translated) {
-      original = { lang: "id", title, excerpt, body };
+      original = {
+        lang: "id",
+        title: noEmDash(title),
+        excerpt: noEmDash(excerpt),
+        body: noEmDash(body),
+      };
       title = translated.title || title;
       excerpt = translated.excerpt || excerpt;
       body = translated.body || body;
     }
+    title = noEmDash(title);
+    excerpt = noEmDash(excerpt);
+    body = noEmDash(body);
 
     const note = {
       wpId: post.id,
