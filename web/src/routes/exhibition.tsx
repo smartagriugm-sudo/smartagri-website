@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { useEffect } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -15,6 +15,7 @@ import { A } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
 import {
   ARCHITECTURE,
+  EXHIBITION_LIVE,
   DOCUMENTS,
   EVENT,
   EVENT_TAG,
@@ -27,6 +28,9 @@ import Footer from "../components/Footer";
 import CallToAction from "../components/CallToAction";
 
 export const Route = createFileRoute("/exhibition")({
+  beforeLoad: () => {
+    if (!EXHIBITION_LIVE) throw redirect({ to: "/" });
+  },
   component: ExhibitionPage,
   head: () => ({
     meta: [

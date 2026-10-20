@@ -5,6 +5,7 @@ import { Globe, Instagram, Linkedin, Mail, MessageSquare, PenLine } from "lucide
 import { A } from "../lib/assets";
 import { body, display } from "../lib/fonts";
 import { trackClick, trackView } from "../lib/links-analytics";
+import { EXHIBITION_LIVE } from "../lib/exhibition";
 
 export const Route = createFileRoute("/links")({
   component: LinksPage,
@@ -109,6 +110,7 @@ function LinksPage() {
         </motion.div>
 
         {/* Highlighted, hard-to-miss guest book CTA for the exhibition. */}
+        {EXHIBITION_LIVE && (
         <motion.a
           href="/guestbook"
           onClick={() => trackClick("INAGRITECH Guest Book")}
@@ -135,6 +137,7 @@ function LinksPage() {
           <PenLine size={19} strokeWidth={2} className="shrink-0" />
           INAGRITECH 2026 - Sign Guest Book
         </motion.a>
+        )}
 
         <nav className="mt-9 flex w-full flex-col gap-4 sm:mt-11">
           {LINKS.map((item, i) => (

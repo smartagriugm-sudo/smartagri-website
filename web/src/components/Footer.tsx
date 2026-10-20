@@ -3,6 +3,7 @@ import { Instagram, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { A } from "../lib/assets";
 import { body } from "../lib/fonts";
 import { RESEARCH_AREAS } from "../lib/research";
+import { EXHIBITION_LIVE } from "../lib/exhibition";
 
 // lucide has no WhatsApp glyph; this is the standard mark, colored via currentColor.
 function WhatsAppIcon({ className = "" }: { className?: string }) {
@@ -25,7 +26,7 @@ const centerLinks = [
   { label: "Publications", href: "/publications" },
   { label: "Field Notes", href: "/field-notes" },
   { label: "Gallery", href: "/gallery" },
-  { label: "Exhibition", href: "/exhibition" },
+  ...(EXHIBITION_LIVE ? [{ label: "Exhibition", href: "/exhibition" }] : []),
   { label: "About Us", href: "/about-us" },
   { label: "Contact", href: "/contact-us" },
 ];
