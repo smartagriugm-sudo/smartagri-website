@@ -10,6 +10,15 @@ Di-deploy otomatis oleh Vercel dari branch `main`.
 
 Aplikasinya ada di folder `web/`.
 
+## Dokumen
+
+- `CLAUDE.md` aturan brand dan implementasi, baca sebelum mengubah kode
+- `INDOOR-FARMING-DASHBOARD.md` catatan pengembangan dashboard Indoor Farming:
+  struktur, alasan tiap keputusan rancangan, dan daftar yang masih menggantung
+- `PROMPT-LANJUTAN-DASHBOARD.md` prompt siap pakai untuk melanjutkan di sesi
+  Claude Code baru
+- `SETUP-*.md` panduan setup per fitur
+
 ## Menjalankan secara lokal
 
 Butuh **Node 20 atau lebih baru** (versi yang dipakai ada di `.nvmrc`).

@@ -5,6 +5,7 @@
 //
 // Run from the web/ directory:  node scripts/import-wp.mjs
 // Optional: IMPORT_LIMIT=5 node scripts/import-wp.mjs   (cap new posts per run)
+import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -253,9 +254,18 @@ async function importImage(url, wpId, idx) {
   try {
     const clean = url.split("?")[0];
     const ext = path.extname(new URL(clean).pathname).toLowerCase();
-    // Only raster formats go through sharp; leave anything exotic as-is.
-    if (![".png", ".jpg", ".jpeg", ".webp"].includes(ext)) return null;
-    const base = sanitize(path.basename(new URL(clean).pathname, ext)) || "img";
+    // Anything we know is not a raster image is left alone. An empty extension
+    // is NOT one of those cases: Google Docs exports its images to
+    // lh7-rt.googleusercontent.com under extensionless paths, and rejecting
+    // those on sight is what left eight of them hotlinked to Google instead of
+    // imported. Download first and let sharp decide; it throws on anything it
+    // cannot read, and the catch below turns that into the same null.
+    if (ext && ![".png", ".jpg", ".jpeg", ".webp"].includes(ext)) return null;
+    const base =
+      sanitize(path.basename(new URL(clean).pathname, ext)) ||
+      // Extensionless URLs carry no useful basename, so fall back to a short
+      // hash of the URL. It is stable, so re-running never re-downloads.
+      createHash("sha1").update(clean).digest("hex").slice(0, 10);
     const name = `${wpId}-${idx}-${base}.webp`;
     const dest = path.join(IMG_DIR, name);
     const publicPath = `${IMG_PUBLIC_PREFIX}/${name}`;
