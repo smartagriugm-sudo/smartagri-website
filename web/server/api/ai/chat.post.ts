@@ -5,7 +5,7 @@ import { isAuthorized } from '../../../src/lib/ai/auth-guard'
 import { embedText } from '../../../src/lib/ai/embed'
 import { retrieveChunks } from '../../../src/lib/ai/retrieve'
 
-// POST /api/ai/chat — proxy for the chat assistant. The browser only ever
+// POST /api/ai/chat: proxy for the chat assistant. The browser only ever
 // talks to this route, never to Ollama directly.
 export default defineEventHandler(async (event) => {
   if (!(await isAuthorized(getRequestHeader(event, 'authorization')))) {
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
       : CHAT_SYSTEM_PROMPT
 
   // RAG: retrieve SmartAgri knowledge-base excerpts relevant to the latest user
-  // message and add them as grounding context. Fully best-effort — if embeddings
+  // message and add them as grounding context. Fully best-effort: if embeddings
   // or the vector store are unavailable, the chat continues without RAG.
   const lastUser = [...(messages as Array<{ role?: string; content?: unknown }>)]
     .reverse()

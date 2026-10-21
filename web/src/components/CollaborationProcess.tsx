@@ -10,7 +10,7 @@ import {
 import { accent, body, display } from "../lib/fonts";
 import PartnerMarquee from "./PartnerMarquee";
 
-// "Our collaboration process" — six steps from first contact to a working,
+// "Our collaboration process": six steps from first contact to a working,
 // supported deployment, in smartagri's voice. TODO: team to review the copy.
 const steps = [
   {

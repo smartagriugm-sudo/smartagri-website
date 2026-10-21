@@ -13,6 +13,7 @@ import {
 import { A } from "../lib/assets";
 import { body } from "../lib/fonts";
 import { useAuth } from "../lib/auth/auth";
+import { EXHIBITION_LIVE } from "../lib/exhibition";
 
 type NavLink = { label: string; to: string; highlight?: boolean };
 
@@ -193,7 +194,7 @@ export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
     ...(showAi ? [AI_LINK] : []),
     ...mediaLinks,
     ...tailLinks,
-    eventLink,
+    ...(EXHIBITION_LIVE ? [eventLink] : []),
   ];
 
   useEffect(() => {
@@ -228,7 +229,7 @@ export default function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           {tailLinks.map((link) => (
             <DesktopNavLink key={link.to} link={link} />
           ))}
-          <DesktopNavLink link={eventLink} />
+          {EXHIBITION_LIVE && <DesktopNavLink link={eventLink} />}
           <Link
             to="/contact-us"
             className="h-10 px-5 rounded-full bg-[#45DFB1] text-[#0B2A22] font-medium flex items-center whitespace-nowrap hover:bg-[#80ED99] transition-colors"

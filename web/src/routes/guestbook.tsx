@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { A } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
+import { EXHIBITION_LIVE } from "../lib/exhibition";
 import {
   GUEST_ROLES,
   guestbookEnabled,
@@ -12,6 +13,9 @@ import {
 } from "../lib/guestbook";
 
 export const Route = createFileRoute("/guestbook")({
+  beforeLoad: () => {
+    if (!EXHIBITION_LIVE) throw redirect({ to: "/" });
+  },
   component: GuestbookPage,
   head: () => ({
     meta: [

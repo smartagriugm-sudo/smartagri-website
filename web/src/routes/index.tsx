@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, createLink } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Leaf } from "lucide-react";
 import { A } from "../lib/assets";
@@ -13,6 +13,9 @@ import CallToAction from "../components/CallToAction";
 import Footer from "../components/Footer";
 
 export const Route = createFileRoute("/")({ component: Home });
+
+// Router-typed Link that also accepts framer-motion animation props.
+const MotionLink = createLink(motion.a);
 
 function AnimatedWords({ text, baseDelay }: { text: string; baseDelay: number }) {
   return (
@@ -98,7 +101,8 @@ function Hero() {
         >
           Turning field data into healthier, more sustainable harvests.
         </motion.p>
-        <motion.button
+        <MotionLink
+          to="/research"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.0, duration: 0.5 }}
@@ -106,7 +110,7 @@ function Hero() {
           style={body}
         >
           Explore our research
-        </motion.button>
+        </MotionLink>
       </div>
 
       <footer className="w-full max-w-[1360px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-6 z-10">

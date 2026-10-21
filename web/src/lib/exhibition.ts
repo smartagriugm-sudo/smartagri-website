@@ -15,6 +15,12 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { partnerLogo } from "./assets";
 
+// Master switch for the annual exhibition. While false, every entry point
+// (header, footer, /links guest book button) is hidden and /exhibition and
+// /guestbook redirect home; /guestbook/admin stays reachable for the data.
+// Flip back to true (and update EVENT below) for the next edition.
+export const EXHIBITION_LIVE = false;
+
 // Tag used to surface event coverage (news, daily reports, after report) from
 // Field Notes on the exhibition page. Articles tagged with this in /admin
 // show up automatically.

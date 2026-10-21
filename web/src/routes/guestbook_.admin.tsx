@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Download, Loader2, Users } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
+import { EXHIBITION_LIVE } from "../lib/exhibition";
 import SiteHeader from "../components/SiteHeader";
 import { useAuth } from "../lib/auth/auth";
 import {
@@ -106,11 +107,11 @@ function AdminContent() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <a
-              href="/exhibition"
+              href={EXHIBITION_LIVE ? "/exhibition" : "/"}
               className="mb-3 inline-flex items-center gap-1.5 text-sm text-[#0B6477] hover:text-[#14919B]"
               style={body}
             >
-              <ArrowLeft size={15} /> Back to INAGRITECH
+              <ArrowLeft size={15} /> {EXHIBITION_LIVE ? "Back to INAGRITECH" : "Back to home"}
             </a>
             <h1
               style={display}

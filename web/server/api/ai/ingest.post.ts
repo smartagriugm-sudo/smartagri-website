@@ -3,7 +3,7 @@ import { jsonResponse } from '../../../src/lib/ai/ollama'
 import { isAuthorized } from '../../../src/lib/ai/auth-guard'
 import { embedText } from '../../../src/lib/ai/embed'
 
-// POST /api/ai/ingest — add a team document to the RAG knowledge base. The
+// POST /api/ai/ingest: add a team document to the RAG knowledge base. The
 // client extracts text and posts { title, text, ref, userId }; the server
 // chunks + embeds (bge-m3) + stores the rows in Supabase using the caller's
 // own JWT (RLS, no service_role).
