@@ -9,141 +9,56 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsOfUseRouteImport } from './routes/terms-of-use'
-import { Route as TechnologyRouteImport } from './routes/technology'
-import { Route as TeamRouteImport } from './routes/team'
-import { Route as SignUpRouteImport } from './routes/sign-up'
-import { Route as SignInRouteImport } from './routes/sign-in'
-import { Route as ResearchRouteImport } from './routes/research'
-import { Route as PublicationsRouteImport } from './routes/publications'
-import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
-import { Route as LinksRouteImport } from './routes/links'
-import { Route as InventoryRouteImport } from './routes/inventory'
-import { Route as IndoorFarmingRouteImport } from './routes/indoor-farming'
-import { Route as ImpactRouteImport } from './routes/impact'
-import { Route as GuestbookRouteImport } from './routes/guestbook'
-import { Route as GalleryRouteImport } from './routes/gallery'
-import { Route as FieldNotesRouteImport } from './routes/field-notes'
-import { Route as ExhibitionRouteImport } from './routes/exhibition'
-import { Route as DemoRouteImport } from './routes/demo'
-import { Route as ContactUsRouteImport } from './routes/contact-us'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutUsRouteImport } from './routes/about-us'
 import { Route as AiRouteRouteImport } from './routes/ai/route'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as ContactUsRouteImport } from './routes/contact-us'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as ExhibitionRouteImport } from './routes/exhibition'
+import { Route as FieldNotesRouteImport } from './routes/field-notes'
+import { Route as GalleryRouteImport } from './routes/gallery'
+import { Route as GuestbookRouteImport } from './routes/guestbook'
+import { Route as ImpactRouteImport } from './routes/impact'
+import { Route as IndoorFarmingRouteImport } from './routes/indoor-farming'
+import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as LinksRouteImport } from './routes/links'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
+import { Route as PublicationsRouteImport } from './routes/publications'
+import { Route as ResearchRouteImport } from './routes/research'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as TeamRouteImport } from './routes/team'
+import { Route as TechnologyRouteImport } from './routes/technology'
+import { Route as TermsOfUseRouteImport } from './routes/terms-of-use'
 import { Route as AiIndexRouteImport } from './routes/ai/index'
-import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
-import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
-import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
-import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
-import { Route as InventoryStatsRouteImport } from './routes/inventory_.stats'
-import { Route as InventorySlugRouteImport } from './routes/inventory_.$slug'
-import { Route as IndoorFarmingKnowledgeRouteImport } from './routes/indoor-farming_.knowledge'
-import { Route as IndoorFarmingInstrumentationRouteImport } from './routes/indoor-farming_.instrumentation'
-import { Route as IndoorFarmingDashboardRouteImport } from './routes/indoor-farming_.dashboard'
-import { Route as IndoorFarmingSectionRouteImport } from './routes/indoor-farming_.$section'
-import { Route as GuestbookAdminRouteImport } from './routes/guestbook_.admin'
-import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
-import { Route as AiProfileRouteImport } from './routes/ai/profile'
-import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
-import { Route as AiGenerateRouteImport } from './routes/ai/generate'
 import { Route as AiChatRouteImport } from './routes/ai/chat'
-import { Route as IndoorFarmingDashboardIndexRouteImport } from './routes/indoor-farming_.dashboard.index'
-import { Route as IndoorFarmingDashboardSensorsRouteImport } from './routes/indoor-farming_.dashboard.sensors'
-import { Route as IndoorFarmingDashboardRoomsRouteImport } from './routes/indoor-farming_.dashboard.rooms'
-import { Route as IndoorFarmingDashboardNutritionRouteImport } from './routes/indoor-farming_.dashboard.nutrition'
-import { Route as IndoorFarmingDashboardClimateRouteImport } from './routes/indoor-farming_.dashboard.climate'
-import { Route as IndoorFarmingDashboardCalibrationRouteImport } from './routes/indoor-farming_.dashboard.calibration'
-import { Route as IndoorFarmingDashboardAnalyticsRouteImport } from './routes/indoor-farming_.dashboard.analytics'
+import { Route as AiGenerateRouteImport } from './routes/ai/generate'
+import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
+import { Route as AiProfileRouteImport } from './routes/ai/profile'
+import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
+import { Route as GuestbookAdminRouteImport } from './routes/guestbook_.admin'
+import { Route as IndoorFarmingSectionRouteImport } from './routes/indoor-farming_.$section'
+import { Route as IndoorFarmingDashboardRouteImport } from './routes/indoor-farming_.dashboard'
+import { Route as IndoorFarmingInstrumentationRouteImport } from './routes/indoor-farming_.instrumentation'
+import { Route as IndoorFarmingKnowledgeRouteImport } from './routes/indoor-farming_.knowledge'
+import { Route as InventorySlugRouteImport } from './routes/inventory_.$slug'
+import { Route as InventoryStatsRouteImport } from './routes/inventory_.stats'
+import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
+import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
+import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
+import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
 import { Route as IndoorFarmingSectionGroupRouteImport } from './routes/indoor-farming_.$section_.$group'
+import { Route as IndoorFarmingDashboardIndexRouteImport } from './routes/indoor-farming_.dashboard.index'
+import { Route as IndoorFarmingDashboardAnalyticsRouteImport } from './routes/indoor-farming_.dashboard.analytics'
+import { Route as IndoorFarmingDashboardCalibrationRouteImport } from './routes/indoor-farming_.dashboard.calibration'
+import { Route as IndoorFarmingDashboardClimateRouteImport } from './routes/indoor-farming_.dashboard.climate'
+import { Route as IndoorFarmingDashboardNutritionRouteImport } from './routes/indoor-farming_.dashboard.nutrition'
+import { Route as IndoorFarmingDashboardRoomsRouteImport } from './routes/indoor-farming_.dashboard.rooms'
+import { Route as IndoorFarmingDashboardSensorsRouteImport } from './routes/indoor-farming_.dashboard.sensors'
 
-const TermsOfUseRoute = TermsOfUseRouteImport.update({
-  id: '/terms-of-use',
-  path: '/terms-of-use',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TechnologyRoute = TechnologyRouteImport.update({
-  id: '/technology',
-  path: '/technology',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TeamRoute = TeamRouteImport.update({
-  id: '/team',
-  path: '/team',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignUpRoute = SignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignInRoute = SignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResearchRoute = ResearchRouteImport.update({
-  id: '/research',
-  path: '/research',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PublicationsRoute = PublicationsRouteImport.update({
-  id: '/publications',
-  path: '/publications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
-  id: '/privacy-policy',
-  path: '/privacy-policy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LinksRoute = LinksRouteImport.update({
-  id: '/links',
-  path: '/links',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InventoryRoute = InventoryRouteImport.update({
-  id: '/inventory',
-  path: '/inventory',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndoorFarmingRoute = IndoorFarmingRouteImport.update({
-  id: '/indoor-farming',
-  path: '/indoor-farming',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ImpactRoute = ImpactRouteImport.update({
-  id: '/impact',
-  path: '/impact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GuestbookRoute = GuestbookRouteImport.update({
-  id: '/guestbook',
-  path: '/guestbook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GalleryRoute = GalleryRouteImport.update({
-  id: '/gallery',
-  path: '/gallery',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FieldNotesRoute = FieldNotesRouteImport.update({
-  id: '/field-notes',
-  path: '/field-notes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExhibitionRoute = ExhibitionRouteImport.update({
-  id: '/exhibition',
-  path: '/exhibition',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoRoute = DemoRouteImport.update({
-  id: '/demo',
-  path: '/demo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactUsRoute = ContactUsRouteImport.update({
-  id: '/contact-us',
-  path: '/contact-us',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutUsRoute = AboutUsRouteImport.update({
@@ -156,9 +71,94 @@ const AiRouteRoute = AiRouteRouteImport.update({
   path: '/ai',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ContactUsRoute = ContactUsRouteImport.update({
+  id: '/contact-us',
+  path: '/contact-us',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExhibitionRoute = ExhibitionRouteImport.update({
+  id: '/exhibition',
+  path: '/exhibition',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FieldNotesRoute = FieldNotesRouteImport.update({
+  id: '/field-notes',
+  path: '/field-notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GalleryRoute = GalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuestbookRoute = GuestbookRouteImport.update({
+  id: '/guestbook',
+  path: '/guestbook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImpactRoute = ImpactRouteImport.update({
+  id: '/impact',
+  path: '/impact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndoorFarmingRoute = IndoorFarmingRouteImport.update({
+  id: '/indoor-farming',
+  path: '/indoor-farming',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryRoute = InventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinksRoute = LinksRouteImport.update({
+  id: '/links',
+  path: '/links',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicationsRoute = PublicationsRouteImport.update({
+  id: '/publications',
+  path: '/publications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResearchRoute = ResearchRouteImport.update({
+  id: '/research',
+  path: '/research',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TechnologyRoute = TechnologyRouteImport.update({
+  id: '/technology',
+  path: '/technology',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsOfUseRoute = TermsOfUseRouteImport.update({
+  id: '/terms-of-use',
+  path: '/terms-of-use',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiIndexRoute = AiIndexRouteImport.update({
@@ -166,39 +166,44 @@ const AiIndexRoute = AiIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AiRouteRoute,
 } as any)
-const TeamSlugRoute = TeamSlugRouteImport.update({
-  id: '/team_/$slug',
-  path: '/team/$slug',
+const AiChatRoute = AiChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AiRouteRoute,
+} as any)
+const AiGenerateRoute = AiGenerateRouteImport.update({
+  id: '/generate',
+  path: '/generate',
+  getParentRoute: () => AiRouteRoute,
+} as any)
+const AiKnowledgeRoute = AiKnowledgeRouteImport.update({
+  id: '/knowledge',
+  path: '/knowledge',
+  getParentRoute: () => AiRouteRoute,
+} as any)
+const AiProfileRoute = AiProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AiRouteRoute,
+} as any)
+const FieldNotesSlugRoute = FieldNotesSlugRouteImport.update({
+  id: '/field-notes_/$slug',
+  path: '/field-notes/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResearchSlugRoute = ResearchSlugRouteImport.update({
-  id: '/research_/$slug',
-  path: '/research/$slug',
+const GuestbookAdminRoute = GuestbookAdminRouteImport.update({
+  id: '/guestbook_/admin',
+  path: '/guestbook/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PublicationsSlugRoute = PublicationsSlugRouteImport.update({
-  id: '/publications_/$slug',
-  path: '/publications/$slug',
+const IndoorFarmingSectionRoute = IndoorFarmingSectionRouteImport.update({
+  id: '/indoor-farming_/$section',
+  path: '/indoor-farming/$section',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LinksInsightsRoute = LinksInsightsRouteImport.update({
-  id: '/links_/insights',
-  path: '/links/insights',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InventoryStatsRoute = InventoryStatsRouteImport.update({
-  id: '/inventory_/stats',
-  path: '/inventory/stats',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InventorySlugRoute = InventorySlugRouteImport.update({
-  id: '/inventory_/$slug',
-  path: '/inventory/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndoorFarmingKnowledgeRoute = IndoorFarmingKnowledgeRouteImport.update({
-  id: '/indoor-farming_/knowledge',
-  path: '/indoor-farming/knowledge',
+const IndoorFarmingDashboardRoute = IndoorFarmingDashboardRouteImport.update({
+  id: '/indoor-farming_/dashboard',
+  path: '/indoor-farming/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndoorFarmingInstrumentationRoute =
@@ -207,80 +212,51 @@ const IndoorFarmingInstrumentationRoute =
     path: '/indoor-farming/instrumentation',
     getParentRoute: () => rootRouteImport,
   } as any)
-const IndoorFarmingDashboardRoute = IndoorFarmingDashboardRouteImport.update({
-  id: '/indoor-farming_/dashboard',
-  path: '/indoor-farming/dashboard',
+const IndoorFarmingKnowledgeRoute = IndoorFarmingKnowledgeRouteImport.update({
+  id: '/indoor-farming_/knowledge',
+  path: '/indoor-farming/knowledge',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndoorFarmingSectionRoute = IndoorFarmingSectionRouteImport.update({
-  id: '/indoor-farming_/$section',
-  path: '/indoor-farming/$section',
+const InventorySlugRoute = InventorySlugRouteImport.update({
+  id: '/inventory_/$slug',
+  path: '/inventory/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuestbookAdminRoute = GuestbookAdminRouteImport.update({
-  id: '/guestbook_/admin',
-  path: '/guestbook/admin',
+const InventoryStatsRoute = InventoryStatsRouteImport.update({
+  id: '/inventory_/stats',
+  path: '/inventory/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FieldNotesSlugRoute = FieldNotesSlugRouteImport.update({
-  id: '/field-notes_/$slug',
-  path: '/field-notes/$slug',
+const LinksInsightsRoute = LinksInsightsRouteImport.update({
+  id: '/links_/insights',
+  path: '/links/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AiProfileRoute = AiProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AiRouteRoute,
+const PublicationsSlugRoute = PublicationsSlugRouteImport.update({
+  id: '/publications_/$slug',
+  path: '/publications/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AiKnowledgeRoute = AiKnowledgeRouteImport.update({
-  id: '/knowledge',
-  path: '/knowledge',
-  getParentRoute: () => AiRouteRoute,
+const ResearchSlugRoute = ResearchSlugRouteImport.update({
+  id: '/research_/$slug',
+  path: '/research/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AiGenerateRoute = AiGenerateRouteImport.update({
-  id: '/generate',
-  path: '/generate',
-  getParentRoute: () => AiRouteRoute,
+const TeamSlugRoute = TeamSlugRouteImport.update({
+  id: '/team_/$slug',
+  path: '/team/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AiChatRoute = AiChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => AiRouteRoute,
-} as any)
+const IndoorFarmingSectionGroupRoute =
+  IndoorFarmingSectionGroupRouteImport.update({
+    id: '/indoor-farming_/$section_/$group',
+    path: '/indoor-farming/$section/$group',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const IndoorFarmingDashboardIndexRoute =
   IndoorFarmingDashboardIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => IndoorFarmingDashboardRoute,
-  } as any)
-const IndoorFarmingDashboardSensorsRoute =
-  IndoorFarmingDashboardSensorsRouteImport.update({
-    id: '/sensors',
-    path: '/sensors',
-    getParentRoute: () => IndoorFarmingDashboardRoute,
-  } as any)
-const IndoorFarmingDashboardRoomsRoute =
-  IndoorFarmingDashboardRoomsRouteImport.update({
-    id: '/rooms',
-    path: '/rooms',
-    getParentRoute: () => IndoorFarmingDashboardRoute,
-  } as any)
-const IndoorFarmingDashboardNutritionRoute =
-  IndoorFarmingDashboardNutritionRouteImport.update({
-    id: '/nutrition',
-    path: '/nutrition',
-    getParentRoute: () => IndoorFarmingDashboardRoute,
-  } as any)
-const IndoorFarmingDashboardClimateRoute =
-  IndoorFarmingDashboardClimateRouteImport.update({
-    id: '/climate',
-    path: '/climate',
-    getParentRoute: () => IndoorFarmingDashboardRoute,
-  } as any)
-const IndoorFarmingDashboardCalibrationRoute =
-  IndoorFarmingDashboardCalibrationRouteImport.update({
-    id: '/calibration',
-    path: '/calibration',
     getParentRoute: () => IndoorFarmingDashboardRoute,
   } as any)
 const IndoorFarmingDashboardAnalyticsRoute =
@@ -289,11 +265,35 @@ const IndoorFarmingDashboardAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => IndoorFarmingDashboardRoute,
   } as any)
-const IndoorFarmingSectionGroupRoute =
-  IndoorFarmingSectionGroupRouteImport.update({
-    id: '/indoor-farming_/$section_/$group',
-    path: '/indoor-farming/$section/$group',
-    getParentRoute: () => rootRouteImport,
+const IndoorFarmingDashboardCalibrationRoute =
+  IndoorFarmingDashboardCalibrationRouteImport.update({
+    id: '/calibration',
+    path: '/calibration',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
+const IndoorFarmingDashboardClimateRoute =
+  IndoorFarmingDashboardClimateRouteImport.update({
+    id: '/climate',
+    path: '/climate',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
+const IndoorFarmingDashboardNutritionRoute =
+  IndoorFarmingDashboardNutritionRouteImport.update({
+    id: '/nutrition',
+    path: '/nutrition',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
+const IndoorFarmingDashboardRoomsRoute =
+  IndoorFarmingDashboardRoomsRouteImport.update({
+    id: '/rooms',
+    path: '/rooms',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
+  } as any)
+const IndoorFarmingDashboardSensorsRoute =
+  IndoorFarmingDashboardSensorsRouteImport.update({
+    id: '/sensors',
+    path: '/sensors',
+    getParentRoute: () => IndoorFarmingDashboardRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -623,130 +623,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms-of-use': {
-      id: '/terms-of-use'
-      path: '/terms-of-use'
-      fullPath: '/terms-of-use'
-      preLoaderRoute: typeof TermsOfUseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/technology': {
-      id: '/technology'
-      path: '/technology'
-      fullPath: '/technology'
-      preLoaderRoute: typeof TechnologyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/team': {
-      id: '/team'
-      path: '/team'
-      fullPath: '/team'
-      preLoaderRoute: typeof TeamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/research': {
-      id: '/research'
-      path: '/research'
-      fullPath: '/research'
-      preLoaderRoute: typeof ResearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/publications': {
-      id: '/publications'
-      path: '/publications'
-      fullPath: '/publications'
-      preLoaderRoute: typeof PublicationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy-policy': {
-      id: '/privacy-policy'
-      path: '/privacy-policy'
-      fullPath: '/privacy-policy'
-      preLoaderRoute: typeof PrivacyPolicyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/links': {
-      id: '/links'
-      path: '/links'
-      fullPath: '/links'
-      preLoaderRoute: typeof LinksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inventory': {
-      id: '/inventory'
-      path: '/inventory'
-      fullPath: '/inventory'
-      preLoaderRoute: typeof InventoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/indoor-farming': {
-      id: '/indoor-farming'
-      path: '/indoor-farming'
-      fullPath: '/indoor-farming'
-      preLoaderRoute: typeof IndoorFarmingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/impact': {
-      id: '/impact'
-      path: '/impact'
-      fullPath: '/impact'
-      preLoaderRoute: typeof ImpactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guestbook': {
-      id: '/guestbook'
-      path: '/guestbook'
-      fullPath: '/guestbook'
-      preLoaderRoute: typeof GuestbookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/gallery': {
-      id: '/gallery'
-      path: '/gallery'
-      fullPath: '/gallery'
-      preLoaderRoute: typeof GalleryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/field-notes': {
-      id: '/field-notes'
-      path: '/field-notes'
-      fullPath: '/field-notes'
-      preLoaderRoute: typeof FieldNotesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/exhibition': {
-      id: '/exhibition'
-      path: '/exhibition'
-      fullPath: '/exhibition'
-      preLoaderRoute: typeof ExhibitionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo': {
-      id: '/demo'
-      path: '/demo'
-      fullPath: '/demo'
-      preLoaderRoute: typeof DemoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact-us': {
-      id: '/contact-us'
-      path: '/contact-us'
-      fullPath: '/contact-us'
-      preLoaderRoute: typeof ContactUsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about-us': {
@@ -763,11 +644,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/contact-us': {
+      id: '/contact-us'
+      path: '/contact-us'
+      fullPath: '/contact-us'
+      preLoaderRoute: typeof ContactUsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/exhibition': {
+      id: '/exhibition'
+      path: '/exhibition'
+      fullPath: '/exhibition'
+      preLoaderRoute: typeof ExhibitionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/field-notes': {
+      id: '/field-notes'
+      path: '/field-notes'
+      fullPath: '/field-notes'
+      preLoaderRoute: typeof FieldNotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gallery': {
+      id: '/gallery'
+      path: '/gallery'
+      fullPath: '/gallery'
+      preLoaderRoute: typeof GalleryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guestbook': {
+      id: '/guestbook'
+      path: '/guestbook'
+      fullPath: '/guestbook'
+      preLoaderRoute: typeof GuestbookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/impact': {
+      id: '/impact'
+      path: '/impact'
+      fullPath: '/impact'
+      preLoaderRoute: typeof ImpactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/indoor-farming': {
+      id: '/indoor-farming'
+      path: '/indoor-farming'
+      fullPath: '/indoor-farming'
+      preLoaderRoute: typeof IndoorFarmingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory': {
+      id: '/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof InventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/links': {
+      id: '/links'
+      path: '/links'
+      fullPath: '/links'
+      preLoaderRoute: typeof LinksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/publications': {
+      id: '/publications'
+      path: '/publications'
+      fullPath: '/publications'
+      preLoaderRoute: typeof PublicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/research': {
+      id: '/research'
+      path: '/research'
+      fullPath: '/research'
+      preLoaderRoute: typeof ResearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/technology': {
+      id: '/technology'
+      path: '/technology'
+      fullPath: '/technology'
+      preLoaderRoute: typeof TechnologyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms-of-use': {
+      id: '/terms-of-use'
+      path: '/terms-of-use'
+      fullPath: '/terms-of-use'
+      preLoaderRoute: typeof TermsOfUseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ai/': {
@@ -777,102 +777,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiIndexRouteImport
       parentRoute: typeof AiRouteRoute
     }
-    '/team_/$slug': {
-      id: '/team_/$slug'
-      path: '/team/$slug'
-      fullPath: '/team/$slug'
-      preLoaderRoute: typeof TeamSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/research_/$slug': {
-      id: '/research_/$slug'
-      path: '/research/$slug'
-      fullPath: '/research/$slug'
-      preLoaderRoute: typeof ResearchSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/publications_/$slug': {
-      id: '/publications_/$slug'
-      path: '/publications/$slug'
-      fullPath: '/publications/$slug'
-      preLoaderRoute: typeof PublicationsSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/links_/insights': {
-      id: '/links_/insights'
-      path: '/links/insights'
-      fullPath: '/links/insights'
-      preLoaderRoute: typeof LinksInsightsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inventory_/stats': {
-      id: '/inventory_/stats'
-      path: '/inventory/stats'
-      fullPath: '/inventory/stats'
-      preLoaderRoute: typeof InventoryStatsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inventory_/$slug': {
-      id: '/inventory_/$slug'
-      path: '/inventory/$slug'
-      fullPath: '/inventory/$slug'
-      preLoaderRoute: typeof InventorySlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/indoor-farming_/knowledge': {
-      id: '/indoor-farming_/knowledge'
-      path: '/indoor-farming/knowledge'
-      fullPath: '/indoor-farming/knowledge'
-      preLoaderRoute: typeof IndoorFarmingKnowledgeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/indoor-farming_/instrumentation': {
-      id: '/indoor-farming_/instrumentation'
-      path: '/indoor-farming/instrumentation'
-      fullPath: '/indoor-farming/instrumentation'
-      preLoaderRoute: typeof IndoorFarmingInstrumentationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/indoor-farming_/dashboard': {
-      id: '/indoor-farming_/dashboard'
-      path: '/indoor-farming/dashboard'
-      fullPath: '/indoor-farming/dashboard'
-      preLoaderRoute: typeof IndoorFarmingDashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/indoor-farming_/$section': {
-      id: '/indoor-farming_/$section'
-      path: '/indoor-farming/$section'
-      fullPath: '/indoor-farming/$section'
-      preLoaderRoute: typeof IndoorFarmingSectionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guestbook_/admin': {
-      id: '/guestbook_/admin'
-      path: '/guestbook/admin'
-      fullPath: '/guestbook/admin'
-      preLoaderRoute: typeof GuestbookAdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/field-notes_/$slug': {
-      id: '/field-notes_/$slug'
-      path: '/field-notes/$slug'
-      fullPath: '/field-notes/$slug'
-      preLoaderRoute: typeof FieldNotesSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ai/profile': {
-      id: '/ai/profile'
-      path: '/profile'
-      fullPath: '/ai/profile'
-      preLoaderRoute: typeof AiProfileRouteImport
-      parentRoute: typeof AiRouteRoute
-    }
-    '/ai/knowledge': {
-      id: '/ai/knowledge'
-      path: '/knowledge'
-      fullPath: '/ai/knowledge'
-      preLoaderRoute: typeof AiKnowledgeRouteImport
+    '/ai/chat': {
+      id: '/ai/chat'
+      path: '/chat'
+      fullPath: '/ai/chat'
+      preLoaderRoute: typeof AiChatRouteImport
       parentRoute: typeof AiRouteRoute
     }
     '/ai/generate': {
@@ -882,53 +791,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiGenerateRouteImport
       parentRoute: typeof AiRouteRoute
     }
-    '/ai/chat': {
-      id: '/ai/chat'
-      path: '/chat'
-      fullPath: '/ai/chat'
-      preLoaderRoute: typeof AiChatRouteImport
+    '/ai/knowledge': {
+      id: '/ai/knowledge'
+      path: '/knowledge'
+      fullPath: '/ai/knowledge'
+      preLoaderRoute: typeof AiKnowledgeRouteImport
       parentRoute: typeof AiRouteRoute
+    }
+    '/ai/profile': {
+      id: '/ai/profile'
+      path: '/profile'
+      fullPath: '/ai/profile'
+      preLoaderRoute: typeof AiProfileRouteImport
+      parentRoute: typeof AiRouteRoute
+    }
+    '/field-notes_/$slug': {
+      id: '/field-notes_/$slug'
+      path: '/field-notes/$slug'
+      fullPath: '/field-notes/$slug'
+      preLoaderRoute: typeof FieldNotesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guestbook_/admin': {
+      id: '/guestbook_/admin'
+      path: '/guestbook/admin'
+      fullPath: '/guestbook/admin'
+      preLoaderRoute: typeof GuestbookAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/indoor-farming_/$section': {
+      id: '/indoor-farming_/$section'
+      path: '/indoor-farming/$section'
+      fullPath: '/indoor-farming/$section'
+      preLoaderRoute: typeof IndoorFarmingSectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/indoor-farming_/dashboard': {
+      id: '/indoor-farming_/dashboard'
+      path: '/indoor-farming/dashboard'
+      fullPath: '/indoor-farming/dashboard'
+      preLoaderRoute: typeof IndoorFarmingDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/indoor-farming_/instrumentation': {
+      id: '/indoor-farming_/instrumentation'
+      path: '/indoor-farming/instrumentation'
+      fullPath: '/indoor-farming/instrumentation'
+      preLoaderRoute: typeof IndoorFarmingInstrumentationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/indoor-farming_/knowledge': {
+      id: '/indoor-farming_/knowledge'
+      path: '/indoor-farming/knowledge'
+      fullPath: '/indoor-farming/knowledge'
+      preLoaderRoute: typeof IndoorFarmingKnowledgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory_/$slug': {
+      id: '/inventory_/$slug'
+      path: '/inventory/$slug'
+      fullPath: '/inventory/$slug'
+      preLoaderRoute: typeof InventorySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory_/stats': {
+      id: '/inventory_/stats'
+      path: '/inventory/stats'
+      fullPath: '/inventory/stats'
+      preLoaderRoute: typeof InventoryStatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/links_/insights': {
+      id: '/links_/insights'
+      path: '/links/insights'
+      fullPath: '/links/insights'
+      preLoaderRoute: typeof LinksInsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/publications_/$slug': {
+      id: '/publications_/$slug'
+      path: '/publications/$slug'
+      fullPath: '/publications/$slug'
+      preLoaderRoute: typeof PublicationsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/research_/$slug': {
+      id: '/research_/$slug'
+      path: '/research/$slug'
+      fullPath: '/research/$slug'
+      preLoaderRoute: typeof ResearchSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team_/$slug': {
+      id: '/team_/$slug'
+      path: '/team/$slug'
+      fullPath: '/team/$slug'
+      preLoaderRoute: typeof TeamSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/indoor-farming_/$section_/$group': {
+      id: '/indoor-farming_/$section_/$group'
+      path: '/indoor-farming/$section/$group'
+      fullPath: '/indoor-farming/$section/$group'
+      preLoaderRoute: typeof IndoorFarmingSectionGroupRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/indoor-farming_/dashboard/': {
       id: '/indoor-farming_/dashboard/'
       path: '/'
       fullPath: '/indoor-farming/dashboard/'
       preLoaderRoute: typeof IndoorFarmingDashboardIndexRouteImport
-      parentRoute: typeof IndoorFarmingDashboardRoute
-    }
-    '/indoor-farming_/dashboard/sensors': {
-      id: '/indoor-farming_/dashboard/sensors'
-      path: '/sensors'
-      fullPath: '/indoor-farming/dashboard/sensors'
-      preLoaderRoute: typeof IndoorFarmingDashboardSensorsRouteImport
-      parentRoute: typeof IndoorFarmingDashboardRoute
-    }
-    '/indoor-farming_/dashboard/rooms': {
-      id: '/indoor-farming_/dashboard/rooms'
-      path: '/rooms'
-      fullPath: '/indoor-farming/dashboard/rooms'
-      preLoaderRoute: typeof IndoorFarmingDashboardRoomsRouteImport
-      parentRoute: typeof IndoorFarmingDashboardRoute
-    }
-    '/indoor-farming_/dashboard/nutrition': {
-      id: '/indoor-farming_/dashboard/nutrition'
-      path: '/nutrition'
-      fullPath: '/indoor-farming/dashboard/nutrition'
-      preLoaderRoute: typeof IndoorFarmingDashboardNutritionRouteImport
-      parentRoute: typeof IndoorFarmingDashboardRoute
-    }
-    '/indoor-farming_/dashboard/climate': {
-      id: '/indoor-farming_/dashboard/climate'
-      path: '/climate'
-      fullPath: '/indoor-farming/dashboard/climate'
-      preLoaderRoute: typeof IndoorFarmingDashboardClimateRouteImport
-      parentRoute: typeof IndoorFarmingDashboardRoute
-    }
-    '/indoor-farming_/dashboard/calibration': {
-      id: '/indoor-farming_/dashboard/calibration'
-      path: '/calibration'
-      fullPath: '/indoor-farming/dashboard/calibration'
-      preLoaderRoute: typeof IndoorFarmingDashboardCalibrationRouteImport
       parentRoute: typeof IndoorFarmingDashboardRoute
     }
     '/indoor-farming_/dashboard/analytics': {
@@ -938,12 +910,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndoorFarmingDashboardAnalyticsRouteImport
       parentRoute: typeof IndoorFarmingDashboardRoute
     }
-    '/indoor-farming_/$section_/$group': {
-      id: '/indoor-farming_/$section_/$group'
-      path: '/indoor-farming/$section/$group'
-      fullPath: '/indoor-farming/$section/$group'
-      preLoaderRoute: typeof IndoorFarmingSectionGroupRouteImport
-      parentRoute: typeof rootRouteImport
+    '/indoor-farming_/dashboard/calibration': {
+      id: '/indoor-farming_/dashboard/calibration'
+      path: '/calibration'
+      fullPath: '/indoor-farming/dashboard/calibration'
+      preLoaderRoute: typeof IndoorFarmingDashboardCalibrationRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
+    '/indoor-farming_/dashboard/climate': {
+      id: '/indoor-farming_/dashboard/climate'
+      path: '/climate'
+      fullPath: '/indoor-farming/dashboard/climate'
+      preLoaderRoute: typeof IndoorFarmingDashboardClimateRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
+    '/indoor-farming_/dashboard/nutrition': {
+      id: '/indoor-farming_/dashboard/nutrition'
+      path: '/nutrition'
+      fullPath: '/indoor-farming/dashboard/nutrition'
+      preLoaderRoute: typeof IndoorFarmingDashboardNutritionRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
+    '/indoor-farming_/dashboard/rooms': {
+      id: '/indoor-farming_/dashboard/rooms'
+      path: '/rooms'
+      fullPath: '/indoor-farming/dashboard/rooms'
+      preLoaderRoute: typeof IndoorFarmingDashboardRoomsRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
+    }
+    '/indoor-farming_/dashboard/sensors': {
+      id: '/indoor-farming_/dashboard/sensors'
+      path: '/sensors'
+      fullPath: '/indoor-farming/dashboard/sensors'
+      preLoaderRoute: typeof IndoorFarmingDashboardSensorsRouteImport
+      parentRoute: typeof IndoorFarmingDashboardRoute
     }
   }
 }
