@@ -1,14 +1,19 @@
+import { useEffect, useState } from "react";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+import { MotionConfig, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import { indoorFarmingPhoto } from "../lib/assets";
-import { findIFSection } from "../lib/indoor-farming";
+import { findIFSection, type IFTopic } from "../lib/indoor-farming";
 import SiteHeader from "../components/SiteHeader";
 import IndoorFarmingNav from "../components/IndoorFarmingNav";
 import IndoorFarmingCrumb from "../components/IndoorFarmingCrumb";
-import PhotoSlot from "../components/PhotoSlot";
 import Footer from "../components/Footer";
+import AmbientWash from "../components/AmbientWash";
+import CallToAction from "../components/CallToAction";
+import { RevealPhoto } from "../components/ResearchPhotos";
+import { EASE, MaskLine, META } from "../components/NoteParts";
+import { Eyebrow, GroupCard, IFNotFound, fadeUp } from "../components/IndoorFarmingParts";
 
 export const Route = createFileRoute("/indoor-farming_/$section_/$group")({
   component: IndoorFarmingGroupPage,
@@ -39,33 +44,87 @@ export const Route = createFileRoute("/indoor-farming_/$section_/$group")({
   notFoundComponent: GroupNotFound,
 });
 
+// One group of topics: masthead with its photo, the topics with a sticky
+// contents list that follows the scroll, previous and next within the
+// section, the rest of the section, and the landing call to action.
+
 function GroupNotFound() {
+  return <IFNotFound message="That topic does not exist in the Indoor Farming section." />;
+}
+
+// The topic nearest the top of the viewport.
+function useActiveTopic(key: string) {
+  const [active, setActive] = useState(key.split(",")[0]);
+  useEffect(() => {
+    const ids = key.split(",");
+    const onScroll = () => {
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top < 220) current = id;
+      }
+      setActive(current);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [key]);
+  return active;
+}
+
+const points = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.15 } },
+};
+const point = {
+  hidden: { opacity: 0, x: -10 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.45, ease: EASE } },
+};
+
+function TopicArticle({ topic, first }: { topic: IFTopic; first: boolean }) {
   return (
-    <main>
-      <SiteHeader />
-      <section className="bg-[#F3F7F6]">
-        <div className="max-w-[760px] mx-auto px-6 py-24 text-center flex flex-col items-center gap-4">
-          <h1
-            className="text-3xl md:text-4xl font-semibold text-neutral-900"
-            style={display}
-          >
-            Page not found
-          </h1>
-          <p className="text-neutral-500" style={body}>
-            That topic does not exist in the Indoor Farming section.
-          </p>
-          <Link
-            to="/indoor-farming"
-            className="inline-flex items-center gap-2 text-[#0B6477] font-medium hover:underline"
+    <article
+      id={topic.slug}
+      className={`scroll-mt-40 ${first ? "" : "border-t border-[#0B6477]/10 pt-12 md:pt-14"}`}
+    >
+      <motion.h2
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, amount: 0.5 }}
+        className="text-3xl font-semibold leading-[1.1] tracking-[-0.03em] text-neutral-900 md:text-4xl"
+        style={display}
+      >
+        <MaskLine delay={0}>{topic.title}</MaskLine>
+      </motion.h2>
+      <motion.p
+        {...fadeUp(0.1)}
+        className="mt-5 max-w-[680px] text-base leading-relaxed text-neutral-600 md:text-lg"
+        style={body}
+      >
+        {topic.summary}
+      </motion.p>
+      <motion.ul
+        variants={points}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, amount: 0.4 }}
+        className="mt-7 grid gap-3"
+      >
+        {topic.points.map((p) => (
+          <motion.li
+            key={p}
+            variants={point}
+            className="flex items-start gap-3 rounded-2xl border border-[#0B6477]/10 bg-white/80 px-5 py-4 text-[15px] leading-snug text-neutral-800 backdrop-blur"
             style={body}
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Indoor Farming
-          </Link>
-        </div>
-      </section>
-      <Footer />
-    </main>
+            <span className="mt-px grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#45DFB1]/25 text-[#0B6477]">
+              <Check className="h-3 w-3" strokeWidth={3} />
+            </span>
+            {p}
+          </motion.li>
+        ))}
+      </motion.ul>
+    </article>
   );
 }
 
@@ -73,179 +132,232 @@ function IndoorFarmingGroupPage() {
   const { section: sectionSlug, group: groupSlug } = Route.useLoaderData();
   const section = findIFSection(sectionSlug);
   const group = section?.groups.find((g) => g.slug === groupSlug);
+  const active = useActiveTopic(group?.topics.map((t) => t.slug).join(",") ?? "");
   if (!section || !group) return <GroupNotFound />;
 
+  const index = section.groups.indexOf(group);
+  const prev = section.groups[index - 1];
+  const next = section.groups[index + 1];
   const siblings = section.groups.filter((g) => g.slug !== group.slug);
 
   return (
-    <main>
-      <SiteHeader />
-      <IndoorFarmingNav />
-
-      {/* Header */}
-      <section className="bg-white">
-        <div className="max-w-[1100px] mx-auto px-6 md:px-12 pt-8 md:pt-10 pb-10 md:pb-14">
-          <IndoorFarmingCrumb
-            section={{ slug: section.slug, label: section.label }}
-            current={group.title}
-          />
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: "easeOut" }}
-            className="mt-6 grid lg:grid-cols-[1.15fr_0.85fr] gap-10 lg:gap-14 items-center"
-          >
-            <div>
-              <div
-                className="flex items-center gap-2 text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-3"
-                style={body}
-              >
-                <group.icon className="w-4 h-4" />
-                {section.label}
-              </div>
-              <h1
-                className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.035em] leading-[1.05] text-neutral-900"
-                style={display}
-              >
-                {group.title}
-              </h1>
-              <p
-                className="mt-5 text-base md:text-lg font-normal text-neutral-500 leading-relaxed"
-                style={body}
-              >
-                {group.lede ?? group.intro}
-              </p>
-            </div>
-            <PhotoSlot
-              src={indoorFarmingPhoto(`${section.slug}-${group.slug}.webp`)}
-              alt={group.title}
-              icon={group.icon}
-              caption={`Photo: ${group.title.toLowerCase()}`}
-              ratio="aspect-[4/3]"
-            />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Topics */}
-      <section className="bg-[#F3F7F6]">
-        <div className="max-w-[1100px] mx-auto px-6 md:px-12 py-14 md:py-20">
-          <div className="grid sm:grid-cols-2 gap-5">
-            {group.topics.map((topic, i) => (
-              <motion.article
-                key={topic.slug}
-                id={topic.slug}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{
-                  delay: Math.min(i, 3) * 0.06,
-                  duration: 0.45,
-                  ease: "easeOut",
-                }}
-                className={`scroll-mt-28 flex flex-col gap-3 rounded-3xl border border-[#0B6477]/10 bg-white p-7 ${
-                  group.topics.length % 2 === 1 &&
-                  i === group.topics.length - 1
-                    ? "sm:col-span-2"
-                    : ""
-                }`}
-              >
-                <h2
-                  className="text-lg font-medium text-neutral-900 leading-snug"
-                  style={display}
-                >
-                  {topic.title}
-                </h2>
-                <p
-                  className="text-sm font-normal text-neutral-500 leading-relaxed"
-                  style={body}
-                >
-                  {topic.summary}
-                </p>
-                <ul className="mt-1 flex flex-col gap-2">
-                  {topic.points.map((point) => (
-                    <li
-                      key={point}
-                      className="flex items-start gap-2.5 text-sm font-normal text-neutral-600"
-                      style={body}
-                    >
-                      <Check className="w-4 h-4 shrink-0 mt-0.5 text-[#14919B]" />
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              </motion.article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Siblings within the same section */}
-      {siblings.length > 0 && (
-        <section className="bg-white">
-          <div className="max-w-[1100px] mx-auto px-6 md:px-12 py-14 md:py-20">
-            <h2
-              className="text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-neutral-900 mb-8"
-              style={display}
-            >
-              More in <span style={accent}>{section.label}</span>
-            </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {siblings.map((other) => (
-                <Link
-                  key={other.slug}
-                  to="/indoor-farming/$section/$group"
-                  params={{ section: section.slug, group: other.slug }}
-                  className="group rounded-2xl bg-[#F3F7F6] border border-[#0B6477]/10 p-6 flex items-center gap-4 hover:border-[#14919B]/40 transition-colors"
-                >
-                  <div className="w-11 h-11 rounded-xl bg-[#0B6477] flex items-center justify-center shrink-0">
-                    <other.icon className="w-5 h-5 text-[#45DFB1]" />
-                  </div>
-                  <span
-                    className="text-base font-medium text-neutral-900 leading-snug group-hover:text-[#0B6477] transition-colors"
+    <MotionConfig reducedMotion="user">
+      <main>
+        <SiteHeader subnav={<IndoorFarmingNav />} />
+        <div className="relative overflow-clip bg-white">
+          <AmbientWash count={7} />
+          <div className="relative">
+            {/* Masthead */}
+            <section className="mx-auto max-w-[1360px] px-6 pb-16 pt-12 md:px-12 md:pb-20 md:pt-16">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+                <IndoorFarmingCrumb
+                  section={{ slug: section.slug, label: section.label }}
+                  current={group.title}
+                />
+              </motion.div>
+              <div className="mt-8 grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-14">
+                <div className="lg:col-span-7">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Eyebrow>
+                      <group.icon className="h-3.5 w-3.5" aria-hidden="true" />
+                      {section.label}
+                    </Eyebrow>
+                  </motion.div>
+                  <motion.h1
+                    initial="hidden"
+                    animate="show"
+                    className="mt-5 text-[44px] font-semibold leading-[1.0] tracking-[-0.04em] text-neutral-900 sm:text-6xl md:text-[72px]"
                     style={display}
                   >
-                    {other.title}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+                    <MaskLine delay={0.05}>{group.title}</MaskLine>
+                  </motion.h1>
+                  <motion.p
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
+                    className="mt-7 max-w-[640px] text-base leading-relaxed text-neutral-600 md:text-lg"
+                    style={body}
+                  >
+                    {group.lede ?? group.intro}
+                  </motion.p>
+                  <motion.p
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
+                    className={`mt-6 text-neutral-400 ${META}`}
+                    style={body}
+                  >
+                    {group.topics.length} topics
+                  </motion.p>
+                </div>
+                <div className="lg:col-span-5">
+                  <RevealPhoto
+                    src={indoorFarmingPhoto(`${section.slug}-${group.slug}.webp`)}
+                    side="right"
+                    alt={group.title}
+                  />
+                </div>
+              </div>
+            </section>
 
-      {/* CTA */}
-      <section className="bg-[#F3F7F6]">
-        <div className="max-w-[1100px] mx-auto px-6 md:px-12 py-14 md:py-20">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <h2
-                className="text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-neutral-900"
-                style={display}
-              >
-                Ready to talk it <span style={accent}>through?</span>
-              </h2>
-              <p
-                className="mt-3 text-base font-normal text-neutral-500 max-w-[560px]"
-                style={body}
-              >
-                Bring us the crop, the site, and the goal. We will tell you what
-                a controlled environment can realistically deliver.
-              </p>
-            </div>
-            <Link
-              to="/contact-us"
-              className="inline-flex items-center gap-2 h-12 px-7 shrink-0 bg-[#45DFB1] rounded-2xl text-[#0B2A22] text-base font-medium hover:bg-[#80ED99] transition-colors"
-              style={body}
-            >
-              Discuss a project
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            {/* Topics with a contents list */}
+            <section className="border-t border-[#0B6477]/10 bg-[#F3F7F6]/70">
+              <div className="mx-auto grid max-w-[1360px] gap-12 px-6 py-20 md:px-12 md:py-28 lg:grid-cols-12 lg:gap-14">
+                <aside className="hidden lg:col-span-4 lg:block">
+                  <nav aria-label="Topics" className="sticky top-[160px]">
+                    <p className={`mb-4 text-neutral-400 ${META}`} style={body}>
+                      In this topic
+                    </p>
+                    <ul className="flex flex-col border-l border-[#0B6477]/15">
+                      {group.topics.map((t) => {
+                        const on = t.slug === active;
+                        return (
+                          <li key={t.slug} className="relative">
+                            {on && (
+                              <motion.span
+                                layoutId="if-topic-marker"
+                                className="absolute -left-px top-0 h-full w-[2px] bg-[#14919B]"
+                                transition={{ duration: 0.4, ease: EASE }}
+                              />
+                            )}
+                            <a
+                              href={`#${t.slug}`}
+                              className={`block py-2.5 pl-5 text-[15px] leading-snug transition-colors ${
+                                on ? "font-medium text-[#0B6477]" : "text-neutral-500 hover:text-neutral-900"
+                              }`}
+                              style={body}
+                            >
+                              {t.title}
+                            </a>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <Link
+                      to="/contact-us"
+                      hash="inquiry"
+                      className="group mt-10 inline-flex h-12 items-center gap-3 rounded-lg bg-[#45DFB1] px-6 text-sm font-medium uppercase tracking-[0.08em] text-[#0B2A22] transition-colors hover:bg-[#80ED99]"
+                      style={body}
+                    >
+                      Discuss a project
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </nav>
+                </aside>
+                <div className="flex flex-col gap-12 md:gap-14 lg:col-span-8">
+                  {group.topics.map((t, i) => (
+                    <TopicArticle key={t.slug} topic={t} first={i === 0} />
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Previous and next within the section */}
+            <section className="mx-auto max-w-[1360px] px-6 pt-20 md:px-12 md:pt-28">
+              <div className="grid gap-px overflow-hidden rounded-[24px] border border-[#0B6477]/12 bg-[#0B6477]/12 sm:grid-cols-2">
+                {[
+                  { g: prev, label: "Previous", dir: -1 },
+                  { g: next, label: "Next", dir: 1 },
+                ].map(({ g, label, dir }) =>
+                  g ? (
+                    <Link
+                      key={label}
+                      to="/indoor-farming/$section/$group"
+                      params={{ section: section.slug, group: g.slug }}
+                      className={`group flex flex-col gap-3 bg-white/90 p-7 transition-colors hover:bg-[#08313A] md:p-9 ${
+                        dir === 1 ? "sm:items-end sm:text-right" : ""
+                      }`}
+                    >
+                      <span
+                        className={`inline-flex items-center gap-2 text-neutral-400 transition-colors group-hover:text-[#45DFB1] ${META}`}
+                        style={body}
+                      >
+                        {dir === -1 && <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />}
+                        {label}
+                        {dir === 1 && <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />}
+                      </span>
+                      <span
+                        className="text-2xl font-medium tracking-[-0.02em] text-neutral-900 transition-colors group-hover:text-white"
+                        style={display}
+                      >
+                        {g.title}
+                      </span>
+                    </Link>
+                  ) : (
+                    <Link
+                      key={label}
+                      to="/indoor-farming/$section"
+                      params={{ section: section.slug }}
+                      className={`group flex flex-col gap-3 bg-white/90 p-7 transition-colors hover:bg-[#08313A] md:p-9 ${
+                        dir === 1 ? "sm:items-end sm:text-right" : ""
+                      }`}
+                    >
+                      <span
+                        className={`inline-flex items-center gap-2 text-neutral-400 transition-colors group-hover:text-[#45DFB1] ${META}`}
+                        style={body}
+                      >
+                        {dir === -1 && <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />}
+                        Back to
+                        {dir === 1 && <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />}
+                      </span>
+                      <span
+                        className="text-2xl font-medium tracking-[-0.02em] text-neutral-900 transition-colors group-hover:text-white"
+                        style={display}
+                      >
+                        {section.label} overview
+                      </span>
+                    </Link>
+                  ),
+                )}
+              </div>
+            </section>
+
+            {/* Rest of the section */}
+            {siblings.length > 0 && (
+              <section className="mx-auto max-w-[1360px] px-6 py-20 md:px-12 md:py-28">
+                <div className="mb-12">
+                  <Eyebrow>Keep exploring</Eyebrow>
+                  <motion.h2
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, amount: 0.6 }}
+                    className="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 md:text-5xl"
+                    style={display}
+                  >
+                    <MaskLine delay={0}>More in</MaskLine>
+                    <MaskLine delay={0.1}>
+                      <span style={accent}>{section.label}.</span>
+                    </MaskLine>
+                  </motion.h2>
+                </div>
+                <div
+                  className={`grid gap-5 sm:grid-cols-2 ${siblings.length === 3 ? "lg:grid-cols-3" : ""}`}
+                >
+                  {siblings.map((g, i) => (
+                    <motion.div
+                      key={g.slug}
+                      initial={{ opacity: 0, y: 24 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.3 }}
+                      transition={{ delay: i * 0.08, duration: 0.7, ease: EASE }}
+                      className={siblings.length === 3 && i === 2 ? "sm:col-span-2 lg:col-span-1" : ""}
+                    >
+                      <GroupCard section={section.slug} group={g} />
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <CallToAction />
           </div>
         </div>
-      </section>
-
-      <Footer />
-    </main>
+        <Footer />
+      </main>
+    </MotionConfig>
   );
 }

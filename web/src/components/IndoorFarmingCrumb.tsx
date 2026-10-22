@@ -20,7 +20,7 @@ export default function IndoorFarmingCrumb({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex items-center gap-1.5 text-sm overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.1em] overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       style={body}
     >
       <Link to="/research" className={linkClass}>
@@ -32,7 +32,7 @@ export default function IndoorFarmingCrumb({
           Indoor Farming
         </Link>
       ) : (
-        <span className="font-medium text-neutral-700 whitespace-nowrap">
+        <span className="text-[#0B6477] whitespace-nowrap">
           Indoor Farming
         </span>
       )}
@@ -51,7 +51,7 @@ export default function IndoorFarmingCrumb({
       {current && (
         <>
           <ChevronRight className="w-3.5 h-3.5 shrink-0 text-neutral-300" />
-          <span className="font-medium text-neutral-700 whitespace-nowrap">
+          <span className="text-[#0B6477] whitespace-nowrap">
             {current}
           </span>
         </>

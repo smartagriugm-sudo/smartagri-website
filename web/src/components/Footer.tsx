@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { motion, type Variants } from "framer-motion";
 import { Instagram, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { A } from "../lib/assets";
 import { body } from "../lib/fonts";
@@ -37,7 +38,21 @@ type Social = {
   href: string;
   // mailto opens in place; external links open in a new tab.
   external: boolean;
+  /** Shown above the button on hover: where the link goes */
+  handle: string;
+  /** Hover fill: the platform's own colour (ours for email) */
+  fill: string;
+  /** Icon colour once filled */
+  ink: string;
+  /** How the fill arrives */
+  reveal: Variants;
+  /** What the icon does */
+  move: Variants;
+  /** Ring pulsing out while hovered (WhatsApp: an incoming call) */
+  ring?: string;
 };
+
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 const socials: Social[] = [
   {
@@ -45,26 +60,167 @@ const socials: Social[] = [
     icon: Instagram,
     href: "https://www.instagram.com/smartagri.ugm/",
     external: true,
+    handle: "@smartagri.ugm",
+    fill: "radial-gradient(circle at 25% 110%, #FEDA75 0%, #FA7E1E 25%, #D62976 50%, #962FBF 72%, #4F5BD5 100%)",
+    ink: "#FFFFFF",
+    // Gradient blooms in from the bottom-left corner, like the app icon.
+    reveal: {
+      rest: { scale: 0, opacity: 0 },
+      hover: { scale: 1, opacity: 1, transition: { duration: 0.45, ease: EASE } },
+    },
+    // Camera tilts as if taking a shot.
+    move: {
+      rest: { rotate: 0, scale: 1 },
+      hover: {
+        rotate: [0, -14, 8, 0],
+        scale: [1, 1.15, 1.08],
+        transition: { duration: 0.6, ease: EASE },
+      },
+    },
   },
   {
     label: "LinkedIn",
     icon: Linkedin,
     href: "https://www.linkedin.com/company/sarc-ugm",
     external: true,
+    handle: "SARC UGM",
+    fill: "#0A66C2",
+    ink: "#FFFFFF",
+    // Blue rises from the bottom.
+    reveal: {
+      rest: { clipPath: "inset(100% 0% 0% 0%)", opacity: 1 },
+      hover: {
+        clipPath: "inset(0% 0% 0% 0%)",
+        opacity: 1,
+        transition: { duration: 0.4, ease: EASE },
+      },
+    },
+    // A small professional hop.
+    move: {
+      rest: { y: 0 },
+      hover: { y: [0, -5, 0, -2, 0], transition: { duration: 0.6, ease: "easeOut" } },
+    },
   },
   {
     label: "Email",
     icon: Mail,
     href: "mailto:hello@smart-agri.id",
     external: false,
+    handle: "hello@smart-agri.id",
+    fill: "#45DFB1",
+    ink: "#0B2A22",
+    // Mint sweeps in from the left.
+    reveal: {
+      rest: { clipPath: "inset(0% 100% 0% 0%)", opacity: 1 },
+      hover: {
+        clipPath: "inset(0% 0% 0% 0%)",
+        opacity: 1,
+        transition: { duration: 0.4, ease: EASE },
+      },
+    },
+    // The envelope flies off to the top right and comes back in: sent.
+    move: {
+      rest: { x: 0, y: 0, opacity: 1 },
+      hover: {
+        x: [0, 16, -16, 0],
+        y: [0, -16, 16, 0],
+        opacity: [1, 0, 0, 1],
+        transition: { duration: 0.7, times: [0, 0.4, 0.41, 1], ease: "easeInOut" },
+      },
+    },
   },
   {
     label: "WhatsApp",
     icon: WhatsAppIcon,
     href: "https://wa.me/6285111220365",
     external: true,
+    handle: "+62 851-1122-0365",
+    fill: "#25D366",
+    ink: "#FFFFFF",
+    // Green opens out from the centre.
+    reveal: {
+      rest: { scale: 0, opacity: 0 },
+      hover: { scale: 1, opacity: 1, transition: { duration: 0.4, ease: EASE } },
+    },
+    // Rings like an incoming call.
+    move: {
+      rest: { rotate: 0 },
+      hover: {
+        rotate: [0, -16, 16, -12, 12, -6, 0],
+        transition: { duration: 0.6, ease: "easeInOut" },
+      },
+    },
+    ring: "#25D366",
   },
 ];
+
+// Round social button: on hover (or keyboard focus) the platform colour fills
+// it in its own way, the icon makes a platform-specific move, and where the
+// link goes floats up above it.
+function SocialButton({ social }: { social: Social }) {
+  return (
+    <motion.a
+      href={social.href}
+      target={social.external ? "_blank" : undefined}
+      rel={social.external ? "noreferrer" : undefined}
+      aria-label={`${social.label}: ${social.handle}`}
+      initial="rest"
+      animate="rest"
+      whileHover="hover"
+      whileFocus="hover"
+      whileTap={{ scale: 0.92 }}
+      className="relative grid h-10 w-10 place-items-center rounded-full border border-white/15 outline-none focus-visible:ring-2 focus-visible:ring-[#45DFB1]/70"
+    >
+      {/* Platform-colour fill, clipped to the circle. */}
+      <span className="absolute inset-0 overflow-hidden rounded-full">
+        <motion.span
+          variants={social.reveal}
+          className="absolute inset-0"
+          style={{ background: social.fill, originX: 0.2, originY: 1 }}
+        />
+      </span>
+      {social.ring && (
+        <motion.span
+          aria-hidden="true"
+          className="absolute inset-0 rounded-full border-2"
+          style={{ borderColor: social.ring }}
+          variants={{
+            rest: { scale: 1, opacity: 0 },
+            hover: {
+              scale: [1, 1.6],
+              opacity: [0.7, 0],
+              transition: { duration: 1, repeat: Infinity, ease: "easeOut" },
+            },
+          }}
+        />
+      )}
+      <motion.span
+        className="relative grid place-items-center"
+        variants={{
+          rest: { color: "rgba(255,255,255,0.8)" },
+          hover: { color: social.ink, transition: { duration: 0.2 } },
+        }}
+      >
+        <motion.span variants={social.move} className="grid place-items-center">
+          <social.icon className="h-[18px] w-[18px]" />
+        </motion.span>
+      </motion.span>
+      {/* Destination label. */}
+      <motion.span
+        aria-hidden="true"
+        variants={{
+          rest: { opacity: 0, y: 6, scale: 0.95 },
+          hover: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: EASE } },
+        }}
+        className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-white px-2.5 py-1 text-[12px] font-medium text-[#0B2A22] shadow-lg"
+        style={body}
+      >
+        {social.handle}
+        <span className="absolute left-1/2 top-full -translate-x-1/2 border-x-[5px] border-t-[5px] border-x-transparent border-t-white" />
+      </motion.span>
+    </motion.a>
+  );
+}
 
 export default function Footer() {
   return (
@@ -82,16 +238,7 @@ export default function Footer() {
             </p>
             <div className="flex gap-3 mt-6">
               {socials.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target={social.external ? "_blank" : undefined}
-                  rel={social.external ? "noreferrer" : undefined}
-                  aria-label={social.label}
-                  className="w-10 h-10 rounded-full border border-white/15 flex items-center justify-center hover:bg-white/10 transition-colors"
-                >
-                  <social.icon className="w-[18px] h-[18px] text-white/80" />
-                </a>
+                <SocialButton key={social.label} social={social} />
               ))}
             </div>
           </div>

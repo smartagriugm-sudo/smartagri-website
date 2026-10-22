@@ -4,6 +4,8 @@ export type Publication = {
   year: string;
   title: string;
   venue: string;
+  /** Journal publisher, filled from Crossref by scripts/enrich-publications.mjs */
+  publisher?: string;
   authors: string;
   /** DOI / external URL, also used to auto-fetch metadata from Crossref */
   link?: string;

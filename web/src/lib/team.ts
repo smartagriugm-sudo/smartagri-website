@@ -279,6 +279,17 @@ export const TEAM: TeamMember[] = [
     expertise: ["Spectral Data Analytics"],
     projects: ["Smart farming research programs"],
   },
+  {
+    slug: "ardan-desta-vaunendra",
+    name: "Ardan Desta Vaunendra",
+    fullName: "Ardan Desta Vaunendra",
+    role: "Researcher",
+    category: "Researcher",
+    core: true,
+    bio: "Researcher working on precision irrigation for coastal sandy soils. His undergraduate thesis built an IoT sprinkler controller that combines reference evapotranspiration from an automatic weather station with soil moisture readings in a Mamdani fuzzy logic model to set irrigation duration, tested in the field in Kulon Progo.",
+    expertise: ["Precision Irrigation & IoT Control"],
+    projects: ["Fuzzy logic sprinkler irrigation for coastal sandy soils"],
+  },
 ];
 
 // Members with a white-background portrait in public/brand/team/<slug>.webp.
@@ -300,6 +311,7 @@ const SLUGS_WITH_PHOTO = new Set<string>([
   "fahmi-arsyad",
   "mutiara-alifia-ramadhanty",
   "fathuzaky-setyawan",
+  "ardan-desta-vaunendra",
 ]);
 
 for (const member of TEAM) {

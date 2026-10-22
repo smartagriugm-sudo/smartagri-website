@@ -3,6 +3,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import { AuthProvider } from '../lib/auth/auth'
+import PageCurtain from '../components/PageCurtain'
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({
@@ -79,6 +80,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <AuthProvider>{children}</AuthProvider>
+        <PageCurtain />
         <TanStackDevtools
           config={{
             position: 'bottom-right',

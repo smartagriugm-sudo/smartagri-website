@@ -36,6 +36,7 @@ import { Route as AiGenerateRouteImport } from './routes/ai/generate'
 import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
 import { Route as AiProfileRouteImport } from './routes/ai/profile'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
+import { Route as GallerySlugRouteImport } from './routes/gallery_.$slug'
 import { Route as GuestbookAdminRouteImport } from './routes/guestbook_.admin'
 import { Route as IndoorFarmingSectionRouteImport } from './routes/indoor-farming_.$section'
 import { Route as IndoorFarmingDashboardRouteImport } from './routes/indoor-farming_.dashboard'
@@ -191,6 +192,11 @@ const FieldNotesSlugRoute = FieldNotesSlugRouteImport.update({
   path: '/field-notes/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GallerySlugRoute = GallerySlugRouteImport.update({
+  id: '/gallery_/$slug',
+  path: '/gallery/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuestbookAdminRoute = GuestbookAdminRouteImport.update({
   id: '/guestbook_/admin',
   path: '/guestbook/admin',
@@ -323,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
+  '/gallery/$slug': typeof GallerySlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
   '/indoor-farming/$section': typeof IndoorFarmingSectionRoute
   '/indoor-farming/dashboard': typeof IndoorFarmingDashboardRouteWithChildren
@@ -370,6 +377,7 @@ export interface FileRoutesByTo {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
+  '/gallery/$slug': typeof GallerySlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
   '/indoor-farming/$section': typeof IndoorFarmingSectionRoute
   '/indoor-farming/instrumentation': typeof IndoorFarmingInstrumentationRoute
@@ -418,6 +426,7 @@ export interface FileRoutesById {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
+  '/gallery_/$slug': typeof GallerySlugRoute
   '/guestbook_/admin': typeof GuestbookAdminRoute
   '/indoor-farming_/$section': typeof IndoorFarmingSectionRoute
   '/indoor-farming_/dashboard': typeof IndoorFarmingDashboardRouteWithChildren
@@ -468,6 +477,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/field-notes/$slug'
+    | '/gallery/$slug'
     | '/guestbook/admin'
     | '/indoor-farming/$section'
     | '/indoor-farming/dashboard'
@@ -515,6 +525,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/field-notes/$slug'
+    | '/gallery/$slug'
     | '/guestbook/admin'
     | '/indoor-farming/$section'
     | '/indoor-farming/instrumentation'
@@ -562,6 +573,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/field-notes_/$slug'
+    | '/gallery_/$slug'
     | '/guestbook_/admin'
     | '/indoor-farming_/$section'
     | '/indoor-farming_/dashboard'
@@ -607,6 +619,7 @@ export interface RootRouteChildren {
   TechnologyRoute: typeof TechnologyRoute
   TermsOfUseRoute: typeof TermsOfUseRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
+  GallerySlugRoute: typeof GallerySlugRoute
   GuestbookAdminRoute: typeof GuestbookAdminRoute
   IndoorFarmingSectionRoute: typeof IndoorFarmingSectionRoute
   IndoorFarmingDashboardRoute: typeof IndoorFarmingDashboardRouteWithChildren
@@ -810,6 +823,13 @@ declare module '@tanstack/react-router' {
       path: '/field-notes/$slug'
       fullPath: '/field-notes/$slug'
       preLoaderRoute: typeof FieldNotesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gallery_/$slug': {
+      id: '/gallery_/$slug'
+      path: '/gallery/$slug'
+      fullPath: '/gallery/$slug'
+      preLoaderRoute: typeof GallerySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guestbook_/admin': {
@@ -1017,6 +1037,7 @@ const rootRouteChildren: RootRouteChildren = {
   TechnologyRoute: TechnologyRoute,
   TermsOfUseRoute: TermsOfUseRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
+  GallerySlugRoute: GallerySlugRoute,
   GuestbookAdminRoute: GuestbookAdminRoute,
   IndoorFarmingSectionRoute: IndoorFarmingSectionRoute,
   IndoorFarmingDashboardRoute: IndoorFarmingDashboardRouteWithChildren,

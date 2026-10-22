@@ -18,3 +18,11 @@ Thumbs.db
 # Vite cache
 .vite/
 web/.vite/
+
+# Local tooling and scratch (not part of the site)
+.cache/
+.taste-skill/
+skills/
+gitclone/
+video/node_modules/
+video/out/
