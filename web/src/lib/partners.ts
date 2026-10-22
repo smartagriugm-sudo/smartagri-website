@@ -22,6 +22,12 @@ export type Partner = {
    * use ACTIVE_PARTNERS.
    */
   archived?: boolean;
+  /**
+   * Short, verified descriptor shown when the logo is hovered (full name,
+   * country, or role). Leave it out rather than guess: the card then shows
+   * the partner group instead.
+   */
+  note?: string;
 };
 
 // Real partner roster, ordered by organization type:
@@ -34,46 +40,55 @@ export const PARTNERS: Partner[] = [
     name: "Wageningen University & Research",
     logo: partnerLogo("wageningen-university-research.svg"),
     group: "University",
+    note: "Netherlands",
   },
   {
     name: "Kyushu University",
     logo: partnerLogo("kyushu-university.png"),
     group: "University",
+    note: "Japan",
   },
   {
     name: "Ehime University",
     logo: partnerLogo("ehime-university.svg"),
     group: "University",
+    note: "Japan",
   },
   {
     name: "Kangwon National University",
     logo: partnerLogo("kangwon-national-university.png"),
     group: "University",
+    note: "South Korea",
   },
   {
     name: "Chungnam National University",
     logo: partnerLogo("chungnam-national-university.png"),
     group: "University",
+    note: "South Korea",
   },
   {
     name: "Seoul National University",
     logo: partnerLogo("seoul-national-university.svg"),
     group: "University",
+    note: "South Korea",
   },
   {
     name: "Maejo University",
     logo: partnerLogo("maejo-university.png"),
     group: "University",
+    note: "Thailand",
   },
   {
     name: "Kasetsart University",
     logo: partnerLogo("kasetsart-university.png"),
     group: "University",
+    note: "Thailand",
   },
   {
     name: "Universiti Putra Malaysia",
     logo: partnerLogo("universiti-putra-malaysia.svg"),
     group: "University",
+    note: "Malaysia",
   },
 
   // Ministries
@@ -81,20 +96,33 @@ export const PARTNERS: Partner[] = [
     name: "Kementerian Pekerjaan Umum",
     logo: partnerLogo("kementerian-pu.png"),
     group: "Ministry",
+    note: "Ministry of Public Works",
   },
   {
     name: "Kementerian Pertanian",
     logo: partnerLogo("kementerian-pertanian.png"),
     group: "Ministry",
+    note: "Ministry of Agriculture",
   },
 
   // Government institutions
-  { name: "BMKG", logo: partnerLogo("bmkg.png"), group: "Government Institution" },
-  { name: "BRIN", logo: partnerLogo("brin.svg"), group: "Government Institution" },
+  {
+    name: "BMKG",
+    logo: partnerLogo("bmkg.png"),
+    group: "Government Institution",
+    note: "Badan Meteorologi, Klimatologi, dan Geofisika",
+  },
+  {
+    name: "BRIN",
+    logo: partnerLogo("brin.svg"),
+    group: "Government Institution",
+    note: "Badan Riset dan Inovasi Nasional",
+  },
   {
     name: "BI Institute",
     logo: partnerLogo("bi-institute.svg"),
     group: "Government Institution",
+    note: "Bank Indonesia",
   },
 
   // State-owned enterprises (BUMN)
@@ -102,6 +130,7 @@ export const PARTNERS: Partner[] = [
     name: "Pertamina Patra Niaga",
     logo: partnerLogo("pertamina-patra-niaga.png"),
     group: "State-Owned Enterprise",
+    note: "Pertamina Group",
   },
 
   // Private companies
@@ -136,6 +165,7 @@ export const PARTNERS: Partner[] = [
     name: "Quantum Systems",
     logo: partnerLogo("quantum-systems.png"),
     group: "Private Company",
+    note: "Via PT Quatindo Widjaya Adhirajasa",
   },
   {
     name: "Tribuana Solusi Inovasi Teknologi",
@@ -173,11 +203,13 @@ export const PARTNERS: Partner[] = [
     name: "Perhimpunan Teknik Pertanian Indonesia",
     logo: partnerLogo("perteta.png"),
     group: "Research Center & Organization",
+    note: "PERTETA",
   },
   {
     name: "Pusat Kajian Modernisasi Irigasi dan Pertanian",
     logo: partnerLogo("pkmip.png"),
     group: "Research Center & Organization",
+    note: "PKMIP, FTP UGM",
   },
   {
     name: "SIPASI",
@@ -188,11 +220,13 @@ export const PARTNERS: Partner[] = [
     name: "PUAPT UGM",
     logo: partnerLogo("puapt-ugm.png"),
     group: "Research Center & Organization",
+    note: "Pusat Unggulan Antar Perguruan Tinggi",
   },
   {
     name: "WGFS 1.2 Precision Agriculture & Smart Farming",
     logo: partnerLogo("wgfs.svg"),
     group: "Research Center & Organization",
+    note: "Research team, FTP UGM",
   },
 
   // Farmer groups
@@ -200,9 +234,10 @@ export const PARTNERS: Partner[] = [
     name: "KWT Teratai Mekar",
     logo: partnerLogo("kwt-teratai-mekar.svg"),
     group: "Farmer Group",
+    note: "Kelompok Wanita Tani",
   },
   {
-    name: "Taruna Tani",
+    name: "Taruna Tani Hijaunya Cinta",
     logo: partnerLogo("taruna-tani.svg"),
     group: "Farmer Group",
   },

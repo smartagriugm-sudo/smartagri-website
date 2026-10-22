@@ -166,6 +166,13 @@ collections:
       - name: venue
         label: Journal / venue
         widget: string
+      - name: publisher
+        label: Publisher
+        widget: string
+        required: false
+        hint: >-
+          Penerbit jurnal (kolom Publisher di halaman Publications). Bila ada
+          DOI, bisa diisi otomatis dengan: node scripts/enrich-publications.mjs
       - name: link
         label: DOI / URL
         widget: string

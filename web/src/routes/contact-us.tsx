@@ -1,12 +1,26 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { motion } from "framer-motion";
-import { Clock, Download, Mail, MapPin, Pencil, Phone, Send } from "lucide-react";
+import { MotionConfig, motion, type TargetAndTransition } from "framer-motion";
+import {
+  ArrowUpRight,
+  Check,
+  ClipboardCheck,
+  Clock,
+  Copy,
+  Download,
+  FileText,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Send,
+} from "lucide-react";
 import { jsPDF } from "jspdf";
 import { accent, body, display } from "../lib/fonts";
 import { RESEARCH_AREAS } from "../lib/research";
 import { TECHNOLOGIES } from "../lib/technology";
-import PageHero from "../components/PageHero";
+import AmbientWash from "../components/AmbientWash";
+import { EASE, MaskLine, META } from "../components/NoteParts";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 
@@ -33,29 +47,122 @@ const CONTACT_EMAIL = "hello@smart-agri.id";
 const INQUIRY_ENDPOINT =
   "https://script.google.com/macros/s/AKfycbxj-2d-hmXocr7OEag-oNrTy0yo3vUV40-DcmWx7K90ci9Lzol9iby6hcSyrT66k_M/exec";
 
-const contactInfo = [
+const MAPS_URL = "https://www.google.com/maps/search/?api=1&query=-7.7687041%2C110.3806344";
+
+type Channel = {
+  icon: typeof Mail;
+  label: string;
+  value: string;
+  href?: string;
+  external?: boolean;
+  /** Text the copy button puts on the clipboard */
+  copy?: string;
+  /** The icon's hover move */
+  move: TargetAndTransition;
+};
+
+const channels: Channel[] = [
+  {
+    icon: Mail,
+    label: "Email",
+    value: CONTACT_EMAIL,
+    href: `mailto:${CONTACT_EMAIL}`,
+    copy: CONTACT_EMAIL,
+    // Envelope flies off and comes back: sent.
+    move: { x: [0, 12, -12, 0], y: [0, -12, 12, 0], opacity: [1, 0, 0, 1], transition: { duration: 0.7, times: [0, 0.4, 0.41, 1] } },
+  },
+  {
+    icon: Phone,
+    label: "WhatsApp",
+    value: "+62 851-1122-0365",
+    href: "https://wa.me/6285111220365",
+    external: true,
+    copy: "+6285111220365",
+    // Phone ringing.
+    move: { rotate: [0, -16, 16, -12, 12, -6, 0], transition: { duration: 0.6 } },
+  },
   {
     icon: MapPin,
     label: "Address",
     value:
       "Jl. Flora Bulaksumur No.1, Kocoran, Caturtunggal, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281",
-  },
-  {
-    icon: Mail,
-    label: "Email",
-    value: CONTACT_EMAIL,
-  },
-  {
-    icon: Phone,
-    label: "WhatsApp",
-    value: "+62 85111220365",
+    href: MAPS_URL,
+    external: true,
+    // Pin dropping onto the map.
+    move: { y: [0, -6, 0, -2, 0], transition: { duration: 0.7 } },
   },
   {
     icon: Clock,
     label: "Office hours",
     value: "Monday–Friday, 08.00–16.00 WIB",
+    // Clock hand going round.
+    move: { rotate: [0, 360], transition: { duration: 0.9, ease: "easeInOut" } },
   },
 ];
+
+// The inquiry flow, as the form below actually runs it.
+const flow = [
+  { icon: Pencil, title: "Fill in the form", desc: "Tell us who you are and what you need. Only the starred fields are required." },
+  { icon: ClipboardCheck, title: "Review it", desc: "Check every answer on one screen and edit anything before it goes." },
+  { icon: Send, title: "Send it", desc: "Your inquiry goes straight to the smartagri team." },
+  { icon: FileText, title: "Keep your ID", desc: "You get an inquiry ID and can download a PDF summary for follow-up." },
+];
+
+function ChannelCard({ c, index }: { c: Channel; index: number }) {
+  const [hover, setHover] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const Body = c.href ? "a" : "div";
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ delay: index * 0.08, duration: 0.6, ease: EASE }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="group relative flex h-full flex-col rounded-[24px] border border-[#0B6477]/10 bg-white/90 transition-[background-color,border-color,box-shadow,transform] duration-300 hover:-translate-y-1 hover:border-[#08313A] hover:bg-[#08313A] hover:shadow-xl"
+    >
+      <Body
+        {...(c.href ? { href: c.href, target: c.external ? "_blank" : undefined, rel: c.external ? "noreferrer" : undefined } : {})}
+        className="flex flex-1 flex-col gap-4 p-6"
+      >
+        <span className="flex items-center justify-between">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#0B6477] text-[#45DFB1] transition-colors duration-300 group-hover:bg-[#45DFB1] group-hover:text-[#08313A]">
+            <motion.span className="inline-flex" animate={hover ? c.move : { x: 0, y: 0, rotate: 0, opacity: 1 }}>
+              <c.icon className="h-5 w-5" />
+            </motion.span>
+          </span>
+          {c.href && (
+            <ArrowUpRight className="h-4 w-4 text-[#0B6477] transition-[rotate,color] duration-300 group-hover:rotate-45 group-hover:text-[#45DFB1]" />
+          )}
+        </span>
+        <span className={`text-neutral-400 transition-colors duration-300 group-hover:text-[#45DFB1] ${META}`} style={body}>
+          {c.label}
+        </span>
+        <span className="text-[15px] leading-relaxed text-neutral-800 transition-colors duration-300 group-hover:text-white" style={body}>
+          {c.value}
+        </span>
+      </Body>
+      {c.copy && (
+        <button
+          type="button"
+          onClick={() => {
+            void navigator.clipboard?.writeText(c.copy!).then(() => {
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1600);
+            });
+          }}
+          className={`mx-6 mb-6 inline-flex items-center gap-1.5 self-start rounded-full border border-[#0B6477]/15 px-3 py-1 text-[12px] text-[#0B6477] transition-colors group-hover:border-white/20 group-hover:text-white/80 hover:!bg-white/10`}
+          style={body}
+          aria-label={`Copy ${c.label.toLowerCase()}`}
+        >
+          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      )}
+    </motion.div>
+  );
+}
 
 const inputClass =
   "w-full rounded-xl border border-[#0B6477]/20 bg-white px-4 py-3 text-base text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-[#14919B] focus:ring-2 focus:ring-[#14919B]/30 transition-colors";
@@ -619,95 +726,169 @@ function InquiryForm() {
   );
 }
 
+// Contact page: masthead, how an inquiry works with the map beside the
+// inquiry form (the form itself is unchanged), then the four direct channels.
 function ContactUsPage() {
   return (
-    <main>
-      <SiteHeader />
-      <section className="bg-[#F3F7F6]">
-        <div className="max-w-[1360px] mx-auto px-6 md:px-12 pt-14 md:pt-20 pb-16 md:pb-20">
-          <PageHero
-            eyebrow="Contact Us"
-            title={
-              <>
-                Come find us <span style={accent}>in the field</span>
-              </>
-            }
-            subtitle="Reach out to start a conversation, whether you're exploring a collaboration, piloting smartagri on your fields, or just curious about our work."
-          />
-
-          <div className="grid lg:grid-cols-2 gap-6 items-stretch">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.55, ease: "easeOut" }}
-              className="flex flex-col gap-6"
-            >
-              <div className="rounded-3xl overflow-hidden border border-[#0B6477]/10 bg-white flex-1 min-h-[320px] relative">
-                {/* Google Maps embed (keyless): Faculty of Agricultural
-                    Technology UGM (-7.7687041, 110.3806344) */}
-                <iframe
-                  title="smartagri location map"
-                  src="https://www.google.com/maps?q=-7.7687041,110.3806344&z=17&output=embed"
-                  className="w-full h-full min-h-[320px] border-0"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-                <a
-                  href="https://www.google.com/maps/search/?api=1&query=-7.7687041%2C110.3806344"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="absolute bottom-3 right-3 rounded-full bg-[#08313A]/85 backdrop-blur px-4 py-2 text-sm font-medium text-white hover:bg-[#08313A] transition-colors"
+    <MotionConfig reducedMotion="user">
+      <main>
+        <SiteHeader />
+        <div className="relative overflow-clip bg-white">
+          <AmbientWash count={4} />
+          <div className="relative">
+            {/* Masthead */}
+            <section className="mx-auto max-w-[1360px] px-6 pt-12 md:px-12 md:pt-20">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <motion.h1
+                  initial="hidden"
+                  animate="show"
+                  className="text-[44px] font-semibold leading-[1.0] tracking-[-0.04em] text-neutral-900 sm:text-6xl md:text-[80px]"
+                  style={display}
+                >
+                  <MaskLine delay={0}>Come find us</MaskLine>
+                  <MaskLine delay={0.12}>
+                    <span style={accent}>in the field.</span>
+                  </MaskLine>
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
+                  className="max-w-[480px] text-base leading-relaxed text-neutral-600 md:text-lg"
                   style={body}
                 >
-                  Open in Google Maps
-                </a>
+                  Reach out to start a conversation, whether you're exploring a collaboration,
+                  piloting smartagri on your fields, or just curious about our work.
+                </motion.p>
               </div>
-              <div className="rounded-3xl bg-[#08313A] p-7 grid sm:grid-cols-2 gap-5">
-                {contactInfo.map((item) => (
-                  <div key={item.label} className="flex items-start gap-3">
-                    <item.icon className="w-5 h-5 text-[#45DFB1] mt-0.5 shrink-0" />
-                    <div>
-                      <div
-                        className="text-[13px] font-medium tracking-[0.03em] text-white/50"
-                        style={body}
-                      >
-                        {item.label}
-                      </div>
-                      <div
-                        className="text-sm font-normal text-white/85 leading-relaxed"
-                        style={body}
-                      >
-                        {item.label === "Email" ? (
-                          <a
-                            href={`mailto:${item.value}`}
-                            className="hover:text-white transition-colors"
-                          >
-                            {item.value}
-                          </a>
-                        ) : (
-                          item.value
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ delay: 0.12, duration: 0.55, ease: "easeOut" }}
-              className="rounded-3xl bg-white border border-[#0B6477]/10"
-            >
-              <InquiryForm />
-            </motion.div>
+            </section>
+
+            {/* How it works + map | form */}
+            <section className="mx-auto grid max-w-[1360px] gap-6 px-6 pb-16 pt-14 md:px-12 md:pb-20 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
+              <div className="flex flex-col gap-6 lg:sticky lg:top-28">
+                <motion.div
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.7, ease: EASE }}
+                  data-header-theme="dark"
+                  className="relative overflow-clip rounded-[28px] bg-[#08313A] p-7 text-white md:p-9"
+                >
+                  <div className="pointer-events-none absolute -right-20 -top-20 h-[280px] w-[280px] rounded-full bg-[#14919B]/30 blur-3xl animate-wash-a" />
+                  <p className={`relative flex items-center gap-2 text-[#45DFB1] ${META}`} style={body}>
+                    <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
+                    How it works
+                  </p>
+                  <h2 className="relative mt-4 text-3xl font-semibold leading-[1.05] tracking-[-0.03em] md:text-4xl" style={display}>
+                    From your message <span style={{ ...accent, color: "#80ED99" }}>to our team.</span>
+                  </h2>
+                  <ol className="relative mt-8 flex flex-col">
+                    {flow.map((f, i) => (
+                      <motion.li
+                        key={f.title}
+                        initial={{ opacity: 0, x: -12 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, amount: 0.6 }}
+                        transition={{ delay: 0.15 + i * 0.1, duration: 0.5, ease: EASE }}
+                        className="relative flex gap-4 pb-6 last:pb-0"
+                      >
+                        {i < flow.length - 1 && (
+                          <motion.span
+                            aria-hidden="true"
+                            className="absolute left-5 top-11 h-[calc(100%-2.75rem)] w-px origin-top bg-[#45DFB1]/35"
+                            initial={{ scaleY: 0 }}
+                            whileInView={{ scaleY: 1 }}
+                            viewport={{ once: true, amount: 0.6 }}
+                            transition={{ delay: 0.3 + i * 0.1, duration: 0.6, ease: EASE }}
+                          />
+                        )}
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#45DFB1] text-[#08313A]">
+                          <f.icon className="h-4 w-4" />
+                        </span>
+                        <span style={body}>
+                          <span className="block text-[17px] font-medium" style={display}>
+                            {f.title}
+                          </span>
+                          <span className="mt-1 block text-[14px] leading-relaxed text-white/70">{f.desc}</span>
+                        </span>
+                      </motion.li>
+                    ))}
+                  </ol>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ delay: 0.1, duration: 0.7, ease: EASE }}
+                  className="relative overflow-hidden rounded-[28px] border border-[#0B6477]/10 bg-white shadow-[0_30px_80px_-50px_rgba(8,49,58,0.45)]"
+                >
+                  {/* Google Maps embed (keyless): Faculty of Agricultural
+                      Technology UGM (-7.7687041, 110.3806344) */}
+                  <iframe
+                    title="smartagri location map"
+                    src="https://www.google.com/maps?q=-7.7687041,110.3806344&z=17&output=embed"
+                    className="h-[300px] w-full border-0"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <a
+                    href={MAPS_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-[#08313A]/85 px-4 py-2 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-[#08313A]"
+                    style={body}
+                  >
+                    Open in Google Maps
+                    <ArrowUpRight className="h-4 w-4 transition-[rotate] duration-300 group-hover:rotate-45" />
+                  </a>
+                </motion.div>
+              </div>
+
+              <motion.div
+                id="inquiry"
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.1 }}
+                transition={{ delay: 0.12, duration: 0.7, ease: EASE }}
+                className="scroll-mt-28 rounded-[28px] border border-[#0B6477]/10 bg-white/95 shadow-[0_30px_80px_-50px_rgba(8,49,58,0.45)] backdrop-blur"
+              >
+                <InquiryForm />
+              </motion.div>
+            </section>
+
+            {/* Other ways to reach us */}
+            <section className="mx-auto max-w-[1360px] px-6 pb-20 md:px-12 md:pb-28">
+              <div className="border-t border-[#0B6477]/10 pt-14 md:pt-16">
+                <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                  <motion.h2
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, amount: 0.6 }}
+                    className="text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 md:text-5xl"
+                    style={display}
+                  >
+                    <MaskLine delay={0}>Prefer to reach us</MaskLine>
+                    <MaskLine delay={0.1}>
+                      <span style={accent}>directly?</span>
+                    </MaskLine>
+                  </motion.h2>
+                  <p className="max-w-[440px] text-base leading-relaxed text-neutral-500 md:text-lg" style={body}>
+                    Email or message us, or drop by the faculty during office hours.
+                  </p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {channels.map((c, i) => (
+                    <ChannelCard key={c.label} c={c} index={i} />
+                  ))}
+                </div>
+              </div>
+            </section>
           </div>
         </div>
-      </section>
-      <Footer />
-    </main>
+        <Footer />
+      </main>
+    </MotionConfig>
   );
 }

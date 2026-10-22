@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { accent } from "../lib/fonts";
-import PageHero from "../components/PageHero";
 import SiteHeader from "../components/SiteHeader";
-import NotesExplorer from "../components/NotesExplorer";
+import FieldNotes from "../components/FieldNotes";
+import AmbientWash from "../components/AmbientWash";
 import Footer from "../components/Footer";
 
 export const Route = createFileRoute("/field-notes")({
@@ -21,24 +20,18 @@ export const Route = createFileRoute("/field-notes")({
   }),
 });
 
+// The archive uses the same Quayside-style layout as the landing section,
+// in archive mode (every note, loaded a page at a time), over drifting washes.
 function FieldNotesPage() {
   return (
     <main>
       <SiteHeader />
-      <section className="bg-[#F3F7F6]">
-        <div className="max-w-[1360px] mx-auto px-6 md:px-12 pt-14 md:pt-20 pb-16 md:pb-20">
-          <PageHero
-            eyebrow="Field Notes"
-            title={
-              <>
-                Notes from the <span style={accent}>lab and field</span>
-              </>
-            }
-            subtitle="Everything we publish outside of journals: news from the center, research updates, practical guides for farmers, and recaps of the events we host."
-          />
-          <NotesExplorer />
+      <div className="relative overflow-clip bg-white">
+        <AmbientWash count={5} />
+        <div className="relative">
+          <FieldNotes archive />
         </div>
-      </section>
+      </div>
       <Footer />
     </main>
   );
