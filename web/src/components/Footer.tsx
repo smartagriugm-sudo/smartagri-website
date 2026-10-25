@@ -5,6 +5,7 @@ import { A } from "../lib/assets";
 import { body } from "../lib/fonts";
 import { RESEARCH_AREAS } from "../lib/research";
 import { EXHIBITION_LIVE } from "../lib/exhibition";
+import { AI_ASSISTANT_ENABLED } from "../lib/features";
 
 // lucide has no WhatsApp glyph; this is the standard mark, colored via currentColor.
 function WhatsAppIcon({ className = "" }: { className?: string }) {
@@ -23,7 +24,7 @@ const researchLinks = RESEARCH_AREAS.map((area) => ({
 const centerLinks = [
   { label: "Research", href: "/research" },
   { label: "Technology", href: "/technology" },
-  { label: "AI Assistant", href: "/ai" },
+  ...(AI_ASSISTANT_ENABLED ? [{ label: "AI Assistant", href: "/ai" }] : []),
   { label: "Publications", href: "/publications" },
   { label: "Field Notes", href: "/field-notes" },
   { label: "Gallery", href: "/gallery" },

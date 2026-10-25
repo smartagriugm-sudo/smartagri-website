@@ -10,9 +10,17 @@ import { A } from "../lib/assets";
 //     the route changes behind it, then it lifts away (0.65s). Changes that
 //     only touch the hash or search (anchors, filters) don't trigger it.
 // Navigation is only delayed, never blocked. Reduced motion hides it (CSS),
-// and a CSS failsafe lifts it if JavaScript never runs.
+// and a CSS failsafe lifts it if JavaScript never runs. Moving within one
+// Kanban board (opening or closing a card, which is a nested route) stays on
+// the same page, so it is not a page change either.
 const COVER_MS = 420;
 const LIFT_MS = 650;
+
+function samePage(from: string, to: string) {
+  if (from === to) return true;
+  const board = (p: string) => p.match(/^\/kanban\/[^/]+/)?.[0];
+  return !!board(from) && board(from) === board(to);
+}
 
 type Phase = "load" | "idle" | "cover" | "reveal";
 
@@ -43,7 +51,7 @@ export default function PageCurtain() {
   useBlocker({
     enableBeforeUnload: false,
     shouldBlockFn: async ({ current, next }) => {
-      if (reduced.current || current.pathname === next.pathname) return false;
+      if (reduced.current || samePage(current.pathname, next.pathname)) return false;
       covering.current = true;
       setPhase("cover");
       await new Promise((r) => setTimeout(r, COVER_MS));

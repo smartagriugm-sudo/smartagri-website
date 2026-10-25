@@ -1,12 +1,20 @@
 import { useEffect } from 'react'
-import { Outlet, createFileRoute, useRouter } from '@tanstack/react-router'
+import { Outlet, createFileRoute, redirect, useRouter } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '../../lib/auth/auth'
 import { body } from '../../lib/fonts'
+import { AI_ASSISTANT_ENABLED } from '../../lib/features'
 import SiteHeader from '../../components/SiteHeader'
 
 export const Route = createFileRoute('/ai')({
   component: AILayout,
+  // While the assistant is switched off (lib/features.ts) every /ai page,
+  // knowledge base included, sends visitors home; the old profile address
+  // goes to its new home at /account.
+  beforeLoad: ({ location }) => {
+    if (location.pathname.startsWith('/ai/profile')) throw redirect({ to: '/account' })
+    if (!AI_ASSISTANT_ENABLED) throw redirect({ to: '/' })
+  },
   // Keep the AI area out of search engines (it is a private, gated tool).
   head: () => ({
     meta: [{ name: 'robots', content: 'noindex, nofollow' }],

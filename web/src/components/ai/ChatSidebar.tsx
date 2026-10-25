@@ -165,7 +165,7 @@ export default function ChatSidebar({
         <div className="border-t border-[#0B6477]/10 p-2">
           <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
             <Link
-              to="/ai/profile"
+              to="/account"
               className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 transition-colors hover:opacity-80"
               aria-label="Profile and settings"
             >
