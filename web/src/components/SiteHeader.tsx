@@ -9,12 +9,14 @@ import {
   LogOut,
   Menu,
   Settings,
+  SquareKanban,
   X,
 } from "lucide-react";
 import { A } from "../lib/assets";
 import { body } from "../lib/fonts";
 import { useAuth } from "../lib/auth/auth";
 import { EXHIBITION_LIVE } from "../lib/exhibition";
+import { AI_ASSISTANT_ENABLED } from "../lib/features";
 
 type NavLink = { label: string; to: string; highlight?: boolean };
 type Theme = "dark" | "light";
@@ -261,29 +263,36 @@ function MediaDropdown({ t, pathname }: { t: ThemeTokens; pathname: string }) {
   );
 }
 
-// Compact signed-in account control: an avatar (first initial of the email)
-// that reveals the email, shortcuts and Sign out on hover/focus.
+// Compact signed-in account control: the profile photo (or the name's
+// initials) that reveals the name, email, shortcuts and Sign out on hover/focus.
 function AccountMenu({
   email,
+  name,
+  avatarUrl,
   onSignOut,
   t,
 }: {
   email: string;
+  name: string;
+  avatarUrl: string | null;
   onSignOut: () => void;
   t: ThemeTokens;
 }) {
-  const initial = (email.trim()[0] || "?").toUpperCase();
+  const parts = (name || email).trim().split(/[\s@]+/).filter(Boolean);
+  const initial = name
+    ? ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase()
+    : (email.trim()[0] || "?").toUpperCase();
   const row = `flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${t.item}`;
   return (
     <div className="relative group">
       <button
         type="button"
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-[#45DFB1] text-[#0B2A22] text-sm font-semibold transition-colors hover:bg-[#80ED99]"
+        className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[#45DFB1] text-[#0B2A22] text-sm font-semibold transition-colors hover:bg-[#80ED99]"
         style={body}
         aria-haspopup="true"
-        aria-label="Account menu"
+        aria-label={name ? `Account menu: ${name}` : "Account menu"}
       >
-        {initial}
+        {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initial}
       </button>
       <div className="absolute right-0 top-full pt-4 z-50 opacity-0 invisible translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible group-focus-within:translate-y-0">
         <div className={`min-w-[220px] rounded-xl border shadow-xl p-2 ${t.panel}`}>
@@ -291,7 +300,12 @@ function AccountMenu({
             <div className={`text-[11px] uppercase tracking-[0.12em] ${t.muted}`} style={body}>
               Signed in as
             </div>
-            <div className={`mt-0.5 truncate text-sm ${t.strong}`} style={body}>
+            {name && (
+              <div className={`mt-0.5 truncate text-sm font-medium ${t.strong}`} style={body}>
+                {name}
+              </div>
+            )}
+            <div className={`truncate text-sm ${name ? t.muted : `mt-0.5 ${t.strong}`}`} style={body}>
               {email}
             </div>
           </div>
@@ -300,11 +314,17 @@ function AccountMenu({
             <Boxes className="h-4 w-4" />
             Instrument inventory
           </Link>
-          <Link to="/ai/knowledge" className={row} style={body}>
-            <BookOpen className="h-4 w-4" />
-            Knowledge base
+          <Link to="/kanban" className={row} style={body}>
+            <SquareKanban className="h-4 w-4" />
+            Kanban
           </Link>
-          <Link to="/ai/profile" className={row} style={body}>
+          {AI_ASSISTANT_ENABLED && (
+            <Link to="/ai/knowledge" className={row} style={body}>
+              <BookOpen className="h-4 w-4" />
+              Knowledge base
+            </Link>
+          )}
+          <Link to="/account" className={row} style={body}>
             <Settings className="h-4 w-4" />
             Profile &amp; settings
           </Link>
@@ -346,7 +366,7 @@ export default function SiteHeader({
   subnav?: ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user, isConfigured, signOut } = useAuth();
+  const { user, isConfigured, signOut, account } = useAuth();
   const barRef = useRef<HTMLDivElement | null>(null);
   const theme = useBackdropTheme(barRef, overlay ? "dark" : "light");
   const t = THEMES[theme];
@@ -354,7 +374,7 @@ export default function SiteHeader({
 
   // When auth is disabled (no Supabase env) the AI link is public; when
   // enabled, it appears only for signed-in research assistants.
-  const showAi = !isConfigured || !!user;
+  const showAi = AI_ASSISTANT_ENABLED && (!isConfigured || !!user);
   const signedIn = isConfigured && !!user;
   const mobileLinks: NavLink[] = [
     ...leadLinks,
@@ -395,6 +415,8 @@ export default function SiteHeader({
           {signedIn && user && (
             <AccountMenu
               email={user.email ?? ""}
+              name={account?.name ?? ""}
+              avatarUrl={account?.avatarUrl ?? null}
               onSignOut={() => void signOut()}
               t={t}
             />

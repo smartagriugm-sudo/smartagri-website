@@ -14,10 +14,15 @@
     "build": "vite build",
     "ingest": "node scripts/ingest.mjs",
     "import-gallery": "node scripts/import-gallery.mjs",
+    "import-trello": "node scripts/import-trello.mjs",
+    "restructure-kanban": "node scripts/restructure-kanban.mjs",
     "preview": "vite preview",
     "test": "vitest run"
   },
   "dependencies": {
+    "@dnd-kit/core": "6.3.1",
+    "@dnd-kit/sortable": "10.0.0",
+    "@dnd-kit/utilities": "3.2.2",
     "@supabase/supabase-js": "^2.108.2",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "0.10.13",

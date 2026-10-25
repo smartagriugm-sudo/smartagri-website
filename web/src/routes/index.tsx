@@ -69,7 +69,7 @@ function Hero() {
             transition={{ delay: 0.3, duration: 0.6 }}
             className="inline-block mr-[0.25em]"
           >
-            sense.
+            Sense.
           </motion.span>
           <motion.span
             initial={{ opacity: 0, y: 12 }}
@@ -77,7 +77,7 @@ function Hero() {
             transition={{ delay: 0.45, duration: 0.6 }}
             className="inline-block mr-[0.25em]"
           >
-            analyze.
+            Analyze.
           </motion.span>
           <motion.span
             initial={{ opacity: 0, y: 12 }}
@@ -86,7 +86,7 @@ function Hero() {
             className="inline-block"
             style={{ ...accent, color: "#45DFB1" }}
           >
-            grow.
+            Grow.
           </motion.span>
         </h1>
         <motion.p

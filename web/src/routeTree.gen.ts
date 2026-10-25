@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutUsRouteImport } from './routes/about-us'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as AiRouteRouteImport } from './routes/ai/route'
 import { Route as ContactUsRouteImport } from './routes/contact-us'
 import { Route as DemoRouteImport } from './routes/demo'
@@ -21,6 +22,7 @@ import { Route as GuestbookRouteImport } from './routes/guestbook'
 import { Route as ImpactRouteImport } from './routes/impact'
 import { Route as IndoorFarmingRouteImport } from './routes/indoor-farming'
 import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as KanbanRouteImport } from './routes/kanban'
 import { Route as LinksRouteImport } from './routes/links'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PublicationsRouteImport } from './routes/publications'
@@ -30,6 +32,7 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TechnologyRouteImport } from './routes/technology'
 import { Route as TermsOfUseRouteImport } from './routes/terms-of-use'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AiIndexRouteImport } from './routes/ai/index'
 import { Route as AiChatRouteImport } from './routes/ai/chat'
 import { Route as AiGenerateRouteImport } from './routes/ai/generate'
@@ -44,6 +47,7 @@ import { Route as IndoorFarmingInstrumentationRouteImport } from './routes/indoo
 import { Route as IndoorFarmingKnowledgeRouteImport } from './routes/indoor-farming_.knowledge'
 import { Route as InventorySlugRouteImport } from './routes/inventory_.$slug'
 import { Route as InventoryStatsRouteImport } from './routes/inventory_.stats'
+import { Route as KanbanBoardRouteImport } from './routes/kanban_.$board'
 import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
 import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
 import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
@@ -56,6 +60,7 @@ import { Route as IndoorFarmingDashboardClimateRouteImport } from './routes/indo
 import { Route as IndoorFarmingDashboardNutritionRouteImport } from './routes/indoor-farming_.dashboard.nutrition'
 import { Route as IndoorFarmingDashboardRoomsRouteImport } from './routes/indoor-farming_.dashboard.rooms'
 import { Route as IndoorFarmingDashboardSensorsRouteImport } from './routes/indoor-farming_.dashboard.sensors'
+import { Route as KanbanBoardCCardRouteImport } from './routes/kanban_.$board.c.$card'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -65,6 +70,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutUsRoute = AboutUsRouteImport.update({
   id: '/about-us',
   path: '/about-us',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiRouteRoute = AiRouteRouteImport.update({
@@ -117,6 +127,11 @@ const InventoryRoute = InventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KanbanRoute = KanbanRouteImport.update({
+  id: '/kanban',
+  path: '/kanban',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LinksRoute = LinksRouteImport.update({
   id: '/links',
   path: '/links',
@@ -160,6 +175,11 @@ const TechnologyRoute = TechnologyRouteImport.update({
 const TermsOfUseRoute = TermsOfUseRouteImport.update({
   id: '/terms-of-use',
   path: '/terms-of-use',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiIndexRoute = AiIndexRouteImport.update({
@@ -233,6 +253,11 @@ const InventoryStatsRoute = InventoryStatsRouteImport.update({
   path: '/inventory/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KanbanBoardRoute = KanbanBoardRouteImport.update({
+  id: '/kanban_/$board',
+  path: '/kanban/$board',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LinksInsightsRoute = LinksInsightsRouteImport.update({
   id: '/links_/insights',
   path: '/links/insights',
@@ -301,11 +326,17 @@ const IndoorFarmingDashboardSensorsRoute =
     path: '/sensors',
     getParentRoute: () => IndoorFarmingDashboardRoute,
   } as any)
+const KanbanBoardCCardRoute = KanbanBoardCCardRouteImport.update({
+  id: '/c/$card',
+  path: '/c/$card',
+  getParentRoute: () => KanbanBoardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ai': typeof AiRouteRouteWithChildren
   '/about-us': typeof AboutUsRoute
+  '/account': typeof AccountRoute
   '/contact-us': typeof ContactUsRoute
   '/demo': typeof DemoRoute
   '/exhibition': typeof ExhibitionRoute
@@ -315,6 +346,7 @@ export interface FileRoutesByFullPath {
   '/impact': typeof ImpactRoute
   '/indoor-farming': typeof IndoorFarmingRoute
   '/inventory': typeof InventoryRoute
+  '/kanban': typeof KanbanRoute
   '/links': typeof LinksRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publications': typeof PublicationsRoute
@@ -324,6 +356,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
   '/terms-of-use': typeof TermsOfUseRoute
+  '/welcome': typeof WelcomeRoute
   '/ai/chat': typeof AiChatRoute
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
@@ -337,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/indoor-farming/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory/$slug': typeof InventorySlugRoute
   '/inventory/stats': typeof InventoryStatsRoute
+  '/kanban/$board': typeof KanbanBoardRouteWithChildren
   '/links/insights': typeof LinksInsightsRoute
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
@@ -350,10 +384,12 @@ export interface FileRoutesByFullPath {
   '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
   '/indoor-farming/dashboard/': typeof IndoorFarmingDashboardIndexRoute
+  '/kanban/$board/c/$card': typeof KanbanBoardCCardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about-us': typeof AboutUsRoute
+  '/account': typeof AccountRoute
   '/contact-us': typeof ContactUsRoute
   '/demo': typeof DemoRoute
   '/exhibition': typeof ExhibitionRoute
@@ -363,6 +399,7 @@ export interface FileRoutesByTo {
   '/impact': typeof ImpactRoute
   '/indoor-farming': typeof IndoorFarmingRoute
   '/inventory': typeof InventoryRoute
+  '/kanban': typeof KanbanRoute
   '/links': typeof LinksRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publications': typeof PublicationsRoute
@@ -372,6 +409,7 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
   '/terms-of-use': typeof TermsOfUseRoute
+  '/welcome': typeof WelcomeRoute
   '/ai/chat': typeof AiChatRoute
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
@@ -384,6 +422,7 @@ export interface FileRoutesByTo {
   '/indoor-farming/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory/$slug': typeof InventorySlugRoute
   '/inventory/stats': typeof InventoryStatsRoute
+  '/kanban/$board': typeof KanbanBoardRouteWithChildren
   '/links/insights': typeof LinksInsightsRoute
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
@@ -397,12 +436,14 @@ export interface FileRoutesByTo {
   '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
   '/indoor-farming/dashboard': typeof IndoorFarmingDashboardIndexRoute
+  '/kanban/$board/c/$card': typeof KanbanBoardCCardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/ai': typeof AiRouteRouteWithChildren
   '/about-us': typeof AboutUsRoute
+  '/account': typeof AccountRoute
   '/contact-us': typeof ContactUsRoute
   '/demo': typeof DemoRoute
   '/exhibition': typeof ExhibitionRoute
@@ -412,6 +453,7 @@ export interface FileRoutesById {
   '/impact': typeof ImpactRoute
   '/indoor-farming': typeof IndoorFarmingRoute
   '/inventory': typeof InventoryRoute
+  '/kanban': typeof KanbanRoute
   '/links': typeof LinksRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/publications': typeof PublicationsRoute
@@ -421,6 +463,7 @@ export interface FileRoutesById {
   '/team': typeof TeamRoute
   '/technology': typeof TechnologyRoute
   '/terms-of-use': typeof TermsOfUseRoute
+  '/welcome': typeof WelcomeRoute
   '/ai/chat': typeof AiChatRoute
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
@@ -434,6 +477,7 @@ export interface FileRoutesById {
   '/indoor-farming_/knowledge': typeof IndoorFarmingKnowledgeRoute
   '/inventory_/$slug': typeof InventorySlugRoute
   '/inventory_/stats': typeof InventoryStatsRoute
+  '/kanban_/$board': typeof KanbanBoardRouteWithChildren
   '/links_/insights': typeof LinksInsightsRoute
   '/publications_/$slug': typeof PublicationsSlugRoute
   '/research_/$slug': typeof ResearchSlugRoute
@@ -447,6 +491,7 @@ export interface FileRoutesById {
   '/indoor-farming_/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming_/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
   '/indoor-farming_/dashboard/': typeof IndoorFarmingDashboardIndexRoute
+  '/kanban_/$board/c/$card': typeof KanbanBoardCCardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -454,6 +499,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ai'
     | '/about-us'
+    | '/account'
     | '/contact-us'
     | '/demo'
     | '/exhibition'
@@ -463,6 +509,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/indoor-farming'
     | '/inventory'
+    | '/kanban'
     | '/links'
     | '/privacy-policy'
     | '/publications'
@@ -472,6 +519,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/technology'
     | '/terms-of-use'
+    | '/welcome'
     | '/ai/chat'
     | '/ai/generate'
     | '/ai/knowledge'
@@ -485,6 +533,7 @@ export interface FileRouteTypes {
     | '/indoor-farming/knowledge'
     | '/inventory/$slug'
     | '/inventory/stats'
+    | '/kanban/$board'
     | '/links/insights'
     | '/publications/$slug'
     | '/research/$slug'
@@ -498,10 +547,12 @@ export interface FileRouteTypes {
     | '/indoor-farming/dashboard/rooms'
     | '/indoor-farming/dashboard/sensors'
     | '/indoor-farming/dashboard/'
+    | '/kanban/$board/c/$card'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about-us'
+    | '/account'
     | '/contact-us'
     | '/demo'
     | '/exhibition'
@@ -511,6 +562,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/indoor-farming'
     | '/inventory'
+    | '/kanban'
     | '/links'
     | '/privacy-policy'
     | '/publications'
@@ -520,6 +572,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/technology'
     | '/terms-of-use'
+    | '/welcome'
     | '/ai/chat'
     | '/ai/generate'
     | '/ai/knowledge'
@@ -532,6 +585,7 @@ export interface FileRouteTypes {
     | '/indoor-farming/knowledge'
     | '/inventory/$slug'
     | '/inventory/stats'
+    | '/kanban/$board'
     | '/links/insights'
     | '/publications/$slug'
     | '/research/$slug'
@@ -545,11 +599,13 @@ export interface FileRouteTypes {
     | '/indoor-farming/dashboard/rooms'
     | '/indoor-farming/dashboard/sensors'
     | '/indoor-farming/dashboard'
+    | '/kanban/$board/c/$card'
   id:
     | '__root__'
     | '/'
     | '/ai'
     | '/about-us'
+    | '/account'
     | '/contact-us'
     | '/demo'
     | '/exhibition'
@@ -559,6 +615,7 @@ export interface FileRouteTypes {
     | '/impact'
     | '/indoor-farming'
     | '/inventory'
+    | '/kanban'
     | '/links'
     | '/privacy-policy'
     | '/publications'
@@ -568,6 +625,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/technology'
     | '/terms-of-use'
+    | '/welcome'
     | '/ai/chat'
     | '/ai/generate'
     | '/ai/knowledge'
@@ -581,6 +639,7 @@ export interface FileRouteTypes {
     | '/indoor-farming_/knowledge'
     | '/inventory_/$slug'
     | '/inventory_/stats'
+    | '/kanban_/$board'
     | '/links_/insights'
     | '/publications_/$slug'
     | '/research_/$slug'
@@ -594,12 +653,14 @@ export interface FileRouteTypes {
     | '/indoor-farming_/dashboard/rooms'
     | '/indoor-farming_/dashboard/sensors'
     | '/indoor-farming_/dashboard/'
+    | '/kanban_/$board/c/$card'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AiRouteRoute: typeof AiRouteRouteWithChildren
   AboutUsRoute: typeof AboutUsRoute
+  AccountRoute: typeof AccountRoute
   ContactUsRoute: typeof ContactUsRoute
   DemoRoute: typeof DemoRoute
   ExhibitionRoute: typeof ExhibitionRoute
@@ -609,6 +670,7 @@ export interface RootRouteChildren {
   ImpactRoute: typeof ImpactRoute
   IndoorFarmingRoute: typeof IndoorFarmingRoute
   InventoryRoute: typeof InventoryRoute
+  KanbanRoute: typeof KanbanRoute
   LinksRoute: typeof LinksRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   PublicationsRoute: typeof PublicationsRoute
@@ -618,6 +680,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRoute
   TechnologyRoute: typeof TechnologyRoute
   TermsOfUseRoute: typeof TermsOfUseRoute
+  WelcomeRoute: typeof WelcomeRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   GallerySlugRoute: typeof GallerySlugRoute
   GuestbookAdminRoute: typeof GuestbookAdminRoute
@@ -627,6 +690,7 @@ export interface RootRouteChildren {
   IndoorFarmingKnowledgeRoute: typeof IndoorFarmingKnowledgeRoute
   InventorySlugRoute: typeof InventorySlugRoute
   InventoryStatsRoute: typeof InventoryStatsRoute
+  KanbanBoardRoute: typeof KanbanBoardRouteWithChildren
   LinksInsightsRoute: typeof LinksInsightsRoute
   PublicationsSlugRoute: typeof PublicationsSlugRoute
   ResearchSlugRoute: typeof ResearchSlugRoute
@@ -648,6 +712,13 @@ declare module '@tanstack/react-router' {
       path: '/about-us'
       fullPath: '/about-us'
       preLoaderRoute: typeof AboutUsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ai': {
@@ -720,6 +791,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kanban': {
+      id: '/kanban'
+      path: '/kanban'
+      fullPath: '/kanban'
+      preLoaderRoute: typeof KanbanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/links': {
       id: '/links'
       path: '/links'
@@ -781,6 +859,13 @@ declare module '@tanstack/react-router' {
       path: '/terms-of-use'
       fullPath: '/terms-of-use'
       preLoaderRoute: typeof TermsOfUseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ai/': {
@@ -881,6 +966,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventoryStatsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kanban_/$board': {
+      id: '/kanban_/$board'
+      path: '/kanban/$board'
+      fullPath: '/kanban/$board'
+      preLoaderRoute: typeof KanbanBoardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/links_/insights': {
       id: '/links_/insights'
       path: '/links/insights'
@@ -965,6 +1057,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndoorFarmingDashboardSensorsRouteImport
       parentRoute: typeof IndoorFarmingDashboardRoute
     }
+    '/kanban_/$board/c/$card': {
+      id: '/kanban_/$board/c/$card'
+      path: '/c/$card'
+      fullPath: '/kanban/$board/c/$card'
+      preLoaderRoute: typeof KanbanBoardCCardRouteImport
+      parentRoute: typeof KanbanBoardRoute
+    }
   }
 }
 
@@ -1014,10 +1113,23 @@ const IndoorFarmingDashboardRouteWithChildren =
     IndoorFarmingDashboardRouteChildren,
   )
 
+interface KanbanBoardRouteChildren {
+  KanbanBoardCCardRoute: typeof KanbanBoardCCardRoute
+}
+
+const KanbanBoardRouteChildren: KanbanBoardRouteChildren = {
+  KanbanBoardCCardRoute: KanbanBoardCCardRoute,
+}
+
+const KanbanBoardRouteWithChildren = KanbanBoardRoute._addFileChildren(
+  KanbanBoardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AiRouteRoute: AiRouteRouteWithChildren,
   AboutUsRoute: AboutUsRoute,
+  AccountRoute: AccountRoute,
   ContactUsRoute: ContactUsRoute,
   DemoRoute: DemoRoute,
   ExhibitionRoute: ExhibitionRoute,
@@ -1027,6 +1139,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImpactRoute: ImpactRoute,
   IndoorFarmingRoute: IndoorFarmingRoute,
   InventoryRoute: InventoryRoute,
+  KanbanRoute: KanbanRoute,
   LinksRoute: LinksRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   PublicationsRoute: PublicationsRoute,
@@ -1036,6 +1149,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRoute,
   TechnologyRoute: TechnologyRoute,
   TermsOfUseRoute: TermsOfUseRoute,
+  WelcomeRoute: WelcomeRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   GallerySlugRoute: GallerySlugRoute,
   GuestbookAdminRoute: GuestbookAdminRoute,
@@ -1045,6 +1159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndoorFarmingKnowledgeRoute: IndoorFarmingKnowledgeRoute,
   InventorySlugRoute: InventorySlugRoute,
   InventoryStatsRoute: InventoryStatsRoute,
+  KanbanBoardRoute: KanbanBoardRouteWithChildren,
   LinksInsightsRoute: LinksInsightsRoute,
   PublicationsSlugRoute: PublicationsSlugRoute,
   ResearchSlugRoute: ResearchSlugRoute,

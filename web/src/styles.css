@@ -41,6 +41,12 @@ body {
   animation: marquee 35s linear infinite;
 }
 
+/* Kanban board and list scroll areas: thin, quiet scrollbars. */
+.kanban-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(8 49 58 / 0.25) transparent;
+}
+
 /* Field Notes (after the Quayside journal): slow drifting colour washes, a
    pulsing marker ring and a softly floating signal line. */
 @keyframes wash-a {

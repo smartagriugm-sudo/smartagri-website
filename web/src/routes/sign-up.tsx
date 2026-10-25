@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { Loader2, UserPlus } from 'lucide-react'
+import { AtSign, KeyRound, Loader2, UserRound } from 'lucide-react'
 import { isAuthConfigured, supabase } from '../lib/auth/supabase'
 import { useAuth } from '../lib/auth/auth'
-import { accent, body, display } from '../lib/fonts'
-import SiteHeader from '../components/SiteHeader'
+import { DEFAULT_SIGNED_IN_PATH } from '../lib/features'
+import AuthShell, { AUTH_BUTTON, AuthInput } from '../components/AuthShell'
 
 export const Route = createFileRoute('/sign-up')({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -18,7 +18,7 @@ export const Route = createFileRoute('/sign-up')({
     meta: [
       { title: 'Sign Up | smartagri' },
       { name: 'robots', content: 'noindex, nofollow' },
-      { name: 'description', content: 'Research assistant sign up for the SmartAgri AI Assistant.' },
+      { name: 'description', content: 'Register for the SmartAgri internal tools for research assistants.' },
     ],
   }),
 })
@@ -26,14 +26,16 @@ export const Route = createFileRoute('/sign-up')({
 function SignUpPage() {
   const { redirect } = Route.useSearch()
   const { user, loading } = useAuth()
+  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [agreed, setAgreed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const target = redirect ?? '/ai'
+  const target = redirect ?? DEFAULT_SIGNED_IN_PATH
 
   useEffect(() => {
     if (!loading && user) window.location.assign(target)
@@ -44,12 +46,20 @@ function SignUpPage() {
       setError('Authentication is not configured yet.')
       return
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.')
+    if (fullName.trim().length < 3) {
+      setError('Enter your full name.')
+      return
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.')
       return
     }
     if (password !== confirm) {
       setError('Passwords do not match.')
+      return
+    }
+    if (!agreed) {
+      setError('Please accept the Terms of Use and Privacy Policy.')
       return
     }
     setSubmitting(true)
@@ -58,6 +68,8 @@ function SignUpPage() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
+      // Copied into the profile by handle_new_user (supabase/accounts.sql).
+      options: { data: { full_name: fullName.trim() } },
     })
     setSubmitting(false)
     if (signUpError) {
@@ -69,130 +81,121 @@ function SignUpPage() {
       window.location.assign(target)
     } else {
       setNotice(
-        'Account created. Please check your email to confirm your address, then sign in.',
+        'Account created. Check your email to confirm your address, then sign in to finish your profile. A lab admin approves new accounts before the internal tools open.',
       )
     }
   }
 
   return (
-    <main>
-      <SiteHeader />
-      <section className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[#F3F7F6] px-6 py-16">
-        <div className="w-full max-w-[420px] rounded-3xl border border-[#0B6477]/10 bg-white p-8 shadow-sm">
-          <div className="mb-6 flex flex-col items-center gap-3 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0B6477]">
-              <UserPlus className="h-6 w-6 text-[#45DFB1]" />
-            </div>
-            <h1
-              className="text-2xl font-semibold tracking-[-0.025em] text-neutral-900"
-              style={display}
-            >
-              Create an <span style={accent}>account</span>
-            </h1>
-            <p className="text-sm text-neutral-500" style={body}>
-              Register to access the SmartAgri AI Assistant.
-            </p>
+    <AuthShell
+      title="Join the"
+      accentWord="lab"
+      subtitle="Create a SmartAgri account. A lab admin approves new accounts before the internal tools open."
+      footer={
+        <p>
+          Already have an account?{' '}
+          <Link to="/sign-in" search={{ redirect }} className="font-medium text-[#0B6477] hover:underline">
+            Sign in
+          </Link>
+        </p>
+      }
+    >
+      {!isAuthConfigured ? (
+        <p className="rounded-xl bg-[#F3F7F6] px-4 py-3 text-sm text-neutral-500">
+          Sign-up is not configured yet. Please contact the SmartAgri team.
+        </p>
+      ) : notice ? (
+        <p className="rounded-xl border border-[#14919B]/20 bg-[#45DFB1]/10 px-4 py-3 text-sm leading-relaxed text-[#0B6477]" role="status">
+          {notice}
+        </p>
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            void handleSubmit()
+          }}
+          className="flex flex-col gap-4"
+        >
+          <AuthInput
+            icon={UserRound}
+            label="Full name"
+            required
+            autoComplete="name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="As on your student or staff card"
+          />
+          <AuthInput
+            icon={AtSign}
+            label="Email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@ugm.ac.id"
+          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <AuthInput
+              icon={KeyRound}
+              label="Password"
+              type="password"
+              required
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="8+ characters"
+            />
+            <AuthInput
+              icon={KeyRound}
+              label="Confirm password"
+              type="password"
+              required
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Re-enter"
+            />
           </div>
 
-          {!isAuthConfigured ? (
-            <p
-              className="rounded-xl bg-[#F3F7F6] px-4 py-3 text-center text-sm text-neutral-500"
-              style={body}
-            >
-              Sign-up is not configured yet. Please contact the SmartAgri team.
+          <label className="flex items-start gap-2.5 text-sm text-neutral-600">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-[#14919B]"
+            />
+            <span>
+              I agree to the{' '}
+              <Link to="/terms-of-use" className="font-medium text-[#0B6477] hover:underline">
+                Terms of Use
+              </Link>{' '}
+              and{' '}
+              <Link to="/privacy-policy" className="font-medium text-[#0B6477] hover:underline">
+                Privacy Policy
+              </Link>
+              .
+            </span>
+          </label>
+
+          {error && (
+            <p className="text-sm text-[#B91C1C]" role="alert">
+              {error}
             </p>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                void handleSubmit()
-              }}
-              className="flex flex-col gap-4"
-            >
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-neutral-700" style={body}>
-                  Email
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@ugm.ac.id"
-                  className="w-full rounded-xl border border-[#0B6477]/20 bg-white px-3 py-2.5 text-[15px] text-neutral-800 outline-none transition-colors placeholder:text-neutral-400 focus:border-[#0B6477]"
-                  style={body}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-neutral-700" style={body}>
-                  Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  className="w-full rounded-xl border border-[#0B6477]/20 bg-white px-3 py-2.5 text-[15px] text-neutral-800 outline-none transition-colors placeholder:text-neutral-400 focus:border-[#0B6477]"
-                  style={body}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-neutral-700" style={body}>
-                  Confirm password
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="Re-enter password"
-                  className="w-full rounded-xl border border-[#0B6477]/20 bg-white px-3 py-2.5 text-[15px] text-neutral-800 outline-none transition-colors placeholder:text-neutral-400 focus:border-[#0B6477]"
-                  style={body}
-                />
-              </div>
-
-              {error && (
-                <p className="text-sm text-[#B91C1C]" style={body}>
-                  {error}
-                </p>
-              )}
-              {notice && (
-                <p className="text-sm text-[#0B6477]" style={body}>
-                  {notice}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#45DFB1] px-5 py-3 text-[15px] font-medium text-[#0B2A22] transition-colors hover:bg-[#80ED99] disabled:cursor-not-allowed disabled:opacity-60"
-                style={body}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  'Sign Up'
-                )}
-              </button>
-            </form>
           )}
 
-          <p className="mt-6 text-center text-sm text-neutral-500" style={body}>
-            Already have an account?{' '}
-            <Link
-              to="/sign-in"
-              search={{ redirect }}
-              className="font-medium text-[#0B6477] hover:underline"
-            >
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </section>
-    </main>
+          <button type="submit" disabled={submitting} className={`mt-1 ${AUTH_BUTTON}`}>
+            {submitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              'Create account'
+            )}
+          </button>
+        </form>
+      )}
+    </AuthShell>
   )
 }
