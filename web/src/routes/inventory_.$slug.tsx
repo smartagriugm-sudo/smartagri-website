@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
-import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { MotionConfig, motion } from "framer-motion";
+import { ArrowLeft, Loader2, Microscope } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
+import AmbientWash from "../components/AmbientWash";
+import AuthGate from "../components/AuthGate";
+import { EASE, MaskLine, META } from "../components/NoteParts";
 import { supabase } from "../lib/auth/supabase";
 import { useAuth } from "../lib/auth/auth";
 import {
@@ -30,40 +34,32 @@ export const Route = createFileRoute("/inventory_/$slug")({
   }),
 });
 
+// One instrument: photo and rates on the left (sticky), the name, status and
+// the action that fits its state (check out, return, log an inspection) on
+// the right, then its usage or inspection history.
 function InstrumentPage() {
-  const { user, loading: authLoading, isConfigured } = useAuth();
-  const router = useRouter();
+  return (
+    <AuthGate>
+      <InstrumentPageInner />
+    </AuthGate>
+  );
+}
 
-  const blocked = isConfigured && !authLoading && !user;
-  useEffect(() => {
-    if (blocked) {
-      const here = router.state.location.pathname;
-      window.location.assign(`/sign-in?redirect=${encodeURIComponent(here)}`);
-    }
-  }, [blocked, router]);
-
-  if (isConfigured && (authLoading || !user)) {
-    return (
+function InstrumentPageInner() {
+  const { user } = useAuth();
+  return (
+    <MotionConfig reducedMotion="user">
       <main>
         <SiteHeader />
-        <section className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[#F3F7F6]">
-          <div className="flex flex-col items-center gap-3 text-neutral-500">
-            <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
-            <p className="text-sm" style={body}>
-              {authLoading ? "Checking access..." : "Redirecting to sign in..."}
-            </p>
+        <div className="relative overflow-clip bg-white">
+          <AmbientWash count={4} />
+          <div className="relative">
+            <InstrumentDetail userId={user?.id ?? null} />
           </div>
-        </section>
+        </div>
+        <Footer />
       </main>
-    );
-  }
-
-  return (
-    <main>
-      <SiteHeader />
-      <InstrumentDetail userId={user?.id ?? null} />
-      <Footer />
-    </main>
+    </MotionConfig>
   );
 }
 
@@ -122,7 +118,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
 
   if (loading) {
     return (
-      <section className="flex min-h-[50vh] items-center justify-center bg-white">
+      <section className="flex min-h-[50vh] items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
       </section>
     );
@@ -131,7 +127,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
   if (error) {
     return (
       <Shell>
-        <div className="rounded-2xl border border-dashed border-[#0B6477]/25 bg-[#F3F7F6] p-8 text-center text-neutral-500 text-sm" style={body}>
+        <div className="rounded-[20px] border border-dashed border-[#0B6477]/25 bg-white/70 p-8 text-center text-neutral-500 text-sm" style={body}>
           {error}
         </div>
       </Shell>
@@ -154,79 +150,120 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
 
   return (
     <Shell>
-      {instrument.photo && (
-        <div className="mb-8 rounded-3xl border border-[#0B6477]/10 bg-white overflow-hidden">
-          <img
-            src={instrument.photo}
-            alt={instrument.name}
-            loading="lazy"
-            className="w-full h-56 sm:h-72 object-contain p-6"
-          />
+      <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+        {/* Photo and rates */}
+        <div className="lg:col-span-5">
+          <div className="flex flex-col gap-4 lg:sticky lg:top-[110px]">
+            <motion.div
+              initial={{ clipPath: "inset(0% 0% 100% 0% round 24px)" }}
+              animate={{ clipPath: "inset(0% 0% 0% 0% round 24px)" }}
+              transition={{ delay: 0.15, duration: 1, ease: EASE }}
+              className="relative overflow-hidden rounded-[24px] border border-[#0B6477]/10 bg-[#F3F7F6]"
+            >
+              {instrument.photo ? (
+                <motion.img
+                  src={instrument.photo}
+                  alt={instrument.name}
+                  initial={{ scale: 1.12 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.15, duration: 1.4, ease: EASE }}
+                  className="aspect-[4/3] w-full object-contain p-8"
+                />
+              ) : (
+                <div className="grid aspect-[4/3] place-items-center">
+                  <Microscope className="h-12 w-12 text-[#0B6477]/25" />
+                </div>
+              )}
+              <span className={`absolute left-4 top-4 rounded-md bg-white/90 px-2.5 py-1 text-[#0B6477] ${META}`} style={body}>
+                {instrument.code}
+              </span>
+            </motion.div>
+
+            {!installed && (
+              <div className="grid gap-px overflow-hidden rounded-[20px] border border-[#0B6477]/12 bg-[#0B6477]/12 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                <RateCard label="Internal, self" value={instrument.rate_internal_self} unit={instrument.unit} />
+                <RateCard label="Internal, technician" value={instrument.rate_internal_tech} unit={instrument.unit} />
+                <RateCard label="External" value={instrument.rate_external} unit={instrument.unit} />
+              </div>
+            )}
+          </div>
         </div>
-      )}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div
-            className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-2"
+
+        {/* Name, status and action */}
+        <div className="lg:col-span-7">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className={`flex items-center gap-2 text-[#14919B] ${META}`}
             style={body}
           >
-            {instrument.code} · {instrument.lab}
-          </div>
-          <h1
-            className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900"
+            <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
+            {[instrument.code, instrument.lab].filter(Boolean).join(" · ")}
+          </motion.p>
+          <motion.h1
+            initial="hidden"
+            animate="show"
+            className="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 md:text-5xl"
             style={display}
           >
-            {instrument.name}
-          </h1>
-          <p className="mt-2 text-sm text-neutral-500" style={body}>
-            {instrument.brand} · {instrument.category}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          {installed && (
-            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium bg-[#0B6477]/10 text-[#0B6477]">
-              Permanently installed
-            </span>
-          )}
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${meta.chip}`}
+            <MaskLine delay={0.05}>{instrument.name}</MaskLine>
+          </motion.h1>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.6, ease: "easeOut" }}
+            className="mt-5 flex flex-wrap items-center gap-2"
           >
-            <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
-            {meta.label}
-          </span>
-        </div>
-      </div>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${meta.chip}`}
+              style={body}
+            >
+              <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
+              {meta.label}
+            </span>
+            {installed && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0B6477]/10 px-3 py-1.5 text-sm font-medium text-[#0B6477]" style={body}>
+                Permanently installed
+              </span>
+            )}
+            <span className="text-[15px] text-neutral-500" style={body}>
+              {[instrument.brand, instrument.category].filter(Boolean).join(" · ")}
+            </span>
+          </motion.div>
 
-      {/* Rate card: portable instruments only */}
-      {!installed && (
-        <div className="mt-8 grid sm:grid-cols-3 gap-3">
-          <RateCard label="Internal, self" value={instrument.rate_internal_self} unit={instrument.unit} />
-          <RateCard label="Internal, technician" value={instrument.rate_internal_tech} unit={instrument.unit} />
-          <RateCard label="External" value={instrument.rate_external} unit={instrument.unit} />
+          {/* Action panel */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.7, ease: EASE }}
+            className="mt-10"
+          >
+            {installed ? (
+              <InspectionPanel instrument={instrument} userId={userId} onDone={refresh} />
+            ) : activeLog ? (
+              <ReturnPanel instrument={instrument} log={activeLog} onDone={refresh} />
+            ) : instrument.status === "available" ? (
+              <CheckoutPanel instrument={instrument} userId={userId} onDone={refresh} />
+            ) : (
+              <div className="rounded-[24px] border border-[#0B6477]/10 bg-white/90 p-6 text-[15px] text-neutral-600" style={body}>
+                This instrument is currently marked <b>{meta.label.toLowerCase()}</b> and is not available
+                for checkout.
+              </div>
+            )}
+            <StatusControl instrument={instrument} disabled={!!activeLog} onDone={refresh} />
+          </motion.div>
         </div>
-      )}
-
-      {/* Action panel */}
-      <div className="mt-10">
-        {installed ? (
-          <InspectionPanel instrument={instrument} userId={userId} onDone={refresh} />
-        ) : activeLog ? (
-          <ReturnPanel instrument={instrument} log={activeLog} onDone={refresh} />
-        ) : instrument.status === "available" ? (
-          <CheckoutPanel instrument={instrument} userId={userId} onDone={refresh} />
-        ) : (
-          <div className="rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] p-6 text-sm text-neutral-600" style={body}>
-            This instrument is currently marked <b>{meta.label.toLowerCase()}</b> and
-            is not available for checkout.
-          </div>
-        )}
-        <StatusControl instrument={instrument} disabled={!!activeLog} onDone={refresh} />
       </div>
 
       {/* History */}
-      <div className="mt-12">
+      <div className="mt-16 border-t border-[#0B6477]/10 pt-12">
+        <p className={`mb-3 flex items-center gap-2 text-[#14919B] ${META}`} style={body}>
+          <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
+          {logs.length} {logs.length === 1 ? "entry" : "entries"}
+        </p>
         <h2
-          className="text-xl font-semibold tracking-[-0.025em] text-neutral-900 mb-4"
+          className="mb-6 text-3xl font-semibold tracking-[-0.03em] text-neutral-900 md:text-4xl"
           style={display}
         >
           {installed ? (
@@ -240,14 +277,14 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
           )}
         </h2>
         {logs.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[#0B6477]/25 bg-[#F3F7F6] p-6 text-center text-sm text-neutral-500" style={body}>
+          <div className="rounded-[20px] border border-dashed border-[#0B6477]/25 bg-white/70 p-8 text-center text-sm text-neutral-500" style={body}>
             {installed ? "No inspections logged yet." : "No usage logged yet."}
           </div>
         ) : installed ? (
-          <div className="overflow-x-auto rounded-2xl border border-[#0B6477]/10">
+          <div className="overflow-x-auto rounded-[20px] border border-[#0B6477]/12 bg-white/90">
             <table className="w-full text-left border-collapse min-w-[680px]">
               <thead>
-                <tr className="bg-[#F3F7F6] text-neutral-500">
+                <tr className="bg-[#F3F7F6]/80 text-neutral-400">
                   <Th>Date</Th>
                   <Th>Checked by</Th>
                   <Th>Type</Th>
@@ -257,7 +294,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
               </thead>
               <tbody>
                 {logs.map((l) => (
-                  <tr key={l.id} className="border-t border-[#0B6477]/8 align-top">
+                  <tr key={l.id} className="border-t border-[#0B6477]/8 align-top transition-colors hover:bg-[#F3F7F6]/70">
                     <Td className="whitespace-nowrap text-neutral-600">{fmtDate(l.checkout_at)}</Td>
                     <Td className="font-medium text-neutral-800">{l.borrower_name}</Td>
                     <Td className="text-neutral-600">{l.purpose || "-"}</Td>
@@ -269,10 +306,10 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
             </table>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-[#0B6477]/10">
+          <div className="overflow-x-auto rounded-[20px] border border-[#0B6477]/12 bg-white/90">
             <table className="w-full text-left border-collapse min-w-[760px]">
               <thead>
-                <tr className="bg-[#F3F7F6] text-neutral-500">
+                <tr className="bg-[#F3F7F6]/80 text-neutral-400">
                   <Th>Borrower</Th>
                   <Th>Out</Th>
                   <Th>Returned</Th>
@@ -283,7 +320,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
               </thead>
               <tbody>
                 {logs.map((l) => (
-                  <tr key={l.id} className="border-t border-[#0B6477]/8 align-top">
+                  <tr key={l.id} className="border-t border-[#0B6477]/8 align-top transition-colors hover:bg-[#F3F7F6]/70">
                     <Td>
                       <div className="font-medium text-neutral-800">{l.borrower_name}</div>
                       <div className="text-xs text-neutral-400">
@@ -410,7 +447,7 @@ function InspectionPanel({
         <button
           onClick={submit}
           disabled={saving}
-          className="inline-flex items-center gap-2 h-11 px-6 bg-[#45DFB1] rounded-xl text-[#0B2A22] text-sm font-medium hover:bg-[#80ED99] transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-2 h-11 px-6 bg-[#45DFB1] rounded-lg text-[#0B2A22] text-sm font-medium uppercase tracking-[0.08em] hover:bg-[#80ED99] transition-colors disabled:opacity-60"
           style={body}
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
@@ -535,7 +572,7 @@ function CheckoutPanel({
         <button
           onClick={submit}
           disabled={saving}
-          className="inline-flex items-center gap-2 h-11 px-6 bg-[#45DFB1] rounded-xl text-[#0B2A22] text-sm font-medium hover:bg-[#80ED99] transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-2 h-11 px-6 bg-[#45DFB1] rounded-lg text-[#0B2A22] text-sm font-medium uppercase tracking-[0.08em] hover:bg-[#80ED99] transition-colors disabled:opacity-60"
           style={body}
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
@@ -616,7 +653,7 @@ function ReturnPanel({
         <button
           onClick={submit}
           disabled={saving}
-          className="inline-flex items-center gap-2 h-11 px-6 bg-[#0B6477] rounded-xl text-white text-sm font-medium hover:bg-[#14919B] transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-2 h-11 px-6 bg-[#08313A] rounded-lg text-white text-sm font-medium uppercase tracking-[0.08em] hover:bg-[#0B6477] transition-colors disabled:opacity-60"
           style={body}
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
@@ -675,18 +712,16 @@ function StatusControl({
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <section className="bg-white">
-      <div className="max-w-[900px] mx-auto px-6 md:px-12 pt-10 md:pt-14 pb-16 md:pb-24">
-        <Link
-          to="/inventory"
-          className="inline-flex items-center gap-2 text-sm font-medium text-[#0B6477] hover:underline mb-8"
-          style={body}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to inventory
-        </Link>
-        {children}
-      </div>
+    <section className="mx-auto max-w-[1360px] px-6 pb-20 pt-10 md:px-12 md:pb-28 md:pt-12">
+      <Link
+        to="/inventory"
+        className={`group mb-10 inline-flex items-center gap-2 text-neutral-600 hover:text-[#0B6477] ${META}`}
+        style={body}
+      >
+        <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+        Back to inventory
+      </Link>
+      {children}
     </section>
   );
 }
@@ -701,16 +736,16 @@ function RateCard({
   unit: string | null;
 }) {
   return (
-    <div className="rounded-2xl border border-[#0B6477]/10 bg-[#F3F7F6] px-4 py-3">
-      <div className="text-xs font-normal text-neutral-500" style={body}>
+    <div className="flex flex-col gap-1 bg-white/90 p-4">
+      <span className={`text-neutral-400 ${META}`} style={body}>
         {label}
-      </div>
-      <div className="text-lg font-semibold text-neutral-900 mt-0.5" style={display}>
+      </span>
+      <span className="text-xl font-semibold tracking-[-0.02em] text-neutral-900" style={display}>
         {formatIDR(value)}
-      </div>
-      <div className="text-xs text-neutral-400" style={body}>
+      </span>
+      <span className="text-xs text-neutral-400" style={body}>
         {unit}
-      </div>
+      </span>
     </div>
   );
 }
@@ -726,16 +761,11 @@ function Panel({
 }) {
   return (
     <div
-      className={`rounded-3xl border p-6 md:p-7 ${
-        tone === "in_use"
-          ? "border-[#14919B]/25 bg-[#14919B]/5"
-          : "border-[#0B6477]/12 bg-white"
+      className={`rounded-[24px] border p-6 shadow-[0_14px_40px_-30px_rgba(8,49,58,0.35)] md:p-8 ${
+        tone === "in_use" ? "border-[#14919B]/25 bg-[#14919B]/[0.06]" : "border-[#0B6477]/12 bg-white/90 backdrop-blur"
       }`}
     >
-      <h3
-        className="text-lg font-medium text-neutral-900 mb-5"
-        style={display}
-      >
+      <h3 className="mb-6 text-xl font-medium tracking-[-0.02em] text-neutral-900 md:text-[22px]" style={display}>
         {title}
       </h3>
       {children}
@@ -756,7 +786,7 @@ function Field({
 }) {
   return (
     <label className={`flex flex-col gap-1.5 ${full ? "sm:col-span-2" : ""}`}>
-      <span className="text-xs font-medium text-neutral-500" style={body}>
+      <span className={`text-neutral-500 ${META}`} style={body}>
         {label}
         {required && <span className="text-[#E5484D]"> *</span>}
       </span>
@@ -782,7 +812,7 @@ function Input({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       type={type}
-      className="h-11 px-3.5 rounded-xl border border-[#0B6477]/15 bg-[#F3F7F6] text-sm text-neutral-800 outline-none focus:border-[#14919B]"
+      className="h-11 rounded-xl border border-[#0B6477]/15 bg-white px-3.5 text-sm text-neutral-800 outline-none transition-[border-color,box-shadow] focus:border-[#14919B] focus:shadow-[0_0_0_4px_rgba(69,223,177,0.18)]"
       style={body}
     />
   );
@@ -804,7 +834,7 @@ function SelectInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className="h-11 px-3 rounded-xl border border-[#0B6477]/15 bg-white text-sm text-neutral-700 outline-none focus:border-[#14919B] disabled:opacity-50"
+      className="h-11 rounded-xl border border-[#0B6477]/15 bg-white px-3 text-sm text-neutral-700 outline-none transition-[border-color,box-shadow] focus:border-[#14919B] focus:shadow-[0_0_0_4px_rgba(69,223,177,0.18)] disabled:opacity-50"
       style={body}
     >
       {options.map(([v, l]) => (
@@ -824,7 +854,7 @@ function Th({
   className?: string;
 }) {
   return (
-    <th className={`px-4 py-3 text-xs font-medium ${className}`} style={body}>
+    <th className={`px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.1em] ${className}`} style={body}>
       {children}
     </th>
   );

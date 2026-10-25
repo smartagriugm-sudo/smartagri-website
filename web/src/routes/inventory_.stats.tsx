@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Loader2 } from "lucide-react";
-import { body } from "../lib/fonts";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { MotionConfig, motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
+import { accent, body, display } from "../lib/fonts";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
+import AmbientWash from "../components/AmbientWash";
+import AuthGate from "../components/AuthGate";
+import { MaskLine, META } from "../components/NoteParts";
 import { supabase } from "../lib/auth/supabase";
-import { useAuth } from "../lib/auth/auth";
 import { type Instrument, type UsageLog } from "../lib/inventory";
 import { computeInventoryStats } from "../lib/inventory-stats";
 import {
@@ -15,7 +18,6 @@ import {
   Card,
   CurrentlyOutPanel,
   GaugeCard,
-  Heading2,
   KpiCard,
   MonthlyChart,
   StatusBreakdown,
@@ -32,39 +34,21 @@ export const Route = createFileRoute("/inventory_/stats")({
 });
 
 function StatsPage() {
-  const { user, loading: authLoading, isConfigured } = useAuth();
-  const router = useRouter();
-
-  const blocked = isConfigured && !authLoading && !user;
-  useEffect(() => {
-    if (blocked) {
-      const here = router.state.location.pathname;
-      window.location.assign(`/sign-in?redirect=${encodeURIComponent(here)}`);
-    }
-  }, [blocked, router]);
-
-  if (isConfigured && (authLoading || !user)) {
-    return (
-      <main>
-        <SiteHeader />
-        <section className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[#F3F7F6]">
-          <div className="flex flex-col items-center gap-3 text-neutral-500">
-            <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
-            <p className="text-sm" style={body}>
-              {authLoading ? "Checking access..." : "Redirecting to sign in..."}
-            </p>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
   return (
-    <main>
-      <SiteHeader />
-      <StatsContent />
-      <Footer />
-    </main>
+    <AuthGate>
+      <MotionConfig reducedMotion="user">
+        <main>
+          <SiteHeader />
+          <div className="relative overflow-clip bg-white">
+            <AmbientWash count={6} />
+            <div className="relative">
+              <StatsContent />
+            </div>
+          </div>
+          <Footer />
+        </main>
+      </MotionConfig>
+    </AuthGate>
   );
 }
 
@@ -113,40 +97,63 @@ function StatsContent() {
     s.avgDurationDays == null ? null : `${s.avgDurationDays.toFixed(1)}`;
 
   return (
-    <section className="bg-white">
-      <div className="max-w-[1120px] mx-auto px-6 md:px-12 pt-10 md:pt-14 pb-16 md:pb-24">
+    <section>
+      <div className="mx-auto max-w-[1360px] px-6 pb-20 pt-10 md:px-12 md:pb-28 md:pt-12">
         <Link
           to="/inventory"
-          className="inline-flex items-center gap-2 text-sm font-medium text-[#0B6477] hover:underline mb-8"
+          className={`group mb-10 inline-flex items-center gap-2 text-neutral-600 hover:text-[#0B6477] ${META}`}
           style={body}
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
           Back to inventory
         </Link>
 
-        <div className="mb-8">
-          <div className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-3" style={body}>
-            PUAPT · WGFS
+        <div className="mb-12 grid gap-6 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-8">
+            <p className={`flex items-center gap-2 text-[#14919B] ${META}`} style={body}>
+              <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
+              PUAPT · WGFS
+            </p>
+            <motion.h1
+              initial="hidden"
+              animate="show"
+              className="mt-5 text-[44px] font-semibold leading-[1.0] tracking-[-0.04em] text-neutral-900 sm:text-6xl md:text-[72px]"
+              style={display}
+            >
+              <MaskLine delay={0}>Usage</MaskLine>
+              <MaskLine delay={0.12}>
+                <span style={accent}>statistics.</span>
+              </MaskLine>
+            </motion.h1>
           </div>
-          <Heading2 pre="Usage" hi="statistics" />
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
+            className="text-base leading-relaxed text-neutral-600 md:text-lg lg:col-span-4"
+            style={body}
+          >
+            How the instruments are being used: this month against the last, what is out right now,
+            and which instruments, labs and people log the most activity.
+          </motion.p>
         </div>
 
         {error ? (
-          <div className="rounded-2xl border border-dashed border-[#0B6477]/25 bg-[#F3F7F6] p-8 text-center text-neutral-500 text-sm" style={body}>
+          <div className="rounded-[20px] border border-dashed border-[#0B6477]/25 bg-white/70 p-8 text-center text-neutral-500 text-sm" style={body}>
             {error}
           </div>
         ) : (
-          <div className="flex flex-col gap-8">
-            {/* A. KPI cards with month-over-month delta */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <KpiCard label="Log entries this month" value={s.totalEntries.current} delta={s.totalEntries} loading={loading} />
-              <KpiCard label="Instruments used" value={s.instrumentsUsed.current} delta={s.instrumentsUsed} tone="#14919B" loading={loading} />
-              <KpiCard label="People involved" value={s.peopleInvolved.current} delta={s.peopleInvolved} tone="#0B6477" loading={loading} />
-              <KpiCard label="Currently out" value={s.currentlyOut} tone="#F59E0B" loading={loading} />
+          <div className="flex flex-col gap-5 md:gap-6">
+            {/* A. This month at a glance, with month-over-month change */}
+            <div className="grid grid-cols-2 gap-px overflow-clip rounded-[24px] border border-[#0B6477]/12 bg-[#0B6477]/12 lg:grid-cols-4">
+              <KpiCard index={0} label="Log entries this month" value={s.totalEntries.current} delta={s.totalEntries} tone="#0B6477" loading={loading} />
+              <KpiCard index={1} label="Instruments used" value={s.instrumentsUsed.current} delta={s.instrumentsUsed} tone="#14919B" loading={loading} />
+              <KpiCard index={2} label="People involved" value={s.peopleInvolved.current} delta={s.peopleInvolved} tone="#45DFB1" loading={loading} />
+              <KpiCard index={3} label="Currently out" value={s.currentlyOut} tone="#F59E0B" loading={loading} />
             </div>
 
-            {/* B. rate cards */}
-            <div className="grid sm:grid-cols-3 gap-6">
+            {/* B. rates */}
+            <div className="grid gap-5 md:grid-cols-3">
               <GaugeCard
                 title="On-time return rate"
                 pct={s.onTime.pct}
@@ -173,43 +180,43 @@ function StatsContent() {
               />
             </div>
 
-            {/* time series */}
-            <Card title="Activity over time">
-              <MonthlyChart data={s.byMonth} loading={loading} />
+            {/* time series, on a dark band */}
+            <Card title="Activity over time" eyebrow="Log entries per month" dark>
+              <MonthlyChart data={s.byMonth} loading={loading} dark />
             </Card>
 
             {/* C. currently out & overdue */}
             <CurrentlyOutPanel rows={s.currentlyOutRows} overdueCount={s.overdueCount} loading={loading} />
 
             {/* D + E */}
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid gap-5 lg:grid-cols-2">
               <ActivityFeed events={s.recentActivity} now={now} loading={loading} />
               <StatusBreakdown rows={s.statusBreakdown} loading={loading} />
             </div>
 
             {/* most-used vs underused */}
-            <div className="grid lg:grid-cols-2 gap-6">
-              <Card title="Most-used instruments">
+            <div className="grid gap-5 lg:grid-cols-2">
+              <Card title="Most-used instruments" eyebrow="Ranking" className="h-full">
                 <BarList rows={s.mostUsed} color="#0B6477" loading={loading} empty="No borrows yet." />
               </Card>
-              <Card title="Underused instruments">
+              <Card title="Underused instruments" eyebrow="Ranking" className="h-full">
                 <BarList rows={s.underused} color="#8A94A6" loading={loading} empty="No borrowable instruments." />
               </Card>
             </div>
 
             {/* lab / category */}
-            <div className="grid lg:grid-cols-2 gap-6">
-              <Card title="Activity by lab / location">
+            <div className="grid gap-5 lg:grid-cols-2">
+              <Card title="Activity by lab / location" eyebrow="Where" className="h-full">
                 <BarList rows={s.byLab} color="#14919B" loading={loading} />
               </Card>
-              <Card title="Activity by category">
+              <Card title="Activity by category" eyebrow="What" className="h-full">
                 <BarList rows={s.byCategory} color="#0AD1C8" loading={loading} />
               </Card>
             </div>
 
             {/* people */}
-            <Card title="Most active people">
-              <BarList rows={s.topPeople} color="#0B6477" loading={loading} />
+            <Card title="Most active people" eyebrow="Who">
+              <BarList rows={s.topPeople} color="#45DFB1" loading={loading} />
             </Card>
           </div>
         )}
