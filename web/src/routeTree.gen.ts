@@ -38,6 +38,7 @@ import { Route as AiChatRouteImport } from './routes/ai/chat'
 import { Route as AiGenerateRouteImport } from './routes/ai/generate'
 import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
 import { Route as AiProfileRouteImport } from './routes/ai/profile'
+import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
 import { Route as GallerySlugRouteImport } from './routes/gallery_.$slug'
 import { Route as GuestbookAdminRouteImport } from './routes/guestbook_.admin'
@@ -207,6 +208,11 @@ const AiProfileRoute = AiProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AiRouteRoute,
 } as any)
+const AuthConfirmRoute = AuthConfirmRouteImport.update({
+  id: '/auth/confirm',
+  path: '/auth/confirm',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FieldNotesSlugRoute = FieldNotesSlugRouteImport.update({
   id: '/field-notes_/$slug',
   path: '/field-notes/$slug',
@@ -361,6 +367,7 @@ export interface FileRoutesByFullPath {
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/gallery/$slug': typeof GallerySlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
@@ -414,6 +421,7 @@ export interface FileRoutesByTo {
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/gallery/$slug': typeof GallerySlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
@@ -468,6 +476,7 @@ export interface FileRoutesById {
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
   '/gallery_/$slug': typeof GallerySlugRoute
   '/guestbook_/admin': typeof GuestbookAdminRoute
@@ -524,6 +533,7 @@ export interface FileRouteTypes {
     | '/ai/generate'
     | '/ai/knowledge'
     | '/ai/profile'
+    | '/auth/confirm'
     | '/field-notes/$slug'
     | '/gallery/$slug'
     | '/guestbook/admin'
@@ -577,6 +587,7 @@ export interface FileRouteTypes {
     | '/ai/generate'
     | '/ai/knowledge'
     | '/ai/profile'
+    | '/auth/confirm'
     | '/field-notes/$slug'
     | '/gallery/$slug'
     | '/guestbook/admin'
@@ -630,6 +641,7 @@ export interface FileRouteTypes {
     | '/ai/generate'
     | '/ai/knowledge'
     | '/ai/profile'
+    | '/auth/confirm'
     | '/field-notes_/$slug'
     | '/gallery_/$slug'
     | '/guestbook_/admin'
@@ -681,6 +693,7 @@ export interface RootRouteChildren {
   TechnologyRoute: typeof TechnologyRoute
   TermsOfUseRoute: typeof TermsOfUseRoute
   WelcomeRoute: typeof WelcomeRoute
+  AuthConfirmRoute: typeof AuthConfirmRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   GallerySlugRoute: typeof GallerySlugRoute
   GuestbookAdminRoute: typeof GuestbookAdminRoute
@@ -902,6 +915,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ai/profile'
       preLoaderRoute: typeof AiProfileRouteImport
       parentRoute: typeof AiRouteRoute
+    }
+    '/auth/confirm': {
+      id: '/auth/confirm'
+      path: '/auth/confirm'
+      fullPath: '/auth/confirm'
+      preLoaderRoute: typeof AuthConfirmRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/field-notes_/$slug': {
       id: '/field-notes_/$slug'
@@ -1150,6 +1170,7 @@ const rootRouteChildren: RootRouteChildren = {
   TechnologyRoute: TechnologyRoute,
   TermsOfUseRoute: TermsOfUseRoute,
   WelcomeRoute: WelcomeRoute,
+  AuthConfirmRoute: AuthConfirmRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   GallerySlugRoute: GallerySlugRoute,
   GuestbookAdminRoute: GuestbookAdminRoute,

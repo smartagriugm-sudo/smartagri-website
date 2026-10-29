@@ -1,0 +1,93 @@
+<!--
+  smartagri · "Confirm signup" email template for Supabase Auth.
+  Paste into Supabase: Authentication > Emails > Templates > Confirm signup.
+  Subject: Confirm your smartagri account
+  Variables filled by Supabase: {{ .ConfirmationURL }}, {{ .Email }}.
+  Table layout and inline styles only, so it renders the same in Gmail,
+  Outlook and phone mail apps. The logo is a PNG served by the live site
+  (web/public/brand/email/smartagri-logo.png).
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Confirm your smartagri account</title>
+  </head>
+  <body style="margin:0;padding:0;background:#E9F0EE;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+      One click to activate your smartagri lab account.
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#E9F0EE;">
+      <tr>
+        <td align="center" style="padding:40px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+            <!-- Logo -->
+            <tr>
+              <td style="padding:0 8px 24px 8px;">
+                <a href="https://www.smart-agri.id" style="text-decoration:none;">
+                  <img src="https://www.smart-agri.id/brand/email/smartagri-logo.png" width="154" height="28" alt="smartagri" style="display:block;border:0;outline:none;" />
+                </a>
+              </td>
+            </tr>
+
+            <!-- Card -->
+            <tr>
+              <td style="background:#FFFFFF;border-radius:24px;padding:40px 36px;font-family:Inter,'Segoe UI',Helvetica,Arial,sans-serif;">
+                <p style="margin:0 0 12px 0;font-size:13px;font-weight:500;letter-spacing:0.03em;color:#14919B;">
+                  Smart Agriculture Research Center UGM
+                </p>
+                <h1 style="margin:0 0 16px 0;font-size:28px;line-height:1.15;font-weight:600;letter-spacing:-0.03em;color:#171717;">
+                  Confirm your <span style="color:#14919B;">email</span>
+                </h1>
+                <p style="margin:0 0 8px 0;font-size:16px;line-height:1.6;color:#525252;">
+                  Thanks for creating a smartagri account. Confirm that
+                  <strong style="color:#0B6477;font-weight:600;">{{ .Email }}</strong> is your address to activate it.
+                </p>
+                <p style="margin:0 0 28px 0;font-size:16px;line-height:1.6;color:#525252;">
+                  After that you complete a short profile, and a lab admin approves the account before the internal tools open.
+                </p>
+
+                <!-- Button -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="border-radius:10px;background:#45DFB1;">
+                      <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 26px;font-size:15px;font-weight:600;letter-spacing:0.02em;color:#0B2A22;text-decoration:none;border-radius:10px;">
+                        Confirm email address &rarr;
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:28px 0 6px 0;font-size:13px;line-height:1.6;color:#737373;">
+                  Button not working? Paste this link into your browser:
+                </p>
+                <p style="margin:0;font-size:13px;line-height:1.6;word-break:break-all;">
+                  <a href="{{ .ConfirmationURL }}" style="color:#0B6477;">{{ .ConfirmationURL }}</a>
+                </p>
+
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:32px;">
+                  <tr>
+                    <td style="border-top:1px solid #E5EEEC;padding-top:20px;font-size:13px;line-height:1.6;color:#737373;">
+                      The link works once and expires after a while. If you did not create a smartagri account, you can ignore this email.
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:24px 8px 0 8px;font-family:Inter,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#6B7F7B;">
+                Smart Agriculture Research Center · Department of Agricultural and Biosystems Engineering,
+                Faculty of Agricultural Technology, Universitas Gadjah Mada<br />
+                <a href="https://www.smart-agri.id" style="color:#0B6477;text-decoration:none;">smart-agri.id</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

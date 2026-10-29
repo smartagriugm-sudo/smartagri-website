@@ -20,6 +20,7 @@ import {
   Trash2,
   Upload,
   UserRound,
+  Users,
   type LucideIcon,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth/auth'
@@ -42,6 +43,8 @@ import type { AvatarCrop } from '../lib/avatar'
 import { isStudentRole, labRoleLabel } from '../lib/account'
 import type { AccountProfile } from '../lib/account'
 import AvatarEditor from '../components/AvatarEditor'
+import LabMembers from '../components/LabMembers'
+import { listLabAccounts } from '../lib/lab-admin'
 import type { AvatarSource } from '../components/AvatarEditor'
 import { accent, body, display } from '../lib/fonts'
 import SiteHeader from '../components/SiteHeader'
@@ -77,12 +80,14 @@ const STYLES = [
   { value: 'detailed', label: 'Detailed' },
 ]
 
-const SECTIONS: { id: string; label: string; icon: LucideIcon; ai?: boolean }[] = [
+const SECTIONS: { id: string; label: string; icon: LucideIcon; ai?: boolean; admin?: boolean }[] = [
   { id: 'profile', label: 'Profile', icon: UserRound },
   { id: 'personalization', label: 'Personalization', icon: Sparkles, ai: true },
   { id: 'account', label: 'Account', icon: Mail },
   { id: 'security', label: 'Security', icon: Lock },
   { id: 'history', label: 'Chat history', icon: MessageSquare, ai: true },
+  // Admins only: review and manage every lab account.
+  { id: 'members', label: 'Lab members', icon: Users, admin: true },
 ]
 const VISIBLE = SECTIONS.filter((s) => !s.ai || AI_ASSISTANT_ENABLED)
 
@@ -265,7 +270,23 @@ function AccountPage() {
 
 function AccountContent() {
   const { user, isConfigured, account, refreshAccount } = useAuth()
-  const [active, selectTab] = useTab(VISIBLE.map((s) => s.id))
+  const [tab, selectTab] = useTab(VISIBLE.map((s) => s.id))
+  const isAdmin = !!account?.isAdmin
+  const tabs = VISIBLE.filter((s) => !s.admin || isAdmin)
+  // A non-admin opening #members lands on the profile instead.
+  const active = tabs.some((s) => s.id === tab) ? tab : 'profile'
+  const [pendingCount, setPendingCount] = useState(0)
+  // Admins see how many accounts wait for approval on the tab itself.
+  useEffect(() => {
+    if (!isAdmin) return
+    let live = true
+    void listLabAccounts().then((r) => {
+      if (live && r.data) setPendingCount(r.data.filter((a) => a.status === 'pending').length)
+    })
+    return () => {
+      live = false
+    }
+  }, [isAdmin])
 
   const [loading, setLoading] = useState(true)
   // Identity
@@ -623,7 +644,7 @@ function AccountContent() {
             {/* Section tabs */}
             <nav aria-label="Settings sections" className="rounded-2xl border border-[#0B6477]/10 bg-white/80 p-1.5 backdrop-blur">
               <ul role="tablist" className="flex gap-1 overflow-x-auto [scrollbar-width:none] lg:flex-col [&::-webkit-scrollbar]:hidden">
-                {VISIBLE.map((s) => {
+                {tabs.map((s) => {
                   const on = s.id === active
                   return (
                     <li key={s.id} className="relative shrink-0">
@@ -646,6 +667,11 @@ function AccountContent() {
                       >
                         <s.icon className={`h-4 w-4 ${on ? 'text-[#45DFB1]' : 'text-[#14919B]'}`} />
                         {s.label}
+                        {s.id === 'members' && pendingCount > 0 && (
+                          <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[#F2B84B] px-1.5 text-[11px] font-semibold text-[#3A2600]">
+                            {pendingCount}
+                          </span>
+                        )}
                       </button>
                     </li>
                   )
@@ -674,6 +700,17 @@ function AccountContent() {
             </div>
           ) : (
             <>
+              {isAdmin && active === 'members' && (
+                <Card
+                  current={active}
+                  id="members"
+                  icon={Users}
+                  title="Lab members"
+                  desc="Approve new accounts, choose the boards they join, and manage access and admins."
+                >
+                  <LabMembers selfId={user?.id ?? null} onPendingCount={setPendingCount} />
+                </Card>
+              )}
               <Card current={active} id="profile" icon={UserRound} title="Profile" desc="Shown to the smartagri research team.">
                 <div className="flex flex-col gap-5 rounded-2xl border border-[#0B6477]/8 bg-[#F7FAF9] p-5 sm:flex-row sm:items-center">
                   <button
