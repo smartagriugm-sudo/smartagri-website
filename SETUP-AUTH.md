@@ -50,6 +50,46 @@ Anda juga tetap bisa menambah/menghapus/reset akun manual lewat **Authentication
 - Setelah login, menu **"AI Assistant"** muncul otomatis di nav; saat **Sign
   out**, hilang lagi.
 
+### 3b. Email konfirmasi dan alamat kembali (WAJIB untuk produksi)
+Tanpa langkah ini link di email konfirmasi mengarah ke `localhost:3000` dan
+pendaftar melihat halaman "This site can't be reached", walaupun akunnya
+sebenarnya sudah terkonfirmasi.
+
+1. **Authentication → URL Configuration**
+   - **Site URL**: `https://www.smart-agri.id`
+   - **Redirect URLs**, tambahkan:
+     - `https://www.smart-agri.id/**`
+     - `https://smart-agri.id/**`
+     - `http://localhost:3000/**` (pengembangan lokal)
+     - `https://*-smartagriugm-sudo.vercel.app/**` (preview Vercel, opsional)
+   Situs mengirim alamat kembali `<situs>/auth/confirm` sendiri
+   (`lib/auth/redirects.ts`), jadi alamat itu harus masuk daftar ini.
+2. **Pengirim email: Authentication → Emails → SMTP Settings (WAJIB sebelum langkah 3)**
+   Supabase mengunci editor template selama proyek memakai pengirim bawaan
+   (`noreply@mail.app.supabase.io`, juga dibatasi beberapa email per jam dan
+   sering masuk spam). Template baru bisa diubah setelah custom SMTP aktif.
+   - `hello@smartagri.id` saat ini hanya Cloudflare Email Routing, yang bisa
+     MENERIMA tapi tidak MENGIRIM. Untuk mengirim butuh layanan SMTP, misalnya
+     Brevo atau Resend (ada paket gratis). Verifikasi domain `smartagri.id` di
+     layanan itu dengan menambah record DNS (SPF/DKIM) yang diberikannya di
+     Cloudflare.
+   - Isi di Supabase: host, port, username, password SMTP dari layanan itu;
+     Sender email misalnya `no-reply@smartagri.id` atau `hello@smartagri.id`;
+     Sender name `smartagri`. Password SMTP disimpan di dashboard Supabase
+     saja, jangan di repo.
+3. **Authentication → Emails → Templates → Confirm signup** (setelah SMTP aktif)
+   - Subject: `Confirm your smartagri account`
+   - Body: buka tab **Source**, ganti seluruh isinya dengan
+     `web/supabase/email-templates/confirm-signup.html`, lalu **Save changes**.
+     Logo di email diambil dari `https://www.smart-agri.id/brand/email/smartagri-logo.png`
+     (ikut ter-deploy bersama situs).
+
+Alur setelah ini: daftar di `/sign-up` → layar "Check your inbox" (bisa kirim
+ulang) → klik link di email → `/auth/confirm` menampilkan "Email confirmed"
+lalu otomatis ke `/welcome` untuk melengkapi profil → menunggu persetujuan
+admin. Link yang kedaluwarsa atau sudah terpakai menampilkan penjelasan dan
+tombol kirim link baru. Token login dihapus dari address bar begitu dibaca.
+
 ### 4. Isi environment
 - Lokal: file `web/.env`
   ```

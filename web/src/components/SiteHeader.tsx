@@ -10,6 +10,7 @@ import {
   Menu,
   Settings,
   SquareKanban,
+  Users,
   X,
 } from "lucide-react";
 import { A } from "../lib/assets";
@@ -269,12 +270,14 @@ function AccountMenu({
   email,
   name,
   avatarUrl,
+  isAdmin,
   onSignOut,
   t,
 }: {
   email: string;
   name: string;
   avatarUrl: string | null;
+  isAdmin: boolean;
   onSignOut: () => void;
   t: ThemeTokens;
 }) {
@@ -328,6 +331,12 @@ function AccountMenu({
             <Settings className="h-4 w-4" />
             Profile &amp; settings
           </Link>
+          {isAdmin && (
+            <a href="/account#members" className={row} style={body}>
+              <Users className="h-4 w-4" />
+              Lab members
+            </a>
+          )}
           <button type="button" onClick={onSignOut} className={row} style={body}>
             <LogOut className="h-4 w-4" />
             Sign out
@@ -417,6 +426,7 @@ export default function SiteHeader({
               email={user.email ?? ""}
               name={account?.name ?? ""}
               avatarUrl={account?.avatarUrl ?? null}
+              isAdmin={!!account?.isAdmin}
               onSignOut={() => void signOut()}
               t={t}
             />

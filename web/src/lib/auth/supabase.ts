@@ -13,6 +13,16 @@ export const isAuthConfigured = Boolean(url && anonKey)
 // it stays null during SSR. Server-side token checks use auth-guard.ts (fetch).
 const isBrowser = typeof window !== 'undefined'
 
+// Older confirmation emails (sent before /auth/confirm existed) land on the
+// home page with the session or an error in the hash. Hand them to the
+// confirmation page, which reads the tokens and clears them from the URL.
+if (isBrowser && window.location.pathname !== '/auth/confirm') {
+  const hash = window.location.hash
+  if (/(^|[#&])type=(signup|email)(&|$)/.test(hash) || /(^|[#&])error_code=/.test(hash)) {
+    window.location.replace(`/auth/confirm${hash}`)
+  }
+}
+
 export const supabase: SupabaseClient | null =
   isBrowser && url && anonKey ? createClient(url, anonKey) : null
 
