@@ -31,11 +31,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Same Node as local dev (.nvmrc). The lockfile is written by npm 11, whose
+      # handling of optional peer deps npm 10 (bundled with Node 22) rejects in
+      # `npm ci` ("Missing: lru-cache from lock file"), so pin npm 11 too.
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: web/package-lock.json
+
+      - name: Install npm 11
+        run: npm install -g npm@11
 
       - name: Install dependencies
         working-directory: web
