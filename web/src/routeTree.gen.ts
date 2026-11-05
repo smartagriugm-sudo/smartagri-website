@@ -15,6 +15,7 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as AiRouteRouteImport } from './routes/ai/route'
 import { Route as ContactUsRouteImport } from './routes/contact-us'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as ErpRouteImport } from './routes/erp'
 import { Route as ExhibitionRouteImport } from './routes/exhibition'
 import { Route as FieldNotesRouteImport } from './routes/field-notes'
 import { Route as GalleryRouteImport } from './routes/gallery'
@@ -39,6 +40,8 @@ import { Route as AiGenerateRouteImport } from './routes/ai/generate'
 import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
 import { Route as AiProfileRouteImport } from './routes/ai/profile'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
+import { Route as ErpIndexRouteImport } from './routes/erp.index'
+import { Route as ErpPersemaianRouteImport } from './routes/erp.persemaian'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
 import { Route as GallerySlugRouteImport } from './routes/gallery_.$slug'
 import { Route as GuestbookAdminRouteImport } from './routes/guestbook_.admin'
@@ -91,6 +94,11 @@ const ContactUsRoute = ContactUsRouteImport.update({
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ErpRoute = ErpRouteImport.update({
+  id: '/erp',
+  path: '/erp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExhibitionRoute = ExhibitionRouteImport.update({
@@ -212,6 +220,16 @@ const AuthConfirmRoute = AuthConfirmRouteImport.update({
   id: '/auth/confirm',
   path: '/auth/confirm',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ErpIndexRoute = ErpIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpPersemaianRoute = ErpPersemaianRouteImport.update({
+  id: '/persemaian',
+  path: '/persemaian',
+  getParentRoute: () => ErpRoute,
 } as any)
 const FieldNotesSlugRoute = FieldNotesSlugRouteImport.update({
   id: '/field-notes_/$slug',
@@ -345,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/contact-us': typeof ContactUsRoute
   '/demo': typeof DemoRoute
+  '/erp': typeof ErpRouteWithChildren
   '/exhibition': typeof ExhibitionRoute
   '/field-notes': typeof FieldNotesRoute
   '/gallery': typeof GalleryRoute
@@ -368,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/erp/persemaian': typeof ErpPersemaianRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/gallery/$slug': typeof GallerySlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
@@ -383,6 +403,7 @@ export interface FileRoutesByFullPath {
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
+  '/erp/': typeof ErpIndexRoute
   '/indoor-farming/$section/$group': typeof IndoorFarmingSectionGroupRoute
   '/indoor-farming/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
   '/indoor-farming/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
@@ -422,6 +443,7 @@ export interface FileRoutesByTo {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/erp/persemaian': typeof ErpPersemaianRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/gallery/$slug': typeof GallerySlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
@@ -436,6 +458,7 @@ export interface FileRoutesByTo {
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
   '/ai': typeof AiIndexRoute
+  '/erp': typeof ErpIndexRoute
   '/indoor-farming/$section/$group': typeof IndoorFarmingSectionGroupRoute
   '/indoor-farming/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
   '/indoor-farming/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
@@ -454,6 +477,7 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/contact-us': typeof ContactUsRoute
   '/demo': typeof DemoRoute
+  '/erp': typeof ErpRouteWithChildren
   '/exhibition': typeof ExhibitionRoute
   '/field-notes': typeof FieldNotesRoute
   '/gallery': typeof GalleryRoute
@@ -477,6 +501,7 @@ export interface FileRoutesById {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/erp/persemaian': typeof ErpPersemaianRoute
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
   '/gallery_/$slug': typeof GallerySlugRoute
   '/guestbook_/admin': typeof GuestbookAdminRoute
@@ -492,6 +517,7 @@ export interface FileRoutesById {
   '/research_/$slug': typeof ResearchSlugRoute
   '/team_/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
+  '/erp/': typeof ErpIndexRoute
   '/indoor-farming_/$section_/$group': typeof IndoorFarmingSectionGroupRoute
   '/indoor-farming_/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
   '/indoor-farming_/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
@@ -511,6 +537,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/contact-us'
     | '/demo'
+    | '/erp'
     | '/exhibition'
     | '/field-notes'
     | '/gallery'
@@ -534,6 +561,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/auth/confirm'
+    | '/erp/persemaian'
     | '/field-notes/$slug'
     | '/gallery/$slug'
     | '/guestbook/admin'
@@ -549,6 +577,7 @@ export interface FileRouteTypes {
     | '/research/$slug'
     | '/team/$slug'
     | '/ai/'
+    | '/erp/'
     | '/indoor-farming/$section/$group'
     | '/indoor-farming/dashboard/analytics'
     | '/indoor-farming/dashboard/calibration'
@@ -588,6 +617,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/auth/confirm'
+    | '/erp/persemaian'
     | '/field-notes/$slug'
     | '/gallery/$slug'
     | '/guestbook/admin'
@@ -602,6 +632,7 @@ export interface FileRouteTypes {
     | '/research/$slug'
     | '/team/$slug'
     | '/ai'
+    | '/erp'
     | '/indoor-farming/$section/$group'
     | '/indoor-farming/dashboard/analytics'
     | '/indoor-farming/dashboard/calibration'
@@ -619,6 +650,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/contact-us'
     | '/demo'
+    | '/erp'
     | '/exhibition'
     | '/field-notes'
     | '/gallery'
@@ -642,6 +674,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/auth/confirm'
+    | '/erp/persemaian'
     | '/field-notes_/$slug'
     | '/gallery_/$slug'
     | '/guestbook_/admin'
@@ -657,6 +690,7 @@ export interface FileRouteTypes {
     | '/research_/$slug'
     | '/team_/$slug'
     | '/ai/'
+    | '/erp/'
     | '/indoor-farming_/$section_/$group'
     | '/indoor-farming_/dashboard/analytics'
     | '/indoor-farming_/dashboard/calibration'
@@ -675,6 +709,7 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   ContactUsRoute: typeof ContactUsRoute
   DemoRoute: typeof DemoRoute
+  ErpRoute: typeof ErpRouteWithChildren
   ExhibitionRoute: typeof ExhibitionRoute
   FieldNotesRoute: typeof FieldNotesRoute
   GalleryRoute: typeof GalleryRoute
@@ -753,6 +788,13 @@ declare module '@tanstack/react-router' {
       path: '/demo'
       fullPath: '/demo'
       preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/erp': {
+      id: '/erp'
+      path: '/erp'
+      fullPath: '/erp'
+      preLoaderRoute: typeof ErpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/exhibition': {
@@ -922,6 +964,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/confirm'
       preLoaderRoute: typeof AuthConfirmRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/erp/': {
+      id: '/erp/'
+      path: '/'
+      fullPath: '/erp/'
+      preLoaderRoute: typeof ErpIndexRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/persemaian': {
+      id: '/erp/persemaian'
+      path: '/persemaian'
+      fullPath: '/erp/persemaian'
+      preLoaderRoute: typeof ErpPersemaianRouteImport
+      parentRoute: typeof ErpRoute
     }
     '/field-notes_/$slug': {
       id: '/field-notes_/$slug'
@@ -1106,6 +1162,18 @@ const AiRouteRouteChildren: AiRouteRouteChildren = {
 const AiRouteRouteWithChildren =
   AiRouteRoute._addFileChildren(AiRouteRouteChildren)
 
+interface ErpRouteChildren {
+  ErpPersemaianRoute: typeof ErpPersemaianRoute
+  ErpIndexRoute: typeof ErpIndexRoute
+}
+
+const ErpRouteChildren: ErpRouteChildren = {
+  ErpPersemaianRoute: ErpPersemaianRoute,
+  ErpIndexRoute: ErpIndexRoute,
+}
+
+const ErpRouteWithChildren = ErpRoute._addFileChildren(ErpRouteChildren)
+
 interface IndoorFarmingDashboardRouteChildren {
   IndoorFarmingDashboardAnalyticsRoute: typeof IndoorFarmingDashboardAnalyticsRoute
   IndoorFarmingDashboardCalibrationRoute: typeof IndoorFarmingDashboardCalibrationRoute
@@ -1152,6 +1220,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   ContactUsRoute: ContactUsRoute,
   DemoRoute: DemoRoute,
+  ErpRoute: ErpRouteWithChildren,
   ExhibitionRoute: ExhibitionRoute,
   FieldNotesRoute: FieldNotesRoute,
   GalleryRoute: GalleryRoute,

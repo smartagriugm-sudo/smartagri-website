@@ -12,14 +12,15 @@ import { A } from "../lib/assets";
 // Navigation is only delayed, never blocked. Reduced motion hides it (CSS),
 // and a CSS failsafe lifts it if JavaScript never runs. Moving within one
 // Kanban board (opening or closing a card, which is a nested route) stays on
-// the same page, so it is not a page change either.
+// the same page, so it is not a page change either. Neither is switching
+// between the ERP's facility tabs, which share one frame.
 const COVER_MS = 420;
 const LIFT_MS = 650;
 
 function samePage(from: string, to: string) {
   if (from === to) return true;
-  const board = (p: string) => p.match(/^\/kanban\/[^/]+/)?.[0];
-  return !!board(from) && board(from) === board(to);
+  const area = (p: string) => p.match(/^\/kanban\/[^/]+/)?.[0] ?? p.match(/^\/erp(?=\/|$)/)?.[0];
+  return !!area(from) && area(from) === area(to);
 }
 
 type Phase = "load" | "idle" | "cover" | "reveal";
