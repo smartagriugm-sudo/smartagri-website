@@ -270,7 +270,7 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
   const toggle = "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-1 text-[12.5px] font-medium text-[#36525A] hover:bg-[#EEF5F5]";
 
   return (
-      <main className="relative flex-1 lg:h-[calc(100vh-64px)] lg:min-h-[680px]">
+      <main className="relative flex-1 lg:h-[calc(100vh-109px)] lg:min-h-[680px]">
         {/* Scene */}
         <div className="relative h-[62vh] min-h-[420px] lg:absolute lg:bottom-[172px] lg:left-0 lg:right-[392px] lg:top-0 lg:h-auto">
           {sceneOn && <PlantFactoryScene provider={provider} onReady={onReady} onSelect={setSelection} onError={onError} />}

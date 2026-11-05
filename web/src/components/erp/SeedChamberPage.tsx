@@ -132,7 +132,7 @@ function TransplantDialog({ store, code, onClose, onMoved }: { store: ErpStore; 
         {result.left > 0 && <Note tone="warn">{result.left} bibit tidak muat dan tetap di chamber, masih menunggu tingkat lain.</Note>}
         <div className="flex justify-end gap-2">
           <button type="button" className={secondary} onClick={onClose}>Tetap di persemaian</button>
-          <Link to="/erp" search={{ hole: result.firstHole }} onClick={onClose} className="flex items-center gap-1.5 rounded-lg bg-[#45DFB1] px-4 py-2 text-[14px] font-medium text-[#0B2A22] hover:bg-[#80ED99]">
+          <Link to="/erp/plant-factory" search={{ hole: result.firstHole }} onClick={onClose} className="flex items-center gap-1.5 rounded-lg bg-[#45DFB1] px-4 py-2 text-[14px] font-medium text-[#0B2A22] hover:bg-[#80ED99]">
             Lihat di plant factory <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -189,7 +189,7 @@ function TransplantQueue({ store, onMove }: { store: ErpStore; onMove: (code: st
     <Card className="h-full px-5 py-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F2F36]" style={display}>Antrean pindah tanam</p>
-        <Link to="/erp" className="text-[12.5px] font-medium text-[#14919B] hover:underline">{FACILITY_CODE}: {free} lubang siap terima</Link>
+        <Link to="/erp/plant-factory" className="text-[12.5px] font-medium text-[#14919B] hover:underline">{FACILITY_CODE}: {free} lubang siap terima</Link>
       </div>
       {queue.length === 0 ? (
         <p className="text-[13px] text-[#6B8289]">Belum ada nampan berstatus siap pindah tanam.</p>
@@ -254,7 +254,7 @@ function SlotPanel({ id, store, onSaved, onMove }: { id: string; store: ErpStore
         </button>
       )}
       {firstHole && (
-        <Link to="/erp" search={{ hole: firstHole.id }} className="flex items-center gap-1 text-[13px] font-medium text-[#14919B] hover:underline">
+        <Link to="/erp/plant-factory" search={{ hole: firstHole.id }} className="flex items-center gap-1 text-[13px] font-medium text-[#14919B] hover:underline">
           Sebagian batch ini sudah di plant factory <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       )}
@@ -440,7 +440,7 @@ export default function SeedChamberPage({ active, preload, onSceneReady, focusSl
   const Check = ({ on }: { on: boolean }) => <span className={`h-3 w-3 rounded-sm border ${on ? "border-[#14919B] bg-[#14919B]" : "border-[#9AAEB2]"}`} />;
 
   return (
-    <main className="relative flex-1 lg:h-[calc(100vh-64px)] lg:min-h-[680px]">
+    <main className="relative flex-1 lg:h-[calc(100vh-109px)] lg:min-h-[680px]">
       {/* Scene */}
       <div className="relative h-[62vh] min-h-[420px] lg:absolute lg:bottom-[172px] lg:left-0 lg:right-[392px] lg:top-0 lg:h-auto">
         {sceneOn && <SeedChamberScene provider={store.chamber} onReady={onReady} onSelect={setSelection} onError={onError} />}

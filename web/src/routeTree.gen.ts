@@ -42,6 +42,9 @@ import { Route as AiProfileRouteImport } from './routes/ai/profile'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as ErpIndexRouteImport } from './routes/erp.index'
 import { Route as ErpPersemaianRouteImport } from './routes/erp.persemaian'
+import { Route as ErpPlantFactoryRouteImport } from './routes/erp.plant-factory'
+import { Route as ErpResepRouteImport } from './routes/erp.resep'
+import { Route as ErpTanamanRouteImport } from './routes/erp.tanaman'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
 import { Route as GallerySlugRouteImport } from './routes/gallery_.$slug'
 import { Route as GuestbookAdminRouteImport } from './routes/guestbook_.admin'
@@ -56,6 +59,9 @@ import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
 import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
 import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
 import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
+import { Route as ErpPengaturanAuditRouteImport } from './routes/erp.pengaturan.audit'
+import { Route as ErpPengaturanLokasiRouteImport } from './routes/erp.pengaturan.lokasi'
+import { Route as ErpPengaturanPeranRouteImport } from './routes/erp.pengaturan.peran'
 import { Route as IndoorFarmingSectionGroupRouteImport } from './routes/indoor-farming_.$section_.$group'
 import { Route as IndoorFarmingDashboardIndexRouteImport } from './routes/indoor-farming_.dashboard.index'
 import { Route as IndoorFarmingDashboardAnalyticsRouteImport } from './routes/indoor-farming_.dashboard.analytics'
@@ -231,6 +237,21 @@ const ErpPersemaianRoute = ErpPersemaianRouteImport.update({
   path: '/persemaian',
   getParentRoute: () => ErpRoute,
 } as any)
+const ErpPlantFactoryRoute = ErpPlantFactoryRouteImport.update({
+  id: '/plant-factory',
+  path: '/plant-factory',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpResepRoute = ErpResepRouteImport.update({
+  id: '/resep',
+  path: '/resep',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpTanamanRoute = ErpTanamanRouteImport.update({
+  id: '/tanaman',
+  path: '/tanaman',
+  getParentRoute: () => ErpRoute,
+} as any)
 const FieldNotesSlugRoute = FieldNotesSlugRouteImport.update({
   id: '/field-notes_/$slug',
   path: '/field-notes/$slug',
@@ -301,6 +322,21 @@ const TeamSlugRoute = TeamSlugRouteImport.update({
   id: '/team_/$slug',
   path: '/team/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ErpPengaturanAuditRoute = ErpPengaturanAuditRouteImport.update({
+  id: '/pengaturan/audit',
+  path: '/pengaturan/audit',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpPengaturanLokasiRoute = ErpPengaturanLokasiRouteImport.update({
+  id: '/pengaturan/lokasi',
+  path: '/pengaturan/lokasi',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpPengaturanPeranRoute = ErpPengaturanPeranRouteImport.update({
+  id: '/pengaturan/peran',
+  path: '/pengaturan/peran',
+  getParentRoute: () => ErpRoute,
 } as any)
 const IndoorFarmingSectionGroupRoute =
   IndoorFarmingSectionGroupRouteImport.update({
@@ -388,6 +424,9 @@ export interface FileRoutesByFullPath {
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/erp/persemaian': typeof ErpPersemaianRoute
+  '/erp/plant-factory': typeof ErpPlantFactoryRoute
+  '/erp/resep': typeof ErpResepRoute
+  '/erp/tanaman': typeof ErpTanamanRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/gallery/$slug': typeof GallerySlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
@@ -404,6 +443,9 @@ export interface FileRoutesByFullPath {
   '/team/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
+  '/erp/pengaturan/audit': typeof ErpPengaturanAuditRoute
+  '/erp/pengaturan/lokasi': typeof ErpPengaturanLokasiRoute
+  '/erp/pengaturan/peran': typeof ErpPengaturanPeranRoute
   '/indoor-farming/$section/$group': typeof IndoorFarmingSectionGroupRoute
   '/indoor-farming/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
   '/indoor-farming/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
@@ -444,6 +486,9 @@ export interface FileRoutesByTo {
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/erp/persemaian': typeof ErpPersemaianRoute
+  '/erp/plant-factory': typeof ErpPlantFactoryRoute
+  '/erp/resep': typeof ErpResepRoute
+  '/erp/tanaman': typeof ErpTanamanRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
   '/gallery/$slug': typeof GallerySlugRoute
   '/guestbook/admin': typeof GuestbookAdminRoute
@@ -459,6 +504,9 @@ export interface FileRoutesByTo {
   '/team/$slug': typeof TeamSlugRoute
   '/ai': typeof AiIndexRoute
   '/erp': typeof ErpIndexRoute
+  '/erp/pengaturan/audit': typeof ErpPengaturanAuditRoute
+  '/erp/pengaturan/lokasi': typeof ErpPengaturanLokasiRoute
+  '/erp/pengaturan/peran': typeof ErpPengaturanPeranRoute
   '/indoor-farming/$section/$group': typeof IndoorFarmingSectionGroupRoute
   '/indoor-farming/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
   '/indoor-farming/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
@@ -502,6 +550,9 @@ export interface FileRoutesById {
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/erp/persemaian': typeof ErpPersemaianRoute
+  '/erp/plant-factory': typeof ErpPlantFactoryRoute
+  '/erp/resep': typeof ErpResepRoute
+  '/erp/tanaman': typeof ErpTanamanRoute
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
   '/gallery_/$slug': typeof GallerySlugRoute
   '/guestbook_/admin': typeof GuestbookAdminRoute
@@ -518,6 +569,9 @@ export interface FileRoutesById {
   '/team_/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
+  '/erp/pengaturan/audit': typeof ErpPengaturanAuditRoute
+  '/erp/pengaturan/lokasi': typeof ErpPengaturanLokasiRoute
+  '/erp/pengaturan/peran': typeof ErpPengaturanPeranRoute
   '/indoor-farming_/$section_/$group': typeof IndoorFarmingSectionGroupRoute
   '/indoor-farming_/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
   '/indoor-farming_/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
@@ -562,6 +616,9 @@ export interface FileRouteTypes {
     | '/ai/profile'
     | '/auth/confirm'
     | '/erp/persemaian'
+    | '/erp/plant-factory'
+    | '/erp/resep'
+    | '/erp/tanaman'
     | '/field-notes/$slug'
     | '/gallery/$slug'
     | '/guestbook/admin'
@@ -578,6 +635,9 @@ export interface FileRouteTypes {
     | '/team/$slug'
     | '/ai/'
     | '/erp/'
+    | '/erp/pengaturan/audit'
+    | '/erp/pengaturan/lokasi'
+    | '/erp/pengaturan/peran'
     | '/indoor-farming/$section/$group'
     | '/indoor-farming/dashboard/analytics'
     | '/indoor-farming/dashboard/calibration'
@@ -618,6 +678,9 @@ export interface FileRouteTypes {
     | '/ai/profile'
     | '/auth/confirm'
     | '/erp/persemaian'
+    | '/erp/plant-factory'
+    | '/erp/resep'
+    | '/erp/tanaman'
     | '/field-notes/$slug'
     | '/gallery/$slug'
     | '/guestbook/admin'
@@ -633,6 +696,9 @@ export interface FileRouteTypes {
     | '/team/$slug'
     | '/ai'
     | '/erp'
+    | '/erp/pengaturan/audit'
+    | '/erp/pengaturan/lokasi'
+    | '/erp/pengaturan/peran'
     | '/indoor-farming/$section/$group'
     | '/indoor-farming/dashboard/analytics'
     | '/indoor-farming/dashboard/calibration'
@@ -675,6 +741,9 @@ export interface FileRouteTypes {
     | '/ai/profile'
     | '/auth/confirm'
     | '/erp/persemaian'
+    | '/erp/plant-factory'
+    | '/erp/resep'
+    | '/erp/tanaman'
     | '/field-notes_/$slug'
     | '/gallery_/$slug'
     | '/guestbook_/admin'
@@ -691,6 +760,9 @@ export interface FileRouteTypes {
     | '/team_/$slug'
     | '/ai/'
     | '/erp/'
+    | '/erp/pengaturan/audit'
+    | '/erp/pengaturan/lokasi'
+    | '/erp/pengaturan/peran'
     | '/indoor-farming_/$section_/$group'
     | '/indoor-farming_/dashboard/analytics'
     | '/indoor-farming_/dashboard/calibration'
@@ -979,6 +1051,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErpPersemaianRouteImport
       parentRoute: typeof ErpRoute
     }
+    '/erp/plant-factory': {
+      id: '/erp/plant-factory'
+      path: '/plant-factory'
+      fullPath: '/erp/plant-factory'
+      preLoaderRoute: typeof ErpPlantFactoryRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/resep': {
+      id: '/erp/resep'
+      path: '/resep'
+      fullPath: '/erp/resep'
+      preLoaderRoute: typeof ErpResepRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/tanaman': {
+      id: '/erp/tanaman'
+      path: '/tanaman'
+      fullPath: '/erp/tanaman'
+      preLoaderRoute: typeof ErpTanamanRouteImport
+      parentRoute: typeof ErpRoute
+    }
     '/field-notes_/$slug': {
       id: '/field-notes_/$slug'
       path: '/field-notes/$slug'
@@ -1077,6 +1170,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/erp/pengaturan/audit': {
+      id: '/erp/pengaturan/audit'
+      path: '/pengaturan/audit'
+      fullPath: '/erp/pengaturan/audit'
+      preLoaderRoute: typeof ErpPengaturanAuditRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/pengaturan/lokasi': {
+      id: '/erp/pengaturan/lokasi'
+      path: '/pengaturan/lokasi'
+      fullPath: '/erp/pengaturan/lokasi'
+      preLoaderRoute: typeof ErpPengaturanLokasiRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/pengaturan/peran': {
+      id: '/erp/pengaturan/peran'
+      path: '/pengaturan/peran'
+      fullPath: '/erp/pengaturan/peran'
+      preLoaderRoute: typeof ErpPengaturanPeranRouteImport
+      parentRoute: typeof ErpRoute
+    }
     '/indoor-farming_/$section_/$group': {
       id: '/indoor-farming_/$section_/$group'
       path: '/indoor-farming/$section/$group'
@@ -1164,12 +1278,24 @@ const AiRouteRouteWithChildren =
 
 interface ErpRouteChildren {
   ErpPersemaianRoute: typeof ErpPersemaianRoute
+  ErpPlantFactoryRoute: typeof ErpPlantFactoryRoute
+  ErpResepRoute: typeof ErpResepRoute
+  ErpTanamanRoute: typeof ErpTanamanRoute
   ErpIndexRoute: typeof ErpIndexRoute
+  ErpPengaturanAuditRoute: typeof ErpPengaturanAuditRoute
+  ErpPengaturanLokasiRoute: typeof ErpPengaturanLokasiRoute
+  ErpPengaturanPeranRoute: typeof ErpPengaturanPeranRoute
 }
 
 const ErpRouteChildren: ErpRouteChildren = {
   ErpPersemaianRoute: ErpPersemaianRoute,
+  ErpPlantFactoryRoute: ErpPlantFactoryRoute,
+  ErpResepRoute: ErpResepRoute,
+  ErpTanamanRoute: ErpTanamanRoute,
   ErpIndexRoute: ErpIndexRoute,
+  ErpPengaturanAuditRoute: ErpPengaturanAuditRoute,
+  ErpPengaturanLokasiRoute: ErpPengaturanLokasiRoute,
+  ErpPengaturanPeranRoute: ErpPengaturanPeranRoute,
 }
 
 const ErpRouteWithChildren = ErpRoute._addFileChildren(ErpRouteChildren)

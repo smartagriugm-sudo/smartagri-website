@@ -1,6 +1,6 @@
 # Rencana ERP Plant Factory (PFMS) · smartagri
 
-Status: rancangan, dengan prototipe Overview 3D di `/erp` (data contoh). Rujukan: `plant-factory-management-system.md` (dokumen PFMS 4 lapisan).
+Status: Tahap 0 live. Tahap 1 (fondasi) ada di `web/supabase/pf-foundation.sql` dan menu `/erp`; angka operasional masih data contoh. Rujukan: `plant-factory-management-system.md` (dokumen PFMS 4 lapisan).
 Diagram pendukung (ERD, arsitektur, alur fase): buka `diagram-erp-plant-factory.html` di folder ini.
 
 ---
@@ -73,9 +73,9 @@ Alamatnya `/erp/*`, karena SDM dan penjualan bukan bagian dari indoor farming.
 
 Model dan mesin 3D berasal dari paket `plant-factory-3d` (dibangun di proyek sumbernya, `anyscene/plant-factory`):
 
-- **Paket** ada di `web/vendor/plant-factory-3d-<versi>.tgz`, dengan `three` dikunci sesuai syarat paket (`0.170.0`).
-- **Aset** (`plant_factory.glb`, `manifest.json`, `erp_seed/`) ada di `public/brand/plant-factory/`, direferensikan lewat
-  `plantFactoryAssets` di `lib/assets.ts`. GLB tidak disunting di sini; perubahan model dibuat di proyek sumber.
+- **Paket** `web/vendor/plant-factory-3d-<versi>-engine.tgz` berisi kode mesin saja, dengan `three` dikunci sesuai syarat paket (`0.170.0`).
+- **Model** ada di bucket privat `pf-model`, dan lokal di `public/brand/plant-factory/` yang tidak masuk git (`lib/pf/model-assets.ts`).
+  GLB tidak disunting di sini; perubahan model dibuat di proyek sumber.
 - **Provider** `lib/pf/provider.ts` adalah cache yang dibaca mesin secara sinkron. Data ERP dimuat di luar mesin,
   disimpan di cache, lalu ditampilkan dengan `scene.refresh()`.
 - **Overlay HTML** untuk kartu KPI, filter, dan panel detail tetap milik ERP, sesuai brand (Inter, teal).
@@ -92,7 +92,7 @@ Aturan dari paket:
 ### Persemaian: growth chamber FPG450
 
 Fase semai dan germinasi berjalan di growth chamber `CH1` (FAITHFUL FPG450), di `/erp/persemaian`.
-Plant factory tetap di `/erp`. Keduanya memakai paket dan aset yang sama, tetapi mesin 3D masing-masing.
+Plant factory ada di `/erp/plant-factory`, sedangkan `/erp` kini dashboard. Keduanya memakai paket yang sama, tetapi mesin 3D masing-masing.
 
 - **Satu batch, dua fasilitas.** `lib/pf/store.ts` (`ErpStore`) memegang batch, cache chamber, dan cache plant factory.
   Route layout ERP memilikinya, sehingga data tetap sama saat berpindah layar.
@@ -105,7 +105,7 @@ Plant factory tetap di `/erp`. Keduanya memakai paket dan aset yang sama, tetapi
   tetapi tetap memakai memori GPU. Di layar lebar model kedua dimuat setelah yang pertama; di ponsel saat pertama dibuka.
 - **Pintu** pada model hanya tampilan, bukan status pintu asli. **Nilai program germinasi** masih contoh, nantinya dari resep.
 
-Pembaruan model: pasang `.tgz` versi baru, lalu jalankan `npx plant-factory-3d-assets public/brand/plant-factory` dari folder `web/`.
+Pembaruan model dan mesin: lihat `SETUP-ERP-MODEL.md`.
 
 ---
 
@@ -185,8 +185,11 @@ Pimpinan, Admin sistem, Manajer produksi, Staf penjualan, Staf SDM, Teknisi, Ope
 7. SDM mencakup jadwal, tugas, absensi, dan kontrak untuk semua orang. Penggajian di luar lingkup versi ini.
 8. Penjualan dan traceability hasil panen diprioritaskan.
 9. Model 3D tidak dibuka di repo publik, tetapi tetap ditampilkan di ERP. Filenya ada di bucket Supabase privat
-   (lihat `SETUP-ERP-MODEL.md`). Sumber paket mesin 3D untuk build Vercel belum diputuskan, jadi Tahap 0 belum boleh digabung ke `main`.
+   (lihat `SETUP-ERP-MODEL.md`). Kode mesin 3D ada di repo sebagai paket tanpa model.
 10. Sensor mikroklimat juga dipasang di dalam chamber. Interval kirim dibahas bersama pengembangan firmware.
 11. Grade panen memakai A, B, dan Afkir. Batas angkanya menyusul dari data panen tim.
 12. Tagihan memakai invoice dengan pajak opsional. Absensi memakai lokasi dan foto dari ponsel.
+13. ERP tertutup di deployment tanpa pengaturan Supabase, dan hanya untuk akun yang sudah disetujui.
+14. `pf_asset` dan `pf_calibration` dibuat di Tahap 2 bersama API sensor, karena baru terpakai di sana.
+15. Satu klik mengubah status paling banyak satu tingkat (80 posisi). Lokasi tidak dihapus, hanya ditandai tidak dipakai.
 

@@ -1,6 +1,6 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import RequireAuth from "../components/RequireAuth";
 import { ErpStoreProvider } from "../components/erp/ErpContext";
+import ErpGate from "../components/erp/ErpGate";
 import ErpScreens from "../components/erp/ErpScreens";
 import ErpShell from "../components/erp/ErpShell";
 
@@ -19,13 +19,13 @@ export const Route = createFileRoute("/erp")({
 
 function ErpLayout() {
   return (
-    <RequireAuth>
+    <ErpGate>
       <ErpStoreProvider>
         <ErpShell>
           <ErpScreens />
           <Outlet />
         </ErpShell>
       </ErpStoreProvider>
-    </RequireAuth>
+    </ErpGate>
   );
 }
