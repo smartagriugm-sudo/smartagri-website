@@ -3,18 +3,26 @@
 Model plant factory dan growth chamber tidak disimpan di repo publik. Situs yang sudah deploy membacanya dari
 bucket Supabase privat lewat tautan berumur satu jam, yang hanya bisa didapat anggota lab yang sudah login.
 
+## Paket di repo
+
+`web/vendor/plant-factory-3d-1.4.1-engine.tgz` berisi kode mesin saja, tanpa model, manifest, atau CSV. Paket ini
+masuk git supaya Vercel dan workflow impor berita bisa menjalankan `npm ci` tanpa token. Paket lengkap dari sumbernya
+tidak boleh masuk git: simpan di `web/vendor/private/`, yang ada di `.gitignore`.
+
 ## Pengembangan lokal
 
-Paket `web/vendor/plant-factory-3d-1.4.1.tgz` dan folder `web/public/brand/plant-factory/` ada di `.gitignore`.
-Setelah clone baru, salin `.tgz` ke `web/vendor/`, lalu jalankan dari `web/`:
+Saat `npm run dev`, situs membaca model dari `web/public/brand/plant-factory/`, yang juga ada di `.gitignore`. Setelah
+clone baru, salin paket lengkap ke `web/vendor/private/`, lalu jalankan dari `web/`:
 
 ```bash
-npm install
+mkdir -p public/brand/plant-factory
 ```
 
 ```bash
-npx plant-factory-3d-assets public/brand/plant-factory
+tar -xzf vendor/private/plant-factory-3d-1.4.1.tgz --strip-components=2 -C public/brand/plant-factory package/assets
 ```
+
+Tanpa folder ini, test yang membandingkan data dengan manifest model dilewati, dan test lain tetap berjalan.
 
 ## Bucket produksi
 
@@ -28,13 +36,14 @@ npx plant-factory-3d-assets public/brand/plant-factory
 
 Setiap pembaruan model, ulangi langkah 3 dan timpa file lama. File CSV di `erp_seed/` tidak perlu diunggah.
 
-## Yang masih harus diputuskan sebelum digabung ke `main`
+## Memperbarui mesin
 
-Vercel dan workflow impor berita menjalankan `npm ci`, sedangkan `.tgz` tidak ada di repo. Sebelum sumber paket
-ditentukan, branch ini tidak bisa dibangun dari clone baru, dan menggabungkannya ke `main` akan menghentikan deploy
-dan impor berita.
+Kalau paket lengkap versi baru tiba: buang `assets`, `examples`, `bin`, dan `README.md`, ubah `package.json`-nya sesuai
+paket `-engine` yang lama (tanpa `bin`, tanpa ekspor `assets`, versi berakhiran `-engine`), jalankan `npm pack`, lalu
+`npm install` paket hasilnya. Periksa dengan `tar -tzf` bahwa hanya ada `src/`, `index.d.ts`, dan `package.json`.
 
 ## Batas perlindungan
 
-Cara ini mencegah orang luar mengunduh model. Anggota lab yang sudah login secara teknis tetap bisa mengambil file
+Cara ini mencegah orang luar mengunduh model. Kode mesin sendiri bersifat publik, karena ada di repo dan terkirim ke
+browser pengunjung. Anggota lab yang sudah login secara teknis tetap bisa mengambil file
 yang tampil di browsernya.

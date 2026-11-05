@@ -38,7 +38,7 @@
     "mammoth": "^1.12.0",
     "nitro": "npm:nitro-nightly@3.0.260610-beta",
     "pdfjs-dist": "^5.6.205",
-    "plant-factory-3d": "file:vendor/plant-factory-3d-1.4.1.tgz",
+    "plant-factory-3d": "file:vendor/plant-factory-3d-1.4.1-engine.tgz",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",

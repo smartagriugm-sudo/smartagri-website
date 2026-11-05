@@ -28,5 +28,5 @@ video/node_modules/
 video/out/
 
 # ERP 3D model and its package stay out of this public repo (SETUP-ERP-MODEL.md)
-web/vendor/
+web/vendor/private/
 web/public/brand/plant-factory/
