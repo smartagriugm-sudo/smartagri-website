@@ -28,6 +28,11 @@ export const indoorFarmingPhoto = (file: string) =>
 export const indoorDashboardImage = (file: string) =>
   `${BASE}/indoor-farming/dashboard/${file}`;
 
+// Local development copy of the ERP's 3D model, git-ignored and made with
+// `npx plant-factory-3d-assets public/brand/plant-factory`. The deployed site
+// reads a private bucket instead: see lib/pf/model-assets.ts.
+export const plantFactoryAssets = `${BASE}/plant-factory/`;
+
 // One real photo per research area (from the center's own gallery and field
 // notes), keyed by the area slug in lib/research.ts. Used on /research.
 export const researchPhoto: Record<string, string> = {
