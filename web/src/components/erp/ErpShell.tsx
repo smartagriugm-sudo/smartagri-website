@@ -1,122 +1,224 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookOpen, ClipboardList, Factory, History, LayoutDashboard, Leaf, MapPin, Menu, Package, Sprout, Users, X, type LucideIcon } from "lucide-react";
+import { A } from "../../lib/assets";
 import { body, display } from "../../lib/fonts";
-import { CHAMBER_CODE } from "../../lib/pf/chamber";
-import { FACILITY_CODE, HOLES_TOTAL, isPlanted } from "../../lib/pf/facility";
+import type { StoreMode } from "../../lib/pf/store";
 import { useErpStore } from "./ErpContext";
 
-// The frame around every ERP page: the way back, the module menu, the pages of
-// the current module, and on the 3D screens how full each facility is. A module
-// that is not built yet shows in the menu, disabled, with the stage it arrives in.
+// The frame around every ERP page. On a large screen, a sidebar on the page's own
+// ground: labelled from 1280px, a rail of icons from 1024px so the 3D screens keep
+// their width. Below that, a top bar whose button opens the menu as a full sheet.
+// Modules that are not built yet are named once at the foot, not offered as links.
 
-const LATER = [
-  { label: "Monitoring", stage: 2 },
-  { label: "Penjualan", stage: 3 },
-  { label: "Inventory", stage: 4 },
-  { label: "SDM", stage: 5 },
-  { label: "Biaya", stage: 6 },
+type NavItem = { to: NavPath; label: string; icon: LucideIcon; exact?: boolean };
+type NavPath = "/erp" | "/erp/batch" | "/erp/persemaian" | "/erp/plant-factory" | "/erp/benih" | "/erp/tanaman" | "/erp/resep" | "/erp/pengaturan/lokasi" | "/erp/pengaturan/peran" | "/erp/pengaturan/audit";
+
+const HOME: NavItem = { to: "/erp", label: "Ringkasan", icon: LayoutDashboard, exact: true };
+
+const GROUPS: { label: string; items: NavItem[] }[] = [
+  {
+    label: "Budidaya",
+    items: [
+      { to: "/erp/batch", label: "Batch", icon: ClipboardList },
+      { to: "/erp/persemaian", label: "Persemaian", icon: Sprout },
+      { to: "/erp/plant-factory", label: "Plant factory", icon: Factory },
+      { to: "/erp/benih", label: "Lot benih", icon: Package },
+      { to: "/erp/tanaman", label: "Tanaman", icon: Leaf },
+      { to: "/erp/resep", label: "Resep", icon: BookOpen },
+    ],
+  },
+  {
+    label: "Pengaturan",
+    items: [
+      { to: "/erp/pengaturan/lokasi", label: "Lokasi", icon: MapPin },
+      { to: "/erp/pengaturan/peran", label: "Peran", icon: Users },
+      { to: "/erp/pengaturan/audit", label: "Audit log", icon: History },
+    ],
+  },
 ];
 
-const moduleClass = "whitespace-nowrap rounded-md px-3 py-1.5 text-[14px] font-medium";
-const subClass = "flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1 text-[13.5px] font-medium";
+const ALL_ITEMS = [HOME, ...GROUPS.flatMap((g) => g.items)];
+const LATER = "Monitoring, Penjualan, Inventory, SDM, Biaya";
 
-function useClock() {
-  const [now, setNow] = useState<string | null>(null);
-  useEffect(() => {
-    const fmt = () => new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date());
-    setNow(fmt());
-    const t = setInterval(() => setNow(fmt()), 30_000);
-    return () => clearInterval(t);
-  }, []);
-  return now;
+const MODE_CHIP: Record<StoreMode, { label: string; dot: string }> = {
+  loading: { label: "Memuat data", dot: "bg-[#8D9398]" },
+  live: { label: "Batch asli, iklim contoh", dot: "bg-[#0E9F6E]" },
+  sample: { label: "Data contoh", dot: "bg-[#E0A526]" },
+  error: { label: "Data gagal dimuat", dot: "bg-[#D9433B]" },
+};
+
+const isActive = (item: NavItem, pathname: string) => (item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`));
+
+/** One row of the menu. `rail` hides the label from 1024 to 1279px, leaving the icon and its name for assistive tech. */
+function NavRow({ item, pathname, rail, count, countLabel }: { item: NavItem; pathname: string; rail: boolean; count?: number; countLabel?: string }) {
+  const active = isActive(item, pathname);
+  const Icon = item.icon;
+  const showCount = !!count;
+  return (
+    <Link
+      to={item.to}
+      aria-current={active ? "page" : undefined}
+      aria-label={rail ? (showCount ? `${item.label}, ${countLabel}` : item.label) : undefined}
+      title={rail ? (showCount ? `${item.label}: ${countLabel}` : item.label) : undefined}
+      className={`relative flex min-h-[44px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] lg:min-h-[36px] ${rail ? "justify-center xl:justify-start" : ""} ${active ? "bg-[#DDE8E8] font-medium text-[#0F2F36]" : "text-[#36525A] hover:bg-[#E9EFEF] hover:text-[#0F2F36]"}`}
+    >
+      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-[#0B6477]" : "text-[#4F6B73]"}`} strokeWidth={1.75} />
+      <span className={rail ? "hidden xl:inline" : ""}>{item.label}</span>
+      {showCount && (
+        <span title={countLabel} className={`rounded-md bg-[#E3F4F4] px-1.5 text-[12px] font-medium tabular-nums text-[#0B6477] ${rail ? "absolute right-0.5 top-0.5 xl:static xl:ml-auto" : "ml-auto"}`}>
+          {count}
+          {!rail && <span className="sr-only"> {countLabel}</span>}
+        </span>
+      )}
+    </Link>
+  );
 }
 
-function Occupancy({ code, value }: { code: string; value: string }) {
+function RetryLoad() {
+  const store = useErpStore();
+  const [busy, setBusy] = useState(false);
+  const retry = async () => {
+    setBusy(true);
+    await store.load();
+    setBusy(false);
+  };
   return (
-    <span className="flex items-center gap-1.5 whitespace-nowrap">
-      <span className="rounded bg-[#0B6477] px-1.5 py-0.5 text-[11px] font-semibold text-white">{code}</span>
-      <span className="font-medium text-[#0F2F36]">{value}</span>
-    </span>
+    <button type="button" disabled={busy} onClick={() => void retry()} className="min-h-[36px] whitespace-nowrap text-[13px] font-medium text-[#0F2F36] underline disabled:cursor-not-allowed disabled:opacity-50">
+      {busy ? "Menghubungkan..." : "Coba lagi"}
+    </button>
+  );
+}
+
+function NavBody({ pathname, rail }: { pathname: string; rail: boolean }) {
+  const store = useErpStore();
+  const ready = store.readyToMove().reduce((n, r) => n + r.seedlings, 0);
+  const chip = MODE_CHIP[store.mode];
+  const hideOnRail = rail ? "hidden xl:block" : "";
+
+  return (
+    <>
+      <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto px-2.5 py-3" aria-label="Menu ERP">
+        <NavRow item={HOME} pathname={pathname} rail={rail} />
+        {GROUPS.map((g) => (
+          <div key={g.label}>
+            <p className={`mb-1 px-2.5 text-[12.5px] text-[#4F6B73] ${hideOnRail}`}>{g.label}</p>
+            {rail && <div className="mx-2.5 mb-2 border-t border-[#DCE7E8] xl:hidden" />}
+            <div className="space-y-0.5">
+              {g.items.map((item) => (
+                <NavRow key={item.to} item={item} pathname={pathname} rail={rail} count={item.to === "/erp/persemaian" ? ready : undefined} countLabel={`${ready} bibit siap pindah`} />
+              ))}
+            </div>
+          </div>
+        ))}
+        <p className={`px-2.5 text-[12.5px] leading-[1.45] text-[#4F6B73] ${hideOnRail}`}>Menyusul: {LATER}</p>
+      </nav>
+
+      <div className="space-y-1 border-t border-[#DCE7E8] px-2.5 py-2.5">
+        <div className={`flex items-center gap-2 px-2.5 py-1 text-[12.5px] text-[#36525A] ${rail ? "justify-center xl:justify-start" : ""}`} title={chip.label}>
+          <span className={`h-2 w-2 shrink-0 rounded-full ${chip.dot}`} />
+          <span className={rail ? "sr-only xl:not-sr-only" : ""} role="status">{chip.label}</span>
+        </div>
+        {store.mode === "error" && <div className={`px-2.5 ${hideOnRail}`}><RetryLoad /></div>}
+        <Link
+          to="/indoor-farming/dashboard"
+          aria-label={rail ? "Keluar dari ERP" : undefined}
+          title={rail ? "Keluar dari ERP" : undefined}
+          className={`flex min-h-[44px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] text-[#36525A] hover:bg-[#E9EFEF] lg:min-h-[36px] ${rail ? "justify-center xl:justify-start" : ""}`}
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0 text-[#4F6B73]" strokeWidth={1.75} />
+          <span className={rail ? "hidden xl:inline" : ""}>Keluar dari ERP</span>
+        </Link>
+      </div>
+    </>
+  );
+}
+
+function Brand({ rail }: { rail: boolean }) {
+  return (
+    <Link to="/erp" aria-label="smartagri ERP, ke Ringkasan" className={`flex items-center gap-2 ${rail ? "justify-center xl:justify-start" : ""}`}>
+      <img src={A.iconColor} alt="" className="h-7 w-7 shrink-0" />
+      <span className={rail ? "hidden xl:block" : ""}>
+        <span className="block text-[15px] font-semibold leading-tight tracking-[-0.02em] text-[#0F2F36]" style={display}>smartagri <span className="font-medium text-[#0B6477]">ERP</span></span>
+        <span className="block text-[12px] leading-tight text-[#4F6B73]">SARC UGM</span>
+      </span>
+    </Link>
+  );
+}
+
+/** The phone's menu: one full sheet, closed by its button, Escape, or going somewhere. */
+function MenuSheet({ pathname, onClose }: { pathname: string; onClose: () => void }) {
+  const close = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    close.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = overflow;
+    };
+  }, [onClose]);
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Menu ERP" className="fixed inset-0 z-50 flex flex-col bg-[#F4F7F7] lg:hidden">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-[#DCE7E8] px-3">
+        <Brand rail={false} />
+        <button ref={close} type="button" onClick={onClose} aria-label="Tutup menu" className="grid h-11 w-11 place-items-center rounded-lg text-[#36525A] hover:bg-[#E9EFEF]">
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      <NavBody pathname={pathname} rail={false} />
+    </div>
   );
 }
 
 export default function ErpShell({ children }: { children: ReactNode }) {
-  const store = useErpStore();
-  const clock = useClock();
   const pathname = useRouterState({ select: (s) => s.location.pathname }).replace(/\/$/, "");
-  const on3d = pathname.endsWith("/persemaian") || pathname.endsWith("/plant-factory");
-  const inGrowing = on3d || pathname.endsWith("/tanaman") || pathname.endsWith("/resep");
-  const inSettings = pathname.includes("/erp/pengaturan");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
 
-  const filled = [...store.pf.holes.values()].filter((h) => isPlanted(h.state)).length;
-  const slots = store.countSlots();
-  const trays = store.chamber.slots.size - slots.kosong;
-  const ready = store.readyToMove().reduce((n, r) => n + r.seedlings, 0);
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
-  const on = "bg-[#EEF3F4] text-[#0F2F36]";
-  const off = "text-[#4F6B73] hover:text-[#0F2F36]";
-  const subActive = { className: `${subClass} bg-white text-[#0F2F36] shadow-sm` };
-  const subInactive = { className: `${subClass} text-[#4F6B73] hover:text-[#0F2F36]` };
+  // The ERP is written in Indonesian, the public site it sits in is not.
+  useEffect(() => {
+    const before = document.documentElement.lang;
+    document.documentElement.lang = "id";
+    return () => {
+      document.documentElement.lang = before;
+    };
+  }, []);
+
+  const current = ALL_ITEMS.find((i) => isActive(i, pathname));
+  const closeMenu = () => {
+    setMenuOpen(false);
+    menuButton.current?.focus();
+  };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#E7EAE7]" style={body}>
-      <header className="z-40 border-b border-[#DCE7E8] bg-white/95 backdrop-blur lg:sticky lg:top-0">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 sm:px-6 lg:h-16 lg:flex-nowrap lg:py-0">
-          <Link to="/indoor-farming/dashboard" className="grid h-9 w-9 place-items-center rounded-lg text-[#36525A] hover:bg-[#EEF5F5]" aria-label="Kembali ke dashboard">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <p className="whitespace-nowrap text-[17px] font-semibold tracking-[-0.02em] text-[#0F2F36]" style={display}>
-            smartagri <span className="font-medium text-[#14919B]">ERP</span>
-          </p>
+    <div
+      className="flex min-h-screen flex-col bg-[#F4F7F7] lg:flex-row [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-offset-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-[#0B6477]"
+      style={body}
+    >
+      <aside className="sticky top-0 hidden h-screen w-[64px] shrink-0 flex-col border-r border-[#DCE7E8] lg:flex xl:w-[232px]">
+        <div className="flex h-14 shrink-0 items-center px-2.5 xl:px-4"><Brand rail /></div>
+        <NavBody pathname={pathname} rail />
+      </aside>
 
-          <nav className="order-last -mx-1 flex w-full min-w-0 gap-0.5 overflow-x-auto px-1 lg:order-none lg:ml-4 lg:w-auto" aria-label="Modul ERP">
-            <Link to="/erp" activeOptions={{ exact: true, includeSearch: false }} activeProps={{ className: `${moduleClass} ${on}` }} inactiveProps={{ className: `${moduleClass} ${off}` }}>Dashboard</Link>
-            <Link to="/erp/persemaian" className={`${moduleClass} ${inGrowing ? on : off}`}>Budidaya</Link>
-            {LATER.map((m) => (
-              <span key={m.label} title={`Mulai Tahap ${m.stage}`} aria-disabled="true" className={`${moduleClass} cursor-default text-[#6B8289]`}>{m.label}</span>
-            ))}
-            <Link to="/erp/pengaturan/lokasi" className={`${moduleClass} ${inSettings ? on : off}`}>Pengaturan</Link>
-          </nav>
-        </div>
-
-        {(inGrowing || inSettings) && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#EEF3F4] bg-[#F6F8F8] px-4 py-1.5 sm:px-6 lg:h-11 lg:flex-nowrap lg:py-0">
-          <nav className="flex min-w-0 items-center gap-0.5 overflow-x-auto" aria-label={inGrowing ? "Halaman budidaya" : "Halaman pengaturan"}>
-            {inGrowing ? (
-              <>
-                <Link to="/erp/persemaian" activeProps={subActive} inactiveProps={subInactive}>
-                  Persemaian
-                  {ready > 0 && <span className="rounded-full bg-[#2F9E57] px-1.5 text-[11.5px] font-semibold text-white">{ready}</span>}
-                </Link>
-                <Link to="/erp/plant-factory" activeProps={subActive} inactiveProps={subInactive}>Plant factory</Link>
-                <Link to="/erp/tanaman" activeProps={subActive} inactiveProps={subInactive}>Tanaman</Link>
-                <Link to="/erp/resep" activeProps={subActive} inactiveProps={subInactive}>Resep</Link>
-              </>
-            ) : (
-              <>
-                <Link to="/erp/pengaturan/lokasi" activeProps={subActive} inactiveProps={subInactive}>Lokasi</Link>
-                <Link to="/erp/pengaturan/peran" activeProps={subActive} inactiveProps={subInactive}>Peran</Link>
-                <Link to="/erp/pengaturan/audit" activeProps={subActive} inactiveProps={subInactive}>Audit log</Link>
-              </>
-            )}
-          </nav>
-          {on3d && (
-            <div className="flex items-center gap-2 lg:ml-auto">
-              <span className="hidden items-center gap-3 text-[13px] xl:flex">
-                <Occupancy code={CHAMBER_CODE} value={`${trays}/${store.chamber.slots.size} nampan`} />
-                <Occupancy code={FACILITY_CODE} value={`${Math.round((filled / HOLES_TOTAL) * 100)}% terisi`} />
-              </span>
-              <span className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-[#E3F7F0] px-2.5 py-1 text-[13px] font-medium text-[#0E7A5C]">
-                <span className="h-2 w-2 rounded-full bg-[#0E9F6E]" />
-                Data contoh{clock ? ` · ${clock}` : ""}
-              </span>
-            </div>
-          )}
-          </div>
-        )}
+      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-1 border-b border-[#DCE7E8] bg-[#F4F7F7] px-1.5 lg:hidden">
+        <button ref={menuButton} type="button" onClick={() => setMenuOpen(true)} aria-label="Buka menu" aria-expanded={menuOpen} className="grid h-11 w-11 place-items-center rounded-lg text-[#36525A] hover:bg-[#E9EFEF]">
+          <Menu className="h-5 w-5" />
+        </button>
+        <img src={A.iconColor} alt="" className="h-6 w-6 shrink-0" />
+        <p className="ml-1.5 truncate text-[15px] font-medium tracking-[-0.01em] text-[#0F2F36]" style={display}>{current?.label ?? "ERP"}</p>
       </header>
-      {children}
+      {menuOpen && <MenuSheet pathname={pathname} onClose={closeMenu} />}
+
+      <div className="relative flex min-w-0 flex-1 flex-col">{children}</div>
     </div>
   );
 }

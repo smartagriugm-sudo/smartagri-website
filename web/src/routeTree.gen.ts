@@ -41,6 +41,7 @@ import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
 import { Route as AiProfileRouteImport } from './routes/ai/profile'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as ErpIndexRouteImport } from './routes/erp.index'
+import { Route as ErpBenihRouteImport } from './routes/erp.benih'
 import { Route as ErpPersemaianRouteImport } from './routes/erp.persemaian'
 import { Route as ErpPlantFactoryRouteImport } from './routes/erp.plant-factory'
 import { Route as ErpResepRouteImport } from './routes/erp.resep'
@@ -59,6 +60,8 @@ import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
 import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
 import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
 import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
+import { Route as ErpBatchIndexRouteImport } from './routes/erp.batch.index'
+import { Route as ErpBatchIdRouteImport } from './routes/erp.batch.$id'
 import { Route as ErpPengaturanAuditRouteImport } from './routes/erp.pengaturan.audit'
 import { Route as ErpPengaturanLokasiRouteImport } from './routes/erp.pengaturan.lokasi'
 import { Route as ErpPengaturanPeranRouteImport } from './routes/erp.pengaturan.peran'
@@ -232,6 +235,11 @@ const ErpIndexRoute = ErpIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ErpRoute,
 } as any)
+const ErpBenihRoute = ErpBenihRouteImport.update({
+  id: '/benih',
+  path: '/benih',
+  getParentRoute: () => ErpRoute,
+} as any)
 const ErpPersemaianRoute = ErpPersemaianRouteImport.update({
   id: '/persemaian',
   path: '/persemaian',
@@ -322,6 +330,16 @@ const TeamSlugRoute = TeamSlugRouteImport.update({
   id: '/team_/$slug',
   path: '/team/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ErpBatchIndexRoute = ErpBatchIndexRouteImport.update({
+  id: '/batch/',
+  path: '/batch/',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpBatchIdRoute = ErpBatchIdRouteImport.update({
+  id: '/batch/$id',
+  path: '/batch/$id',
+  getParentRoute: () => ErpRoute,
 } as any)
 const ErpPengaturanAuditRoute = ErpPengaturanAuditRouteImport.update({
   id: '/pengaturan/audit',
@@ -423,6 +441,7 @@ export interface FileRoutesByFullPath {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/erp/benih': typeof ErpBenihRoute
   '/erp/persemaian': typeof ErpPersemaianRoute
   '/erp/plant-factory': typeof ErpPlantFactoryRoute
   '/erp/resep': typeof ErpResepRoute
@@ -443,6 +462,7 @@ export interface FileRoutesByFullPath {
   '/team/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
+  '/erp/batch/$id': typeof ErpBatchIdRoute
   '/erp/pengaturan/audit': typeof ErpPengaturanAuditRoute
   '/erp/pengaturan/lokasi': typeof ErpPengaturanLokasiRoute
   '/erp/pengaturan/peran': typeof ErpPengaturanPeranRoute
@@ -453,6 +473,7 @@ export interface FileRoutesByFullPath {
   '/indoor-farming/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
   '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
+  '/erp/batch/': typeof ErpBatchIndexRoute
   '/indoor-farming/dashboard/': typeof IndoorFarmingDashboardIndexRoute
   '/kanban/$board/c/$card': typeof KanbanBoardCCardRoute
 }
@@ -485,6 +506,7 @@ export interface FileRoutesByTo {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/erp/benih': typeof ErpBenihRoute
   '/erp/persemaian': typeof ErpPersemaianRoute
   '/erp/plant-factory': typeof ErpPlantFactoryRoute
   '/erp/resep': typeof ErpResepRoute
@@ -504,6 +526,7 @@ export interface FileRoutesByTo {
   '/team/$slug': typeof TeamSlugRoute
   '/ai': typeof AiIndexRoute
   '/erp': typeof ErpIndexRoute
+  '/erp/batch/$id': typeof ErpBatchIdRoute
   '/erp/pengaturan/audit': typeof ErpPengaturanAuditRoute
   '/erp/pengaturan/lokasi': typeof ErpPengaturanLokasiRoute
   '/erp/pengaturan/peran': typeof ErpPengaturanPeranRoute
@@ -514,6 +537,7 @@ export interface FileRoutesByTo {
   '/indoor-farming/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
   '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
+  '/erp/batch': typeof ErpBatchIndexRoute
   '/indoor-farming/dashboard': typeof IndoorFarmingDashboardIndexRoute
   '/kanban/$board/c/$card': typeof KanbanBoardCCardRoute
 }
@@ -549,6 +573,7 @@ export interface FileRoutesById {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/erp/benih': typeof ErpBenihRoute
   '/erp/persemaian': typeof ErpPersemaianRoute
   '/erp/plant-factory': typeof ErpPlantFactoryRoute
   '/erp/resep': typeof ErpResepRoute
@@ -569,6 +594,7 @@ export interface FileRoutesById {
   '/team_/$slug': typeof TeamSlugRoute
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
+  '/erp/batch/$id': typeof ErpBatchIdRoute
   '/erp/pengaturan/audit': typeof ErpPengaturanAuditRoute
   '/erp/pengaturan/lokasi': typeof ErpPengaturanLokasiRoute
   '/erp/pengaturan/peran': typeof ErpPengaturanPeranRoute
@@ -579,6 +605,7 @@ export interface FileRoutesById {
   '/indoor-farming_/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
   '/indoor-farming_/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming_/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
+  '/erp/batch/': typeof ErpBatchIndexRoute
   '/indoor-farming_/dashboard/': typeof IndoorFarmingDashboardIndexRoute
   '/kanban_/$board/c/$card': typeof KanbanBoardCCardRoute
 }
@@ -615,6 +642,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/auth/confirm'
+    | '/erp/benih'
     | '/erp/persemaian'
     | '/erp/plant-factory'
     | '/erp/resep'
@@ -635,6 +663,7 @@ export interface FileRouteTypes {
     | '/team/$slug'
     | '/ai/'
     | '/erp/'
+    | '/erp/batch/$id'
     | '/erp/pengaturan/audit'
     | '/erp/pengaturan/lokasi'
     | '/erp/pengaturan/peran'
@@ -645,6 +674,7 @@ export interface FileRouteTypes {
     | '/indoor-farming/dashboard/nutrition'
     | '/indoor-farming/dashboard/rooms'
     | '/indoor-farming/dashboard/sensors'
+    | '/erp/batch/'
     | '/indoor-farming/dashboard/'
     | '/kanban/$board/c/$card'
   fileRoutesByTo: FileRoutesByTo
@@ -677,6 +707,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/auth/confirm'
+    | '/erp/benih'
     | '/erp/persemaian'
     | '/erp/plant-factory'
     | '/erp/resep'
@@ -696,6 +727,7 @@ export interface FileRouteTypes {
     | '/team/$slug'
     | '/ai'
     | '/erp'
+    | '/erp/batch/$id'
     | '/erp/pengaturan/audit'
     | '/erp/pengaturan/lokasi'
     | '/erp/pengaturan/peran'
@@ -706,6 +738,7 @@ export interface FileRouteTypes {
     | '/indoor-farming/dashboard/nutrition'
     | '/indoor-farming/dashboard/rooms'
     | '/indoor-farming/dashboard/sensors'
+    | '/erp/batch'
     | '/indoor-farming/dashboard'
     | '/kanban/$board/c/$card'
   id:
@@ -740,6 +773,7 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/auth/confirm'
+    | '/erp/benih'
     | '/erp/persemaian'
     | '/erp/plant-factory'
     | '/erp/resep'
@@ -760,6 +794,7 @@ export interface FileRouteTypes {
     | '/team_/$slug'
     | '/ai/'
     | '/erp/'
+    | '/erp/batch/$id'
     | '/erp/pengaturan/audit'
     | '/erp/pengaturan/lokasi'
     | '/erp/pengaturan/peran'
@@ -770,6 +805,7 @@ export interface FileRouteTypes {
     | '/indoor-farming_/dashboard/nutrition'
     | '/indoor-farming_/dashboard/rooms'
     | '/indoor-farming_/dashboard/sensors'
+    | '/erp/batch/'
     | '/indoor-farming_/dashboard/'
     | '/kanban_/$board/c/$card'
   fileRoutesById: FileRoutesById
@@ -1044,6 +1080,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErpIndexRouteImport
       parentRoute: typeof ErpRoute
     }
+    '/erp/benih': {
+      id: '/erp/benih'
+      path: '/benih'
+      fullPath: '/erp/benih'
+      preLoaderRoute: typeof ErpBenihRouteImport
+      parentRoute: typeof ErpRoute
+    }
     '/erp/persemaian': {
       id: '/erp/persemaian'
       path: '/persemaian'
@@ -1170,6 +1213,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/erp/batch/': {
+      id: '/erp/batch/'
+      path: '/batch'
+      fullPath: '/erp/batch/'
+      preLoaderRoute: typeof ErpBatchIndexRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/batch/$id': {
+      id: '/erp/batch/$id'
+      path: '/batch/$id'
+      fullPath: '/erp/batch/$id'
+      preLoaderRoute: typeof ErpBatchIdRouteImport
+      parentRoute: typeof ErpRoute
+    }
     '/erp/pengaturan/audit': {
       id: '/erp/pengaturan/audit'
       path: '/pengaturan/audit'
@@ -1277,25 +1334,31 @@ const AiRouteRouteWithChildren =
   AiRouteRoute._addFileChildren(AiRouteRouteChildren)
 
 interface ErpRouteChildren {
+  ErpBenihRoute: typeof ErpBenihRoute
   ErpPersemaianRoute: typeof ErpPersemaianRoute
   ErpPlantFactoryRoute: typeof ErpPlantFactoryRoute
   ErpResepRoute: typeof ErpResepRoute
   ErpTanamanRoute: typeof ErpTanamanRoute
   ErpIndexRoute: typeof ErpIndexRoute
+  ErpBatchIdRoute: typeof ErpBatchIdRoute
   ErpPengaturanAuditRoute: typeof ErpPengaturanAuditRoute
   ErpPengaturanLokasiRoute: typeof ErpPengaturanLokasiRoute
   ErpPengaturanPeranRoute: typeof ErpPengaturanPeranRoute
+  ErpBatchIndexRoute: typeof ErpBatchIndexRoute
 }
 
 const ErpRouteChildren: ErpRouteChildren = {
+  ErpBenihRoute: ErpBenihRoute,
   ErpPersemaianRoute: ErpPersemaianRoute,
   ErpPlantFactoryRoute: ErpPlantFactoryRoute,
   ErpResepRoute: ErpResepRoute,
   ErpTanamanRoute: ErpTanamanRoute,
   ErpIndexRoute: ErpIndexRoute,
+  ErpBatchIdRoute: ErpBatchIdRoute,
   ErpPengaturanAuditRoute: ErpPengaturanAuditRoute,
   ErpPengaturanLokasiRoute: ErpPengaturanLokasiRoute,
   ErpPengaturanPeranRoute: ErpPengaturanPeranRoute,
+  ErpBatchIndexRoute: ErpBatchIndexRoute,
 }
 
 const ErpRouteWithChildren = ErpRoute._addFileChildren(ErpRouteChildren)

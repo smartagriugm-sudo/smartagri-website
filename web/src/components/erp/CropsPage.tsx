@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { cropToForm, emptyCropForm, fetchCrops, parseCropForm, saveCrop, type CropForm } from "../../lib/pf/foundation";
-import { DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
-import { Card, Note } from "./ui";
+import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
+import { Card } from "./ui";
 
 // Crops the recipes and, later, the batches point at. A crop is switched off
 // instead of deleted, so old records keep their meaning.
@@ -33,7 +33,7 @@ function CropEditor({ id, initial, onDone }: { id: string | null; initial: CropF
           <input type="checkbox" checked={form.active} onChange={(e) => set("active", e.target.checked)} className="h-4 w-4 accent-[#14919B]" />
           Aktif, bisa dipilih untuk resep baru
         </label>
-        {action.error && <Note tone="warn">{action.error}</Note>}
+        <ActionNote action={action} />
         <div className="flex gap-2">
           <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Simpan"}</PrimaryButton>
           <SecondaryButton onClick={() => onDone(false)}>Batal</SecondaryButton>
@@ -66,12 +66,24 @@ export default function CropsPage() {
           <div className={`grid grid-cols-1 items-start gap-4 ${editing ? "lg:grid-cols-[minmax(0,1fr)_360px]" : ""}`}>
             <div className="min-w-0 space-y-3">
               {!canManageProduction && <ReadOnlyNote who="Manajer produksi" />}
-              <Card className="overflow-x-auto p-4">
+              <Card className="p-4">
                 {crops.length === 0 ? (
                   <p className="py-6 text-center text-[14px] text-[#4F6B73]">Belum ada tanaman.</p>
                 ) : (
-                  <table className="w-full min-w-[560px] text-left text-[14px]">
-                    <thead className="text-[13px] text-[#6B8289]">
+                  <>
+                  <ul className="-my-2 md:hidden">
+                    {crops.map((c) => (
+                      <li key={c.id} className="flex items-center gap-3 border-t border-[#E3ECED] py-2 first:border-0">
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[14px] font-medium text-[#0F2F36]">{c.name}{c.variety && <span className="font-normal text-[#4F6B73]"> {c.variety}</span>}</span>
+                          <span className="block text-[13px] text-[#4F6B73]">{c.active ? "Aktif" : "Nonaktif"} · siklus {c.cycle_days != null ? `${c.cycle_days} hari` : "-"} · kecambah {c.germ_rate != null ? `${c.germ_rate}%` : "-"}</span>
+                        </span>
+                        {canManageProduction && <button type="button" onClick={() => setEditing(c.id)} className="min-h-[44px] shrink-0 text-[14px] font-medium text-[#0B6477] hover:underline">Ubah</button>}
+                      </li>
+                    ))}
+                  </ul>
+                  <table className="hidden w-full text-left text-[14px] md:table">
+                    <thead className="text-[13px] text-[#4F6B73]">
                       <tr>
                         <th className="pb-2 font-medium">Tanaman</th>
                         <th className="pb-2 font-medium">Siklus</th>
@@ -85,7 +97,7 @@ export default function CropsPage() {
                         <tr key={c.id} className="border-t border-[#E3ECED]">
                           <td className="py-2.5">
                             <span className="font-medium">{c.name}</span>{c.variety && <span className="text-[#4F6B73]"> {c.variety}</span>}
-                            {c.notes && <span className="block text-[13px] text-[#6B8289]">{c.notes}</span>}
+                            {c.notes && <span className="block text-[13px] text-[#4F6B73]">{c.notes}</span>}
                           </td>
                           <td className="py-2.5">{c.cycle_days != null ? `${c.cycle_days} hari` : "Belum diisi"}</td>
                           <td className="py-2.5">{c.germ_rate != null ? `${c.germ_rate}%` : "Belum diisi"}</td>
@@ -93,12 +105,13 @@ export default function CropsPage() {
                             <span className={`rounded-full px-2 py-0.5 text-[12.5px] font-medium ${c.active ? "bg-[#E3F7F0] text-[#0E7A5C]" : "bg-[#EEF3F4] text-[#4F6B73]"}`}>{c.active ? "Aktif" : "Nonaktif"}</span>
                           </td>
                           <td className="py-2.5 text-right">
-                            {canManageProduction && <button type="button" onClick={() => setEditing(c.id)} className="text-[14px] font-medium text-[#14919B] hover:underline">Ubah</button>}
+                            {canManageProduction && <button type="button" onClick={() => setEditing(c.id)} className="min-h-[24px] text-[14px] font-medium text-[#0B6477] hover:underline">Ubah</button>}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  </>
                 )}
               </Card>
             </div>

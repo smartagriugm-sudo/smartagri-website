@@ -1,6 +1,6 @@
 # Rencana ERP Plant Factory (PFMS) · smartagri
 
-Status: Tahap 0 live. Tahap 1 (fondasi) ada di `web/supabase/pf-foundation.sql` dan menu `/erp`; angka operasional masih data contoh. Rujukan: `plant-factory-management-system.md` (dokumen PFMS 4 lapisan).
+Status: Tahap 0 live. Tahap 1 (fondasi) ada di `web/supabase/pf-foundation.sql`. Bagian budidaya Tahap 2 ada di `web/supabase/pf-batch.sql`; iklim dan bacaan sensor masih data contoh sampai bagian sensor selesai. Rujukan: `plant-factory-management-system.md` (dokumen PFMS 4 lapisan).
 Diagram pendukung (ERD, arsitektur, alur fase): buka `diagram-erp-plant-factory.html` di folder ini.
 
 ---
@@ -115,7 +115,8 @@ Pembaruan model dan mesin: lihat `SETUP-ERP-MODEL.md`.
 |---|---|---|---|
 | 0 | Dasar | Commit, kontrol alat dilepas, alamat pindah ke `/erp`, ERD disetujui | ERD disetujui |
 | 1 | Fondasi | Lokasi, tanaman, resep berversi, peran, audit log, kerangka menu, dashboard awal | Semua lubang dan posisi nampan punya kode |
-| 2 | Budidaya + sensor | Batch dari semai sampai panen, lot benih, input ponsel, API sensor, grafik, alarm | Operator mencatat batch harian; data sensor masuk stabil |
+| 2A | Budidaya | Batch dari semai sampai panen, lot benih, input ponsel, 3D dari data asli | Operator mencatat batch harian |
+| 2B | Sensor | Daftar perangkat dan kalibrasi, API sensor, grafik, bacaan vs acuan resep, alarm | Data sensor masuk stabil |
 | 3 | Penjualan | Pelanggan, pesanan, alokasi lot panen, pengiriman, traceability | Satu pesanan bisa ditelusuri sampai lot benih |
 | 4 | Inventory | Stok per lot, pemakaian otomatis per batch, pembelian | Stok fisik cocok dengan sistem |
 | 5 | SDM | Data orang, kontrak, jadwal, absensi, izin, jam kerja per batch | Jadwal dan absensi dipakai satu bulan |
@@ -192,4 +193,11 @@ Pimpinan, Admin sistem, Manajer produksi, Staf penjualan, Staf SDM, Teknisi, Ope
 13. ERP tertutup di deployment tanpa pengaturan Supabase, dan hanya untuk akun yang sudah disetujui.
 14. `pf_asset` dan `pf_calibration` dibuat di Tahap 2 bersama API sensor, karena baru terpakai di sana.
 15. Satu klik mengubah status paling banyak satu tingkat (80 posisi). Lokasi tidak dihapus, hanya ditandai tidak dipakai.
+16. Fase batch tidak disimpan, melainkan dihitung dari tempat tanaman dan umur menurut resep. Tidak ada `pf_batch.phase`, supaya operator tidak perlu mengubah 480 lubang dan datanya tidak bisa berselisih.
+17. Layar 3D hanya menampilkan data. Semua pencatatan ada di halaman batch, lewat fungsi database yang memeriksa peran. Tabel budidaya tidak punya izin tulis langsung.
+18. `pf_item`, `pf_stock_lot`, dan `pf_stock_move` dibuat di Tahap 2A khusus untuk benih, dan diperluas di Tahap 4. Lot bersatuan biji berkurang otomatis saat semai, sedangkan lot bersatuan gram meminta berat yang terpakai.
+19. Selesai panen, lubang masuk status `sanitasi` dan tingkatnya menolak batch baru sampai operator menandainya selesai.
+20. `pf_harvest_lot.grade` menyimpan A, B, atau Afkir langsung. `pf_grade`, kriteria, dan QC menyusul setelah batas angkanya ada dari data panen tim. `pf_production_plan`, `pf_task`, dan foto kejadian juga ditunda karena belum termasuk syarat selesai Tahap 2.
+21. Navigasi ERP ada di sidebar kiri (rail ikon pada lebar 1024 sampai 1279 px, menu lembar penuh di bawah 1024 px). Modul yang belum dibangun hanya disebut di kaki menu, tidak tampil sebagai tautan.
+22. Dashboard menjawab "apa yang perlu dikerjakan hari ini" lewat antrean kerja, dengan model 3D langsung di sampingnya pada layar besar. Di ponsel model 3D tidak dimuat di dashboard; ada tautan ke layar penuhnya.
 

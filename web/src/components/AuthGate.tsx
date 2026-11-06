@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "../lib/auth/auth";
@@ -10,7 +10,8 @@ import SiteHeader from "./SiteHeader";
 // to sign in, and an account that is not onboarded or not yet approved is sent
 // to /welcome. Both bring the visitor back here afterwards. `allowPending`
 // lets a signed-in account through whatever its status (used by /account).
-export default function AuthGate({ children, allowPending = false }: { children: ReactNode; allowPending?: boolean }) {
+// `checkingText` and `slowText` replace the wording while access is checked.
+export default function AuthGate({ children, allowPending = false, checkingText = "Checking access...", slowText }: { children: ReactNode; allowPending?: boolean; checkingText?: string; slowText?: string }) {
   const { user, loading, isConfigured, account, accountLoading } = useAuth();
   const router = useRouter();
   const signedOut = isConfigured && !loading && !user;
@@ -24,6 +25,17 @@ export default function AuthGate({ children, allowPending = false }: { children:
   }, [signedOut, needsWelcome, router]);
 
   const waiting = isConfigured && (loading || !user || (!allowPending && (accountLoading || needsWelcome)));
+  const checking = loading || accountLoading;
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!waiting || !checking || !slowText) return;
+    const t = window.setTimeout(() => setSlow(true), 6000);
+    return () => {
+      window.clearTimeout(t);
+      setSlow(false);
+    };
+  }, [waiting, checking, slowText]);
+
   if (waiting) {
     return (
       <main>
@@ -32,7 +44,7 @@ export default function AuthGate({ children, allowPending = false }: { children:
           <div className="flex flex-col items-center gap-3 text-neutral-500">
             <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
             <p className="text-sm" style={body}>
-              {loading || accountLoading ? "Checking access..." : signedOut ? "Redirecting to sign in..." : "Redirecting..."}
+              {checking ? (slow ? slowText : checkingText) : signedOut ? "Redirecting to sign in..." : "Redirecting..."}
             </p>
           </div>
         </section>

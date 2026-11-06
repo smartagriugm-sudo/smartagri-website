@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { labRoleLabel } from "../../lib/account";
 import { ERP_ROLES, fetchMembers, fetchRoleGrants, memberName, setRole, type ErpRole } from "../../lib/pf/foundation";
-import { DataState, ErpPage, useAction, useErpAccess, useLoad } from "./page";
+import { ActionNote, DataState, ErpPage, useAction, useErpAccess, useLoad } from "./page";
 import { Card, Note } from "./ui";
 
 // Who has which ERP role. A person may hold several. Approving lab members stays
@@ -26,13 +26,33 @@ export default function RolesPage() {
       <div className="mb-3 space-y-2">
         <Note>Admin lab selalu punya akses Admin sistem, walau tidak dicentang di sini.</Note>
         {!canAdmin && <Note tone="warn">{canReadAudit ? "Anda bisa melihat daftar ini. Mengubahnya perlu peran Admin sistem." : "Daftar lengkap hanya untuk Admin sistem dan Pimpinan. Anda hanya melihat peran Anda sendiri."}</Note>}
-        {action.error && <Note tone="warn">{action.error}</Note>}
+        <ActionNote action={action} />
       </div>
       <DataState state={state}>
         {({ members }) => (
-          <Card className="overflow-x-auto p-4">
+          <>
+          <div className="space-y-3 md:hidden">
+            {members.map((m) => (
+              <Card key={m.id} className="p-4">
+                <p className="text-[14px] font-medium text-[#0F2F36]">{memberName(m)}</p>
+                <p className="mb-2 text-[13px] text-[#4F6B73]">{labRoleLabel(m.lab_role)}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2">
+                  {ERP_ROLES.map((r) => {
+                    const on = held.has(`${m.id}:${r.key}`);
+                    return (
+                      <label key={r.key} className="flex min-h-[44px] items-center gap-2.5 text-[14px] text-[#0F2F36]">
+                        <input type="checkbox" checked={on} disabled={!canAdmin || action.busy} onChange={() => void toggle(m.id, r.key, !on)} className="h-5 w-5 accent-[#14919B] disabled:opacity-50" />
+                        {r.label}
+                      </label>
+                    );
+                  })}
+                </div>
+              </Card>
+            ))}
+          </div>
+          <Card className="hidden overflow-x-auto p-4 md:block">
             <table className="w-full min-w-[920px] text-left text-[14px]">
-              <thead className="text-[13px] text-[#6B8289]">
+              <thead className="text-[13px] text-[#4F6B73]">
                 <tr>
                   <th className="sticky left-0 bg-white pb-2 pr-3 font-medium">Anggota</th>
                   {ERP_ROLES.map((r) => <th key={r.key} title={r.note} className="px-2 pb-2 text-center font-medium">{r.label}</th>)}
@@ -43,7 +63,7 @@ export default function RolesPage() {
                   <tr key={m.id} className="border-t border-[#E3ECED]">
                     <td className="sticky left-0 bg-white py-2 pr-3">
                       <span className="block font-medium">{memberName(m)}</span>
-                      <span className="block text-[13px] text-[#6B8289]">{labRoleLabel(m.lab_role)}</span>
+                      <span className="block text-[13px] text-[#4F6B73]">{labRoleLabel(m.lab_role)}</span>
                     </td>
                     {ERP_ROLES.map((r) => {
                       const on = held.has(`${m.id}:${r.key}`);
@@ -65,6 +85,7 @@ export default function RolesPage() {
               </tbody>
             </table>
           </Card>
+          </>
         )}
       </DataState>
     </ErpPage>

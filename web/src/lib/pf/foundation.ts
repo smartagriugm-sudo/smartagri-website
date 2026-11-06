@@ -11,24 +11,26 @@ import { SHELVES, slotId } from "./chamber";
 export const ERP_ROLES = [
   { key: "pimpinan", label: "Pimpinan", note: "Melihat semua data dan audit log" },
   { key: "admin", label: "Admin sistem", note: "Mengatur peran dan lokasi" },
-  { key: "manajer_produksi", label: "Manajer produksi", note: "Mengatur tanaman dan resep" },
+  { key: "manajer_produksi", label: "Manajer produksi", note: "Mengatur tanaman, resep, lot benih, dan batch" },
   { key: "staf_penjualan", label: "Staf penjualan", note: "Penjualan, mulai Tahap 3" },
   { key: "staf_sdm", label: "Staf SDM", note: "SDM, mulai Tahap 5" },
-  { key: "teknisi", label: "Teknisi", note: "Perangkat, mulai Tahap 2" },
-  { key: "operator", label: "Operator", note: "Catatan budidaya, mulai Tahap 2" },
+  { key: "teknisi", label: "Teknisi", note: "Perangkat, mulai bagian sensor Tahap 2" },
+  { key: "operator", label: "Operator", note: "Mencatat semai, pindah tanam, dan panen" },
   { key: "peneliti", label: "Peneliti dan mahasiswa", note: "Membaca data" },
 ] as const;
 
 export type ErpRole = (typeof ERP_ROLES)[number]["key"];
 
-export type ErpAccess = { canAdmin: boolean; canManageProduction: boolean; canReadAudit: boolean };
+export type ErpAccess = { canAdmin: boolean; canManageProduction: boolean; canOperate: boolean; canReadAudit: boolean };
 
-/** Mirrors pf_is_admin(), pf_can_manage_production() and pf_can_read_audit(). */
+/** Mirrors pf_is_admin(), pf_can_manage_production(), pf_can_operate() and pf_can_read_audit(). */
 export function accessOf(roles: readonly string[], isLabAdmin: boolean): ErpAccess {
   const canAdmin = isLabAdmin || roles.includes("admin");
+  const canManageProduction = canAdmin || roles.includes("manajer_produksi");
   return {
     canAdmin,
-    canManageProduction: canAdmin || roles.includes("manajer_produksi"),
+    canManageProduction,
+    canOperate: canManageProduction || roles.includes("operator"),
     canReadAudit: canAdmin || roles.includes("pimpinan"),
   };
 }
@@ -36,12 +38,13 @@ export function accessOf(roles: readonly string[], isLabAdmin: boolean): ErpAcce
 /* -------------------------------------------------------------- locations */
 
 export type LocationLevel = "site" | "room" | "rack" | "tier" | "gully" | "hole" | "chamber" | "chamber_shelf" | "tray_position";
-export type SlotStatus = "available" | "maintenance" | "retired";
+export type SlotStatus = "available" | "maintenance" | "retired" | "sanitasi";
 
 export const SLOT_STATUSES: { key: SlotStatus; label: string; color: string }[] = [
   { key: "available", label: "Siap pakai", color: "#2F9E57" },
   { key: "maintenance", label: "Perawatan", color: "#E0A526" },
   { key: "retired", label: "Tidak dipakai", color: "#8D9398" },
+  { key: "sanitasi", label: "Sanitasi", color: "#7FB7E8" },
 ];
 
 export const LEVEL_LABELS: Record<LocationLevel, string> = {
@@ -273,6 +276,10 @@ export const AUDIT_TABLES: { key: string; label: string }[] = [
   { key: "pf_recipe", label: "Resep" },
   { key: "pf_recipe_phase", label: "Fase resep" },
   { key: "pf_user_role", label: "Peran" },
+  { key: "pf_batch", label: "Batch" },
+  { key: "pf_harvest_lot", label: "Lot panen" },
+  { key: "pf_stock_lot", label: "Lot benih" },
+  { key: "pf_item", label: "Barang" },
 ];
 
 export const AUDIT_ACTIONS: Record<AuditEntry["action"], string> = { INSERT: "Dibuat", UPDATE: "Diubah", DELETE: "Dihapus" };
@@ -288,6 +295,20 @@ export function auditChanges(e: Pick<AuditEntry, "old_data" | "new_data">): Audi
 }
 
 /** A readable name for what an entry is about. */
+export type AuditGroup = { key: number; entries: AuditEntry[] };
+
+/** Rows from one saved operation (same person, kind of data, action and second) read as one line. */
+export function groupAudit(entries: readonly AuditEntry[]): AuditGroup[] {
+  const groups: AuditGroup[] = [];
+  const stamp = (e: AuditEntry) => `${e.actor_id}|${e.table_name}|${e.action}|${e.at.slice(0, 19)}`;
+  for (const e of entries) {
+    const last = groups[groups.length - 1];
+    if (last && stamp(last.entries[0]) === stamp(e)) last.entries.push(e);
+    else groups.push({ key: e.id, entries: [e] });
+  }
+  return groups;
+}
+
 export function auditSubject(e: Pick<AuditEntry, "old_data" | "new_data" | "row_id">): string {
   const d = e.new_data ?? e.old_data ?? {};
   const pick = (k: string) => (typeof d[k] === "string" && d[k] ? (d[k] as string) : "");
@@ -314,23 +335,32 @@ export function toDataError(e: PostgrestLikeError): ErpDataError {
   return new ErpDataError(friendlyMessage(e), missing);
 }
 
+const NETWORK_FAILURE = /failed to fetch|networkerror|load failed|fetch failed/i;
+
 function friendlyMessage(e: PostgrestLikeError) {
+  if (NETWORK_FAILURE.test(e.message)) return "Tidak bisa terhubung ke server. Periksa koneksi internet, lalu coba lagi.";
   if (e.code === "23505") return "Data dengan nama atau kode itu sudah ada.";
   if (e.code === "42501") return "Akun Anda tidak punya izin untuk tindakan ini.";
   return e.message;
 }
 
-function db() {
+/** Any failure, as an error whose message can be shown to the person using the page. */
+export function toErpError(e: unknown): ErpDataError {
+  if (e instanceof ErpDataError) return e;
+  return toDataError({ message: e instanceof Error ? e.message : "Terjadi kesalahan" });
+}
+
+export function db() {
   if (!supabase) throw new ErpDataError("Supabase belum dikonfigurasi di lingkungan ini.", true);
   return supabase;
 }
 
-function unwrap<T>({ data, error }: { data: T | null; error: PostgrestLikeError | null }): T {
+export function unwrap<T>({ data, error }: { data: T | null; error: PostgrestLikeError | null }): T {
   if (error) throw toDataError(error);
   return data as T;
 }
 
-function check({ error }: { error: PostgrestLikeError | null }) {
+export function check({ error }: { error: PostgrestLikeError | null }) {
   if (error) throw toDataError(error);
 }
 
@@ -420,13 +450,14 @@ export async function fetchAudit(table: string | null): Promise<AuditEntry[]> {
   return unwrap(await (table ? query.eq("table_name", table) : query)) as AuditEntry[];
 }
 
-export type FoundationSummary = { slots: SlotCoverage; crops: number; activeRecipes: number };
+export type FoundationSummary = { slots: SlotCoverage; crops: number; activeRecipes: number; seedLots: number };
 
 export async function fetchFoundationSummary(): Promise<FoundationSummary> {
-  const [slots, crops, recipes] = await Promise.all([
+  const [slots, crops, recipes, lots] = await Promise.all([
     db().from("pf_location").select("code").in("level", ["hole", "tray_position"]).limit(5000),
     db().from("pf_crop").select("id", { count: "exact", head: true }).eq("active", true),
     db().from("pf_recipe").select("id", { count: "exact", head: true }).eq("status", "active"),
+    db().from("pf_stock_lot").select("id", { count: "exact", head: true }),
   ]);
   check(crops);
   check(recipes);
@@ -434,5 +465,7 @@ export async function fetchFoundationSummary(): Promise<FoundationSummary> {
     slots: slotCoverage(unwrap(slots) as { code: string }[]),
     crops: crops.count ?? 0,
     activeRecipes: recipes.count ?? 0,
+    // Tahap 2's table: the rest of this card still works before it is installed.
+    seedLots: lots.error ? 0 : (lots.count ?? 0),
   };
 }

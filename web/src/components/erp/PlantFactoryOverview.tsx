@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { ObjectRecord, Selection, ViewName } from "plant-factory-3d";
-import { ArrowRight, Box, CircleAlert, Droplets, Home, Lightbulb, LightbulbOff, Minus, MoveRight, Plus, Sprout, Thermometer } from "lucide-react";
+import { ArrowRight, CircleAlert, Home, Lightbulb, LightbulbOff, Minus, MoveRight, Plus } from "lucide-react";
 import { CHAMBER_CODE } from "../../lib/pf/chamber";
 import {
   FACILITY_CODE,
@@ -14,12 +14,12 @@ import {
   countByState,
   isPlanted,
   stateColor,
-  type HoleState,
 } from "../../lib/pf/facility";
 import { RACK_NUMBERS, TIER_NUMBERS, type PfProvider } from "../../lib/pf/provider";
 import type { ErpStore } from "../../lib/pf/store";
 import { useErpStore } from "./ErpContext";
 import PlantFactoryScene, { type SceneEngine } from "./PlantFactoryScene";
+import { formatLongDate } from "../../lib/pf/dashboard";
 import { Bar, Card, Kpi, Lifecycle, Note, PanelHeader, Readings, Rows, SceneStatus, Segmented, StateBreakdown, dolly, useEngineActivity, useSceneGate } from "./ui";
 
 // ERP overview: the 3D model of PF01 with floating KPI cards, a detail panel
@@ -39,65 +39,44 @@ const VIEWS: { key: ViewName; label: string }[] = [
 
 /* --------------------------------------------------------- detail panels */
 
-function HolePanel({ id, store, onApply }: { id: string; store: ErpStore; onApply: (state: HoleState, note: string) => void }) {
+function HolePanel({ id, store }: { id: string; store: ErpStore }) {
   const hole = store.pf.getHole(id)!;
   const b = store.batch(hole.batch);
   const germination = b ? store.germinationOf(b.code) : null;
-  const [state, setState] = useState(hole.state);
-  const [note, setNote] = useState(hole.note);
-  const field = "w-full rounded-lg border border-[#DCE7E8] bg-white px-3 py-2 text-[13.5px] text-[#0F2F36] outline-none focus:border-[#14919B]";
   return (
     <div className="space-y-4">
       <PanelHeader eyebrow="Lubang tanam" title={id} sub={`Rak ${hole.rack} · Tingkat ${hole.tier} · Talang ${hole.gully} · Lubang ${hole.hole}`} />
       {b ? (
         <div className="space-y-2">
-          <Rows rows={[["Batch", b.code], ["Tanaman", b.crop], ["Resep", b.recipe], ["Tanggal semai", b.sownAt], ["Umur", `${b.age} dari ${b.cycle} hari`]]} />
-          <Bar value={Math.min(b.age, b.cycle)} max={b.cycle} />
+          <Rows rows={[["Status", HOLE_STATES[hole.state].label], ["Batch", b.code], ["Tanaman", b.crop], ["Resep", b.recipe], ["Tanggal semai", b.sownAt], ["Umur", `${b.age} dari ${b.cycle} hari`]]} />
+          <Bar value={Math.min(b.age, b.cycle)} max={b.cycle || 1} />
+          {hole.note && <Note>{hole.note}</Note>}
         </div>
       ) : (
-        <Note>Tidak ada batch di lubang ini.</Note>
+        <Note>{hole.state === "sanitasi" ? "Lubang ini sedang sanitasi." : hole.offline ? "Lubang ini sedang tidak dipakai." : "Tidak ada batch di lubang ini."}</Note>
       )}
       {b && germination && (
         <div className="space-y-2 rounded-lg bg-[#F3F7F7] px-3 py-2.5">
           <p className="text-[13px] font-medium text-[#4F6B73]">Asal persemaian</p>
           <Rows
             rows={[
-              ["Pindah tanam", b.transplantedAt ?? "Belum tercatat"],
+              ["Pindah tanam", b.transplantedAt ? formatLongDate(b.transplantedAt) : "Belum tercatat"],
               ["Daya kecambah batch", `${Math.round(germination.rate * 100)}%`],
               ...(hole.sourceSlot ? ([["Nampan asal", hole.sourceSlot]] as [string, string][]) : []),
             ]}
           />
           {hole.sourceSlot && (
-            <Link to="/erp/persemaian" search={{ slot: hole.sourceSlot }} className="flex items-center gap-1 text-[13px] font-medium text-[#14919B] hover:underline">
+            <Link to="/erp/persemaian" search={{ slot: hole.sourceSlot }} className="flex items-center gap-1 text-[13px] font-medium text-[#0B6477] hover:underline">
               Buka posisinya di persemaian <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           )}
         </div>
       )}
-      <form
-        className="space-y-3 border-t border-[#E3ECED] pt-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          onApply(state, note);
-        }}
-      >
-        <label className="block text-[13px] font-medium text-[#4F6B73]">
-          Status
-          <select value={state} onChange={(e) => setState(e.target.value as HoleState)} className={`${field} mt-1`}>
-            {HOLE_STATE_KEYS.map((s) => (
-              <option key={s} value={s}>{HOLE_STATES[s].label}</option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-[13px] font-medium text-[#4F6B73]">
-          Catatan
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className={`${field} mt-1 resize-none`} />
-        </label>
-        <button type="submit" className="w-full rounded-lg bg-[#45DFB1] px-3 py-2 text-[14px] font-medium text-[#0B2A22] hover:bg-[#80ED99]">
-          Terapkan
-        </button>
-        <p className="text-[12px] text-[#6B8289]">Perubahan hanya berlaku di sesi ini sampai tabel ERP tersambung.</p>
-      </form>
+      {b?.id && (
+        <Link to="/erp/batch/$id" params={{ id: b.id }} search={{ hole: id }} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#45DFB1] px-3 py-2 text-[14px] font-medium text-[#0B2A22] hover:bg-[#80ED99]">
+          Catat di halaman batch <ArrowRight className="h-4 w-4" />
+        </Link>
+      )}
     </div>
   );
 }
@@ -137,10 +116,9 @@ function ObjectPanel({ object: o, provider }: { object: ObjectRecord; provider: 
         <>
           <Readings title="Larutan nutrisi (contoh)" items={RESERVOIR_READINGS} />
           <div>
-            <div className="mb-1 flex justify-between text-[13px]"><span className="text-[#6B8289]">Level tandon</span><span className="font-medium">74%</span></div>
+            <div className="mb-1 flex justify-between text-[13px]"><span className="text-[#4F6B73]">Level tandon</span><span className="font-medium">74%</span></div>
             <Bar value={74} max={100} color="#0AD1C8" />
           </div>
-          <Note tone="warn">pH 6.48 di atas target 5.8–6.2. Periksa dosing pH down.</Note>
         </>
       )}
       {o.type === "cctv" && <Note>Belum ada siaran kamera yang tersambung.</Note>}
@@ -162,12 +140,12 @@ function RackPanel({ rack, store, onTier }: { rack: number; store: ErpStore; onT
             <button key={t} type="button" onClick={() => onTier(t)} className="block w-full rounded-lg border border-[#E3ECED] px-3 py-2.5 text-left hover:border-[#14919B]">
               <div className="flex items-center justify-between text-[13px]">
                 <span className="font-medium text-[#0F2F36]">Tingkat {t}</span>
-                <span className="text-[#6B8289]">{ts.filter((h) => isPlanted(h.state)).length}/{ts.length} terisi</span>
+                <span className="text-[#4F6B73]">{ts.filter((h) => isPlanted(h.state)).length}/{ts.length} terisi</span>
               </div>
               {b ? (
                 <>
                   <p className="mt-0.5 text-[12.5px] text-[#4F6B73]">{b.code} · {b.crop} · hari {b.age}/{b.cycle}</p>
-                  <div className="mt-1.5"><Bar value={Math.min(b.age, b.cycle)} max={b.cycle} /></div>
+                  <div className="mt-1.5"><Bar value={Math.min(b.age, b.cycle)} max={b.cycle || 1} /></div>
                 </>
               ) : (
                 <p className="mt-0.5 text-[12.5px] text-[#4F6B73]">Tidak ada batch aktif</p>
@@ -188,7 +166,7 @@ function SeedlingSupply({ store }: { store: ErpStore }) {
     <Link to="/erp/persemaian" className="block rounded-lg border border-[#E3ECED] px-3 py-2.5 hover:border-[#14919B]">
       <span className="flex items-center justify-between text-[13px]">
         <span className="font-medium text-[#0F2F36]">Pasokan dari persemaian · {CHAMBER_CODE}</span>
-        <MoveRight className="h-4 w-4 text-[#14919B]" />
+        <MoveRight className="h-4 w-4 text-[#0B6477]" />
       </span>
       <span className="mt-0.5 block text-[12.5px] text-[#4F6B73]">
         {seedlings} bibit siap pindah · {germinating.length} batch masih germinasi · {store.freeCapacity()} lubang siap terima
@@ -203,18 +181,17 @@ function FacilityPanel({ store, onRack }: { store: ErpStore; onRack: (rack: numb
     <div className="space-y-4">
       <PanelHeader eyebrow={`Plant factory · ${FACILITY_CODE}`} title="Smart Agriculture Research Center" sub="Ruang tumbuh (2 rak NFT) dan ruang kontrol" />
       <div className="flex items-center gap-2 text-[12.5px]">
-        <span className="rounded-md bg-[#E3F7F0] px-2 py-0.5 font-medium text-[#0E7A5C]">Operasional</span>
-        <span className="text-[#6B8289]">{store.batchesInFactory().length} batch aktif</span>
+        <span className="text-[#4F6B73]">{store.batchesInFactory().length} batch aktif</span>
       </div>
       <StateBreakdown counts={countByState(provider.holes.values())} total={HOLES_TOTAL} />
       <SeedlingSupply store={store} />
-      <Readings title="Ruang tumbuh" items={GROW_ROOM_READINGS} />
+      <Readings title="Ruang tumbuh (contoh)" items={GROW_ROOM_READINGS} />
       <div className="space-y-2">
         {RACK_NUMBERS.map((r) => {
           const n = provider.holesOfRack(r).filter((h) => isPlanted(h.state)).length;
           return (
             <button key={r} type="button" onClick={() => onRack(r)} className="block w-full rounded-lg border border-[#E3ECED] px-3 py-2 text-left hover:border-[#14919B]">
-              <div className="mb-1 flex justify-between text-[13px]"><span className="font-medium text-[#0F2F36]">Rak {r}</span><span className="text-[#6B8289]">{n}/{HOLES_PER_RACK}</span></div>
+              <div className="mb-1 flex justify-between text-[13px]"><span className="font-medium text-[#0F2F36]">Rak {r}</span><span className="text-[#4F6B73]">{n}/{HOLES_PER_RACK}</span></div>
               <Bar value={n} max={HOLES_PER_RACK} />
             </button>
           );
@@ -253,6 +230,11 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
 
   useEngineActivity(engine, active);
 
+  // New records arrive after the model does, and whenever a batch page saves.
+  useEffect(() => {
+    engine?.refresh();
+  }, [engine, store.dataVersion]);
+
   useEffect(() => {
     if (engine && active && focusHole) engine.focusHole(focusHole);
   }, [engine, active, focusHole]);
@@ -270,7 +252,7 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
   const toggle = "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-1 text-[12.5px] font-medium text-[#36525A] hover:bg-[#EEF5F5]";
 
   return (
-      <main className="relative flex-1 lg:h-[calc(100vh-109px)] lg:min-h-[680px]">
+      <main className="relative flex-1 bg-[#E7EAE7] lg:h-screen lg:min-h-[680px]">
         {/* Scene */}
         <div className="relative h-[62vh] min-h-[420px] lg:absolute lg:bottom-[172px] lg:left-0 lg:right-[392px] lg:top-0 lg:h-auto">
           {sceneOn && <PlantFactoryScene provider={provider} onReady={onReady} onSelect={setSelection} onError={onError} />}
@@ -297,10 +279,10 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
         {/* KPI cards */}
         <div className="flex gap-3 overflow-x-auto px-3 py-3 lg:pointer-events-none lg:absolute lg:left-4 lg:right-[404px] lg:top-4 lg:p-0 lg:pb-3">
           <div className="flex gap-3 lg:pointer-events-auto">
-            <Kpi icon={Box} label="Lubang terisi" value={`${filled}`} sub={`dari ${HOLES_TOTAL} lubang · ${FACILITY_CODE}`} />
-            <Kpi icon={Sprout} label="Siap panen" value={`${counts.siap_panen}`} sub="tanaman · ≤ 3 hari" tone="#B26205" />
-            <Kpi icon={Thermometer} label="Suhu ruang tumbuh" value="22.4 °C" sub="RH 68% · CO₂ 812 ppm" />
-            <Kpi icon={Droplets} label="Tandon" value="EC 1.62" sub="pH 6.48 · di atas target" tone="#B26205" />
+            <Kpi label="Lubang terisi" value={`${filled}`} sub={`dari ${HOLES_TOTAL} lubang · ${FACILITY_CODE}`} />
+            <Kpi label="Siap panen" value={`${counts.siap_panen}`} sub="tanaman, menurut resep" />
+            <Kpi label="Suhu ruang tumbuh" value="22.4 °C" sub="contoh · RH 68% · CO₂ 812 ppm" />
+            <Kpi label="Tandon" value="EC 1.62" sub="contoh · pH 6.48" />
           </div>
         </div>
 
@@ -343,7 +325,7 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
                   {HOLE_STATES[s].label}
                 </span>
               ))}
-              {filter.tier === 0 && <span className="text-[12px] text-[#6B8289] lg:ml-auto">Pilih satu tingkat untuk mengeklik lubang</span>}
+              {filter.tier === 0 && <span className="text-[12px] text-[#4F6B73] lg:ml-auto">Pilih satu tingkat untuk mengeklik lubang</span>}
             </div>
           </Card>
         </div>
@@ -352,16 +334,7 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
         <div className="px-3 pb-3 lg:absolute lg:bottom-4 lg:right-4 lg:top-4 lg:w-[360px] lg:p-0">
           <Card className="h-full overflow-y-auto p-4">
             {selection?.kind === "hole" ? (
-              <HolePanel
-                key={`${selection.id}:${provider.getHole(selection.id)?.state}:${provider.getHole(selection.id)?.batch}`}
-                id={selection.id}
-                store={store}
-                onApply={(state, note) => {
-                  provider.updateHole(selection.id, { state, note });
-                  engine?.refreshHole(selection.id);
-                  store.emit();
-                }}
-              />
+              <HolePanel id={selection.id} store={store} />
             ) : selectedObject ? (
               <ObjectPanel object={selectedObject} provider={provider} />
             ) : filter.rack ? (

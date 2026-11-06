@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Loader2, type LucideIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { PerspectiveCamera } from "three";
 import { body, display } from "../../lib/fonts";
 import { HOLE_STATES, HOLE_STATE_KEYS, stateColor, type Batch, type HoleState, type Reading } from "../../lib/pf/facility";
-import { LIFECYCLE_PHASES } from "../../lib/pf/store";
+import { LIFECYCLE_PHASES, lifecycleDay } from "../../lib/pf/store";
 
 // Pieces shared by the two ERP screens, the plant factory and the growth chamber.
 
@@ -51,39 +51,35 @@ export function dolly(engine: { three: { camera: PerspectiveCamera; controls: un
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-xl border border-[#DCE7E8] bg-white/95 shadow-[0_6px_24px_-12px_rgba(8,49,58,0.25)] backdrop-blur ${className}`}>
+    <div className={`rounded-xl border border-[#DCE7E8] bg-white ${className}`}>
       {children}
     </div>
   );
 }
 
-export function Kpi({ icon: Icon, label, value, sub, tone = "#0B6477" }: { icon: LucideIcon; label: string; value: string; sub: string; tone?: string }) {
+/** A label and a number. What it counts is in its words, not in an icon. */
+export function Kpi({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <Card className="flex min-w-[180px] items-center gap-3 px-4 py-3">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg" style={{ background: `${tone}14`, color: tone }}>
-        <Icon className="h-5 w-5" />
-      </span>
-      <div>
-        <p className="text-[13px] font-medium text-[#4F6B73]" style={body}>{label}</p>
-        <p className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0F2F36]" style={display}>{value}</p>
-        <p className="text-[12px] text-[#6B8289]" style={body}>{sub}</p>
-      </div>
+    <Card className="min-w-[150px] px-3.5 py-2.5">
+      <p className="text-[13px] font-medium text-[#4F6B73]" style={body}>{label}</p>
+      <p className="text-[22px] font-semibold leading-tight tabular-nums tracking-[-0.02em] text-[#0F2F36]" style={display}>{value}</p>
+      <p className="text-[12px] text-[#4F6B73]" style={body}>{sub}</p>
     </Card>
   );
 }
 
-export function Segmented<T extends string | number>({ label, value, options, onChange }: { label: string; value: T; options: { key: T; label: string }[]; onChange: (v: T) => void }) {
+export function Segmented<T extends string | number>({ label, value, options, onChange }: { label?: string; value: T; options: { key: T; label: string }[]; onChange: (v: T) => void }) {
   return (
     <div className="flex max-w-full items-center gap-1.5">
-      <span className="text-[12px] text-[#6B8289]">{label}</span>
-      <div className="flex min-w-0 overflow-x-auto rounded-lg bg-[#EEF3F4] p-0.5 text-[12.5px] font-medium">
+      {label && <span className="text-[12px] text-[#4F6B73]">{label}</span>}
+      <div className="flex min-w-0 overflow-x-auto rounded-lg bg-[#EEF3F4] p-0.5 text-[13px] font-medium">
         {options.map((o) => (
           <button
             key={o.key}
             type="button"
             aria-pressed={value === o.key}
             onClick={() => onChange(o.key)}
-            className={`whitespace-nowrap rounded-md px-2 py-1 ${value === o.key ? "bg-white text-[#0F2F36] shadow-sm" : "text-[#6B8289] hover:text-[#0F2F36]"}`}
+            className={`min-h-[44px] whitespace-nowrap rounded-md px-2.5 py-1 lg:min-h-[28px] ${value === o.key ? "bg-white text-[#0F2F36] shadow-sm" : "text-[#4F6B73] hover:text-[#0F2F36]"}`}
           >
             {o.label}
           </button>
@@ -100,11 +96,11 @@ export function Readings({ title, items }: { title: string; items: Reading[] }) 
       <div className="grid grid-cols-2 gap-2">
         {items.map((r) => (
           <div key={r.label} className="rounded-lg bg-[#F3F7F7] px-3 py-2">
-            <p className="text-[12px] text-[#6B8289]">{r.label}</p>
+            <p className="text-[12px] text-[#4F6B73]">{r.label}</p>
             <p className="text-[16px] font-semibold tracking-[-0.01em] text-[#0F2F36]">
-              {r.value} <span className="text-[12px] font-normal text-[#6B8289]">{r.unit}</span>
+              {r.value} <span className="text-[12px] font-normal text-[#4F6B73]">{r.unit}</span>
             </p>
-            {!r.ok && <p className="text-[11px] font-medium text-[#B26205]">Di luar rentang</p>}
+            {!r.ok && <p className="text-[12px] font-medium text-[#B26205]">Di luar rentang</p>}
           </div>
         ))}
       </div>
@@ -148,8 +144,8 @@ export function Rows({ rows }: { rows: [string, string][] }) {
     <div className="space-y-2 text-[13.5px]">
       {rows.map(([k, v]) => (
         <div key={k} className="flex justify-between gap-3">
-          <span className="text-[#6B8289]">{k}</span>
-          <span className="text-right font-medium text-[#0F2F36]">{v}</span>
+          <span className="text-[#4F6B73]">{k}</span>
+          <span className="text-right font-medium tabular-nums text-[#0F2F36]">{v}</span>
         </div>
       ))}
     </div>
@@ -158,26 +154,26 @@ export function Rows({ rows }: { rows: [string, string][] }) {
 
 export function Note({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "warn" }) {
   const cls = tone === "warn" ? "bg-[#FFF6E5] text-[#8A5A07]" : "bg-[#F3F7F7] text-[#4F6B73]";
-  return <p className={`rounded-lg px-3 py-2 text-[12.5px] ${cls}`}>{children}</p>;
+  return <p role={tone === "warn" ? "alert" : undefined} className={`rounded-lg px-3 py-2 text-[12.5px] ${cls}`}>{children}</p>;
 }
 
 export function PanelHeader({ eyebrow, title, sub }: { eyebrow: string; title: string; sub?: string }) {
   return (
     <div className="border-b border-[#E3ECED] pb-3">
-      <p className="text-[13px] font-medium tracking-[0.03em] text-[#14919B]">{eyebrow}</p>
+      <p className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]">{eyebrow}</p>
       <h2 className="text-[19px] font-semibold tracking-[-0.025em] text-[#0F2F36]" style={display}>{title}</h2>
-      {sub && <p className="text-[13px] text-[#6B8289]">{sub}</p>}
+      {sub && <p className="text-[13px] text-[#4F6B73]">{sub}</p>}
     </div>
   );
 }
 
 /** One batch's way from sowing in the chamber to harvest in the plant factory. */
-export function Lifecycle({ batch, phase }: { batch: Batch; phase: number }) {
+export function Lifecycle({ batch, phase, compact = false }: { batch: Batch; phase: number; compact?: boolean }) {
   return (
     <Card className="h-full px-5 py-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F2F36]" style={display}>Lifecycle batch</p>
-        <p className="text-[12.5px] text-[#6B8289]">{batch.code} · {batch.crop} · {batch.recipe}</p>
+        <p className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F2F36]" style={display}>Alur batch</p>
+        <p className="text-[12.5px] text-[#4F6B73]">{batch.code} · {batch.crop} · {batch.recipe}</p>
       </div>
       <ol className="grid grid-cols-5">
         {LIFECYCLE_PHASES.map((p, i) => {
@@ -188,13 +184,13 @@ export function Lifecycle({ batch, phase }: { batch: Batch; phase: number }) {
               {i > 0 && <span className={`absolute right-1/2 top-4 h-0.5 w-full ${i <= phase ? "bg-[#14919B]" : "bg-[#DCE7E8]"}`} />}
               <span
                 className={`relative z-10 grid h-8 w-8 place-items-center rounded-full border-2 text-[12px] font-semibold ${
-                  now ? "border-[#14919B] bg-white text-[#14919B] ring-4 ring-[#14919B]/15" : done ? "border-[#14919B] bg-[#14919B] text-white" : "border-[#DCE7E8] bg-white text-[#9AAEB2]"
+                  now ? "border-[#14919B] bg-white text-[#0B6477] ring-4 ring-[#14919B]/15" : done ? "border-[#14919B] bg-[#14919B] text-white" : "border-[#DCE7E8] bg-white text-[#4F6B73]"
                 }`}
               >
                 {i + 1}
               </span>
               <span className={`mt-1.5 text-[12.5px] font-medium ${now ? "text-[#0F2F36]" : "text-[#4F6B73]"}`}>{p.label}</span>
-              <span className="text-[11.5px] text-[#8AA0A5]">{p.place} · hari {p.day >= 0 ? p.day : batch.cycle}</span>
+              <span className="text-[12px] text-[#4F6B73]">{compact ? "" : `${p.place} · `}hari {lifecycleDay(i, batch)}</span>
             </li>
           );
         })}
@@ -205,7 +201,7 @@ export function Lifecycle({ batch, phase }: { batch: Batch; phase: number }) {
 
 export function SceneStatus({ failed }: { failed: boolean }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center text-[#6B8289]">
+    <div className="absolute inset-0 flex items-center justify-center text-[#4F6B73]">
       {failed ? (
         <span className="text-[13px]">Model 3D gagal dimuat. Muat ulang halaman untuk mencoba lagi.</span>
       ) : (

@@ -1,43 +1,62 @@
-import { ChamberProvider, emptySlot, DAYS_TO_TRANSPLANT, type Slot, type SlotState } from "./chamber";
-import { BATCHES, DUMMY_TODAY, addDays, daysBetween, isPlanted, type Batch, type Hole } from "./facility";
+import { blankSlots, ChamberProvider, seedSlots, type Slot, type SlotState } from "./chamber";
+import { BATCHES, DUMMY_TODAY, addDays, blankHoles, daysBetween, isPlanted, seedHoles, type Batch } from "./facility";
+import { ageOn, batchLabel, fetchErpSnapshot, holeStateOn, jakartaDate, trayState, transplantDay, type ErpSnapshot } from "./batch";
+import { ErpDataError, toErpError } from "./foundation";
 import { PfProvider, RACK_NUMBERS, TIER_NUMBERS } from "./provider";
 
-// The ERP's shared state, and the seam between its two facilities. A batch is
-// one record across both: it is sown in growth chamber trays, then transplant()
-// moves its seedlings into plant factory holes. Each 3D engine only ever reads
-// its own provider, so both screens stay consistent by going through here.
+// The ERP's shared view of both facilities, for the dashboard and the 3D screens.
+// A batch is one record across both: sown in growth chamber trays, then moved into
+// plant factory holes. Each 3D engine only ever reads its own provider, so load()
+// fills both from the same snapshot. Writes happen on the batch pages, through
+// the database's functions, and reach here on the next load().
 //
-// Everything lives in memory until the pf_* tables exist. The ERP layout route
-// owns the instance, so it survives moving between the two screens and is gone
-// on a full reload.
+// Where the pf_* tables are not installed yet it shows the sample data instead,
+// and says so through `mode`.
 
 export const LIFECYCLE_PHASES = [
-  { label: "Semai", place: "CH1", day: 0 },
-  { label: "Germinasi", place: "CH1", day: 4 },
-  { label: "Pindah tanam", place: "ke PF01", day: DAYS_TO_TRANSPLANT },
-  { label: "Vegetatif", place: "PF01", day: 14 },
-  { label: "Panen", place: "PF01", day: -1 },
+  { label: "Semai", place: "CH1" },
+  { label: "Germinasi", place: "CH1" },
+  { label: "Pindah tanam", place: "ke PF01" },
+  { label: "Vegetatif", place: "PF01" },
+  { label: "Panen", place: "PF01" },
 ];
 
-export type SlotPatch = Pick<Slot, "state" | "crop" | "sownOn" | "seedCount" | "germinated" | "transplantOn" | "note"> & { batch: string };
+/** The day a batch reaches each step of the strip, from its own recipe. */
+export function lifecycleDay(step: number, batch: Pick<Batch, "germinationDay" | "transplantDay" | "cycle">) {
+  return [0, batch.germinationDay, batch.transplantDay, batch.transplantDay, batch.cycle][step];
+}
+
+export type StoreMode = "loading" | "live" | "sample" | "error";
 
 export type TierCapacity = {
   rack: number;
   tier: number;
+  code: string;
   /** Empty holes a seedling can go into. */
   free: number;
   /** Why this tier cannot take the batch, or null. */
   blocked: string | null;
 };
 
-export type TransplantResult = { batch: string; rack: number; tier: number; count: number; firstHole: string; left: number };
-
 export class ErpStore {
   pf = new PfProvider();
   chamber = new ChamberProvider();
-  batches = new Map<string, Batch>(BATCHES.map((b) => [b.code, { ...b, archived: { ...b.archived } }]));
+  batches = new Map<string, Batch>();
+  /** Location ids by code, for the writes that name a tier or a tray position. */
+  locationIds = new Map<string, string>();
+  mode: StoreMode = "loading";
+  /** False until a load has filled the caches. Their blanks are not real zeros. */
+  hasData = false;
+  /** Why the last load failed, while mode is "error". */
+  loadError: string | null = null;
+  /** When the records on screen were read. */
+  loadedAt: Date | null = null;
+  today = DUMMY_TODAY;
   revision = 0;
+  /** Moves when the records change, not when the simulated climate ticks. */
+  dataVersion = 0;
   private listeners = new Set<() => void>();
+  private latestLoad = 0;
 
   subscribe = (fn: () => void) => {
     this.listeners.add(fn);
@@ -50,6 +69,123 @@ export class ErpStore {
   emit() {
     this.revision++;
     for (const fn of this.listeners) fn();
+  }
+
+  /** Reads the records again. A reply older than the latest request is dropped. */
+  async load() {
+    const request = ++this.latestLoad;
+    try {
+      const snapshot = await fetchErpSnapshot();
+      if (request === this.latestLoad) this.applySnapshot(snapshot);
+    } catch (e) {
+      if (request !== this.latestLoad) return;
+      if (e instanceof ErpDataError && e.notInstalled) {
+        this.useSample();
+      } else {
+        this.mode = "error";
+        this.loadError = toErpError(e).message;
+        this.dataVersion++;
+        this.emit();
+      }
+    }
+  }
+
+  useSample() {
+    this.today = DUMMY_TODAY;
+    this.batches = new Map(BATCHES.map((b) => [b.code, { ...b, archived: { ...b.archived } }]));
+    this.pf.setHoles(seedHoles());
+    this.chamber.slots = new Map(seedSlots().map((s) => [s.id, s]));
+    this.mode = "sample";
+    this.hasData = true;
+    this.loadError = null;
+    this.dataVersion++;
+    this.emit();
+  }
+
+  applySnapshot({ today, batches, slots, phases, locations }: ErpSnapshot) {
+    this.today = today;
+    this.locationIds = new Map(locations.map((l) => [l.code, l.id]));
+    const status = new Map(locations.map((l) => [l.code, l.slot_status]));
+    const openTrays = slots.filter((s) => s.kind === "tray");
+
+    const phasesOf = new Map<string, ErpSnapshot["phases"]>();
+    for (const p of phases) phasesOf.set(p.recipe_id, [...(phasesOf.get(p.recipe_id) ?? []), p]);
+
+    const records = new Map(batches.map((b) => [b.id, b]));
+    this.batches = new Map(
+      batches.map((b) => {
+        const mine = openTrays.filter((t) => t.batch_id === b.id);
+        return [
+          b.code,
+          {
+            id: b.id,
+            code: b.code,
+            crop: batchLabel(b),
+            recipe: `${b.recipe_code} v${b.recipe_version}`,
+            sownAt: b.sown_at ?? "",
+            age: ageOn(b.sown_at, today),
+            cycle: b.cycle_days,
+            transplantedAt: b.transplanted_at ? jakartaDate(b.transplanted_at) : null,
+            transplantDay: transplantDay(phasesOf.get(b.recipe_id) ?? []),
+            germinationDay: phasesOf.get(b.recipe_id)?.[0]?.duration_days ?? 0,
+            // Open trays are counted again by germinationOf().
+            archived: {
+              seeds: b.seeds - mine.reduce((n, t) => n + t.qty, 0),
+              germinated: b.germinated - mine.reduce((n, t) => n + t.germinated + t.moved, 0),
+            },
+          },
+        ];
+      }),
+    );
+
+    const holes = blankHoles();
+    const byCode = new Map(slots.filter((s) => s.kind === "hole").map((s) => [s.location_code, s]));
+    for (const hole of holes) {
+      const slot = byCode.get(hole.id);
+      const place = status.get(hole.id);
+      if (place === "sanitasi") hole.state = "sanitasi";
+      hole.offline = place === "maintenance" || place === "retired";
+      if (!slot) continue;
+      const record = records.get(slot.batch_id);
+      hole.batch = slot.batch_code;
+      hole.sourceSlot = slot.source_code;
+      hole.note = slot.note;
+      hole.state = slot.state === "masalah" || !record ? "masalah" : holeStateOn(ageOn(record.sown_at, today), phasesOf.get(record.recipe_id) ?? []);
+    }
+    this.pf.setHoles(holes);
+
+    const trays = blankSlots();
+    const trayByCode = new Map(openTrays.map((s) => [s.location_code, s]));
+    for (const tray of trays) {
+      const place = status.get(tray.id);
+      tray.offline = place !== undefined && place !== "available";
+      const slot = trayByCode.get(tray.id);
+      const record = slot && records.get(slot.batch_id);
+      if (!slot || !record) continue;
+      Object.assign(tray, {
+        state: trayState(slot.state),
+        batch: slot.batch_code,
+        crop: batchLabel(record),
+        sownOn: jakartaDate(slot.placed_at),
+        seedCount: slot.qty,
+        germinated: slot.germinated,
+        moved: slot.moved,
+        transplantOn: addDays(record.sown_at ?? today, transplantDay(phasesOf.get(record.recipe_id) ?? [])),
+        note: slot.note,
+      } satisfies Partial<Slot>);
+    }
+    this.chamber.slots = new Map(trays.map((s) => [s.id, s]));
+
+    this.mode = "live";
+    this.hasData = true;
+    this.loadError = null;
+    this.loadedAt = new Date();
+    this.dataVersion++;
+    this.emit();
+  }
+
+  ageOn(date: string) {
+    return date ? Math.max(0, daysBetween(date, this.today)) : 0;
   }
 
   batch(code: string | null | undefined) {
@@ -76,9 +212,10 @@ export class ErpStore {
 
   /** Index into LIFECYCLE_PHASES, from where the batch actually is rather than its planned dates. */
   phaseOf(batch: Batch) {
-    if (this.holesOfBatch(batch.code).length > 0) {
-      if (batch.age >= batch.cycle - 3) return 4;
-      return batch.age >= 14 ? 3 : 2;
+    const holes = this.holesOfBatch(batch.code).map((h) => h.state);
+    if (holes.length > 0) {
+      if (holes.includes("siap_panen")) return 4;
+      return holes.includes("vegetatif") ? 3 : 2;
     }
     const states = this.traysOfBatch(batch.code).map((s) => s.state);
     if (states.includes("siap_pindah")) return 2;
@@ -97,45 +234,6 @@ export class ErpStore {
     return { seeds, germinated, rate: seeds ? germinated / seeds : 0 };
   }
 
-  /** Validates and applies the tray form. Returns what is wrong, or null. */
-  updateSlot(id: string, patch: SlotPatch): string | null {
-    const slot = this.chamber.slots.get(id);
-    if (!slot) return "Posisi tidak dikenal.";
-    if (patch.state === "kosong") {
-      this.chamber.slots.set(id, { ...emptySlot(slot), note: patch.note });
-      this.emit();
-      return null;
-    }
-    const code = patch.batch.trim();
-    const crop = patch.crop.trim();
-    if (!code || !crop) return "Batch dan tanaman wajib diisi.";
-    if (!patch.sownOn) return "Tanggal semai wajib diisi.";
-    if (patch.seedCount <= 0) return "Jumlah benih harus lebih dari 0.";
-    if (patch.germinated < 0 || patch.germinated + slot.moved > patch.seedCount) return "Jumlah berkecambah melebihi jumlah benih.";
-    if (patch.transplantOn && patch.transplantOn < patch.sownOn) return "Rencana pindah tanam sebelum tanggal semai.";
-    const known = this.batches.get(code);
-    if (known && known.crop !== crop) return `Batch ${code} sudah tercatat untuk ${known.crop}.`;
-    if (!known) {
-      this.batches.set(code, {
-        code,
-        crop,
-        recipe: "Resep belum dipilih",
-        sownAt: patch.sownOn,
-        age: daysBetween(patch.sownOn, DUMMY_TODAY),
-        cycle: 35,
-        transplantedAt: null,
-        archived: { seeds: 0, germinated: 0 },
-      });
-    }
-    Object.assign(slot, patch, {
-      batch: code,
-      crop,
-      transplantOn: patch.transplantOn || addDays(patch.sownOn, DAYS_TO_TRANSPLANT),
-    });
-    this.emit();
-    return null;
-  }
-
   /** Trays ready to move, grouped by batch. */
   readyToMove() {
     const out: { batch: Batch; trays: Slot[]; seedlings: number }[] = [];
@@ -146,65 +244,35 @@ export class ErpStore {
     return out;
   }
 
-  /** Each plant factory tier and whether it can receive this batch. A tier grows one batch at a time. */
+  /**
+   * Each plant factory tier and whether it can receive this batch. A tier grows
+   * one batch at a time. pf_batch_transplant() has the last word on this.
+   */
   tiersFor(code: string): TierCapacity[] {
     const out: TierCapacity[] = [];
     for (const rack of RACK_NUMBERS) {
       for (const tier of TIER_NUMBERS) {
         const holes = this.pf.holesOfRack(rack).filter((h) => h.tier === tier);
         const other = holes.find((h) => isPlanted(h.state) && h.batch !== code);
-        const free = holes.filter((h) => h.state === "kosong").length;
+        const free = holes.filter((h) => h.state === "kosong" && !h.offline).length;
         let blocked: string | null = null;
         if (holes.some((h) => h.state === "sanitasi")) blocked = "Masih sanitasi";
         else if (other) blocked = `Dipakai ${other.batch ?? "batch lain"}`;
         else if (!free) blocked = "Penuh";
-        out.push({ rack, tier, free, blocked });
+        out.push({ rack, tier, code: `R${rack}-T${tier}`, free, blocked });
       }
     }
     return out;
   }
 
+  /** Tiers waiting for someone to finish cleaning them. */
+  tiersInSanitation() {
+    return this.tiersFor("").filter((t) => t.blocked === "Masih sanitasi");
+  }
+
   /** Empty holes across the tiers that could take a new batch. */
   freeCapacity() {
     return this.tiersFor("").reduce((n, t) => (t.blocked ? n : n + t.free), 0);
-  }
-
-  /**
-   * Moves a batch's ready seedlings into one tier, as many as fit. A tray left
-   * with seedlings stays ready for the next tier; an emptied tray returns to
-   * the shelf, its counts kept on the batch.
-   */
-  transplant(code: string, rack: number, tier: number): TransplantResult {
-    const batch = this.batch(code);
-    const ready = this.readyToMove().find((r) => r.batch.code === code);
-    const target = this.tiersFor(code).find((t) => t.rack === rack && t.tier === tier);
-    if (!batch || !ready) throw new Error(`Batch ${code} tidak punya bibit siap pindah.`);
-    if (!target) throw new Error(`Rak ${rack} tingkat ${tier} tidak dikenal.`);
-    if (target.blocked) throw new Error(`Rak ${rack} tingkat ${tier}: ${target.blocked}.`);
-
-    const holes: Hole[] = this.pf
-      .holesOfRack(rack)
-      .filter((h) => h.tier === tier && h.state === "kosong")
-      .sort((a, b) => a.gully - b.gully || a.hole - b.hole);
-    let filled = 0;
-    for (const tray of ready.trays) {
-      const take = Math.min(tray.germinated, holes.length - filled);
-      for (const hole of holes.slice(filled, filled + take)) {
-        Object.assign(hole, { state: "semai", batch: code, sourceSlot: tray.id, note: "" });
-      }
-      filled += take;
-      tray.germinated -= take;
-      tray.moved += take;
-      if (tray.germinated === 0) {
-        batch.archived.seeds += tray.seedCount;
-        batch.archived.germinated += tray.moved;
-        this.chamber.slots.set(tray.id, emptySlot(tray));
-      }
-      if (filled === holes.length) break;
-    }
-    batch.transplantedAt ??= DUMMY_TODAY;
-    this.emit();
-    return { batch: code, rack, tier, count: filled, firstHole: holes[0].id, left: ready.seedlings - filled };
   }
 
   countSlots() {

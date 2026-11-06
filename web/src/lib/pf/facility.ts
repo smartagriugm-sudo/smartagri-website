@@ -5,9 +5,9 @@
 // What this file shares with the model is the hole id, R<rack>-T<tier>-G<gully>-H<hole>,
 // the key that links ERP records to what is on screen.
 //
-// The data half (batches, hole states, readings) is dummy until the pf_* tables
-// and the sensors are in place. It is deterministic so the server render and
-// the browser agree, which is why "today" is fixed.
+// The data half (batches, hole states, readings) is sample data, shown where the
+// pf_* tables are not installed and, for the readings, until the sensors report.
+// It is deterministic so every render agrees, which is why its "today" is fixed.
 //
 // A batch germinates in the growth chamber first (chamber.ts), so only batches
 // past transplanting appear in these holes.
@@ -65,6 +65,12 @@ export type Batch = {
   cycle: number;
   /** Null until the first seedlings leave the chamber. */
   transplantedAt: string | null;
+  /** The day of the recipe the seedlings are due to move. */
+  transplantDay: number;
+  /** The day of the recipe the first phase ends and germination shows. */
+  germinationDay: number;
+  /** The record's id, once the batch comes from the database. */
+  id?: string;
   /** Counts of trays already emptied, so germination stays known after they are gone. */
   archived: { seeds: number; germinated: number };
 };
@@ -78,6 +84,8 @@ function batch(code: string, crop: string, recipe: string, sownAt: string, cycle
     cycle,
     age: daysBetween(sownAt, DUMMY_TODAY),
     transplantedAt: moved ? addDays(sownAt, 10) : null,
+    transplantDay: 10,
+    germinationDay: 4,
     archived: { seeds: moved?.[0] ?? 0, germinated: moved?.[1] ?? 0 },
   };
 }
@@ -110,6 +118,8 @@ export type Hole = {
   /** The chamber tray this seedling came from, once the batch moved through the ERP. */
   sourceSlot: string | null;
   note: string;
+  /** Under maintenance or retired, so it takes no plant whatever it looks like. */
+  offline: boolean;
 };
 
 export function holeId(rack: number, tier: number, gully: number, hole: number) {
@@ -140,12 +150,17 @@ export function seedHoles(): Hole[] {
         for (let hole = 1; hole <= RACK_SPEC.holes; hole++) {
           const id = holeId(rack, tier, gully, hole);
           const state = planted ? stateFor(planted, noise(id)) : (plan as HoleState);
-          out.push({ id, rack, tier, gully, hole, state, batch: isPlanted(state) ? planted!.code : null, sourceSlot: null, note: "" });
+          out.push({ id, rack, tier, gully, hole, state, batch: isPlanted(state) ? planted!.code : null, sourceSlot: null, note: "", offline: false });
         }
       }
     }
   }
   return out;
+}
+
+/** Every hole, empty, before records are laid over them. */
+export function blankHoles(): Hole[] {
+  return seedHoles().map((h) => ({ ...h, state: "kosong", batch: null }));
 }
 
 export function batchOf(code: string | null | undefined): Batch | undefined {

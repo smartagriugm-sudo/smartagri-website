@@ -13,7 +13,7 @@ import {
   type LocationNode,
   type SlotStatus,
 } from "../../lib/pf/foundation";
-import { DataState, ErpPage, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
+import { ActionNote, DataState, ErpPage, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
 import { Card, Note } from "./ui";
 
 // The tree of places. Its codes are fixed, since they link to the 3D models; what
@@ -38,15 +38,15 @@ function TreeRow({ node, depth, selected, open, onToggle, onSelect }: {
     <>
       <div className={`flex items-center rounded-lg ${selected === node.id ? "bg-[#E3F7F0]" : "hover:bg-[#F3F7F7]"}`} style={{ paddingLeft: depth * 14 }}>
         {branches.length > 0 ? (
-          <button type="button" onClick={() => onToggle(node.id)} className="grid h-8 w-8 shrink-0 place-items-center text-[#6B8289]" aria-label={isOpen ? `Tutup ${node.code}` : `Buka ${node.code}`} aria-expanded={isOpen}>
+          <button type="button" onClick={() => onToggle(node.id)} className="grid h-11 w-9 shrink-0 place-items-center text-[#4F6B73] sm:h-8 sm:w-8" aria-label={isOpen ? `Tutup ${node.code}` : `Buka ${node.code}`} aria-expanded={isOpen}>
             <ChevronRight className={`h-4 w-4 transition-transform ${isOpen ? "rotate-90" : ""}`} />
           </button>
         ) : (
           <span className="w-8 shrink-0" />
         )}
-        <button type="button" onClick={() => onSelect(node.id)} className="flex min-w-0 flex-1 items-baseline gap-2 py-1.5 pr-2 text-left">
+        <button type="button" onClick={() => onSelect(node.id)} className="flex min-h-[44px] min-w-0 flex-1 items-center gap-2 py-1.5 pr-2 text-left sm:min-h-0">
           <span className="whitespace-nowrap text-[14px] font-medium text-[#0F2F36]">{node.code}</span>
-          <span className="truncate text-[13px] text-[#6B8289]">{node.name}</span>
+          <span className="truncate text-[13px] text-[#4F6B73]">{node.name}</span>
         </button>
       </div>
       {isOpen && branches.map((c) => <TreeRow key={c.id} node={c} depth={depth + 1} selected={selected} open={open} onToggle={onToggle} onSelect={onSelect} />)}
@@ -83,7 +83,7 @@ function Detail({ node, canEdit, onChanged }: { node: LocationNode; canEdit: boo
 
   return (
     <Card className="p-4">
-      <p className="text-[13px] font-medium tracking-[0.03em] text-[#14919B]">{LEVEL_LABELS[node.level]}</p>
+      <p className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]">{LEVEL_LABELS[node.level]}</p>
       <h2 className="text-[20px] font-semibold tracking-[-0.025em] text-[#0F2F36]">{node.code}</h2>
       <p className="mb-3 text-[14px] text-[#4F6B73]">{node.name}{node.capacity != null && !isSlot(node) ? ` · kapasitas ${node.capacity}` : ""}</p>
 
@@ -112,11 +112,11 @@ function Detail({ node, canEdit, onChanged }: { node: LocationNode; canEdit: boo
           <span className="font-medium text-[#0F2F36]">{current.code}</span>
           <span className="text-[#4F6B73]">{statusOf(current.slot_status)?.label}</span>
           {current.level === "hole" ? (
-            <Link to="/erp/plant-factory" search={{ hole: current.code }} className="flex items-center gap-1 font-medium text-[#14919B] hover:underline">
+            <Link to="/erp/plant-factory" search={{ hole: current.code }} className="flex items-center gap-1 font-medium text-[#0B6477] hover:underline">
               Lihat di 3D <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           ) : (
-            <Link to="/erp/persemaian" search={{ slot: current.code }} className="flex items-center gap-1 font-medium text-[#14919B] hover:underline">
+            <Link to="/erp/persemaian" search={{ slot: current.code }} className="flex items-center gap-1 font-medium text-[#0B6477] hover:underline">
               Lihat di 3D <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           )}
@@ -124,7 +124,7 @@ function Detail({ node, canEdit, onChanged }: { node: LocationNode; canEdit: boo
       )}
 
       {canEdit && targets.length === 0 && (
-        <p className="mt-3 text-[13px] text-[#6B8289]">Pilih tingkat, talang, atau rak chamber untuk mengubah status.</p>
+        <p className="mt-3 text-[13px] text-[#4F6B73]">Pilih tingkat, talang, atau rak chamber untuk mengubah status.</p>
       )}
 
       {canEdit && targets.length > 0 && (
@@ -139,7 +139,7 @@ function Detail({ node, canEdit, onChanged }: { node: LocationNode; canEdit: boo
               </SecondaryButton>
             ))}
           </div>
-          {action.error && <div className="mt-2"><Note tone="warn">{action.error}</Note></div>}
+          <div className="mt-2"><ActionNote action={action} /></div>
         </div>
       )}
     </Card>

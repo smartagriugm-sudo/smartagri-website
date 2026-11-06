@@ -7,6 +7,7 @@ import {
   auditSubject,
   buildLocationTree,
   expectedSlotCodes,
+  groupAudit,
   groupRecipes,
   normalizeRecipeCode,
   parseCropForm,
@@ -15,6 +16,7 @@ import {
   slotCoverage,
   slotsUnder,
   toDataError,
+  toErpError,
   totalDays,
   emptyCropForm,
   type PfLocation,
@@ -65,13 +67,13 @@ describe("slot coverage", () => {
 
 describe("access", () => {
   it("gives a lab admin everything, even with no ERP role", () => {
-    expect(accessOf([], true)).toEqual({ canAdmin: true, canManageProduction: true, canReadAudit: true });
+    expect(accessOf([], true)).toEqual({ canAdmin: true, canManageProduction: true, canOperate: true, canReadAudit: true });
   });
 
   it("lets each role do only its part", () => {
-    expect(accessOf(["manajer_produksi"], false)).toEqual({ canAdmin: false, canManageProduction: true, canReadAudit: false });
-    expect(accessOf(["pimpinan"], false)).toEqual({ canAdmin: false, canManageProduction: false, canReadAudit: true });
-    expect(accessOf(["operator", "peneliti"], false)).toEqual({ canAdmin: false, canManageProduction: false, canReadAudit: false });
+    expect(accessOf(["manajer_produksi"], false)).toEqual({ canAdmin: false, canManageProduction: true, canOperate: true, canReadAudit: false });
+    expect(accessOf(["pimpinan"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: false, canReadAudit: true });
+    expect(accessOf(["operator", "peneliti"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: true, canReadAudit: false });
   });
 });
 
@@ -153,7 +155,26 @@ describe("audit entries", () => {
   });
 });
 
+describe("audit groups", () => {
+  const row = (id: number, over: object = {}) => ({ id, at: "2026-11-06T04:00:00.120Z", actor_id: "a", table_name: "pf_location", row_id: `r${id}`, action: "UPDATE" as const, old_data: null, new_data: null, ...over });
+
+  it("reads one operation's rows as one line, and nothing else", () => {
+    const groups = groupAudit([row(4), row(3, { at: "2026-11-06T04:00:00.900Z" }), row(2, { table_name: "pf_batch" }), row(1, { actor_id: "b" })]);
+    expect(groups.map((g) => g.entries.length)).toEqual([2, 1, 1]);
+  });
+});
+
 describe("data errors", () => {
+  it("says in plain words when the server cannot be reached", () => {
+    for (const message of ["TypeError: Failed to fetch", "NetworkError when attempting to fetch resource.", "Load failed"]) {
+      const e = toDataError({ code: "", message });
+      expect(e.message).toMatch(/^Tidak bisa terhubung/);
+      expect(e.notInstalled).toBe(false);
+    }
+    expect(toErpError(new TypeError("Failed to fetch")).message).toMatch(/^Tidak bisa terhubung/);
+    expect(toErpError(new Error("Alasan wajib diisi")).message).toBe("Alasan wajib diisi");
+  });
+
   it("recognizes a table that is not installed yet", () => {
     expect(toDataError({ code: "PGRST205", message: "no table" }).notInstalled).toBe(true);
     expect(toDataError({ code: "42P01", message: "no table" }).notInstalled).toBe(true);

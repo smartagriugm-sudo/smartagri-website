@@ -23,5 +23,5 @@ export default function ErpGate({ children }: { children: ReactNode }) {
       </main>
     );
   }
-  return <AuthGate>{children}</AuthGate>;
+  return <AuthGate checkingText="Memeriksa akses..." slowText="Koneksi lambat, masih mencoba...">{children}</AuthGate>;
 }

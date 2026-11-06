@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "../../lib/auth/auth";
 import { isAuthConfigured, supabase } from "../../lib/auth/supabase";
 import { body, display } from "../../lib/fonts";
-import { ErpDataError, accessOf, type ErpAccess } from "../../lib/pf/foundation";
+import { ErpDataError, accessOf, toErpError, type ErpAccess } from "../../lib/pf/foundation";
 import { Card, Note } from "./ui";
 
 // Pieces shared by the ERP's data pages: loading, the page frame, form controls.
@@ -24,7 +24,7 @@ export function useLoad<T>(load: () => Promise<T>, deps: readonly unknown[] = []
       if (request === latest.current) setState({ data, error: null, loading: false });
     } catch (e) {
       if (request === latest.current) {
-        setState((s) => ({ ...s, error: e instanceof ErpDataError ? e : new ErpDataError(e instanceof Error ? e.message : "Terjadi kesalahan"), loading: false }));
+        setState((s) => ({ ...s, error: toErpError(e), loading: false }));
       }
     }
   }, [stable]);
@@ -67,10 +67,10 @@ export function useErpAccess(): ErpAccess {
 export function ErpPage({ eyebrow, title, sub, actions, children }: { eyebrow: string; title: string; sub?: string; actions?: ReactNode; children: ReactNode }) {
   return (
     <main className="flex-1 px-4 py-5 sm:px-6 lg:py-6">
-      <div className="mx-auto max-w-[1200px]">
+      <div className="max-w-[1240px]">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[13px] font-medium tracking-[0.03em] text-[#14919B]" style={body}>{eyebrow}</p>
+            <p className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]" style={body}>{eyebrow}</p>
             <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.03em] text-[#0F2F36]" style={display}>{title}</h1>
             {sub && <p className="mt-1 max-w-[720px] text-[14px] leading-[1.5] text-[#4F6B73]" style={body}>{sub}</p>}
           </div>
@@ -88,7 +88,7 @@ function NotInstalled() {
       <p className="text-[15px] font-medium text-[#0F2F36]">Tabel ERP belum terpasang</p>
       <p className="mt-1 text-[14px] leading-[1.5] text-[#4F6B73]">
         {isAuthConfigured ? (
-          <>Jalankan <code className="rounded bg-[#EEF3F4] px-1">web/supabase/pf-foundation.sql</code> di SQL Editor Supabase, lalu muat ulang halaman ini.</>
+          <>Jalankan file SQL ERP dari folder <code className="rounded bg-[#EEF3F4] px-1">web/supabase/</code> di SQL Editor Supabase (<code className="rounded bg-[#EEF3F4] px-1">pf-foundation.sql</code>, lalu <code className="rounded bg-[#EEF3F4] px-1">pf-batch.sql</code>), kemudian muat ulang halaman ini.</>
         ) : (
           "Supabase belum dikonfigurasi di lingkungan ini, jadi data ERP tidak bisa dibaca."
         )}
@@ -97,46 +97,106 @@ function NotInstalled() {
   );
 }
 
+/** The client retries a failed read for up to about 18 seconds, so a long wait gets a word of its own. */
+export const SLOW_TEXT = "Koneksi lambat, masih mencoba...";
+
+export function useSlow(waiting: boolean, afterMs = 6000) {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!waiting) return;
+    const t = window.setTimeout(() => setSlow(true), afterMs);
+    return () => {
+      window.clearTimeout(t);
+      setSlow(false);
+    };
+  }, [waiting, afterMs]);
+  return slow;
+}
+
+/** What failed, inside the block that failed, with the way to try again. */
+export function ErrorNote({ message, onRetry }: { message: string; onRetry: () => Promise<unknown> }) {
+  const [busy, setBusy] = useState(false);
+  const retry = async () => {
+    setBusy(true);
+    try {
+      await onRetry();
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div role="alert" className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-[#FFF6E5] px-3 py-2 text-[13px] text-[#8A5A07]">
+      <span className="min-w-0">{message}</span>
+      <button type="button" disabled={busy} onClick={() => void retry()} className="whitespace-nowrap font-medium text-[#0F2F36] underline disabled:cursor-not-allowed disabled:opacity-50">
+        {busy ? "Menghubungkan..." : "Coba lagi"}
+      </button>
+    </div>
+  );
+}
+
+function LoadingNote() {
+  const slow = useSlow(true);
+  return (
+    <div className="flex items-center gap-2 py-10 text-[14px] text-[#4F6B73]">
+      <Loader2 className="h-4 w-4 animate-spin text-[#0B6477]" /> {slow ? SLOW_TEXT : "Memuat data..."}
+    </div>
+  );
+}
+
 /** Spinner, error or not-installed notice until the data is there, then the children. */
 export function DataState<T>({ state, children }: { state: Loaded<T>; children: (data: T) => ReactNode }) {
   if (state.data !== null) {
     return (
       <>
-        {state.error && <div className="mb-3"><Note tone="warn">{state.error.message}</Note></div>}
+        {state.error && <div className="mb-3"><ErrorNote message={state.error.message} onRetry={state.reload} /></div>}
         {children(state.data)}
       </>
     );
   }
   if (state.error?.notInstalled) return <NotInstalled />;
-  if (state.error) return <Note tone="warn">{state.error.message}</Note>;
-  return (
-    <div className="flex items-center gap-2 py-10 text-[14px] text-[#4F6B73]">
-      <Loader2 className="h-4 w-4 animate-spin text-[#0B6477]" /> Memuat data...
-    </div>
-  );
+  if (state.error) return <ErrorNote message={state.error.message} onRetry={state.reload} />;
+  return <LoadingNote />;
 }
 
 /** Runs one write at a time and keeps its error message for the form. */
 export function useAction() {
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setErrorState] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const setError = useCallback((message: string | null) => {
+    setSaved(false);
+    setErrorState(message);
+  }, []);
+  useEffect(() => {
+    if (!saved) return;
+    const t = window.setTimeout(() => setSaved(false), 4000);
+    return () => window.clearTimeout(t);
+  }, [saved]);
   const run = useCallback(async (action: () => Promise<void>) => {
     setBusy(true);
     setError(null);
     try {
       await action();
+      setSaved(true);
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Terjadi kesalahan");
+      setError(toErpError(e).message);
       return false;
     } finally {
       setBusy(false);
     }
-  }, []);
-  return { busy, error, setError, run };
+  }, [setError]);
+  return { busy, error, saved, setError, run };
 }
 
-const buttonBase = "inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-[14px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+/** A form's answer: why it failed, or for a few seconds that it saved. */
+export function ActionNote({ action }: { action: { error: string | null; saved: boolean } }) {
+  if (action.error) return <Note tone="warn">{action.error}</Note>;
+  if (action.saved) return <p role="status" className="text-[13px] font-medium text-[#0E7A5C]">Tersimpan</p>;
+  return null;
+}
+
+const buttonBase = "inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-[14px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0";
 
 export function PrimaryButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button type="button" {...props} className={`${buttonBase} bg-[#45DFB1] text-[#0B2A22] hover:bg-[#80ED99] ${props.className ?? ""}`}>{children}</button>;
@@ -146,14 +206,15 @@ export function SecondaryButton({ children, ...props }: React.ButtonHTMLAttribut
   return <button type="button" {...props} className={`${buttonBase} border border-[#DCE7E8] bg-white text-[#0F2F36] hover:border-[#14919B] ${props.className ?? ""}`}>{children}</button>;
 }
 
-export const inputClass = "w-full rounded-lg border border-[#DCE7E8] bg-white px-3 py-2 text-[14px] text-[#0F2F36] outline-none focus:border-[#14919B] disabled:bg-[#F3F7F7] disabled:text-[#6B8289]";
+// 16px on a phone: iOS Safari zooms the page into any smaller field.
+export const inputClass = "w-full rounded-lg border border-[#C9D8DA] bg-white px-3 py-2 text-[16px] text-[#0F2F36] focus:border-[#0B6477] disabled:bg-[#F3F7F7] disabled:text-[#4F6B73] sm:text-[14px]";
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block">
       <span className="mb-1 block text-[13px] font-medium text-[#36525A]">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-[12.5px] text-[#6B8289]">{hint}</span>}
+      {hint && <span className="mt-1 block text-[12.5px] text-[#4F6B73]">{hint}</span>}
     </label>
   );
 }

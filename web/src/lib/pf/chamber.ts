@@ -1,5 +1,5 @@
 import type { ChamberReading, SeedChamberProvider } from "plant-factory-3d";
-import { BATCHES, DUMMY_TODAY, addDays, daysBetween } from "./facility";
+import { BATCHES, addDays } from "./facility";
 
 // Growth chamber CH1 (FAITHFUL FPG450), where every batch spends its germination
 // phase before moving to the plant factory. The model in the plant-factory-3d
@@ -7,8 +7,9 @@ import { BATCHES, DUMMY_TODAY, addDays, daysBetween } from "./facility";
 // the tray position id, CH<chamber>-S<shelf>-P<position>.
 //
 // The tray count per shelf is estimated from photos, so nothing but SHELVES may
-// assume it, and the future tables must not lock it in. The slot data and the
-// climate here are dummy until the pf_* tables and the device are in place.
+// assume it, and the tables do not lock it in. The climate here is simulated
+// until the device reports; seedSlots() is sample data for where the tables are
+// not installed yet.
 
 export const CHAMBER_CODE = "CH1";
 
@@ -59,6 +60,8 @@ export type Slot = {
   moved: number;
   transplantOn: string;
   note: string;
+  /** Under maintenance or retired, so nothing can be sown here. */
+  offline: boolean;
 };
 
 export function slotId(shelf: number, position: number) {
@@ -83,6 +86,11 @@ export function emptySlot(slot: Slot): Slot {
   return { ...slot, state: "kosong", batch: null, crop: "", sownOn: "", seedCount: 0, germinated: 0, moved: 0, transplantOn: "", note: "" };
 }
 
+/** Every tray position, empty, before records are laid over them. */
+export function blankSlots(): Slot[] {
+  return seedSlots().map(emptySlot);
+}
+
 export function seedSlots(): Slot[] {
   const out: Slot[] = [];
   for (const { shelf, positions } of SHELVES) {
@@ -105,6 +113,7 @@ export function seedSlots(): Slot[] {
         moved: 0,
         transplantOn: "",
         note: "",
+        offline: false,
       };
       if (position > plan.trays) {
         out.push(base);
@@ -153,7 +162,7 @@ export const vpdOf = (temp: number, rh: number) => 0.6108 * Math.exp((17.27 * te
  * which will come from the crop recipe.
  */
 export class ChamberProvider implements SeedChamberProvider {
-  slots = new Map<string, Slot>(seedSlots().map((s) => [s.id, s]));
+  slots = new Map<string, Slot>(blankSlots().map((s) => [s.id, s]));
   lamps = new Map<string, boolean>(CHAMBER_LAMPS.map((l) => [l.id, true]));
   reference: Climate = { temp: 24, rh: 72, co2: 800, lux: 12000 };
   climate: Climate = { temp: 23.8, rh: 73, co2: 790, lux: 12000 };
@@ -210,5 +219,3 @@ export class ChamberProvider implements SeedChamberProvider {
     );
   }
 }
-
-export const seedAge = (sownOn: string) => (sownOn ? daysBetween(sownOn, DUMMY_TODAY) : 0);

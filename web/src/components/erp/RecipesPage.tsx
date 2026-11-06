@@ -27,7 +27,7 @@ import {
   type PhaseForm,
   type RecipePhaseKey,
 } from "../../lib/pf/foundation";
-import { DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
+import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
 import { Card, Note } from "./ui";
 
 // Versioned recipes. Only a draft can be edited: once active, a change means a
@@ -68,7 +68,7 @@ function NewRecipe({ crops, onCreated, onCancel }: { crops: PfCrop[]; onCreated:
           <input className={inputClass} value={code} onChange={(e) => setCode(e.target.value)} placeholder="RSP-SEL-03" />
         </Field>
         <Field label="Catatan"><textarea className={inputClass} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
-        {action.error && <Note tone="warn">{action.error}</Note>}
+        <ActionNote action={action} />
         <div className="flex gap-2">
           <PrimaryButton type="submit" disabled={action.busy}>Buat draf</PrimaryButton>
           <SecondaryButton onClick={onCancel}>Batal</SecondaryButton>
@@ -109,7 +109,7 @@ function PhaseEditor({ recipe, phases, onSaved }: { recipe: PfRecipe; phases: Pf
   return (
     <div>
       <div className="space-y-2">
-        <div className="hidden grid-cols-[1.3fr_1fr_1fr_1fr_36px] gap-2 text-[13px] font-medium text-[#6B8289] sm:grid">
+        <div className="hidden grid-cols-[1.3fr_1fr_1fr_1fr_36px] gap-2 text-[13px] font-medium text-[#4F6B73] sm:grid">
           <span>Fase</span><span>Lama (hari)</span><span>Fotoperiode (jam)</span><span>PPFD (µmol/m²/s)</span><span />
         </div>
         {rows.map((r, i) => (
@@ -120,13 +120,13 @@ function PhaseEditor({ recipe, phases, onSaved }: { recipe: PfRecipe; phases: Pf
             <input className={inputClass} inputMode="numeric" aria-label={`Lama fase ${i + 1} dalam hari`} placeholder="Hari" value={r.durationDays} onChange={(e) => change(i, { durationDays: e.target.value })} />
             <input className={inputClass} inputMode="decimal" aria-label={`Fotoperiode fase ${i + 1} dalam jam`} placeholder="Jam" value={r.photoperiodH} onChange={(e) => change(i, { photoperiodH: e.target.value })} />
             <input className={inputClass} inputMode="decimal" aria-label={`PPFD fase ${i + 1}`} placeholder="PPFD" value={r.ppfdUmol} onChange={(e) => change(i, { ppfdUmol: e.target.value })} />
-            <button type="button" onClick={() => remove(i)} className="grid h-9 w-9 place-items-center rounded-lg text-[#6B8289] hover:bg-[#FBEDEC] hover:text-[#D9433B]" aria-label={`Hapus fase ${i + 1}`}>
+            <button type="button" onClick={() => remove(i)} className="grid h-9 w-9 place-items-center rounded-lg text-[#4F6B73] hover:bg-[#FBEDEC] hover:text-[#D9433B]" aria-label={`Hapus fase ${i + 1}`}>
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ))}
       </div>
-      {action.error && <div className="mt-2"><Note tone="warn">{action.error}</Note></div>}
+      <div className="mt-2"><ActionNote action={action} /></div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <SecondaryButton onClick={add}><Plus className="h-4 w-4" /> Tambah fase</SecondaryButton>
         <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Menyimpan..." : "Simpan fase"}</PrimaryButton>
@@ -171,7 +171,7 @@ function Detail({ recipe, siblings, crop, canEdit, onChanged, onSelect }: {
     <Card className="p-4">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E3ECED] pb-3">
         <div>
-          <p className="text-[13px] font-medium tracking-[0.03em] text-[#14919B]">{crop ? cropLabel(crop) : "Tanaman"}</p>
+          <p className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]">{crop ? cropLabel(crop) : "Tanaman"}</p>
           <h2 className="flex flex-wrap items-center gap-2 text-[20px] font-semibold tracking-[-0.025em] text-[#0F2F36]">
             {recipe.code} v{recipe.version} <StatusBadge status={recipe.status} />
           </h2>
@@ -220,8 +220,8 @@ function Detail({ recipe, siblings, crop, canEdit, onChanged, onSelect }: {
               <p className="text-[14px] text-[#4F6B73]">Belum ada fase.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[440px] text-left text-[14px]">
-                  <thead className="text-[13px] text-[#6B8289]">
+                <table className="w-full text-left text-[14px]">
+                  <thead className="text-[13px] text-[#4F6B73]">
                     <tr><th className="pb-2 font-medium">Fase</th><th className="pb-2 font-medium">Lama</th><th className="pb-2 font-medium">Fotoperiode</th><th className="pb-2 font-medium">PPFD</th></tr>
                   </thead>
                   <tbody className="text-[#0F2F36]">
@@ -307,7 +307,7 @@ export default function RecipesPage() {
                     return (
                       <div key={g.code} className="border-b border-[#E3ECED] py-1.5 last:border-0">
                         <p className="px-2 text-[14px] font-medium text-[#0F2F36]">{g.code}</p>
-                        <p className="px-2 pb-1 text-[13px] text-[#6B8289]">{crop ? cropLabel(crop) : ""}</p>
+                        <p className="px-2 pb-1 text-[13px] text-[#4F6B73]">{crop ? cropLabel(crop) : ""}</p>
                         {g.versions.map((v) => (
                           <button
                             key={v.id}
