@@ -20,6 +20,7 @@ import type { ErpStore } from "../../lib/pf/store";
 import { useErpStore } from "./ErpContext";
 import PlantFactoryScene, { type SceneEngine } from "./PlantFactoryScene";
 import { formatLongDate } from "../../lib/pf/dashboard";
+import { formatValue, formatWithUnit } from "../../lib/pf/monitoring";
 import { Bar, Card, Kpi, Lifecycle, Note, PanelHeader, Readings, Rows, SceneStatus, Segmented, StateBreakdown, dolly, useEngineActivity, useSceneGate } from "./ui";
 
 // ERP overview: the 3D model of PF01 with floating KPI cards, a detail panel
@@ -185,7 +186,11 @@ function FacilityPanel({ store, onRack }: { store: ErpStore; onRack: (rack: numb
       </div>
       <StateBreakdown counts={countByState(provider.holes.values())} total={HOLES_TOTAL} />
       <SeedlingSupply store={store} />
-      <Readings title="Ruang tumbuh (contoh)" items={GROW_ROOM_READINGS} />
+      {store.monitoring?.latest.some((r) => r.location_code === FACILITY_CODE) ? (
+        <Link to="/erp/monitoring" className="block rounded-lg border border-[#E3ECED] px-3 py-2 text-[13.5px] font-medium text-[#0B6477] hover:border-[#14919B]">Lihat bacaan sensor ruang tumbuh</Link>
+      ) : (
+        <Readings title="Ruang tumbuh (contoh)" items={GROW_ROOM_READINGS} />
+      )}
       <div className="space-y-2">
         {RACK_NUMBERS.map((r) => {
           const n = provider.holesOfRack(r).filter((h) => isPlanted(h.state)).length;
@@ -239,6 +244,10 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
     if (engine && active && focusHole) engine.focusHole(focusHole);
   }, [engine, active, focusHole]);
 
+  const roomTemp = store.reading(FACILITY_CODE, "suhu");
+  const roomRh = store.reading(FACILITY_CODE, "rh");
+  const tankEc = store.reading(FACILITY_CODE, "ec");
+  const tankPh = store.reading(FACILITY_CODE, "ph");
   const counts = countByState(provider.holes.values());
   const filled = HOLE_STATE_KEYS.filter(isPlanted).reduce((n, s) => n + counts[s], 0);
 
@@ -279,10 +288,18 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
         {/* KPI cards */}
         <div className="flex gap-3 overflow-x-auto px-3 py-3 lg:pointer-events-none lg:absolute lg:left-4 lg:right-[404px] lg:top-4 lg:p-0 lg:pb-3">
           <div className="flex gap-3 lg:pointer-events-auto">
-            <Kpi label="Lubang terisi" value={`${filled}`} sub={`dari ${HOLES_TOTAL} lubang · ${FACILITY_CODE}`} />
-            <Kpi label="Siap panen" value={`${counts.siap_panen}`} sub="tanaman, menurut resep" />
-            <Kpi label="Suhu ruang tumbuh" value="22.4 °C" sub="contoh · RH 68% · CO₂ 812 ppm" />
-            <Kpi label="Tandon" value="EC 1.62" sub="contoh · pH 6.48" />
+            <Kpi label="Lubang terisi" value={store.hasData ? `${filled}` : "-"} sub={`dari ${HOLES_TOTAL} lubang · ${FACILITY_CODE}`} />
+            <Kpi label="Siap panen" value={store.hasData ? `${counts.siap_panen}` : "-"} sub="tanaman, menurut resep" />
+            {roomTemp !== null ? (
+              <Kpi label="Suhu ruang tumbuh" value={formatWithUnit("suhu", roomTemp)} sub={roomRh !== null ? `RH ${formatWithUnit("rh", roomRh)}` : "dari sensor"} />
+            ) : (
+              <Kpi label="Suhu ruang tumbuh" value="22.4 °C" sub="contoh · RH 68% · CO₂ 812 ppm" />
+            )}
+            {tankEc !== null ? (
+              <Kpi label="Tandon" value={`EC ${formatValue("ec", tankEc)}`} sub={tankPh !== null ? `pH ${formatValue("ph", tankPh)}` : "dari sensor"} />
+            ) : (
+              <Kpi label="Tandon" value="EC 1.62" sub="contoh · pH 6.48" />
+            )}
           </div>
         </div>
 

@@ -166,6 +166,10 @@ export class ChamberProvider implements SeedChamberProvider {
   lamps = new Map<string, boolean>(CHAMBER_LAMPS.map((l) => [l.id, true]));
   reference: Climate = { temp: 24, rh: 72, co2: 800, lux: 12000 };
   climate: Climate = { temp: 23.8, rh: 73, co2: 790, lux: 12000 };
+  /** True once a sensor reports here: its values stand, and nothing is simulated. */
+  liveClimate = false;
+  /** Which of the climate's values come from a sensor; the rest stay samples. */
+  liveKeys = new Set<keyof Climate>();
   private tick = 0;
 
   getSlot(id: string) {
@@ -189,7 +193,16 @@ export class ChamberProvider implements SeedChamberProvider {
     return vpdOf(this.reference.temp, this.reference.rh);
   }
 
+  /** Real readings replace the simulation, metric by metric. */
+  setLiveClimate(readings: { [K in keyof Climate]: number | null }) {
+    const known = Object.entries(readings).filter(([, v]) => v !== null) as [keyof Climate, number][];
+    this.liveClimate = known.length > 0;
+    this.liveKeys = new Set(known.map(([key]) => key));
+    for (const [key, value] of known) this.climate[key] = value;
+  }
+
   stepClimate() {
+    if (this.liveClimate) return;
     this.tick++;
     const wave = (period: number, amp: number) => Math.sin((this.tick / period) * Math.PI * 2) * amp;
     const near = (from: number, to: number) => from + (to - from) * 0.2;

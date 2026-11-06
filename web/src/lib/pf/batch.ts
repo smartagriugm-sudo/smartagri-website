@@ -359,7 +359,7 @@ export async function fetchErpSnapshot(): Promise<ErpSnapshot> {
     client.from("pf_batch_overview").select(BATCH_COLUMNS).eq("status", "berjalan").limit(500),
     client.from("pf_slot_open").select(SLOT_COLUMNS).limit(1000),
     client.from("pf_recipe_phase").select("recipe_id,phase,seq,duration_days").order("seq").limit(1000),
-    client.from("pf_location").select("id,code,level,slot_status").in("level", ["hole", "tray_position", "tier"]).limit(1000),
+    client.from("pf_location").select("id,code,level,slot_status").in("level", ["hole", "tray_position", "tier", "room", "chamber"]).limit(1000),
   ]);
   return {
     today: jakartaToday(),

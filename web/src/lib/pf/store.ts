@@ -1,6 +1,7 @@
 import { blankSlots, ChamberProvider, seedSlots, type Slot, type SlotState } from "./chamber";
 import { BATCHES, DUMMY_TODAY, addDays, blankHoles, daysBetween, isPlanted, seedHoles, type Batch } from "./facility";
-import { ageOn, batchLabel, fetchErpSnapshot, holeStateOn, jakartaDate, trayState, transplantDay, type ErpSnapshot } from "./batch";
+import { ageOn, batchLabel, fetchErpSnapshot, holeStateOn, jakartaDate, phaseAt, trayState, transplantDay, type ErpSnapshot } from "./batch";
+import { fetchMonitoringIfInstalled, latestAt, type MonitoringSummary } from "./monitoring";
 import { ErpDataError, toErpError } from "./foundation";
 import { PfProvider, RACK_NUMBERS, TIER_NUMBERS } from "./provider";
 
@@ -49,6 +50,9 @@ export class ErpStore {
   hasData = false;
   /** Why the last load failed, while mode is "error". */
   loadError: string | null = null;
+  /** Devices, latest readings and open alarms. Null until read, or where pf-monitoring.sql is not installed. */
+  monitoring: MonitoringSummary | null = null;
+  monitoringError: string | null = null;
   /** When the records on screen were read. */
   loadedAt: Date | null = null;
   today = DUMMY_TODAY;
@@ -71,8 +75,35 @@ export class ErpStore {
     for (const fn of this.listeners) fn();
   }
 
+  /** Reads the sensors' side. Apart from load(), so it refreshes on its own and a failure here leaves the batches be. */
+  async loadMonitoring() {
+    try {
+      this.applyMonitoring(await fetchMonitoringIfInstalled());
+      this.monitoringError = null;
+    } catch (e) {
+      this.monitoringError = toErpError(e).message;
+    }
+    this.emit();
+  }
+
+  applyMonitoring(summary: MonitoringSummary | null) {
+    this.monitoring = summary;
+    this.chamber.setLiveClimate({
+      temp: this.reading("CH1", "suhu"),
+      rh: this.reading("CH1", "rh"),
+      co2: this.reading("CH1", "co2"),
+      lux: this.reading("CH1", "cahaya"),
+    });
+  }
+
+  /** The newest value of a metric at a place, or null while no sensor reports it. */
+  reading(place: string, metric: string) {
+    return this.monitoring ? latestAt(this.monitoring.latest, place, metric)?.value ?? null : null;
+  }
+
   /** Reads the records again. A reply older than the latest request is dropped. */
   async load() {
+    void this.loadMonitoring();
     const request = ++this.latestLoad;
     try {
       const snapshot = await fetchErpSnapshot();
@@ -128,6 +159,8 @@ export class ErpStore {
             transplantedAt: b.transplanted_at ? jakartaDate(b.transplanted_at) : null,
             transplantDay: transplantDay(phasesOf.get(b.recipe_id) ?? []),
             germinationDay: phasesOf.get(b.recipe_id)?.[0]?.duration_days ?? 0,
+            recipeId: b.recipe_id,
+            phaseKey: phaseAt(ageOn(b.sown_at, today), phasesOf.get(b.recipe_id) ?? []),
             // Open trays are counted again by germinationOf().
             archived: {
               seeds: b.seeds - mine.reduce((n, t) => n + t.qty, 0),

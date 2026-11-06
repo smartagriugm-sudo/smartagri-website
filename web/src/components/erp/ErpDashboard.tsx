@@ -6,11 +6,16 @@ import { batchStage, fetchBatches, fetchSeedLots, batchLabel } from "../../lib/p
 import { HOLES_TOTAL, HOLE_STATE_KEYS, HOLE_STATES, addDays, isPlanted, stateColor, type Hole, type HoleState } from "../../lib/pf/facility";
 import { fetchFoundationSummary } from "../../lib/pf/foundation";
 import { buildWork, formatShortDate, positionOf, scheduleBar, scheduleWindow, weekTicks, workSummary, type BatchWork, type WorkItem, type WorkLink, type WorkTone } from "../../lib/pf/dashboard";
+import { ago, formatWithUnit, latestAt, metricInfo } from "../../lib/pf/monitoring";
+import { fetchAvailableLots, fetchInvoices, fetchOrders, formatKg, formatRupiah, roundKg } from "../../lib/pf/sales";
+import { addDays as addCalendarDays } from "../../lib/pf/facility";
+import { toErpError } from "../../lib/pf/foundation";
+import { cropLabel } from "../../lib/pf/foundation";
 import type { ErpStore } from "../../lib/pf/store";
 import { RACK_NUMBERS, TIER_NUMBERS } from "../../lib/pf/provider";
 import { useErpStore } from "./ErpContext";
 import FacilityViewer, { useLargeScreen } from "./FacilityViewer";
-import { ErpPage, ErrorNote, SLOW_TEXT, useErpAccess, useLoad, useSlow } from "./page";
+import { ErpPage, ErrorNote, SLOW_TEXT, formatDateTime, useErpAccess, useLoad, useSlow } from "./page";
 
 // The ERP's front page answers one question: what needs doing today? The queue of
 // work comes first, beside the live 3D model. Under them, how full the two
@@ -51,6 +56,20 @@ async function fetchRecords() {
   return { planned: batches.filter((b) => b.status === "direncanakan"), lots, setup };
 }
 
+/** Sales' side of the day. Empty until pf-sales.sql is installed; other failures surface. */
+async function fetchSalesWork() {
+  try {
+    const [orders, invoices, lots] = await Promise.all([fetchOrders(), fetchInvoices(), fetchAvailableLots()]);
+    return { orders, invoices, lots };
+  } catch (e) {
+    const error = toErpError(e);
+    if (error.notInstalled) return { orders: [], invoices: [], lots: [] };
+    throw error;
+  }
+}
+
+const LOT_AGING_DAYS = 2;
+
 /* ------------------------------------------------------------------- the queue */
 
 const TONE: Record<WorkTone, string> = {
@@ -61,7 +80,7 @@ const TONE: Record<WorkTone, string> = {
 };
 
 function WorkAction({ link, label, className }: { link: WorkLink; label: string; className: string }) {
-  if (link.to === "/erp/batch/$id") return <Link to={link.to} params={{ id: link.id }} className={className}>{label}</Link>;
+  if ("id" in link) return <Link to={link.to} params={{ id: link.id }} className={className}>{label}</Link>;
   return <Link to={link.to} className={className}>{label}</Link>;
 }
 
@@ -186,9 +205,20 @@ function Legend({ items }: { items: { key: string; label: string; color: string 
   );
 }
 
+/** Temperature and humidity at a place, from its sensors. Says nothing where none report. */
+function Conditions({ store, place }: { store: ErpStore; place: string }) {
+  const latest = store.monitoring?.latest ?? [];
+  const parts = ["suhu", "rh"].map((m) => latestAt(latest, place, m)).filter((r) => r !== null);
+  return (
+    <Link to="/erp/monitoring" className="mb-2.5 flex min-h-[44px] items-center text-[13px] sm:block sm:min-h-0 text-[#4F6B73] hover:text-[#0B6477]">
+      {parts.length ? parts.map((r) => formatWithUnit(r.metric, r.value)).join(" · ") : "Sensor belum tersambung"}
+    </Link>
+  );
+}
+
 function FacilityHead({ title, to, value, unit }: { title: string; to: "/erp/plant-factory" | "/erp/persemaian"; value: string; unit: string }) {
   return (
-    <div className="mb-2.5 flex items-end justify-between gap-3">
+    <div className="mb-1 flex items-end justify-between gap-3">
       <div>
         <h3 className="text-[13px] font-medium text-[#4F6B73]">{title}</h3>
         <p className="tabular-nums text-[#0F2F36]"><span className="text-[24px] font-semibold leading-tight tracking-[-0.02em]">{value}</span> <span className="text-[13px] text-[#4F6B73]">{unit}</span></p>
@@ -216,6 +246,7 @@ function FacilityPanel({ store }: { store: ErpStore }) {
       <div className="grid grid-cols-1 md:grid-cols-2">
         <div className="min-w-0 px-4 pb-3 pt-2.5">
           <FacilityHead title="Plant factory · PF01" to="/erp/plant-factory" value={shown(filled)} unit={`dari ${HOLES_TOTAL} lubang · ${store.hasData ? store.freeCapacity() : dash} siap pakai`} />
+          <Conditions store={store} place="PF01" />
           <div className="grid grid-cols-2 gap-2">
             {TIER_NUMBERS.flatMap((tier) =>
               RACK_NUMBERS.map((rack) => (
@@ -228,6 +259,7 @@ function FacilityPanel({ store }: { store: ErpStore }) {
 
         <div className="min-w-0 border-t border-[#EDF2F2] px-4 pb-3 pt-2.5 md:border-l md:border-t-0">
           <FacilityHead title="Persemaian · CH1" to="/erp/persemaian" value={shown(trays)} unit={`dari ${slots.length} nampan`} />
+          <Conditions store={store} place="CH1" />
           <div className="space-y-2">
             {SHELVES.map((shelf) => (
               <div key={shelf.shelf} className="flex items-center gap-2">
@@ -326,7 +358,8 @@ function SchedulePanel({ store }: { store: ErpStore }) {
 export default function ErpDashboard() {
   const store = useErpStore();
   const records = useLoad(fetchRecords);
-  const { canOperate } = useErpAccess();
+  const { canOperate, canReadSales } = useErpAccess();
+  const sales = useLoad(async () => (canReadSales ? fetchSalesWork() : { orders: [], invoices: [], lots: [] }), [canReadSales]);
   const large = useLargeScreen();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -345,16 +378,22 @@ export default function ErpDashboard() {
         planned: records.data?.planned.map((b) => ({ id: b.id, code: b.code, crop: batchLabel(b) })) ?? null,
         lots: records.data?.lots ?? null,
         setup: records.data?.setup ?? null,
+        alarms: store.monitoring?.alarms.map((a) => ({ id: a.id, level: a.level, label: metricInfo(a.metric).label, value: formatWithUnit(a.metric, a.value), place: a.location_code, since: formatDateTime(a.opened_at) })),
+        silentDevices: store.monitoring?.assets.filter((a) => a.link_state === "terlambat").map((a) => ({ id: a.id, code: a.code, since: a.last_seen_at ? ago(a.last_seen_at) : "tidak diketahui" })),
+        calibrationsDue: store.monitoring?.assets.filter((a) => a.status === "aktif" && a.next_due && a.next_due < store.today).map((a) => ({ id: a.id, code: a.code, due: a.next_due! })),
+        ordersDue: sales.data?.orders.filter((o) => o.status === "dikonfirmasi" && o.requested_on && o.requested_on <= store.today && o.delivered_kg < o.ordered_kg).map((o) => ({ id: o.id, no: o.so_no, customer: o.partner_name, requested: o.requested_on!, openKg: formatKg(roundKg(o.ordered_kg - o.delivered_kg)) })),
+        invoicesOverdue: sales.data?.invoices.filter((i) => i.status === "terbit" && i.balance > 0 && i.due_on < store.today).map((i) => ({ id: i.id, no: i.invoice_no, customer: i.partner_name, due: i.due_on, balance: formatRupiah(i.balance) })),
+        lotsAging: sales.data?.lots.filter((l) => l.best_before && l.best_before >= store.today && l.best_before <= addCalendarDays(store.today, LOT_AGING_DAYS)).map((l) => ({ id: l.id, code: l.lot_code, label: cropLabel({ name: l.crop_name, variety: l.crop_variety }), kg: formatKg(l.remaining_kg), until: l.best_before! })),
       })
     : [];
 
   const refresh = async () => {
     setRefreshing(true);
-    await Promise.all([store.load(), records.reload()]);
+    await Promise.all([store.load(), records.reload(), sales.reload()]);
     setRefreshing(false);
   };
 
-  const failure = store.mode === "error" ? store.loadError : recordsFailed ? records.error!.message : null;
+  const failure = store.mode === "error" ? store.loadError : recordsFailed ? records.error!.message : sales.error?.message ?? null;
   const dateLabel = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${store.today}T00:00:00Z`));
 
   return (

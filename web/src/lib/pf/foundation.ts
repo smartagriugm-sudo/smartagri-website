@@ -12,26 +12,30 @@ export const ERP_ROLES = [
   { key: "pimpinan", label: "Pimpinan", note: "Melihat semua data dan audit log" },
   { key: "admin", label: "Admin sistem", note: "Mengatur peran dan lokasi" },
   { key: "manajer_produksi", label: "Manajer produksi", note: "Mengatur tanaman, resep, lot benih, dan batch" },
-  { key: "staf_penjualan", label: "Staf penjualan", note: "Penjualan, mulai Tahap 3" },
+  { key: "staf_penjualan", label: "Staf penjualan", note: "Mengelola pelanggan, pesanan, invoice, dan pembayaran" },
   { key: "staf_sdm", label: "Staf SDM", note: "SDM, mulai Tahap 5" },
-  { key: "teknisi", label: "Teknisi", note: "Perangkat, mulai bagian sensor Tahap 2" },
+  { key: "teknisi", label: "Teknisi", note: "Mengatur perangkat, kalibrasi, dan token" },
   { key: "operator", label: "Operator", note: "Mencatat semai, pindah tanam, dan panen" },
   { key: "peneliti", label: "Peneliti dan mahasiswa", note: "Membaca data" },
 ] as const;
 
 export type ErpRole = (typeof ERP_ROLES)[number]["key"];
 
-export type ErpAccess = { canAdmin: boolean; canManageProduction: boolean; canOperate: boolean; canReadAudit: boolean };
+export type ErpAccess = { canAdmin: boolean; canManageProduction: boolean; canOperate: boolean; canMaintain: boolean; canReadAudit: boolean; canSell: boolean; canReadSales: boolean };
 
 /** Mirrors pf_is_admin(), pf_can_manage_production(), pf_can_operate() and pf_can_read_audit(). */
 export function accessOf(roles: readonly string[], isLabAdmin: boolean): ErpAccess {
   const canAdmin = isLabAdmin || roles.includes("admin");
   const canManageProduction = canAdmin || roles.includes("manajer_produksi");
+  const canSell = canAdmin || roles.includes("staf_penjualan");
   return {
     canAdmin,
     canManageProduction,
     canOperate: canManageProduction || roles.includes("operator"),
+    canMaintain: canAdmin || roles.includes("teknisi"),
     canReadAudit: canAdmin || roles.includes("pimpinan"),
+    canSell,
+    canReadSales: canSell || roles.includes("pimpinan") || roles.includes("manajer_produksi"),
   };
 }
 
@@ -280,6 +284,17 @@ export const AUDIT_TABLES: { key: string; label: string }[] = [
   { key: "pf_harvest_lot", label: "Lot panen" },
   { key: "pf_stock_lot", label: "Lot benih" },
   { key: "pf_item", label: "Barang" },
+  { key: "pf_partner", label: "Pelanggan" },
+  { key: "pf_sales_order", label: "Pesanan" },
+  { key: "pf_so_allocation", label: "Alokasi lot" },
+  { key: "pf_delivery", label: "Pengiriman" },
+  { key: "pf_invoice", label: "Invoice" },
+  { key: "pf_payment", label: "Pembayaran" },
+  { key: "pf_tax_rate", label: "Tarif pajak" },
+  { key: "pf_asset", label: "Perangkat" },
+  { key: "pf_calibration", label: "Kalibrasi" },
+  { key: "pf_alarm_rule", label: "Aturan alarm" },
+  { key: "pf_recipe_target", label: "Acuan resep" },
 ];
 
 export const AUDIT_ACTIONS: Record<AuditEntry["action"], string> = { INSERT: "Dibuat", UPDATE: "Diubah", DELETE: "Dihapus" };

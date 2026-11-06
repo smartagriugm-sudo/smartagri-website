@@ -43,14 +43,14 @@ function ClimateReadout({ store }: { store: ErpStore }) {
     ["Suhu", `${climate.temp.toFixed(1)} °C`, `${reference.temp} °C`],
     ["Kelembapan", `${climate.rh.toFixed(0)}% RH`, `${reference.rh}%`],
     ["VPD", `${store.chamber.vpd().toFixed(2)} kPa`, `${store.chamber.referenceVpd().toFixed(2)} kPa`],
-    ["CO2", `${Math.round(climate.co2)} ppm`, `${reference.co2} ppm`],
-    ["Pencahayaan", `${lux(climate.lux)} lux`, `${lux(store.chamber.referenceLux())} lux`],
+    [store.chamber.liveClimate && !store.chamber.liveKeys.has("co2") ? "CO2 (contoh)" : "CO2", `${Math.round(climate.co2)} ppm`, `${reference.co2} ppm`],
+    [store.chamber.liveClimate && !store.chamber.liveKeys.has("lux") ? "Pencahayaan (contoh)" : "Pencahayaan", `${lux(climate.lux)} lux`, `${lux(store.chamber.referenceLux())} lux`],
   ];
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-[13px] font-medium text-[#4F6B73]">Iklim di dalam chamber (contoh)</p>
-        <span className={`rounded-md px-2 py-0.5 text-[12px] font-medium ${store.chamber.climateSettled() ? "bg-[#E3F7F0] text-[#0E7A5C]" : "bg-[#FFF6E5] text-[#8A5A07]"}`}>
+        <p className="text-[13px] font-medium text-[#4F6B73]">Iklim di dalam chamber{store.chamber.liveClimate ? "" : " (contoh)"}</p>
+        <span className={`${store.chamber.liveClimate ? "hidden " : ""}rounded-md px-2 py-0.5 text-[12px] font-medium ${store.chamber.climateSettled() ? "bg-[#E3F7F0] text-[#0E7A5C]" : "bg-[#FFF6E5] text-[#8A5A07]"}`}>
           {store.chamber.climateSettled() ? "Sesuai acuan" : "Di luar acuan"}
         </span>
       </div>
@@ -59,7 +59,7 @@ function ClimateReadout({ store }: { store: ErpStore }) {
           <span className="text-[13px] text-[#4F6B73]">{k}</span>
           <span className="text-right">
             <span className="text-[15px] font-semibold tracking-[-0.01em] text-[#0F2F36]">{v}</span>
-            <span className="ml-2 text-[12px] text-[#4F6B73]">acuan {t}</span>
+            {!store.chamber.liveClimate && <span className="ml-2 text-[12px] text-[#4F6B73]">acuan {t}</span>}
           </span>
         </div>
       ))}
@@ -334,9 +334,9 @@ export default function SeedChamberPage({ active, preload, onSceneReady, focusSl
       {/* KPI cards */}
       <div className="flex gap-3 overflow-x-auto px-3 py-3 lg:pointer-events-none lg:absolute lg:left-4 lg:right-[460px] lg:top-4 lg:p-0 lg:pb-3">
         <div className="flex gap-3 lg:pointer-events-auto">
-          <Kpi label="Bibit siap pindah" value={`${seedlings}`} sub={`${counts.siap_pindah} nampan · ${store.freeCapacity()} lubang siap terima`} />
-          <Kpi label="Suhu" value={`${climate.temp.toFixed(1)} °C`} sub={`contoh · acuan ${store.chamber.reference.temp} °C`} />
-          <Kpi label="Kelembapan" value={`${climate.rh.toFixed(0)}%`} sub={`contoh · acuan ${store.chamber.reference.rh}% RH`} />
+          <Kpi label="Bibit siap pindah" value={store.hasData ? `${seedlings}` : "-"} sub={`${counts.siap_pindah} nampan · ${store.freeCapacity()} lubang siap terima`} />
+          <Kpi label="Suhu" value={`${climate.temp.toFixed(1)} °C`} sub={store.chamber.liveClimate ? "dari sensor" : `contoh · acuan ${store.chamber.reference.temp} °C`} />
+          <Kpi label="Kelembapan" value={`${climate.rh.toFixed(0)}%`} sub={store.chamber.liveClimate ? "dari sensor" : `contoh · acuan ${store.chamber.reference.rh}% RH`} />
           <Kpi label="Pencahayaan" value={lux(climate.lux)} sub={`contoh · ${store.chamber.lampsOn()}/${CHAMBER_LAMPS.length} lampu`} />
         </div>
       </div>

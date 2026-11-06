@@ -93,6 +93,29 @@ describe("the day's work", () => {
     expect(workSummary(items.slice(1))).toMatch(/Mulai dari: B-001 siap panen/);
   });
 
+  it("puts the sensors' side where it belongs", () => {
+    const items = buildWork(input({
+      planned: [{ id: "p", code: "B-009", crop: "Pakcoy" }],
+      alarms: [{ id: "a", level: "kritis", label: "Kelembapan", value: "95 % RH", place: "PF01", since: "6 Nov 2026, 10.00" }],
+      silentDevices: [{ id: "d", code: "ENV-1", since: "2 jam lalu" }],
+      calibrationsDue: [{ id: "c", code: "PH-1", due: "2026-11-01" }],
+    }));
+    expect(items.map((w) => w.key)).toEqual(["alarm-a", "silent-d", "cal-c", "plan-p"]);
+    expect(items[0]).toMatchObject({ tag: "Alarm kritis", title: "Kelembapan 95 % RH di PF01" });
+    expect(items[1].title).toBe("ENV-1 berhenti mengirim");
+    expect(items[2].detail).toBe("Jadwal 1 Nov");
+  });
+
+  it("brings in what sales has waiting", () => {
+    const items = buildWork(input({
+      ordersDue: [{ id: "o1", no: "SO-1", customer: "Resto", requested: "2026-11-05", openKg: "3 kg" }, { id: "o2", no: "SO-2", customer: "Toko", requested: today, openKg: "1 kg" }],
+      invoicesOverdue: [{ id: "i", no: "INV-1", customer: "Resto", due: "2026-11-01", balance: "Rp 100" }],
+      lotsAging: [{ id: "l", code: "H-1", label: "Pakcoy", kg: "2 kg", until: "2026-11-07" }],
+    }));
+    expect(items.map((w) => [w.key, w.tag])).toEqual([["order-o1", "Terlambat"], ["order-o2", "Kirim hari ini"], ["invoice-i", "Jatuh tempo"], ["aging-l", "Segera jual"]]);
+    expect(items[0].link).toEqual({ to: "/erp/pesanan/$id", id: "o1" });
+  });
+
   it("falls back to the facility page for a sample batch with no record", () => {
     expect(buildWork(input({ batches: [batch({ id: undefined, problemTrays: ["CH1-S1-P01"] })] }))[0].link).toEqual({ to: "/erp/persemaian" });
   });

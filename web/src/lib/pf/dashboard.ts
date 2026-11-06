@@ -19,7 +19,9 @@ export type WorkTone = "urgent" | "due" | "setup" | "later";
 
 export type WorkLink =
   | { to: "/erp/batch/$id"; id: string }
-  | { to: "/erp/batch" | "/erp/benih" | "/erp/tanaman" | "/erp/resep" | "/erp/pengaturan/lokasi" | "/erp/persemaian" | "/erp/plant-factory" };
+  | { to: "/erp/pesanan/$id"; id: string }
+  | { to: "/erp/invoice/$id"; id: string }
+  | { to: "/erp/alarm" | "/erp/perangkat" | "/erp/pesanan" | "/erp/batch" | "/erp/benih" | "/erp/tanaman" | "/erp/resep" | "/erp/pengaturan/lokasi" | "/erp/persemaian" | "/erp/plant-factory" };
 
 export type WorkItem = { key: string; tone: WorkTone; tag: string; title: string; detail: string; action: string; link: WorkLink };
 
@@ -50,6 +52,14 @@ export type WorkInput = {
   planned: readonly { id: string; code: string; crop: string }[] | null;
   lots: readonly Pick<SeedLot, "id" | "lot_no" | "qty_on_hand" | "unit" | "expiry_date">[] | null;
   setup: FoundationSummary | null;
+  /** From the sensors' side, empty where it is not installed. */
+  alarms?: readonly { id: string; level: "peringatan" | "kritis"; label: string; value: string; place: string; since: string }[];
+  silentDevices?: readonly { id: string; code: string; since: string }[];
+  calibrationsDue?: readonly { id: string; code: string; due: string }[];
+  /** From the sales side, empty where the reader has no access or it is not installed. */
+  ordersDue?: readonly { id: string; no: string; customer: string; requested: string; openKg: string }[];
+  invoicesOverdue?: readonly { id: string; no: string; customer: string; due: string; balance: string }[];
+  lotsAging?: readonly { id: string; code: string; label: string; kg: string; until: string }[];
 };
 
 export const LOT_EXPIRY_WARNING_DAYS = 14;
@@ -63,8 +73,23 @@ const list = (items: readonly string[], shown = 2) =>
 
 const ago = (days: number) => (days === 0 ? "hari ini" : `${days} hari lalu`);
 
-export function buildWork({ today, batches, freeHoles, sanitation, planned, lots, setup }: WorkInput): WorkItem[] {
+export function buildWork({ today, batches, freeHoles, sanitation, planned, lots, setup, alarms = [], silentDevices = [], calibrationsDue = [], ordersDue = [], invoicesOverdue = [], lotsAging = [] }: WorkInput): WorkItem[] {
   const items: WorkItem[] = [];
+
+  for (const a of alarms) {
+    items.push({
+      key: `alarm-${a.id}`,
+      tone: "urgent",
+      tag: a.level === "kritis" ? "Alarm kritis" : "Alarm",
+      title: `${a.label} ${a.value} di ${a.place}`,
+      detail: `Sejak ${a.since}`,
+      action: "Lihat alarm",
+      link: { to: "/erp/alarm" },
+    });
+  }
+  for (const d of silentDevices) {
+    items.push({ key: `silent-${d.id}`, tone: "urgent", tag: "Perangkat", title: `${d.code} berhenti mengirim`, detail: `Terakhir ${d.since}`, action: "Periksa", link: { to: "/erp/perangkat" } });
+  }
 
   for (const b of batches) {
     if (b.problemHoles.length > 0) {
@@ -162,6 +187,29 @@ export function buildWork({ today, batches, freeHoles, sanitation, planned, lots
     } else if (until <= LOT_EXPIRY_WARNING_DAYS) {
       items.push({ key: `lot-${l.id}`, tone: "later", tag: "Segera habis masa", title: `Lot ${l.lot_no} kedaluwarsa ${until === 0 ? "hari ini" : `${until} hari lagi`}`, detail: `${left} · sampai ${formatShortDate(l.expiry_date)}`, action: "Lihat lot", link: { to: "/erp/benih" } });
     }
+  }
+
+  for (const o of ordersDue) {
+    const late = o.requested < today;
+    items.push({
+      key: `order-${o.id}`,
+      tone: late ? "urgent" : "due",
+      tag: late ? "Terlambat" : "Kirim hari ini",
+      title: `${o.no} untuk ${o.customer}`,
+      detail: `${o.openKg} belum terkirim · diminta ${formatShortDate(o.requested)}`,
+      action: "Kirim",
+      link: { to: "/erp/pesanan/$id", id: o.id },
+    });
+  }
+  for (const i of invoicesOverdue) {
+    items.push({ key: `invoice-${i.id}`, tone: "due", tag: "Jatuh tempo", title: `${i.no} dari ${i.customer} belum lunas`, detail: `Sisa ${i.balance} · jatuh tempo ${formatShortDate(i.due)}`, action: "Lihat", link: { to: "/erp/invoice/$id", id: i.id } });
+  }
+  for (const l of lotsAging) {
+    items.push({ key: `aging-${l.id}`, tone: "due", tag: "Segera jual", title: `${l.code}: ${l.kg} ${l.label}`, detail: `Batas simpan ${formatShortDate(l.until)}`, action: "Buat pesanan", link: { to: "/erp/pesanan" } });
+  }
+
+  for (const c of calibrationsDue) {
+    items.push({ key: `cal-${c.id}`, tone: "due", tag: "Kalibrasi", title: `${c.code} lewat jadwal kalibrasi`, detail: `Jadwal ${formatShortDate(c.due)}`, action: "Catat", link: { to: "/erp/perangkat" } });
   }
 
   for (const p of planned ?? []) {

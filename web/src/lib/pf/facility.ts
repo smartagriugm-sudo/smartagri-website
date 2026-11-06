@@ -67,6 +67,9 @@ export type Batch = {
   transplantedAt: string | null;
   /** The day of the recipe the seedlings are due to move. */
   transplantDay: number;
+  /** The recipe and its phase today, for reading sensors against its targets. */
+  recipeId?: string;
+  phaseKey?: string | null;
   /** The day of the recipe the first phase ends and germination shows. */
   germinationDay: number;
   /** The record's id, once the batch comes from the database. */

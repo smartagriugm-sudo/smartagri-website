@@ -1,6 +1,6 @@
 # Rencana ERP Plant Factory (PFMS) · smartagri
 
-Status: Tahap 0 live. Tahap 1 (fondasi) ada di `web/supabase/pf-foundation.sql`. Bagian budidaya Tahap 2 ada di `web/supabase/pf-batch.sql`; iklim dan bacaan sensor masih data contoh sampai bagian sensor selesai. Rujukan: `plant-factory-management-system.md` (dokumen PFMS 4 lapisan).
+Status: Tahap 0 live. Tahap 1 (fondasi) ada di `web/supabase/pf-foundation.sql`. Bagian budidaya Tahap 2 ada di `web/supabase/pf-batch.sql`; bagian sensor ada di `web/supabase/pf-monitoring.sql`, dengan kontrak perangkat di `API-SENSOR.md`. Tahap 3 (penjualan) ada di `web/supabase/pf-sales.sql`. Rujukan: `plant-factory-management-system.md` (dokumen PFMS 4 lapisan).
 Diagram pendukung (ERD, arsitektur, alur fase): buka `diagram-erp-plant-factory.html` di folder ini.
 
 ---
@@ -200,4 +200,12 @@ Pimpinan, Admin sistem, Manajer produksi, Staf penjualan, Staf SDM, Teknisi, Ope
 20. `pf_harvest_lot.grade` menyimpan A, B, atau Afkir langsung. `pf_grade`, kriteria, dan QC menyusul setelah batas angkanya ada dari data panen tim. `pf_production_plan`, `pf_task`, dan foto kejadian juga ditunda karena belum termasuk syarat selesai Tahap 2.
 21. Navigasi ERP ada di sidebar kiri (rail ikon pada lebar 1024 sampai 1279 px, menu lembar penuh di bawah 1024 px). Modul yang belum dibangun hanya disebut di kaki menu, tidak tampil sebagai tautan.
 22. Dashboard menjawab "apa yang perlu dikerjakan hari ini" lewat antrean kerja, dengan model 3D langsung di sampingnya pada layar besar. Di ponsel model 3D tidak dimuat di dashboard; ada tautan ke layar penuhnya.
+23. `pf_reading_hourly` ditambah setiap ada bacaan, bukan oleh `pg_cron`, supaya tidak butuh penjadwal dan grafik tidak menunggu.
+24. `pf_asset.token_hash` dipindah ke `pf_asset_token`, tabel tanpa izin baca sama sekali, karena daftar perangkat dibaca semua anggota lab.
+25. `pf_recipe_target` menunjuk resep dan nama fase, bukan id fase, karena menyimpan fase pada draf menulis ulang barisnya.
+26. Batas `pf_alarm_rule` disimpan sebagai empat kolom angka, bukan `numrange`. Perangkat dan aturan alarm dipasang di tingkat ruang atau chamber. Alarm tampil di ERP dan dashboard; email menyusul.
+27. `pf_so_line` menyimpan apa yang diminta pelanggan (tanaman, grade, berat, harga), dan `pf_so_allocation` menyimpan lot panen yang mengisinya, karena pesanan bisa masuk sebelum panen dan satu baris bisa diisi beberapa lot. Kunci telusur pindah dari `pf_so_line` ke `pf_so_allocation`.
+28. Sisa kg lot panen berkurang saat lot dipilih, bukan saat dikirim, supaya dua pesanan tidak memakai panen yang sama. Lot yang dilepas atau pesanan yang dibatalkan mengembalikannya.
+29. Data pelanggan dan harga hanya untuk Staf penjualan, Admin sistem, Pimpinan, dan Manajer produksi. Peneliti, mahasiswa, dan Operator tidak bisa membacanya.
+30. Nomor SO, surat jalan, dan invoice berurutan per tahun tanpa celah (`pf_doc_counter`). Invoice dan surat jalan dicetak lewat dialog cetak browser, yang juga bisa menyimpan PDF, tanpa pustaka baru. Bukti kirim dan bukti bayar berupa berkas menyusul.
 

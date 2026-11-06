@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { formatLongDate } from "../../lib/pf/dashboard";
 import {
   BATCH_STATUS,
@@ -44,7 +44,7 @@ import { SHELVES, SLOT_STATES, SLOT_STATE_KEYS, slotId, type SlotState } from ".
 import { fetchMembers, memberName } from "../../lib/pf/foundation";
 import { useErpStore } from "./ErpContext";
 import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, formatDateTime, inputClass, useAction, useErpAccess, useLoad } from "./page";
-import { Bar, Card, Note, Rows, Segmented } from "./ui";
+import { Bar, Card, Disclosure, Note, Rows, Segmented, StepStrip } from "./ui";
 
 // One batch from sowing to harvest, written for a phone at the rack: the card for
 // what comes next is on top, and each form saves on its own. The database's
@@ -54,32 +54,6 @@ const sectionTitle = "text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]"
 const link = "inline-flex min-h-[44px] items-center sm:min-h-[24px] text-[14px] font-medium text-[#0B6477] hover:underline";
 
 type Reload = () => Promise<void>;
-
-/** Work that is not the next step: one quiet line, opened when wanted. */
-function Disclosure({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <details className="group">
-      <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 rounded-xl border border-[#DCE7E8] bg-white px-4 py-2.5 text-[14px] font-medium text-[#0F2F36] hover:border-[#14919B] [&::-webkit-details-marker]:hidden">
-        <ChevronRight className="h-4 w-4 text-[#4F6B73] transition-transform group-open:rotate-90" />
-        {title}
-      </summary>
-      <div className="mt-2">{children}</div>
-    </details>
-  );
-}
-
-function StepStrip({ current }: { current: number }) {
-  return (
-    <ol className="flex flex-wrap items-center gap-x-1 gap-y-1 text-[13px]" aria-label="Langkah batch">
-      {BATCH_STEPS.map((label, i) => (
-        <li key={label} className="flex items-center gap-1" aria-current={i === current ? "step" : undefined}>
-          {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-[#9DB2B6]" aria-hidden="true" />}
-          <span className={i === current ? "rounded-md bg-[#E3F4F4] px-2 py-0.5 font-medium text-[#0B6477]" : i < current ? "text-[#36525A]" : "text-[#4F6B73]"}>{label}</span>
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 /* ------------------------------------------------------------------- sowing */
 
@@ -458,7 +432,7 @@ function CorrectLot({ lot, reload, onClose }: { lot: HarvestLot; reload: Reload;
   );
 }
 
-function HarvestCard({ batch, lots, open, canOperate, canCorrect, reload }: { batch: BatchOverview; lots: HarvestLot[]; open: boolean; canOperate: boolean; canCorrect: boolean; reload: Reload }) {
+function HarvestCard({ batch, lots, open, canOperate, canCorrect, canTrace, reload }: { batch: BatchOverview; lots: HarvestLot[]; open: boolean; canOperate: boolean; canCorrect: boolean; canTrace: boolean; reload: Reload }) {
   const today = jakartaToday();
   const [kg, setKg] = useState("");
   const [grade, setGrade] = useState<HarvestGrade>("A");
@@ -491,11 +465,14 @@ function HarvestCard({ batch, lots, open, canOperate, canCorrect, reload }: { ba
             <li key={l.id} className="rounded-lg border border-[#E3ECED] px-3 py-2 text-[14px]">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                 <span className="font-medium text-[#0F2F36]">{l.lot_code} · grade {l.grade}</span>
-                <span className="text-[#0F2F36]">{l.fresh_kg.toLocaleString("id-ID")} kg</span>
+                <span className="tabular-nums text-[#0F2F36]">{l.fresh_kg.toLocaleString("id-ID")} kg{l.remaining_kg < l.fresh_kg ? `, sisa ${l.remaining_kg.toLocaleString("id-ID")} kg` : ""}</span>
               </div>
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-[13px] text-[#4F6B73]">
                 <span>{formatLongDate(l.harvested_at)}{l.best_before ? ` · simpan sampai ${formatLongDate(l.best_before)}` : ""}{l.notes ? ` · ${l.notes}` : ""}</span>
-                {canCorrect && correcting !== l.id && <button type="button" className={link} onClick={() => setCorrecting(l.id)}>Koreksi</button>}
+                <span className="flex items-center gap-3">
+                  {canTrace && <Link to="/erp/telusur" search={{ code: l.lot_code }} className={link}>Telusuri</Link>}
+                  {canCorrect && correcting !== l.id && <button type="button" className={link} onClick={() => setCorrecting(l.id)}>Koreksi</button>}
+                </span>
               </div>
               {correcting === l.id && <CorrectLot lot={l} reload={reload} onClose={() => setCorrecting(null)} />}
             </li>
@@ -630,7 +607,7 @@ export default function BatchDetailPage({ id, focusHole }: { id: string; focusHo
     ]);
     return { batch, slots, events, lots, seedLot, names: new Map(members.map((m) => [m.id, memberName(m)])) };
   }, [id]);
-  const { canManageProduction, canOperate } = useErpAccess();
+  const { canManageProduction, canOperate, canReadSales } = useErpAccess();
   const today = jakartaToday();
   const [phoneTab, setPhoneTab] = useState<"kerja" | "ringkasan" | "riwayat">("kerja");
   // Kept here: the transplant card is gone once its last seedling has moved.
@@ -659,7 +636,7 @@ export default function BatchDetailPage({ id, focusHole }: { id: string; focusHo
           return (
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
               <div className="min-w-0 space-y-4">
-                <StepStrip current={step} />
+                <StepStrip steps={BATCH_STEPS} current={step} label="Langkah batch" />
                 {!canOperate && <ReadOnlyNote who="Operator atau Manajer produksi" />}
                 <div className="lg:hidden">
                   <Segmented value={phoneTab} options={[{ key: "kerja", label: "Pencatatan" }, { key: "ringkasan", label: "Ringkasan" }, { key: "riwayat", label: `Riwayat (${events.length})` }]} onChange={setPhoneTab} />
@@ -675,7 +652,7 @@ export default function BatchDetailPage({ id, focusHole }: { id: string; focusHo
                   {trays.length > 0 && <TrayCard trays={trays} reload={reload} canOperate={canOperate && open} />}
                   {open && canOperate && batch.status === "direncanakan" && <SowCard batch={batch} lot={seedLot} reload={reload} />}
                   {holes.length > 0 && <HoleCard key={holes.length} holes={holes} reload={reload} canOperate={canOperate && open} focus={focusHole} />}
-                  {(batch.plants_now > 0 || lots.length > 0) && <HarvestCard batch={batch} lots={lots} open={open} canOperate={canOperate} canCorrect={canManageProduction} reload={reload} />}
+                  {(batch.plants_now > 0 || lots.length > 0) && <HarvestCard batch={batch} lots={lots} open={open} canOperate={canOperate} canCorrect={canManageProduction} canTrace={canReadSales} reload={reload} />}
                   {open && canOperate && batch.status === "berjalan" && batch.plants_now === 0 && <Disclosure title="Semai di nampan lain"><SowCard batch={batch} lot={seedLot} reload={reload} /></Disclosure>}
                   {open && canOperate && <Disclosure title="Tutup batch"><FinishCard batch={batch} hasHarvest={lots.length > 0} reload={reload} /></Disclosure>}
                 </div>

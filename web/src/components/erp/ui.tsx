@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import type { PerspectiveCamera } from "three";
 import { body, display } from "../../lib/fonts";
 import { HOLE_STATES, HOLE_STATE_KEYS, stateColor, type Batch, type HoleState, type Reading } from "../../lib/pf/facility";
@@ -136,6 +136,33 @@ export function StateBreakdown({ counts, total }: { counts: Record<HoleState, nu
         ))}
       </div>
     </div>
+  );
+}
+
+/** Work that is not the next step: one quiet line, opened when wanted. */
+export function Disclosure({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <details className="group">
+      <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 rounded-xl border border-[#DCE7E8] bg-white px-4 py-2.5 text-[14px] font-medium text-[#0F2F36] hover:border-[#14919B] [&::-webkit-details-marker]:hidden">
+        <ChevronRight className="h-4 w-4 text-[#4F6B73] transition-transform group-open:rotate-90" />
+        {title}
+      </summary>
+      <div className="mt-2">{children}</div>
+    </details>
+  );
+}
+
+/** Where something stands in a fixed run of steps. */
+export function StepStrip({ steps, current, label }: { steps: readonly string[]; current: number; label: string }) {
+  return (
+    <ol className="flex flex-wrap items-center gap-x-1 gap-y-1 text-[13px]" aria-label={label}>
+      {steps.map((step, i) => (
+        <li key={step} className="flex items-center gap-1" aria-current={i === current ? "step" : undefined}>
+          {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-[#9DB2B6]" aria-hidden="true" />}
+          <span className={i === current ? "rounded-md bg-[#E3F4F4] px-2 py-0.5 font-medium text-[#0B6477]" : i < current ? "text-[#36525A]" : "text-[#4F6B73]"}>{step}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 

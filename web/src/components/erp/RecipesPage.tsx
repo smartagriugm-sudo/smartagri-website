@@ -28,7 +28,8 @@ import {
   type RecipePhaseKey,
 } from "../../lib/pf/foundation";
 import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
-import { Card, Note } from "./ui";
+import { Card, Note, Segmented } from "./ui";
+import { METRICS, fetchRecipeTargets, formatBand, metricInfo, parseTargetRows, saveRecipeTargets, type RecipeTarget, type TargetRow } from "../../lib/pf/monitoring";
 
 // Versioned recipes. Only a draft can be edited: once active, a change means a
 // new version, so a batch can always say exactly which recipe it grew under.
@@ -75,6 +76,79 @@ function NewRecipe({ crops, onCreated, onCancel }: { crops: PfCrop[]; onCreated:
         </div>
       </form>
     </Card>
+  );
+}
+
+/** The band each reading should stay in, per phase. Read-only once the recipe is no longer a draft. */
+function TargetsSection({ recipe, phases, canEdit }: { recipe: PfRecipe; phases: PfRecipePhase[]; canEdit: boolean }) {
+  const targets = useLoad(() => fetchRecipeTargets(recipe.id), [recipe.id]);
+  const [phase, setPhase] = useState<string>(phases[0]?.phase ?? "");
+  const current = phases.some((p) => p.phase === phase) ? phase : phases[0]?.phase ?? "";
+  const editable = canEdit && recipe.status === "draft";
+
+  if (targets.error?.notInstalled || phases.length === 0) return null;
+  return (
+    <div className="mt-4 border-t border-[#E3ECED] pt-3">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-[15px] font-medium text-[#0F2F36]">Acuan sensor</h3>
+        <Segmented value={current} options={phases.map((p) => ({ key: p.phase as string, label: phaseLabel(p.phase) }))} onChange={setPhase} />
+      </div>
+      <DataState state={targets}>
+        {(list) => <TargetRows key={`${current}:${list.length}`} recipe={recipe} phase={current} list={list.filter((t) => t.phase === current)} editable={editable} onSaved={targets.reload} />}
+      </DataState>
+    </div>
+  );
+}
+
+function TargetRows({ recipe, phase, list, editable, onSaved }: { recipe: PfRecipe; phase: string; list: RecipeTarget[]; editable: boolean; onSaved: () => Promise<void> }) {
+  const text = (v: number | null | undefined) => (v === null || v === undefined ? "" : String(v));
+  const [rows, setRows] = useState<TargetRow[]>(METRICS.map((m) => {
+    const t = list.find((x) => x.metric === m.key);
+    return { metric: m.key, low: text(t?.low), target: text(t?.target), high: text(t?.high) };
+  }));
+  const action = useAction();
+  const change = (i: number, patch: Partial<TargetRow>) => setRows((r) => r.map((row, n) => (n === i ? { ...row, ...patch } : row)));
+
+  if (!editable) {
+    if (list.length === 0) return <p className="text-[14px] text-[#4F6B73]">Fase ini belum punya acuan.{recipe.status !== "draft" ? " Buat versi baru untuk menambahkannya." : ""}</p>;
+    return (
+      <ul className="text-[14px]">
+        {list.map((t) => (
+          <li key={t.metric} className="flex justify-between gap-3 border-t border-[#EDF2F2] py-2 first:border-0">
+            <span className="text-[#4F6B73]">{metricInfo(t.metric).label}</span>
+            <span className="font-medium tabular-nums text-[#0F2F36]">{formatBand(t.metric, t)}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  const save = async () => {
+    const parsed = parseTargetRows(rows);
+    if (parsed.error !== null) return action.setError(parsed.error);
+    await action.run(async () => {
+      await saveRecipeTargets(recipe.id, phase, parsed.targets);
+      await onSaved();
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="hidden grid-cols-[1.4fr_1fr_1fr_1fr] gap-2 text-[13px] font-medium text-[#4F6B73] sm:grid"><span>Bacaan</span><span>Bawah</span><span>Sasaran</span><span>Atas</span></div>
+      {rows.map((r, i) => {
+        const info = metricInfo(r.metric);
+        return (
+          <div key={r.metric} className="grid grid-cols-3 items-center gap-2 sm:grid-cols-[1.4fr_1fr_1fr_1fr]">
+            <span className="col-span-3 text-[14px] text-[#0F2F36] sm:col-span-1">{info.label}{info.unit ? <span className="text-[#4F6B73]"> ({info.unit})</span> : null}</span>
+            <input className={inputClass} inputMode="decimal" aria-label={`${info.label} batas bawah`} placeholder="Bawah" value={r.low} onChange={(e) => change(i, { low: e.target.value })} />
+            <input className={inputClass} inputMode="decimal" aria-label={`${info.label} sasaran`} placeholder="Sasaran" value={r.target} onChange={(e) => change(i, { target: e.target.value })} />
+            <input className={inputClass} inputMode="decimal" aria-label={`${info.label} batas atas`} placeholder="Atas" value={r.high} onChange={(e) => change(i, { high: e.target.value })} />
+          </div>
+        );
+      })}
+      <ActionNote action={action} />
+      <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Menyimpan..." : "Simpan acuan"}</PrimaryButton>
+    </div>
   );
 }
 
@@ -245,6 +319,7 @@ function Detail({ recipe, siblings, crop, canEdit, onChanged, onSelect }: {
             {crop?.cycle_days && crop.cycle_days !== total ? " Keduanya berbeda, periksa lagi kalau tidak disengaja." : ""}
           </p>
         )}
+        <TargetsSection recipe={recipe} phases={phases.data ?? []} canEdit={canEdit} />
       </div>
 
       <div className="mt-4 border-t border-[#E3ECED] pt-3">

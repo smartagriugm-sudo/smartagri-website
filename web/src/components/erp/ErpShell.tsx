@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, BookOpen, ClipboardList, Factory, History, LayoutDashboard, Leaf, MapPin, Menu, Package, Sprout, Users, X, type LucideIcon } from "lucide-react";
+import { Activity, ArrowLeft, BellRing, BookOpen, ClipboardList, Contact, Cpu, Factory, FileText, History, LayoutDashboard, Leaf, MapPin, Menu, Package, Search, ShoppingCart, Sprout, Users, X, type LucideIcon } from "lucide-react";
 import { A } from "../../lib/assets";
 import { body, display } from "../../lib/fonts";
 import type { StoreMode } from "../../lib/pf/store";
 import { useErpStore } from "./ErpContext";
+import { useErpAccess } from "./page";
 
 // The frame around every ERP page. On a large screen, a sidebar on the page's own
 // ground: labelled from 1280px, a rail of icons from 1024px so the 3D screens keep
@@ -12,11 +13,11 @@ import { useErpStore } from "./ErpContext";
 // Modules that are not built yet are named once at the foot, not offered as links.
 
 type NavItem = { to: NavPath; label: string; icon: LucideIcon; exact?: boolean };
-type NavPath = "/erp" | "/erp/batch" | "/erp/persemaian" | "/erp/plant-factory" | "/erp/benih" | "/erp/tanaman" | "/erp/resep" | "/erp/pengaturan/lokasi" | "/erp/pengaturan/peran" | "/erp/pengaturan/audit";
+type NavPath = "/erp" | "/erp/pesanan" | "/erp/invoice" | "/erp/pelanggan" | "/erp/telusur" | "/erp/monitoring" | "/erp/alarm" | "/erp/perangkat" | "/erp/batch" | "/erp/persemaian" | "/erp/plant-factory" | "/erp/benih" | "/erp/tanaman" | "/erp/resep" | "/erp/pengaturan/lokasi" | "/erp/pengaturan/peran" | "/erp/pengaturan/audit";
 
 const HOME: NavItem = { to: "/erp", label: "Ringkasan", icon: LayoutDashboard, exact: true };
 
-const GROUPS: { label: string; items: NavItem[] }[] = [
+const GROUPS: { label: string; items: NavItem[]; sales?: boolean }[] = [
   {
     label: "Budidaya",
     items: [
@@ -26,6 +27,24 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
       { to: "/erp/benih", label: "Lot benih", icon: Package },
       { to: "/erp/tanaman", label: "Tanaman", icon: Leaf },
       { to: "/erp/resep", label: "Resep", icon: BookOpen },
+    ],
+  },
+  {
+    label: "Penjualan",
+    sales: true,
+    items: [
+      { to: "/erp/pesanan", label: "Pesanan", icon: ShoppingCart },
+      { to: "/erp/invoice", label: "Invoice", icon: FileText },
+      { to: "/erp/pelanggan", label: "Pelanggan", icon: Contact },
+      { to: "/erp/telusur", label: "Telusur", icon: Search },
+    ],
+  },
+  {
+    label: "Monitoring",
+    items: [
+      { to: "/erp/monitoring", label: "Kondisi", icon: Activity },
+      { to: "/erp/alarm", label: "Alarm", icon: BellRing },
+      { to: "/erp/perangkat", label: "Perangkat", icon: Cpu },
     ],
   },
   {
@@ -39,11 +58,11 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
 ];
 
 const ALL_ITEMS = [HOME, ...GROUPS.flatMap((g) => g.items)];
-const LATER = "Monitoring, Penjualan, Inventory, SDM, Biaya";
+const LATER = "Inventory, SDM, Biaya";
 
 const MODE_CHIP: Record<StoreMode, { label: string; dot: string }> = {
   loading: { label: "Memuat data", dot: "bg-[#8D9398]" },
-  live: { label: "Batch asli, iklim contoh", dot: "bg-[#0E9F6E]" },
+  live: { label: "Data asli", dot: "bg-[#0E9F6E]" },
   sample: { label: "Data contoh", dot: "bg-[#E0A526]" },
   error: { label: "Data gagal dimuat", dot: "bg-[#D9433B]" },
 };
@@ -61,7 +80,7 @@ function NavRow({ item, pathname, rail, count, countLabel }: { item: NavItem; pa
       aria-current={active ? "page" : undefined}
       aria-label={rail ? (showCount ? `${item.label}, ${countLabel}` : item.label) : undefined}
       title={rail ? (showCount ? `${item.label}: ${countLabel}` : item.label) : undefined}
-      className={`relative flex min-h-[44px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] lg:min-h-[36px] ${rail ? "justify-center xl:justify-start" : ""} ${active ? "bg-[#DDE8E8] font-medium text-[#0F2F36]" : "text-[#36525A] hover:bg-[#E9EFEF] hover:text-[#0F2F36]"}`}
+      className={`relative flex min-h-[44px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] lg:min-h-[32px] ${rail ? "justify-center xl:justify-start" : ""} ${active ? "bg-[#DDE8E8] font-medium text-[#0F2F36]" : "text-[#36525A] hover:bg-[#E9EFEF] hover:text-[#0F2F36]"}`}
     >
       <Icon className={`h-4 w-4 shrink-0 ${active ? "text-[#0B6477]" : "text-[#4F6B73]"}`} strokeWidth={1.75} />
       <span className={rail ? "hidden xl:inline" : ""}>{item.label}</span>
@@ -92,21 +111,28 @@ function RetryLoad() {
 
 function NavBody({ pathname, rail }: { pathname: string; rail: boolean }) {
   const store = useErpStore();
+  const { canReadSales } = useErpAccess();
   const ready = store.readyToMove().reduce((n, r) => n + r.seedlings, 0);
-  const chip = MODE_CHIP[store.mode];
+  const alarms = store.monitoring?.alarms.filter((a) => !a.ack_at).length ?? 0;
+  const counts: Partial<Record<NavPath, { n: number; label: string }>> = {
+    "/erp/persemaian": { n: ready, label: `${ready} bibit siap pindah` },
+    "/erp/alarm": { n: alarms, label: `${alarms} alarm belum ditangani` },
+  };
+  const live = store.mode === "live" && !store.monitoring?.latest.length;
+  const chip = live ? { ...MODE_CHIP.live, label: "Batch asli, iklim contoh" } : MODE_CHIP[store.mode];
   const hideOnRail = rail ? "hidden xl:block" : "";
 
   return (
     <>
-      <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto px-2.5 py-3" aria-label="Menu ERP">
+      <nav className="min-h-0 flex-1 space-y-3 overflow-y-auto px-2.5 py-2.5" aria-label="Menu ERP">
         <NavRow item={HOME} pathname={pathname} rail={rail} />
-        {GROUPS.map((g) => (
+        {GROUPS.filter((g) => !g.sales || canReadSales).map((g) => (
           <div key={g.label}>
             <p className={`mb-1 px-2.5 text-[12.5px] text-[#4F6B73] ${hideOnRail}`}>{g.label}</p>
             {rail && <div className="mx-2.5 mb-2 border-t border-[#DCE7E8] xl:hidden" />}
             <div className="space-y-0.5">
               {g.items.map((item) => (
-                <NavRow key={item.to} item={item} pathname={pathname} rail={rail} count={item.to === "/erp/persemaian" ? ready : undefined} countLabel={`${ready} bibit siap pindah`} />
+                <NavRow key={item.to} item={item} pathname={pathname} rail={rail} count={counts[item.to]?.n} countLabel={counts[item.to]?.label} />
               ))}
             </div>
           </div>
@@ -124,7 +150,7 @@ function NavBody({ pathname, rail }: { pathname: string; rail: boolean }) {
           to="/indoor-farming/dashboard"
           aria-label={rail ? "Keluar dari ERP" : undefined}
           title={rail ? "Keluar dari ERP" : undefined}
-          className={`flex min-h-[44px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] text-[#36525A] hover:bg-[#E9EFEF] lg:min-h-[36px] ${rail ? "justify-center xl:justify-start" : ""}`}
+          className={`flex min-h-[44px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] text-[#36525A] hover:bg-[#E9EFEF] lg:min-h-[32px] ${rail ? "justify-center xl:justify-start" : ""}`}
         >
           <ArrowLeft className="h-4 w-4 shrink-0 text-[#4F6B73]" strokeWidth={1.75} />
           <span className={rail ? "hidden xl:inline" : ""}>Keluar dari ERP</span>
@@ -201,15 +227,15 @@ export default function ErpShell({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="flex min-h-screen flex-col bg-[#F4F7F7] lg:flex-row [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-offset-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-[#0B6477]"
+      className="flex min-h-screen flex-col bg-[#F4F7F7] print:block print:bg-white lg:flex-row [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-offset-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-[#0B6477]"
       style={body}
     >
-      <aside className="sticky top-0 hidden h-screen w-[64px] shrink-0 flex-col border-r border-[#DCE7E8] lg:flex xl:w-[232px]">
+      <aside className="sticky top-0 hidden h-screen print:hidden w-[64px] shrink-0 flex-col border-r border-[#DCE7E8] lg:flex xl:w-[232px]">
         <div className="flex h-14 shrink-0 items-center px-2.5 xl:px-4"><Brand rail /></div>
         <NavBody pathname={pathname} rail />
       </aside>
 
-      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-1 border-b border-[#DCE7E8] bg-[#F4F7F7] px-1.5 lg:hidden">
+      <header className="sticky top-0 z-40 flex h-14 print:hidden shrink-0 items-center gap-1 border-b border-[#DCE7E8] bg-[#F4F7F7] px-1.5 lg:hidden">
         <button ref={menuButton} type="button" onClick={() => setMenuOpen(true)} aria-label="Buka menu" aria-expanded={menuOpen} className="grid h-11 w-11 place-items-center rounded-lg text-[#36525A] hover:bg-[#E9EFEF]">
           <Menu className="h-5 w-5" />
         </button>

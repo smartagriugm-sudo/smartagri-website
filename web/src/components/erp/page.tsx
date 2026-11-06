@@ -66,9 +66,9 @@ export function useErpAccess(): ErpAccess {
 
 export function ErpPage({ eyebrow, title, sub, actions, children }: { eyebrow: string; title: string; sub?: string; actions?: ReactNode; children: ReactNode }) {
   return (
-    <main className="flex-1 px-4 py-5 sm:px-6 lg:py-6">
+    <main className="flex-1 px-4 py-5 print:p-0 sm:px-6 lg:py-6">
       <div className="max-w-[1240px]">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3 print:hidden">
           <div className="min-w-0">
             <p className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]" style={body}>{eyebrow}</p>
             <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.03em] text-[#0F2F36]" style={display}>{title}</h1>
@@ -88,7 +88,7 @@ function NotInstalled() {
       <p className="text-[15px] font-medium text-[#0F2F36]">Tabel ERP belum terpasang</p>
       <p className="mt-1 text-[14px] leading-[1.5] text-[#4F6B73]">
         {isAuthConfigured ? (
-          <>Jalankan file SQL ERP dari folder <code className="rounded bg-[#EEF3F4] px-1">web/supabase/</code> di SQL Editor Supabase (<code className="rounded bg-[#EEF3F4] px-1">pf-foundation.sql</code>, lalu <code className="rounded bg-[#EEF3F4] px-1">pf-batch.sql</code>), kemudian muat ulang halaman ini.</>
+          <>Jalankan file SQL ERP dari folder <code className="rounded bg-[#EEF3F4] px-1">web/supabase/</code> di SQL Editor Supabase (<code className="rounded bg-[#EEF3F4] px-1">pf-foundation.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-batch.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-monitoring.sql</code>, lalu <code className="rounded bg-[#EEF3F4] px-1">pf-sales.sql</code>), kemudian muat ulang halaman ini.</>
         ) : (
           "Supabase belum dikonfigurasi di lingkungan ini, jadi data ERP tidak bisa dibaca."
         )}

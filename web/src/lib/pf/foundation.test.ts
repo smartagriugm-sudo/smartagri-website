@@ -67,13 +67,15 @@ describe("slot coverage", () => {
 
 describe("access", () => {
   it("gives a lab admin everything, even with no ERP role", () => {
-    expect(accessOf([], true)).toEqual({ canAdmin: true, canManageProduction: true, canOperate: true, canReadAudit: true });
+    expect(accessOf([], true)).toEqual({ canAdmin: true, canManageProduction: true, canOperate: true, canMaintain: true, canReadAudit: true, canSell: true, canReadSales: true });
   });
 
   it("lets each role do only its part", () => {
-    expect(accessOf(["manajer_produksi"], false)).toEqual({ canAdmin: false, canManageProduction: true, canOperate: true, canReadAudit: false });
-    expect(accessOf(["pimpinan"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: false, canReadAudit: true });
-    expect(accessOf(["operator", "peneliti"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: true, canReadAudit: false });
+    expect(accessOf(["manajer_produksi"], false)).toEqual({ canAdmin: false, canManageProduction: true, canOperate: true, canMaintain: false, canReadAudit: false, canSell: false, canReadSales: true });
+    expect(accessOf(["pimpinan"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: false, canMaintain: false, canReadAudit: true, canSell: false, canReadSales: true });
+    expect(accessOf(["staf_penjualan"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: false, canMaintain: false, canReadAudit: false, canSell: true, canReadSales: true });
+    expect(accessOf(["teknisi"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: false, canMaintain: true, canReadAudit: false, canSell: false, canReadSales: false });
+    expect(accessOf(["operator", "peneliti"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: true, canMaintain: false, canReadAudit: false, canSell: false, canReadSales: false });
   });
 });
 
