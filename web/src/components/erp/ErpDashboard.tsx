@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { SHELVES, slotColor, SLOT_STATE_KEYS, SLOT_STATES, type Slot } from "../../lib/pf/chamber";
-import { batchStage, fetchBatches, fetchSeedLots, batchLabel } from "../../lib/pf/batch";
+import { batchStage, fetchBatches, fetchSeedLots, batchLabel, jakartaToday } from "../../lib/pf/batch";
 import { HOLES_TOTAL, HOLE_STATE_KEYS, HOLE_STATES, addDays, isPlanted, stateColor, type Hole, type HoleState } from "../../lib/pf/facility";
 import { fetchFoundationSummary } from "../../lib/pf/foundation";
 import { buildWork, formatShortDate, positionOf, scheduleBar, scheduleWindow, weekTicks, workSummary, type BatchWork, type WorkItem, type WorkLink, type WorkTone } from "../../lib/pf/dashboard";
 import { ago, formatWithUnit, latestAt, metricInfo } from "../../lib/pf/monitoring";
+import { fetchPlans, fetchWorkOrders } from "../../lib/pf/cost";
+import { attendanceFlags, buildRoster, clockText, contractEndingSoon, fetchAllContracts, fetchAttendance, fetchLeaves, fetchPeople, fetchShifts } from "../../lib/pf/people";
+import { fetchItems, fetchOpenShortages, fetchPurchaseOrders, fetchStockLots, formatQty } from "../../lib/pf/inventory";
 import { fetchAvailableLots, fetchInvoices, fetchOrders, formatKg, formatRupiah, roundKg } from "../../lib/pf/sales";
 import { addDays as addCalendarDays } from "../../lib/pf/facility";
 import { toErpError } from "../../lib/pf/foundation";
@@ -69,6 +72,46 @@ async function fetchSalesWork() {
 }
 
 const LOT_AGING_DAYS = 2;
+
+/** What is overdue: open work orders, and plans past due that nobody has opened yet. */
+async function fetchMaintenanceDue(today: string) {
+  try {
+    const [plans, orders] = await Promise.all([fetchPlans(), fetchWorkOrders()]);
+    return [
+      ...orders.filter((o) => o.status === "terbuka" && o.due_on <= today).map((o) => ({ id: o.id, title: o.title, due: o.due_on })),
+      ...plans.filter((p) => p.active && !p.open_order_id && p.next_due < today).map((p) => ({ id: p.id, title: p.title, due: p.next_due })),
+    ];
+  } catch (e) {
+    const error = toErpError(e);
+    if (error.notInstalled) return [];
+    throw error;
+  }
+}
+
+/** People's side of the day, for coordinators. Contracts only where the reader may see them. */
+async function fetchPeopleWork(withContracts: boolean) {
+  const empty = { shifts: [], attendance: [], leaves: [], contracts: [], people: [] };
+  try {
+    const [shifts, attendance, leaves, contracts, people] = await Promise.all([fetchShifts(), fetchAttendance(), fetchLeaves(), withContracts ? fetchAllContracts() : Promise.resolve([]), fetchPeople()]);
+    return { shifts, attendance, leaves, contracts, people };
+  } catch (e) {
+    const error = toErpError(e);
+    if (error.notInstalled) return empty;
+    throw error;
+  }
+}
+
+/** The shelf's side of the day, for those who look after it. */
+async function fetchStockWork() {
+  try {
+    const [items, shortages, purchases, lots] = await Promise.all([fetchItems(), fetchOpenShortages(), fetchPurchaseOrders(), fetchStockLots()]);
+    return { items, shortages, purchases, lots: lots.filter((l) => l.category !== "benih") };
+  } catch (e) {
+    const error = toErpError(e);
+    if (error.notInstalled) return { items: [], shortages: [], purchases: [], lots: [] };
+    throw error;
+  }
+}
 
 /* ------------------------------------------------------------------- the queue */
 
@@ -358,7 +401,10 @@ function SchedulePanel({ store }: { store: ErpStore }) {
 export default function ErpDashboard() {
   const store = useErpStore();
   const records = useLoad(fetchRecords);
-  const { canOperate, canReadSales } = useErpAccess();
+  const { canOperate, canReadSales, canManageProduction, canReadPeople, canReadPrivate, canReadMaintenance } = useErpAccess();
+  const maintenance = useLoad(async () => (canReadMaintenance ? fetchMaintenanceDue(jakartaToday()) : []), [canReadMaintenance]);
+  const team = useLoad(async () => (canReadPeople ? fetchPeopleWork(canReadPrivate) : { shifts: [], attendance: [], leaves: [], contracts: [], people: [] }), [canReadPeople, canReadPrivate]);
+  const stock = useLoad(async () => (canManageProduction ? fetchStockWork() : { items: [], shortages: [], purchases: [], lots: [] }), [canManageProduction]);
   const sales = useLoad(async () => (canReadSales ? fetchSalesWork() : { orders: [], invoices: [], lots: [] }), [canReadSales]);
   const large = useLargeScreen();
   const [refreshing, setRefreshing] = useState(false);
@@ -369,14 +415,23 @@ export default function ErpDashboard() {
   const known = store.hasData && (records.data !== null || recordsMissing);
   const loading = store.mode === "loading" || records.loading;
 
+  const rosterToday = team.data ? buildRoster(store.today, store.today, new Date(), team.data.shifts, team.data.attendance, team.data.leaves) : [];
   const items = known
     ? buildWork({
+        maintenanceDue: maintenance.data ?? [],
+        absentToday: rosterToday.filter((r) => r.state === "tidak_hadir").map((r) => ({ id: r.key, name: r.name, start: clockText(r.shift!.start_at) })),
+        flaggedAttendance: team.data?.attendance.filter((a) => a.work_date === store.today && a.source === "ponsel" && attendanceFlags(a).length > 0).map((a) => ({ id: a.id, name: a.full_name, flag: attendanceFlags(a)[0] })),
+        leavePending: team.data?.leaves.filter((l) => l.status === "diajukan").map((l) => ({ id: l.id, name: l.full_name, label: l.type, from: l.start_date })),
+        contractsEnding: team.data?.contracts.filter((c) => contractEndingSoon(c, store.today)).map((c) => ({ id: c.id, name: team.data!.people.find((p) => p.id === c.person_id)?.full_name ?? "seseorang", until: c.end_date! })),
         today: store.today,
         batches: batchWork(store),
         freeHoles: store.freeCapacity(),
         sanitation: store.mode === "sample" ? [] : store.tiersInSanitation(),
         planned: records.data?.planned.map((b) => ({ id: b.id, code: b.code, crop: batchLabel(b) })) ?? null,
-        lots: records.data?.lots ?? null,
+        lots: records.data ? [...records.data.lots, ...(stock.data?.lots.map((l) => ({ id: l.id, lot_no: l.lot_no, qty_on_hand: l.qty_on_hand, unit: l.unit as never, expiry_date: l.expiry_date, itemName: l.item_name })) ?? [])] : null,
+        lowStock: stock.data?.items.filter((i) => i.active && i.below_reorder).map((i) => ({ id: i.id, name: i.name, left: formatQty(i.usable_qty, i.unit), minimum: formatQty(i.reorder_point ?? 0, i.unit) })),
+        shortages: stock.data?.shortages.map((x) => ({ id: x.id, name: x.item_name, short: formatQty(x.qty_short, x.unit), batch: x.batch_code })),
+        purchasesLate: stock.data?.purchases.filter((p) => p.status === "dipesan" && p.open_lines > 0 && p.expected_on && p.expected_on < store.today).map((p) => ({ id: p.id, no: p.po_no, supplier: p.supplier_name, expected: p.expected_on! })),
         setup: records.data?.setup ?? null,
         alarms: store.monitoring?.alarms.map((a) => ({ id: a.id, level: a.level, label: metricInfo(a.metric).label, value: formatWithUnit(a.metric, a.value), place: a.location_code, since: formatDateTime(a.opened_at) })),
         silentDevices: store.monitoring?.assets.filter((a) => a.link_state === "terlambat").map((a) => ({ id: a.id, code: a.code, since: a.last_seen_at ? ago(a.last_seen_at) : "tidak diketahui" })),
@@ -389,11 +444,11 @@ export default function ErpDashboard() {
 
   const refresh = async () => {
     setRefreshing(true);
-    await Promise.all([store.load(), records.reload(), sales.reload()]);
+    await Promise.all([store.load(), records.reload(), sales.reload(), stock.reload(), team.reload(), maintenance.reload()]);
     setRefreshing(false);
   };
 
-  const failure = store.mode === "error" ? store.loadError : recordsFailed ? records.error!.message : sales.error?.message ?? null;
+  const failure = store.mode === "error" ? store.loadError : recordsFailed ? records.error!.message : sales.error?.message ?? stock.error?.message ?? team.error?.message ?? maintenance.error?.message ?? null;
   const dateLabel = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${store.today}T00:00:00Z`));
 
   return (

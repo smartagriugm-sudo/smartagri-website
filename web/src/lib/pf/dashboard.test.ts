@@ -116,6 +116,35 @@ describe("the day's work", () => {
     expect(items[0].link).toEqual({ to: "/erp/pesanan/$id", id: "o1" });
   });
 
+  it("brings in what the shelf needs", () => {
+    const items = buildWork(input({
+      lowStock: [{ id: "i", name: "Rockwool", left: "50 pcs", minimum: "100 pcs" }],
+      shortages: [{ id: "s", name: "Kemasan", short: "20 pcs", batch: "B-001" }],
+      purchasesLate: [{ id: "p", no: "PO-1", supplier: "Toko", expected: "2026-11-01" }],
+      lots: [{ id: "l", lot_no: "N1", qty_on_hand: 2, unit: "biji", expiry_date: "2026-11-01", itemName: "Nutrisi" }],
+    }));
+    expect(items.map((w) => w.key)).toEqual(["lot-l", "short-s", "low-i", "po-p"]);
+    expect(items[0].title).toBe("Nutrisi N1 sudah kedaluwarsa");
+    expect(items[0].link).toEqual({ to: "/erp/stok" });
+    expect(items[3].link).toEqual({ to: "/erp/pembelian/$id", id: "p" });
+  });
+
+  it("brings in what people's side needs", () => {
+    const items = buildWork(input({
+      absentToday: [{ id: "a", name: "Budi", start: "08.00" }],
+      flaggedAttendance: [{ id: "f", name: "Rina", flag: "Masuk di luar area" }],
+      leavePending: [{ id: "l", name: "Sari", label: "cuti", from: "2026-11-10" }],
+      contractsEnding: [{ id: "c", name: "Dodi", until: "2026-11-20" }],
+    }));
+    expect(items.map((w) => w.key)).toEqual(["absent-a", "leave-l", "flag-f", "contract-c"]);
+    expect(items[2].title).toBe("Rina: masuk di luar area");
+  });
+
+  it("brings in overdue maintenance", () => {
+    const items = buildWork(input({ maintenanceDue: [{ id: "m", title: "Kalibrasi EC", due: "2026-11-01" }] }));
+    expect(items[0]).toMatchObject({ key: "maintenance-m", title: "Kalibrasi EC", link: { to: "/erp/perawatan" } });
+  });
+
   it("falls back to the facility page for a sample batch with no record", () => {
     expect(buildWork(input({ batches: [batch({ id: undefined, problemTrays: ["CH1-S1-P01"] })] }))[0].link).toEqual({ to: "/erp/persemaian" });
   });

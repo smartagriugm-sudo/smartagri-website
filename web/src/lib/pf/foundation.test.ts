@@ -67,15 +67,44 @@ describe("slot coverage", () => {
 
 describe("access", () => {
   it("gives a lab admin everything, even with no ERP role", () => {
-    expect(accessOf([], true)).toEqual({ canAdmin: true, canManageProduction: true, canOperate: true, canMaintain: true, canReadAudit: true, canSell: true, canReadSales: true });
+    expect(accessOf([], true)).toMatchObject({ canAdmin: true, canManageProduction: true, canOperate: true, canMaintain: true, canReadAudit: true, canSell: true, canReadSales: true, canReadPurchase: true });
   });
 
   it("lets each role do only its part", () => {
-    expect(accessOf(["manajer_produksi"], false)).toEqual({ canAdmin: false, canManageProduction: true, canOperate: true, canMaintain: false, canReadAudit: false, canSell: false, canReadSales: true });
-    expect(accessOf(["pimpinan"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: false, canMaintain: false, canReadAudit: true, canSell: false, canReadSales: true });
-    expect(accessOf(["staf_penjualan"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: false, canMaintain: false, canReadAudit: false, canSell: true, canReadSales: true });
-    expect(accessOf(["teknisi"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: false, canMaintain: true, canReadAudit: false, canSell: false, canReadSales: false });
-    expect(accessOf(["operator", "peneliti"], false)).toEqual({ canAdmin: false, canManageProduction: false, canOperate: true, canMaintain: false, canReadAudit: false, canSell: false, canReadSales: false });
+    expect(accessOf(["manajer_produksi"], false)).toMatchObject({ canAdmin: false, canManageProduction: true, canOperate: true, canMaintain: false, canReadAudit: false, canSell: false, canReadSales: true, canReadPurchase: true });
+    expect(accessOf(["pimpinan"], false)).toMatchObject({ canAdmin: false, canManageProduction: false, canOperate: false, canMaintain: false, canReadAudit: true, canSell: false, canReadSales: true, canReadPurchase: true });
+    expect(accessOf(["staf_penjualan"], false)).toMatchObject({ canAdmin: false, canManageProduction: false, canOperate: false, canMaintain: false, canReadAudit: false, canSell: true, canReadSales: true, canReadPurchase: false });
+    expect(accessOf(["teknisi"], false)).toMatchObject({ canAdmin: false, canManageProduction: false, canOperate: false, canMaintain: true, canReadAudit: false, canSell: false, canReadSales: false, canReadPurchase: false });
+    expect(accessOf(["operator", "peneliti"], false)).toMatchObject({ canAdmin: false, canManageProduction: false, canOperate: true, canMaintain: false, canReadAudit: false, canSell: false, canReadSales: false, canReadPurchase: false });
+  });
+});
+
+describe("people access", () => {
+  const people = (roles: string[], admin = false) => {
+    const a = accessOf(roles, admin);
+    return [a.canManagePeople, a.canSchedule, a.canReadPeople, a.canReadPrivate, a.canWriteContracts, a.canSweepPhotos];
+  };
+  it("keeps contracts and photos away from ERP admins", () => {
+    expect(people([], true)).toEqual([true, true, true, false, false, false]);
+    expect(people(["staf_sdm"])).toEqual([true, true, true, true, true, true]);
+    expect(people(["pimpinan"])).toEqual([false, false, true, true, false, false]);
+    expect(people(["manajer_produksi"])).toEqual([false, true, true, false, false, false]);
+    expect(people(["operator"])).toEqual([false, false, false, false, false, false]);
+  });
+});
+
+describe("cost access", () => {
+  const cost = (roles: string[], admin = false) => {
+    const a = accessOf(roles, admin);
+    return [a.canReadCost, a.canReadMaintenance, a.canMaintain];
+  };
+  it("keeps prices from those who do not need them", () => {
+    expect(cost([], true)).toEqual([true, true, true]);
+    expect(cost(["manajer_produksi"])).toEqual([true, true, false]);
+    expect(cost(["pimpinan"])).toEqual([true, true, false]);
+    expect(cost(["teknisi"])).toEqual([false, true, true]);
+    expect(cost(["operator"])).toEqual([false, false, false]);
+    expect(cost(["staf_sdm"])).toEqual([false, false, false]);
   });
 });
 

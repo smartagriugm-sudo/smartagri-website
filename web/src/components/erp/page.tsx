@@ -88,7 +88,7 @@ function NotInstalled() {
       <p className="text-[15px] font-medium text-[#0F2F36]">Tabel ERP belum terpasang</p>
       <p className="mt-1 text-[14px] leading-[1.5] text-[#4F6B73]">
         {isAuthConfigured ? (
-          <>Jalankan file SQL ERP dari folder <code className="rounded bg-[#EEF3F4] px-1">web/supabase/</code> di SQL Editor Supabase (<code className="rounded bg-[#EEF3F4] px-1">pf-foundation.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-batch.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-monitoring.sql</code>, lalu <code className="rounded bg-[#EEF3F4] px-1">pf-sales.sql</code>), kemudian muat ulang halaman ini.</>
+          <>Jalankan file SQL ERP dari folder <code className="rounded bg-[#EEF3F4] px-1">web/supabase/</code> di SQL Editor Supabase (<code className="rounded bg-[#EEF3F4] px-1">pf-foundation.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-batch.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-monitoring.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-sales.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-inventory.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-hr.sql</code>, lalu <code className="rounded bg-[#EEF3F4] px-1">pf-cost.sql</code>), kemudian muat ulang halaman ini.</>
         ) : (
           "Supabase belum dikonfigurasi di lingkungan ini, jadi data ERP tidak bisa dibaca."
         )}

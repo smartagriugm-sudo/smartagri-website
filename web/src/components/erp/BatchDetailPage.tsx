@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { formatLongDate } from "../../lib/pf/dashboard";
+import { addLabor, fetchBatchLabor, formatMinutes, parseDuration, removeLabor } from "../../lib/pf/people";
+import { fetchBatchMoves, fetchItems, formatQty, parseQtyInput, useStock } from "../../lib/pf/inventory";
 import {
   BATCH_STATUS,
   BATCH_STEPS,
@@ -546,6 +548,138 @@ function FinishCard({ batch, hasHarvest, reload }: { batch: BatchOverview; hasHa
   );
 }
 
+/* ------------------------------------------------------------------- hours */
+
+/** Time spent on this batch. Coordinators see everyone's; others see their own. */
+function LaborCard({ batch, open }: { batch: BatchOverview; open: boolean }) {
+  const today = jakartaToday();
+  const entries = useLoad(() => fetchBatchLabor(batch.id), [batch.id]);
+  const [workDate, setWorkDate] = useState(today);
+  const [hours, setHours] = useState("");
+  const [minutes, setMinutes] = useState("");
+  const [activity, setActivity] = useState("");
+  const action = useAction();
+  if (entries.error?.notInstalled) return null;
+  const submit = async () => {
+    const parsed = parseDuration(hours, minutes);
+    if (parsed.error !== null) return action.setError(parsed.error);
+    const saved = await action.run(async () => {
+      await addLabor(null, batch.id, workDate, parsed.minutes, activity);
+      await entries.reload();
+    });
+    if (saved) {
+      setHours("");
+      setMinutes("");
+      setActivity("");
+    }
+  };
+  return (
+    <Card className="p-4">
+      <DataState state={entries}>
+        {(rows) => (
+          <>
+            {rows.length === 0 ? <p className="mb-2 text-[14px] text-[#4F6B73]">Belum ada jam kerja tercatat.</p> : (
+              <>
+                <p className="mb-1 text-[14px] text-[#4F6B73]">Total <span className="font-medium tabular-nums text-[#0F2F36]">{formatMinutes(rows.reduce((n, r) => n + r.minutes, 0))}</span></p>
+                <ul className="mb-3 text-[14px]">
+                  {rows.slice(0, 10).map((r) => (
+                    <li key={r.id} className="flex items-center justify-between gap-3 border-t border-[#EDF2F2] py-1.5">
+                      <span className="min-w-0">
+                        <span className="font-medium text-[#0F2F36]">{r.full_name}</span>
+                        <span className="tabular-nums text-[#0F2F36]"> · {formatMinutes(r.minutes)}</span>
+                        <span className="block text-[13px] text-[#4F6B73]">{formatLongDate(r.work_date)}{r.activity ? ` · ${r.activity}` : ""}</span>
+                      </span>
+                      <button type="button" onClick={() => void action.run(async () => { await removeLabor(r.id); await entries.reload(); })} className="min-h-[44px] shrink-0 text-[13px] font-medium text-[#4F6B73] hover:text-[#B3362C] sm:min-h-[24px]">Hapus</button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {open && (
+              <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
+                <div className="grid grid-cols-3 gap-2">
+                  <Field label="Tanggal"><input type="date" className={inputClass} max={today} value={workDate} onChange={(e) => setWorkDate(e.target.value)} /></Field>
+                  <Field label="Jam"><input className={inputClass} inputMode="decimal" value={hours} onChange={(e) => setHours(e.target.value)} /></Field>
+                  <Field label="Menit"><input className={inputClass} inputMode="numeric" value={minutes} onChange={(e) => setMinutes(e.target.value)} /></Field>
+                </div>
+                <Field label="Kegiatan"><input className={inputClass} value={activity} onChange={(e) => setActivity(e.target.value)} placeholder="Pindah tanam" /></Field>
+                <ActionNote action={action} />
+                <SecondaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Catat jam kerja saya"}</SecondaryButton>
+              </form>
+            )}
+          </>
+        )}
+      </DataState>
+    </Card>
+  );
+}
+
+/* --------------------------------------------------------------- materials */
+
+/** What this batch has used, automatically and by hand, and a way to record more. */
+function MaterialsCard({ batch, open, canOperate }: { batch: BatchOverview; open: boolean; canOperate: boolean }) {
+  const state = useLoad(async () => {
+    const [moves, items] = await Promise.all([fetchBatchMoves(batch.id), fetchItems()]);
+    return { moves, items };
+  }, [batch.id]);
+  const [itemId, setItemId] = useState("");
+  const [qty, setQty] = useState("");
+  const action = useAction();
+  if (state.error?.notInstalled) return null;
+  return (
+    <Card className="p-4">
+      <DataState state={state}>
+        {({ moves, items }) => {
+          const used = new Map<string, { name: string; unit: string; qty: number }>();
+          for (const m of moves) {
+            const row = used.get(m.item_id) ?? { name: m.item_name, unit: m.unit, qty: 0 };
+            row.qty += -m.qty;
+            used.set(m.item_id, row);
+          }
+          const usable = items.filter((i) => i.active && i.category !== "benih" && i.usable_qty > 0);
+          const chosen = usable.find((i) => i.id === itemId) ?? usable[0];
+          const submit = async () => {
+            const parsed = parseQtyInput(qty);
+            if (parsed.error !== null) return action.setError(parsed.error);
+            if (!chosen) return;
+            const saved = await action.run(async () => {
+              await useStock(chosen.id, parsed.qty, batch.id, "");
+              await state.reload();
+            });
+            if (saved) setQty("");
+          };
+          return (
+            <>
+              {used.size === 0 ? <p className="mb-2 text-[14px] text-[#4F6B73]">Belum ada bahan tercatat.</p> : (
+                <ul className="mb-2 text-[14px]">
+                  {[...used.values()].map((u) => (
+                    <li key={u.name} className="flex justify-between gap-3 border-t border-[#EDF2F2] py-1.5 first:border-0">
+                      <span className="text-[#0F2F36]">{u.name}</span>
+                      <span className="tabular-nums text-[#0F2F36]">{formatQty(u.qty, u.unit)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {open && canOperate && usable.length > 0 && (
+                <form className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,1fr)_110px_auto]" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
+                  <Field label="Barang">
+                    <select className={inputClass} value={chosen?.id ?? ""} onChange={(e) => setItemId(e.target.value)}>
+                      {usable.map((i) => <option key={i.id} value={i.id}>{i.name} · sisa {formatQty(i.usable_qty, i.unit)}</option>)}
+                    </select>
+                  </Field>
+                  <Field label={`Jumlah${chosen ? ` (${chosen.unit})` : ""}`}><input className={inputClass} inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} /></Field>
+                  <SecondaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Catat"}</SecondaryButton>
+                  <div className="col-span-full empty:hidden"><ActionNote action={action} /></div>
+                </form>
+              )}
+            </>
+          );
+        }}
+      </DataState>
+    </Card>
+  );
+}
+
 /* ------------------------------------------------------------------- diary */
 
 function Diary({ batch, events, names, open, canOperate, reload }: { batch: BatchOverview; events: BatchEvent[]; names: Map<string, string>; open: boolean; canOperate: boolean; reload: Reload }) {
@@ -607,7 +741,7 @@ export default function BatchDetailPage({ id, focusHole }: { id: string; focusHo
     ]);
     return { batch, slots, events, lots, seedLot, names: new Map(members.map((m) => [m.id, memberName(m)])) };
   }, [id]);
-  const { canManageProduction, canOperate, canReadSales } = useErpAccess();
+  const { canManageProduction, canOperate, canReadSales, canReadCost } = useErpAccess();
   const today = jakartaToday();
   const [phoneTab, setPhoneTab] = useState<"kerja" | "ringkasan" | "riwayat">("kerja");
   // Kept here: the transplant card is gone once its last seedling has moved.
@@ -653,6 +787,9 @@ export default function BatchDetailPage({ id, focusHole }: { id: string; focusHo
                   {open && canOperate && batch.status === "direncanakan" && <SowCard batch={batch} lot={seedLot} reload={reload} />}
                   {holes.length > 0 && <HoleCard key={holes.length} holes={holes} reload={reload} canOperate={canOperate && open} focus={focusHole} />}
                   {(batch.plants_now > 0 || lots.length > 0) && <HarvestCard batch={batch} lots={lots} open={open} canOperate={canOperate} canCorrect={canManageProduction} canTrace={canReadSales} reload={reload} />}
+                  {batch.status !== "direncanakan" && canReadCost && <Link to="/erp/biaya/$id" params={{ id: batch.id }} className="flex min-h-[44px] items-center rounded-xl border border-[#DCE7E8] bg-white px-4 text-[14px] font-medium text-[#0B6477] hover:border-[#14919B]">Lihat biaya batch ini</Link>}
+                  {batch.status !== "direncanakan" && <Disclosure title="Jam kerja"><LaborCard batch={batch} open={open} /></Disclosure>}
+                  {batch.status !== "direncanakan" && <Disclosure title="Bahan terpakai"><MaterialsCard batch={batch} open={open} canOperate={canOperate} /></Disclosure>}
                   {open && canOperate && batch.status === "berjalan" && batch.plants_now === 0 && <Disclosure title="Semai di nampan lain"><SowCard batch={batch} lot={seedLot} reload={reload} /></Disclosure>}
                   {open && canOperate && <Disclosure title="Tutup batch"><FinishCard batch={batch} hasHarvest={lots.length > 0} reload={reload} /></Disclosure>}
                 </div>

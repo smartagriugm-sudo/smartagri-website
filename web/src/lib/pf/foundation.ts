@@ -13,7 +13,7 @@ export const ERP_ROLES = [
   { key: "admin", label: "Admin sistem", note: "Mengatur peran dan lokasi" },
   { key: "manajer_produksi", label: "Manajer produksi", note: "Mengatur tanaman, resep, lot benih, dan batch" },
   { key: "staf_penjualan", label: "Staf penjualan", note: "Mengelola pelanggan, pesanan, invoice, dan pembayaran" },
-  { key: "staf_sdm", label: "Staf SDM", note: "SDM, mulai Tahap 5" },
+  { key: "staf_sdm", label: "Staf SDM", note: "Mengelola data orang, kontrak, jadwal, dan absensi" },
   { key: "teknisi", label: "Teknisi", note: "Mengatur perangkat, kalibrasi, dan token" },
   { key: "operator", label: "Operator", note: "Mencatat semai, pindah tanam, dan panen" },
   { key: "peneliti", label: "Peneliti dan mahasiswa", note: "Membaca data" },
@@ -21,21 +21,35 @@ export const ERP_ROLES = [
 
 export type ErpRole = (typeof ERP_ROLES)[number]["key"];
 
-export type ErpAccess = { canAdmin: boolean; canManageProduction: boolean; canOperate: boolean; canMaintain: boolean; canReadAudit: boolean; canSell: boolean; canReadSales: boolean };
+export type ErpAccess = { canAdmin: boolean; canManageProduction: boolean; canOperate: boolean; canMaintain: boolean; canReadAudit: boolean; canSell: boolean; canReadSales: boolean; canReadPurchase: boolean; canManagePeople: boolean; canSchedule: boolean; canReadPeople: boolean; canReadPrivate: boolean; canWriteContracts: boolean; canSweepPhotos: boolean; canReadCost: boolean; canReadMaintenance: boolean };
 
 /** Mirrors pf_is_admin(), pf_can_manage_production(), pf_can_operate() and pf_can_read_audit(). */
 export function accessOf(roles: readonly string[], isLabAdmin: boolean): ErpAccess {
   const canAdmin = isLabAdmin || roles.includes("admin");
   const canManageProduction = canAdmin || roles.includes("manajer_produksi");
   const canSell = canAdmin || roles.includes("staf_penjualan");
+  const canManagePeople = canAdmin || roles.includes("staf_sdm");
+  const canSchedule = canManagePeople || roles.includes("manajer_produksi");
+  const canMaintain = canAdmin || roles.includes("teknisi");
+  const canReadCost = canManageProduction || roles.includes("pimpinan");
   return {
     canAdmin,
     canManageProduction,
     canOperate: canManageProduction || roles.includes("operator"),
-    canMaintain: canAdmin || roles.includes("teknisi"),
+    canMaintain,
     canReadAudit: canAdmin || roles.includes("pimpinan"),
     canSell,
     canReadSales: canSell || roles.includes("pimpinan") || roles.includes("manajer_produksi"),
+    canReadPurchase: canManageProduction || roles.includes("pimpinan"),
+    canManagePeople,
+    canSchedule,
+    canReadPeople: canSchedule || roles.includes("pimpinan"),
+    // Contracts and photos: deliberately not ERP admins.
+    canReadPrivate: roles.includes("staf_sdm") || roles.includes("pimpinan"),
+    canWriteContracts: roles.includes("staf_sdm"),
+    canSweepPhotos: roles.includes("staf_sdm"),
+    canReadCost,
+    canReadMaintenance: canMaintain || canReadCost,
   };
 }
 
@@ -284,6 +298,21 @@ export const AUDIT_TABLES: { key: string; label: string }[] = [
   { key: "pf_harvest_lot", label: "Lot panen" },
   { key: "pf_stock_lot", label: "Lot benih" },
   { key: "pf_item", label: "Barang" },
+  { key: "pf_cost_entry", label: "Tagihan" },
+  { key: "pf_labor_rate", label: "Tarif tenaga" },
+  { key: "pf_lot_price", label: "Harga lot" },
+  { key: "pf_maintenance_plan", label: "Rencana perawatan" },
+  { key: "pf_work_order", label: "Perintah kerja" },
+  { key: "pf_person", label: "Orang" },
+  { key: "pf_shift", label: "Jadwal" },
+  { key: "pf_leave", label: "Izin" },
+  { key: "pf_work_area", label: "Lokasi kerja" },
+  { key: "pf_labor_log", label: "Jam kerja" },
+  { key: "pf_purchase_order", label: "Pembelian" },
+  { key: "pf_po_line", label: "Baris pembelian" },
+  { key: "pf_recipe_material", label: "Bahan resep" },
+  { key: "pf_stock_count", label: "Opname" },
+  { key: "pf_stock_shortage", label: "Kekurangan stok" },
   { key: "pf_partner", label: "Pelanggan" },
   { key: "pf_sales_order", label: "Pesanan" },
   { key: "pf_so_allocation", label: "Alokasi lot" },

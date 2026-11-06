@@ -41,14 +41,21 @@ import { Route as AiKnowledgeRouteImport } from './routes/ai/knowledge'
 import { Route as AiProfileRouteImport } from './routes/ai/profile'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as ErpIndexRouteImport } from './routes/erp.index'
+import { Route as ErpAbsenRouteImport } from './routes/erp.absen'
 import { Route as ErpAlarmRouteImport } from './routes/erp.alarm'
 import { Route as ErpBenihRouteImport } from './routes/erp.benih'
+import { Route as ErpJadwalRouteImport } from './routes/erp.jadwal'
+import { Route as ErpKehadiranRouteImport } from './routes/erp.kehadiran'
 import { Route as ErpMonitoringRouteImport } from './routes/erp.monitoring'
+import { Route as ErpOpnameRouteImport } from './routes/erp.opname'
+import { Route as ErpOrangRouteImport } from './routes/erp.orang'
 import { Route as ErpPelangganRouteImport } from './routes/erp.pelanggan'
 import { Route as ErpPerangkatRouteImport } from './routes/erp.perangkat'
+import { Route as ErpPerawatanRouteImport } from './routes/erp.perawatan'
 import { Route as ErpPersemaianRouteImport } from './routes/erp.persemaian'
 import { Route as ErpPlantFactoryRouteImport } from './routes/erp.plant-factory'
 import { Route as ErpResepRouteImport } from './routes/erp.resep'
+import { Route as ErpStokRouteImport } from './routes/erp.stok'
 import { Route as ErpTanamanRouteImport } from './routes/erp.tanaman'
 import { Route as ErpTelusurRouteImport } from './routes/erp.telusur'
 import { Route as FieldNotesSlugRouteImport } from './routes/field-notes_.$slug'
@@ -67,8 +74,12 @@ import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
 import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
 import { Route as ErpBatchIndexRouteImport } from './routes/erp.batch.index'
 import { Route as ErpBatchIdRouteImport } from './routes/erp.batch.$id'
+import { Route as ErpBiayaIndexRouteImport } from './routes/erp.biaya.index'
+import { Route as ErpBiayaIdRouteImport } from './routes/erp.biaya.$id'
 import { Route as ErpInvoiceIndexRouteImport } from './routes/erp.invoice.index'
 import { Route as ErpInvoiceIdRouteImport } from './routes/erp.invoice.$id'
+import { Route as ErpPembelianIndexRouteImport } from './routes/erp.pembelian.index'
+import { Route as ErpPembelianIdRouteImport } from './routes/erp.pembelian.$id'
 import { Route as ErpPengaturanAuditRouteImport } from './routes/erp.pengaturan.audit'
 import { Route as ErpPengaturanLokasiRouteImport } from './routes/erp.pengaturan.lokasi'
 import { Route as ErpPengaturanPeranRouteImport } from './routes/erp.pengaturan.peran'
@@ -245,6 +256,11 @@ const ErpIndexRoute = ErpIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ErpRoute,
 } as any)
+const ErpAbsenRoute = ErpAbsenRouteImport.update({
+  id: '/absen',
+  path: '/absen',
+  getParentRoute: () => ErpRoute,
+} as any)
 const ErpAlarmRoute = ErpAlarmRouteImport.update({
   id: '/alarm',
   path: '/alarm',
@@ -255,9 +271,29 @@ const ErpBenihRoute = ErpBenihRouteImport.update({
   path: '/benih',
   getParentRoute: () => ErpRoute,
 } as any)
+const ErpJadwalRoute = ErpJadwalRouteImport.update({
+  id: '/jadwal',
+  path: '/jadwal',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpKehadiranRoute = ErpKehadiranRouteImport.update({
+  id: '/kehadiran',
+  path: '/kehadiran',
+  getParentRoute: () => ErpRoute,
+} as any)
 const ErpMonitoringRoute = ErpMonitoringRouteImport.update({
   id: '/monitoring',
   path: '/monitoring',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpOpnameRoute = ErpOpnameRouteImport.update({
+  id: '/opname',
+  path: '/opname',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpOrangRoute = ErpOrangRouteImport.update({
+  id: '/orang',
+  path: '/orang',
   getParentRoute: () => ErpRoute,
 } as any)
 const ErpPelangganRoute = ErpPelangganRouteImport.update({
@@ -268,6 +304,11 @@ const ErpPelangganRoute = ErpPelangganRouteImport.update({
 const ErpPerangkatRoute = ErpPerangkatRouteImport.update({
   id: '/perangkat',
   path: '/perangkat',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpPerawatanRoute = ErpPerawatanRouteImport.update({
+  id: '/perawatan',
+  path: '/perawatan',
   getParentRoute: () => ErpRoute,
 } as any)
 const ErpPersemaianRoute = ErpPersemaianRouteImport.update({
@@ -283,6 +324,11 @@ const ErpPlantFactoryRoute = ErpPlantFactoryRouteImport.update({
 const ErpResepRoute = ErpResepRouteImport.update({
   id: '/resep',
   path: '/resep',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpStokRoute = ErpStokRouteImport.update({
+  id: '/stok',
+  path: '/stok',
   getParentRoute: () => ErpRoute,
 } as any)
 const ErpTanamanRoute = ErpTanamanRouteImport.update({
@@ -376,6 +422,16 @@ const ErpBatchIdRoute = ErpBatchIdRouteImport.update({
   path: '/batch/$id',
   getParentRoute: () => ErpRoute,
 } as any)
+const ErpBiayaIndexRoute = ErpBiayaIndexRouteImport.update({
+  id: '/biaya/',
+  path: '/biaya/',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpBiayaIdRoute = ErpBiayaIdRouteImport.update({
+  id: '/biaya/$id',
+  path: '/biaya/$id',
+  getParentRoute: () => ErpRoute,
+} as any)
 const ErpInvoiceIndexRoute = ErpInvoiceIndexRouteImport.update({
   id: '/invoice/',
   path: '/invoice/',
@@ -384,6 +440,16 @@ const ErpInvoiceIndexRoute = ErpInvoiceIndexRouteImport.update({
 const ErpInvoiceIdRoute = ErpInvoiceIdRouteImport.update({
   id: '/invoice/$id',
   path: '/invoice/$id',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpPembelianIndexRoute = ErpPembelianIndexRouteImport.update({
+  id: '/pembelian/',
+  path: '/pembelian/',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpPembelianIdRoute = ErpPembelianIdRouteImport.update({
+  id: '/pembelian/$id',
+  path: '/pembelian/$id',
   getParentRoute: () => ErpRoute,
 } as any)
 const ErpPengaturanAuditRoute = ErpPengaturanAuditRouteImport.update({
@@ -501,14 +567,21 @@ export interface FileRoutesByFullPath {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/erp/absen': typeof ErpAbsenRoute
   '/erp/alarm': typeof ErpAlarmRoute
   '/erp/benih': typeof ErpBenihRoute
+  '/erp/jadwal': typeof ErpJadwalRoute
+  '/erp/kehadiran': typeof ErpKehadiranRoute
   '/erp/monitoring': typeof ErpMonitoringRoute
+  '/erp/opname': typeof ErpOpnameRoute
+  '/erp/orang': typeof ErpOrangRoute
   '/erp/pelanggan': typeof ErpPelangganRoute
   '/erp/perangkat': typeof ErpPerangkatRoute
+  '/erp/perawatan': typeof ErpPerawatanRoute
   '/erp/persemaian': typeof ErpPersemaianRoute
   '/erp/plant-factory': typeof ErpPlantFactoryRoute
   '/erp/resep': typeof ErpResepRoute
+  '/erp/stok': typeof ErpStokRoute
   '/erp/tanaman': typeof ErpTanamanRoute
   '/erp/telusur': typeof ErpTelusurRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
@@ -528,7 +601,9 @@ export interface FileRoutesByFullPath {
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
+  '/erp/biaya/$id': typeof ErpBiayaIdRoute
   '/erp/invoice/$id': typeof ErpInvoiceIdRoute
+  '/erp/pembelian/$id': typeof ErpPembelianIdRoute
   '/erp/pengaturan/audit': typeof ErpPengaturanAuditRoute
   '/erp/pengaturan/lokasi': typeof ErpPengaturanLokasiRoute
   '/erp/pengaturan/peran': typeof ErpPengaturanPeranRoute
@@ -542,7 +617,9 @@ export interface FileRoutesByFullPath {
   '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
   '/erp/batch/': typeof ErpBatchIndexRoute
+  '/erp/biaya/': typeof ErpBiayaIndexRoute
   '/erp/invoice/': typeof ErpInvoiceIndexRoute
+  '/erp/pembelian/': typeof ErpPembelianIndexRoute
   '/erp/pesanan/': typeof ErpPesananIndexRoute
   '/indoor-farming/dashboard/': typeof IndoorFarmingDashboardIndexRoute
   '/kanban/$board/c/$card': typeof KanbanBoardCCardRoute
@@ -576,14 +653,21 @@ export interface FileRoutesByTo {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/erp/absen': typeof ErpAbsenRoute
   '/erp/alarm': typeof ErpAlarmRoute
   '/erp/benih': typeof ErpBenihRoute
+  '/erp/jadwal': typeof ErpJadwalRoute
+  '/erp/kehadiran': typeof ErpKehadiranRoute
   '/erp/monitoring': typeof ErpMonitoringRoute
+  '/erp/opname': typeof ErpOpnameRoute
+  '/erp/orang': typeof ErpOrangRoute
   '/erp/pelanggan': typeof ErpPelangganRoute
   '/erp/perangkat': typeof ErpPerangkatRoute
+  '/erp/perawatan': typeof ErpPerawatanRoute
   '/erp/persemaian': typeof ErpPersemaianRoute
   '/erp/plant-factory': typeof ErpPlantFactoryRoute
   '/erp/resep': typeof ErpResepRoute
+  '/erp/stok': typeof ErpStokRoute
   '/erp/tanaman': typeof ErpTanamanRoute
   '/erp/telusur': typeof ErpTelusurRoute
   '/field-notes/$slug': typeof FieldNotesSlugRoute
@@ -602,7 +686,9 @@ export interface FileRoutesByTo {
   '/ai': typeof AiIndexRoute
   '/erp': typeof ErpIndexRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
+  '/erp/biaya/$id': typeof ErpBiayaIdRoute
   '/erp/invoice/$id': typeof ErpInvoiceIdRoute
+  '/erp/pembelian/$id': typeof ErpPembelianIdRoute
   '/erp/pengaturan/audit': typeof ErpPengaturanAuditRoute
   '/erp/pengaturan/lokasi': typeof ErpPengaturanLokasiRoute
   '/erp/pengaturan/peran': typeof ErpPengaturanPeranRoute
@@ -616,7 +702,9 @@ export interface FileRoutesByTo {
   '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
   '/erp/batch': typeof ErpBatchIndexRoute
+  '/erp/biaya': typeof ErpBiayaIndexRoute
   '/erp/invoice': typeof ErpInvoiceIndexRoute
+  '/erp/pembelian': typeof ErpPembelianIndexRoute
   '/erp/pesanan': typeof ErpPesananIndexRoute
   '/indoor-farming/dashboard': typeof IndoorFarmingDashboardIndexRoute
   '/kanban/$board/c/$card': typeof KanbanBoardCCardRoute
@@ -653,14 +741,21 @@ export interface FileRoutesById {
   '/ai/knowledge': typeof AiKnowledgeRoute
   '/ai/profile': typeof AiProfileRoute
   '/auth/confirm': typeof AuthConfirmRoute
+  '/erp/absen': typeof ErpAbsenRoute
   '/erp/alarm': typeof ErpAlarmRoute
   '/erp/benih': typeof ErpBenihRoute
+  '/erp/jadwal': typeof ErpJadwalRoute
+  '/erp/kehadiran': typeof ErpKehadiranRoute
   '/erp/monitoring': typeof ErpMonitoringRoute
+  '/erp/opname': typeof ErpOpnameRoute
+  '/erp/orang': typeof ErpOrangRoute
   '/erp/pelanggan': typeof ErpPelangganRoute
   '/erp/perangkat': typeof ErpPerangkatRoute
+  '/erp/perawatan': typeof ErpPerawatanRoute
   '/erp/persemaian': typeof ErpPersemaianRoute
   '/erp/plant-factory': typeof ErpPlantFactoryRoute
   '/erp/resep': typeof ErpResepRoute
+  '/erp/stok': typeof ErpStokRoute
   '/erp/tanaman': typeof ErpTanamanRoute
   '/erp/telusur': typeof ErpTelusurRoute
   '/field-notes_/$slug': typeof FieldNotesSlugRoute
@@ -680,7 +775,9 @@ export interface FileRoutesById {
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
+  '/erp/biaya/$id': typeof ErpBiayaIdRoute
   '/erp/invoice/$id': typeof ErpInvoiceIdRoute
+  '/erp/pembelian/$id': typeof ErpPembelianIdRoute
   '/erp/pengaturan/audit': typeof ErpPengaturanAuditRoute
   '/erp/pengaturan/lokasi': typeof ErpPengaturanLokasiRoute
   '/erp/pengaturan/peran': typeof ErpPengaturanPeranRoute
@@ -694,7 +791,9 @@ export interface FileRoutesById {
   '/indoor-farming_/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming_/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
   '/erp/batch/': typeof ErpBatchIndexRoute
+  '/erp/biaya/': typeof ErpBiayaIndexRoute
   '/erp/invoice/': typeof ErpInvoiceIndexRoute
+  '/erp/pembelian/': typeof ErpPembelianIndexRoute
   '/erp/pesanan/': typeof ErpPesananIndexRoute
   '/indoor-farming_/dashboard/': typeof IndoorFarmingDashboardIndexRoute
   '/kanban_/$board/c/$card': typeof KanbanBoardCCardRoute
@@ -732,14 +831,21 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/auth/confirm'
+    | '/erp/absen'
     | '/erp/alarm'
     | '/erp/benih'
+    | '/erp/jadwal'
+    | '/erp/kehadiran'
     | '/erp/monitoring'
+    | '/erp/opname'
+    | '/erp/orang'
     | '/erp/pelanggan'
     | '/erp/perangkat'
+    | '/erp/perawatan'
     | '/erp/persemaian'
     | '/erp/plant-factory'
     | '/erp/resep'
+    | '/erp/stok'
     | '/erp/tanaman'
     | '/erp/telusur'
     | '/field-notes/$slug'
@@ -759,7 +865,9 @@ export interface FileRouteTypes {
     | '/ai/'
     | '/erp/'
     | '/erp/batch/$id'
+    | '/erp/biaya/$id'
     | '/erp/invoice/$id'
+    | '/erp/pembelian/$id'
     | '/erp/pengaturan/audit'
     | '/erp/pengaturan/lokasi'
     | '/erp/pengaturan/peran'
@@ -773,7 +881,9 @@ export interface FileRouteTypes {
     | '/indoor-farming/dashboard/rooms'
     | '/indoor-farming/dashboard/sensors'
     | '/erp/batch/'
+    | '/erp/biaya/'
     | '/erp/invoice/'
+    | '/erp/pembelian/'
     | '/erp/pesanan/'
     | '/indoor-farming/dashboard/'
     | '/kanban/$board/c/$card'
@@ -807,14 +917,21 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/auth/confirm'
+    | '/erp/absen'
     | '/erp/alarm'
     | '/erp/benih'
+    | '/erp/jadwal'
+    | '/erp/kehadiran'
     | '/erp/monitoring'
+    | '/erp/opname'
+    | '/erp/orang'
     | '/erp/pelanggan'
     | '/erp/perangkat'
+    | '/erp/perawatan'
     | '/erp/persemaian'
     | '/erp/plant-factory'
     | '/erp/resep'
+    | '/erp/stok'
     | '/erp/tanaman'
     | '/erp/telusur'
     | '/field-notes/$slug'
@@ -833,7 +950,9 @@ export interface FileRouteTypes {
     | '/ai'
     | '/erp'
     | '/erp/batch/$id'
+    | '/erp/biaya/$id'
     | '/erp/invoice/$id'
+    | '/erp/pembelian/$id'
     | '/erp/pengaturan/audit'
     | '/erp/pengaturan/lokasi'
     | '/erp/pengaturan/peran'
@@ -847,7 +966,9 @@ export interface FileRouteTypes {
     | '/indoor-farming/dashboard/rooms'
     | '/indoor-farming/dashboard/sensors'
     | '/erp/batch'
+    | '/erp/biaya'
     | '/erp/invoice'
+    | '/erp/pembelian'
     | '/erp/pesanan'
     | '/indoor-farming/dashboard'
     | '/kanban/$board/c/$card'
@@ -883,14 +1004,21 @@ export interface FileRouteTypes {
     | '/ai/knowledge'
     | '/ai/profile'
     | '/auth/confirm'
+    | '/erp/absen'
     | '/erp/alarm'
     | '/erp/benih'
+    | '/erp/jadwal'
+    | '/erp/kehadiran'
     | '/erp/monitoring'
+    | '/erp/opname'
+    | '/erp/orang'
     | '/erp/pelanggan'
     | '/erp/perangkat'
+    | '/erp/perawatan'
     | '/erp/persemaian'
     | '/erp/plant-factory'
     | '/erp/resep'
+    | '/erp/stok'
     | '/erp/tanaman'
     | '/erp/telusur'
     | '/field-notes_/$slug'
@@ -910,7 +1038,9 @@ export interface FileRouteTypes {
     | '/ai/'
     | '/erp/'
     | '/erp/batch/$id'
+    | '/erp/biaya/$id'
     | '/erp/invoice/$id'
+    | '/erp/pembelian/$id'
     | '/erp/pengaturan/audit'
     | '/erp/pengaturan/lokasi'
     | '/erp/pengaturan/peran'
@@ -924,7 +1054,9 @@ export interface FileRouteTypes {
     | '/indoor-farming_/dashboard/rooms'
     | '/indoor-farming_/dashboard/sensors'
     | '/erp/batch/'
+    | '/erp/biaya/'
     | '/erp/invoice/'
+    | '/erp/pembelian/'
     | '/erp/pesanan/'
     | '/indoor-farming_/dashboard/'
     | '/kanban_/$board/c/$card'
@@ -1200,6 +1332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErpIndexRouteImport
       parentRoute: typeof ErpRoute
     }
+    '/erp/absen': {
+      id: '/erp/absen'
+      path: '/absen'
+      fullPath: '/erp/absen'
+      preLoaderRoute: typeof ErpAbsenRouteImport
+      parentRoute: typeof ErpRoute
+    }
     '/erp/alarm': {
       id: '/erp/alarm'
       path: '/alarm'
@@ -1214,11 +1353,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErpBenihRouteImport
       parentRoute: typeof ErpRoute
     }
+    '/erp/jadwal': {
+      id: '/erp/jadwal'
+      path: '/jadwal'
+      fullPath: '/erp/jadwal'
+      preLoaderRoute: typeof ErpJadwalRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/kehadiran': {
+      id: '/erp/kehadiran'
+      path: '/kehadiran'
+      fullPath: '/erp/kehadiran'
+      preLoaderRoute: typeof ErpKehadiranRouteImport
+      parentRoute: typeof ErpRoute
+    }
     '/erp/monitoring': {
       id: '/erp/monitoring'
       path: '/monitoring'
       fullPath: '/erp/monitoring'
       preLoaderRoute: typeof ErpMonitoringRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/opname': {
+      id: '/erp/opname'
+      path: '/opname'
+      fullPath: '/erp/opname'
+      preLoaderRoute: typeof ErpOpnameRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/orang': {
+      id: '/erp/orang'
+      path: '/orang'
+      fullPath: '/erp/orang'
+      preLoaderRoute: typeof ErpOrangRouteImport
       parentRoute: typeof ErpRoute
     }
     '/erp/pelanggan': {
@@ -1233,6 +1400,13 @@ declare module '@tanstack/react-router' {
       path: '/perangkat'
       fullPath: '/erp/perangkat'
       preLoaderRoute: typeof ErpPerangkatRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/perawatan': {
+      id: '/erp/perawatan'
+      path: '/perawatan'
+      fullPath: '/erp/perawatan'
+      preLoaderRoute: typeof ErpPerawatanRouteImport
       parentRoute: typeof ErpRoute
     }
     '/erp/persemaian': {
@@ -1254,6 +1428,13 @@ declare module '@tanstack/react-router' {
       path: '/resep'
       fullPath: '/erp/resep'
       preLoaderRoute: typeof ErpResepRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/stok': {
+      id: '/erp/stok'
+      path: '/stok'
+      fullPath: '/erp/stok'
+      preLoaderRoute: typeof ErpStokRouteImport
       parentRoute: typeof ErpRoute
     }
     '/erp/tanaman': {
@@ -1382,6 +1563,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErpBatchIdRouteImport
       parentRoute: typeof ErpRoute
     }
+    '/erp/biaya/': {
+      id: '/erp/biaya/'
+      path: '/biaya'
+      fullPath: '/erp/biaya/'
+      preLoaderRoute: typeof ErpBiayaIndexRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/biaya/$id': {
+      id: '/erp/biaya/$id'
+      path: '/biaya/$id'
+      fullPath: '/erp/biaya/$id'
+      preLoaderRoute: typeof ErpBiayaIdRouteImport
+      parentRoute: typeof ErpRoute
+    }
     '/erp/invoice/': {
       id: '/erp/invoice/'
       path: '/invoice'
@@ -1394,6 +1589,20 @@ declare module '@tanstack/react-router' {
       path: '/invoice/$id'
       fullPath: '/erp/invoice/$id'
       preLoaderRoute: typeof ErpInvoiceIdRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/pembelian/': {
+      id: '/erp/pembelian/'
+      path: '/pembelian'
+      fullPath: '/erp/pembelian/'
+      preLoaderRoute: typeof ErpPembelianIndexRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/pembelian/$id': {
+      id: '/erp/pembelian/$id'
+      path: '/pembelian/$id'
+      fullPath: '/erp/pembelian/$id'
+      preLoaderRoute: typeof ErpPembelianIdRouteImport
       parentRoute: typeof ErpRoute
     }
     '/erp/pengaturan/audit': {
@@ -1524,50 +1733,72 @@ const AiRouteRouteWithChildren =
   AiRouteRoute._addFileChildren(AiRouteRouteChildren)
 
 interface ErpRouteChildren {
+  ErpAbsenRoute: typeof ErpAbsenRoute
   ErpAlarmRoute: typeof ErpAlarmRoute
   ErpBenihRoute: typeof ErpBenihRoute
+  ErpJadwalRoute: typeof ErpJadwalRoute
+  ErpKehadiranRoute: typeof ErpKehadiranRoute
   ErpMonitoringRoute: typeof ErpMonitoringRoute
+  ErpOpnameRoute: typeof ErpOpnameRoute
+  ErpOrangRoute: typeof ErpOrangRoute
   ErpPelangganRoute: typeof ErpPelangganRoute
   ErpPerangkatRoute: typeof ErpPerangkatRoute
+  ErpPerawatanRoute: typeof ErpPerawatanRoute
   ErpPersemaianRoute: typeof ErpPersemaianRoute
   ErpPlantFactoryRoute: typeof ErpPlantFactoryRoute
   ErpResepRoute: typeof ErpResepRoute
+  ErpStokRoute: typeof ErpStokRoute
   ErpTanamanRoute: typeof ErpTanamanRoute
   ErpTelusurRoute: typeof ErpTelusurRoute
   ErpIndexRoute: typeof ErpIndexRoute
   ErpBatchIdRoute: typeof ErpBatchIdRoute
+  ErpBiayaIdRoute: typeof ErpBiayaIdRoute
   ErpInvoiceIdRoute: typeof ErpInvoiceIdRoute
+  ErpPembelianIdRoute: typeof ErpPembelianIdRoute
   ErpPengaturanAuditRoute: typeof ErpPengaturanAuditRoute
   ErpPengaturanLokasiRoute: typeof ErpPengaturanLokasiRoute
   ErpPengaturanPeranRoute: typeof ErpPengaturanPeranRoute
   ErpPengirimanIdRoute: typeof ErpPengirimanIdRoute
   ErpPesananIdRoute: typeof ErpPesananIdRoute
   ErpBatchIndexRoute: typeof ErpBatchIndexRoute
+  ErpBiayaIndexRoute: typeof ErpBiayaIndexRoute
   ErpInvoiceIndexRoute: typeof ErpInvoiceIndexRoute
+  ErpPembelianIndexRoute: typeof ErpPembelianIndexRoute
   ErpPesananIndexRoute: typeof ErpPesananIndexRoute
 }
 
 const ErpRouteChildren: ErpRouteChildren = {
+  ErpAbsenRoute: ErpAbsenRoute,
   ErpAlarmRoute: ErpAlarmRoute,
   ErpBenihRoute: ErpBenihRoute,
+  ErpJadwalRoute: ErpJadwalRoute,
+  ErpKehadiranRoute: ErpKehadiranRoute,
   ErpMonitoringRoute: ErpMonitoringRoute,
+  ErpOpnameRoute: ErpOpnameRoute,
+  ErpOrangRoute: ErpOrangRoute,
   ErpPelangganRoute: ErpPelangganRoute,
   ErpPerangkatRoute: ErpPerangkatRoute,
+  ErpPerawatanRoute: ErpPerawatanRoute,
   ErpPersemaianRoute: ErpPersemaianRoute,
   ErpPlantFactoryRoute: ErpPlantFactoryRoute,
   ErpResepRoute: ErpResepRoute,
+  ErpStokRoute: ErpStokRoute,
   ErpTanamanRoute: ErpTanamanRoute,
   ErpTelusurRoute: ErpTelusurRoute,
   ErpIndexRoute: ErpIndexRoute,
   ErpBatchIdRoute: ErpBatchIdRoute,
+  ErpBiayaIdRoute: ErpBiayaIdRoute,
   ErpInvoiceIdRoute: ErpInvoiceIdRoute,
+  ErpPembelianIdRoute: ErpPembelianIdRoute,
   ErpPengaturanAuditRoute: ErpPengaturanAuditRoute,
   ErpPengaturanLokasiRoute: ErpPengaturanLokasiRoute,
   ErpPengaturanPeranRoute: ErpPengaturanPeranRoute,
   ErpPengirimanIdRoute: ErpPengirimanIdRoute,
   ErpPesananIdRoute: ErpPesananIdRoute,
   ErpBatchIndexRoute: ErpBatchIndexRoute,
+  ErpBiayaIndexRoute: ErpBiayaIndexRoute,
   ErpInvoiceIndexRoute: ErpInvoiceIndexRoute,
+  ErpPembelianIndexRoute: ErpPembelianIndexRoute,
   ErpPesananIndexRoute: ErpPesananIndexRoute,
 }
 

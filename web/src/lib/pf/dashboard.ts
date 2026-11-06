@@ -21,7 +21,8 @@ export type WorkLink =
   | { to: "/erp/batch/$id"; id: string }
   | { to: "/erp/pesanan/$id"; id: string }
   | { to: "/erp/invoice/$id"; id: string }
-  | { to: "/erp/alarm" | "/erp/perangkat" | "/erp/pesanan" | "/erp/batch" | "/erp/benih" | "/erp/tanaman" | "/erp/resep" | "/erp/pengaturan/lokasi" | "/erp/persemaian" | "/erp/plant-factory" };
+  | { to: "/erp/pembelian/$id"; id: string }
+  | { to: "/erp/perawatan" | "/erp/kehadiran" | "/erp/orang" | "/erp/stok" | "/erp/alarm" | "/erp/perangkat" | "/erp/pesanan" | "/erp/batch" | "/erp/benih" | "/erp/tanaman" | "/erp/resep" | "/erp/pengaturan/lokasi" | "/erp/persemaian" | "/erp/plant-factory" };
 
 export type WorkItem = { key: string; tone: WorkTone; tag: string; title: string; detail: string; action: string; link: WorkLink };
 
@@ -50,7 +51,7 @@ export type WorkInput = {
   sanitation: readonly { rack: number; tier: number }[];
   /** Null while unknown: nothing is claimed about what could not be read. */
   planned: readonly { id: string; code: string; crop: string }[] | null;
-  lots: readonly Pick<SeedLot, "id" | "lot_no" | "qty_on_hand" | "unit" | "expiry_date">[] | null;
+  lots: readonly (Pick<SeedLot, "id" | "lot_no" | "qty_on_hand" | "unit" | "expiry_date"> & { itemName?: string })[] | null;
   setup: FoundationSummary | null;
   /** From the sensors' side, empty where it is not installed. */
   alarms?: readonly { id: string; level: "peringatan" | "kritis"; label: string; value: string; place: string; since: string }[];
@@ -60,6 +61,17 @@ export type WorkInput = {
   ordersDue?: readonly { id: string; no: string; customer: string; requested: string; openKg: string }[];
   invoicesOverdue?: readonly { id: string; no: string; customer: string; due: string; balance: string }[];
   lotsAging?: readonly { id: string; code: string; label: string; kg: string; until: string }[];
+  /** From inventory, empty where the reader has no access or it is not installed. */
+  lowStock?: readonly { id: string; name: string; left: string; minimum: string }[];
+  shortages?: readonly { id: string; name: string; short: string; batch: string }[];
+  purchasesLate?: readonly { id: string; no: string; supplier: string; expected: string }[];
+  /** From people, empty where the reader has no access or it is not installed. */
+  absentToday?: readonly { id: string; name: string; start: string }[];
+  flaggedAttendance?: readonly { id: string; name: string; flag: string }[];
+  leavePending?: readonly { id: string; name: string; label: string; from: string }[];
+  contractsEnding?: readonly { id: string; name: string; until: string }[];
+  /** From maintenance, empty where the reader has no access or it is not installed. */
+  maintenanceDue?: readonly { id: string; title: string; due: string }[];
 };
 
 export const LOT_EXPIRY_WARNING_DAYS = 14;
@@ -73,7 +85,7 @@ const list = (items: readonly string[], shown = 2) =>
 
 const ago = (days: number) => (days === 0 ? "hari ini" : `${days} hari lalu`);
 
-export function buildWork({ today, batches, freeHoles, sanitation, planned, lots, setup, alarms = [], silentDevices = [], calibrationsDue = [], ordersDue = [], invoicesOverdue = [], lotsAging = [] }: WorkInput): WorkItem[] {
+export function buildWork({ today, batches, freeHoles, sanitation, planned, lots, setup, alarms = [], silentDevices = [], calibrationsDue = [], ordersDue = [], invoicesOverdue = [], lotsAging = [], lowStock = [], shortages = [], purchasesLate = [], absentToday = [], flaggedAttendance = [], leavePending = [], contractsEnding = [], maintenanceDue = [] }: WorkInput): WorkItem[] {
   const items: WorkItem[] = [];
 
   for (const a of alarms) {
@@ -183,9 +195,9 @@ export function buildWork({ today, batches, freeHoles, sanitation, planned, lots
     const left = `sisa ${l.qty_on_hand.toLocaleString("id-ID")} ${l.unit}`;
     const until = daysBetween(today, l.expiry_date);
     if (until < 0) {
-      items.push({ key: `lot-${l.id}`, tone: "due", tag: "Kedaluwarsa", title: `Lot ${l.lot_no} sudah kedaluwarsa`, detail: `${left} · sejak ${formatShortDate(l.expiry_date)}`, action: "Koreksi stok", link: { to: "/erp/benih" } });
+      items.push({ key: `lot-${l.id}`, tone: "due", tag: "Kedaluwarsa", title: `${l.itemName ?? "Lot"} ${l.lot_no} sudah kedaluwarsa`, detail: `${left} · sejak ${formatShortDate(l.expiry_date)}`, action: "Koreksi stok", link: { to: l.itemName ? "/erp/stok" : "/erp/benih" } });
     } else if (until <= LOT_EXPIRY_WARNING_DAYS) {
-      items.push({ key: `lot-${l.id}`, tone: "later", tag: "Segera habis masa", title: `Lot ${l.lot_no} kedaluwarsa ${until === 0 ? "hari ini" : `${until} hari lagi`}`, detail: `${left} · sampai ${formatShortDate(l.expiry_date)}`, action: "Lihat lot", link: { to: "/erp/benih" } });
+      items.push({ key: `lot-${l.id}`, tone: "later", tag: "Segera habis masa", title: `${l.itemName ?? "Lot"} ${l.lot_no} kedaluwarsa ${until === 0 ? "hari ini" : `${until} hari lagi`}`, detail: `${left} · sampai ${formatShortDate(l.expiry_date)}`, action: "Lihat lot", link: { to: l.itemName ? "/erp/stok" : "/erp/benih" } });
     }
   }
 
@@ -206,6 +218,31 @@ export function buildWork({ today, batches, freeHoles, sanitation, planned, lots
   }
   for (const l of lotsAging) {
     items.push({ key: `aging-${l.id}`, tone: "due", tag: "Segera jual", title: `${l.code}: ${l.kg} ${l.label}`, detail: `Batas simpan ${formatShortDate(l.until)}`, action: "Buat pesanan", link: { to: "/erp/pesanan" } });
+  }
+
+  for (const x of absentToday) {
+    items.push({ key: `absent-${x.id}`, tone: "due", tag: "Belum absen", title: `${x.name} belum absen`, detail: `Jadwal mulai ${x.start}`, action: "Lihat", link: { to: "/erp/kehadiran" } });
+  }
+  for (const x of flaggedAttendance) {
+    items.push({ key: `flag-${x.id}`, tone: "later", tag: "Cek absen", title: `${x.name}: ${x.flag.toLowerCase()}`, detail: "Perlu diperiksa koordinator", action: "Periksa", link: { to: "/erp/kehadiran" } });
+  }
+  for (const x of leavePending) {
+    items.push({ key: `leave-${x.id}`, tone: "due", tag: "Izin", title: `${x.name} mengajukan ${x.label}`, detail: `Mulai ${formatShortDate(x.from)}`, action: "Putuskan", link: { to: "/erp/kehadiran" } });
+  }
+  for (const x of contractsEnding) {
+    items.push({ key: `contract-${x.id}`, tone: "later", tag: "Kontrak", title: `Kontrak ${x.name} segera berakhir`, detail: `Sampai ${formatShortDate(x.until)}`, action: "Lihat", link: { to: "/erp/orang" } });
+  }
+  for (const x of maintenanceDue) {
+    items.push({ key: `maintenance-${x.id}`, tone: "due", tag: "Perawatan", title: x.title, detail: `Jadwal ${formatShortDate(x.due)}`, action: "Buka", link: { to: "/erp/perawatan" } });
+  }
+  for (const x of shortages) {
+    items.push({ key: `short-${x.id}`, tone: "due", tag: "Stok kurang", title: `${x.name} kurang ${x.short}`, detail: `Saat dipakai ${x.batch}`, action: "Tangani", link: { to: "/erp/stok" } });
+  }
+  for (const x of lowStock) {
+    items.push({ key: `low-${x.id}`, tone: "due", tag: "Menipis", title: `${x.name} sisa ${x.left}`, detail: `Batas minimum ${x.minimum}`, action: "Lihat stok", link: { to: "/erp/stok" } });
+  }
+  for (const x of purchasesLate) {
+    items.push({ key: `po-${x.id}`, tone: "due", tag: "Belum tiba", title: `${x.no} dari ${x.supplier}`, detail: `Diperkirakan ${formatShortDate(x.expected)}`, action: "Lihat", link: { to: "/erp/pembelian/$id", id: x.id } });
   }
 
   for (const c of calibrationsDue) {

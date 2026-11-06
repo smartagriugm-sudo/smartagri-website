@@ -29,6 +29,7 @@ import {
 } from "../../lib/pf/foundation";
 import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
 import { Card, Note, Segmented } from "./ui";
+import { MATERIAL_BASES, fetchItems, fetchRecipeMaterials, formatQty, parseMaterialRows, saveRecipeMaterials, type MaterialBasis } from "../../lib/pf/inventory";
 import { METRICS, fetchRecipeTargets, formatBand, metricInfo, parseTargetRows, saveRecipeTargets, type RecipeTarget, type TargetRow } from "../../lib/pf/monitoring";
 
 // Versioned recipes. Only a draft can be edited: once active, a change means a
@@ -76,6 +77,75 @@ function NewRecipe({ crops, onCreated, onCancel }: { crops: PfCrop[]; onCreated:
         </div>
       </form>
     </Card>
+  );
+}
+
+/** What a batch of this recipe uses up by itself as the floor records its work. Read-only once active. */
+function MaterialsSection({ recipe, canEdit }: { recipe: PfRecipe; canEdit: boolean }) {
+  const state = useLoad(async () => {
+    const [materials, items] = await Promise.all([fetchRecipeMaterials(recipe.id), fetchItems()]);
+    return { materials, items };
+  }, [recipe.id]);
+  if (state.error?.notInstalled) return null;
+  return (
+    <div className="mt-4 border-t border-[#E3ECED] pt-3">
+      <h3 className="mb-1 text-[15px] font-medium text-[#0F2F36]">Bahan yang terpakai otomatis</h3>
+      <p className="mb-2 text-[13px] text-[#4F6B73]">Stok berkurang saat operator mencatat semai, pindah tanam, atau panen. Kalau stok kurang, pekerjaan tetap jalan dan kekurangannya muncul di halaman Stok.</p>
+      <DataState state={state}>
+        {({ materials, items }) => (canEdit && recipe.status === "draft"
+          ? <MaterialRows key={recipe.id} recipe={recipe} initial={materials.map((m) => ({ itemId: m.item_id, basis: m.basis, qty: String(m.qty).replace(".", ",") }))} items={items} onSaved={state.reload} />
+          : materials.length === 0
+            ? <p className="text-[14px] text-[#4F6B73]">Belum ada bahan.{recipe.status !== "draft" ? " Buat versi baru untuk menambahkannya." : ""}</p>
+            : (
+              <ul className="text-[14px]">
+                {materials.map((m) => (
+                  <li key={m.id} className="flex justify-between gap-3 border-t border-[#EDF2F2] py-2 first:border-0">
+                    <span className="text-[#0F2F36]">{m.item_name}</span>
+                    <span className="tabular-nums text-[#4F6B73]">{formatQty(m.qty, m.unit)} {MATERIAL_BASES.find((b) => b.key === m.basis)?.label.toLowerCase()}</span>
+                  </li>
+                ))}
+              </ul>
+            )
+        )}
+      </DataState>
+    </div>
+  );
+}
+
+function MaterialRows({ recipe, initial, items, onSaved }: { recipe: PfRecipe; initial: { itemId: string; basis: MaterialBasis; qty: string }[]; items: { id: string; name: string; unit: string; category: string; active: boolean }[]; onSaved: () => Promise<void> }) {
+  const usable = items.filter((i) => i.active && i.category !== "benih");
+  const [rows, setRows] = useState(initial);
+  const action = useAction();
+  const change = (i: number, patch: Partial<{ itemId: string; basis: MaterialBasis; qty: string }>) => setRows((r) => r.map((row, n) => (n === i ? { ...row, ...patch } : row)));
+  const save = async () => {
+    const parsed = parseMaterialRows(rows);
+    if (parsed.error !== null) return action.setError(parsed.error);
+    await action.run(async () => {
+      await saveRecipeMaterials(recipe.id, parsed.rows);
+      await onSaved();
+    });
+  };
+  return (
+    <div className="space-y-2">
+      {rows.map((r, i) => (
+        <div key={i} className="grid grid-cols-[minmax(0,1fr)_40px] gap-2 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_100px_40px]">
+          <select className={`${inputClass} sm:order-none`} aria-label={`Barang ${i + 1}`} value={r.itemId} onChange={(e) => change(i, { itemId: e.target.value })}>
+            {usable.map((x) => <option key={x.id} value={x.id}>{x.name} ({x.unit})</option>)}
+          </select>
+          <button type="button" onClick={() => setRows((all) => all.filter((_, n) => n !== i))} aria-label={`Hapus bahan ${i + 1}`} className="grid h-11 w-10 place-items-center rounded-lg text-[#4F6B73] hover:bg-[#FBEDEC] hover:text-[#D9433B] sm:order-last sm:h-9"><Trash2 className="h-4 w-4" /></button>
+          <select className={inputClass} aria-label={`Dasar pemakaian ${i + 1}`} value={r.basis} onChange={(e) => change(i, { basis: e.target.value as MaterialBasis })}>
+            {MATERIAL_BASES.map((b) => <option key={b.key} value={b.key}>{b.label}, {b.when}</option>)}
+          </select>
+          <input className={inputClass} inputMode="decimal" aria-label={`Jumlah ${i + 1}`} placeholder="Jumlah" value={r.qty} onChange={(e) => change(i, { qty: e.target.value })} />
+        </div>
+      ))}
+      {usable.length === 0 && <p className="text-[14px] text-[#4F6B73]">Tambahkan dulu barangnya di halaman Stok.</p>}
+      <ActionNote action={action} />
+      <div className="flex flex-wrap gap-2">
+        <SecondaryButton disabled={usable.length === 0} onClick={() => setRows((all) => [...all, { itemId: usable[0].id, basis: "per_tanaman", qty: "" }])}><Plus className="h-4 w-4" /> Tambah bahan</SecondaryButton>
+        <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Menyimpan..." : "Simpan bahan"}</PrimaryButton>
+      </div>
+    </div>
   );
 }
 
@@ -320,6 +390,7 @@ function Detail({ recipe, siblings, crop, canEdit, onChanged, onSelect }: {
           </p>
         )}
         <TargetsSection recipe={recipe} phases={phases.data ?? []} canEdit={canEdit} />
+        <MaterialsSection recipe={recipe} canEdit={canEdit} />
       </div>
 
       <div className="mt-4 border-t border-[#E3ECED] pt-3">

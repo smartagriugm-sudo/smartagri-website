@@ -1,6 +1,6 @@
 # Rencana ERP Plant Factory (PFMS) · smartagri
 
-Status: Tahap 0 live. Tahap 1 (fondasi) ada di `web/supabase/pf-foundation.sql`. Bagian budidaya Tahap 2 ada di `web/supabase/pf-batch.sql`; bagian sensor ada di `web/supabase/pf-monitoring.sql`, dengan kontrak perangkat di `API-SENSOR.md`. Tahap 3 (penjualan) ada di `web/supabase/pf-sales.sql`. Rujukan: `plant-factory-management-system.md` (dokumen PFMS 4 lapisan).
+Status: Tahap 0 live. Tahap 1 (fondasi) ada di `web/supabase/pf-foundation.sql`. Bagian budidaya Tahap 2 ada di `web/supabase/pf-batch.sql`; bagian sensor ada di `web/supabase/pf-monitoring.sql`, dengan kontrak perangkat di `API-SENSOR.md`. Tahap 3 (penjualan) ada di `web/supabase/pf-sales.sql`. Tahap 4 (inventory) ada di `web/supabase/pf-inventory.sql`. Tahap 5 (SDM) ada di `web/supabase/pf-hr.sql`. Tahap 6 (biaya) ada di `web/supabase/pf-cost.sql`. Rujukan: `plant-factory-management-system.md` (dokumen PFMS 4 lapisan).
 Diagram pendukung (ERD, arsitektur, alur fase): buka `diagram-erp-plant-factory.html` di folder ini.
 
 ---
@@ -208,4 +208,16 @@ Pimpinan, Admin sistem, Manajer produksi, Staf penjualan, Staf SDM, Teknisi, Ope
 28. Sisa kg lot panen berkurang saat lot dipilih, bukan saat dikirim, supaya dua pesanan tidak memakai panen yang sama. Lot yang dilepas atau pesanan yang dibatalkan mengembalikannya.
 29. Data pelanggan dan harga hanya untuk Staf penjualan, Admin sistem, Pimpinan, dan Manajer produksi. Peneliti, mahasiswa, dan Operator tidak bisa membacanya.
 30. Nomor SO, surat jalan, dan invoice berurutan per tahun tanpa celah (`pf_doc_counter`). Invoice dan surat jalan dicetak lewat dialog cetak browser, yang juga bisa menyimpan PDF, tanpa pustaka baru. Bukti kirim dan bukti bayar berupa berkas menyusul.
+31. Pemakaian otomatis lewat `pf_recipe_material`: bahan per benih, per tanaman, atau per kg panen, dan stok berkurang saat operator mencatat pekerjaannya. Lot yang kedaluwarsa paling dulu terpakai lebih dulu, dan lot yang sudah kedaluwarsa dilewati.
+32. Stok yang kurang tidak menghentikan pekerjaan di lantai produksi. Kekurangannya dicatat di `pf_stock_shortage` sampai ditangani. Pemakaian manual sebaliknya ditolak kalau stok tidak cukup.
+33. Harga dan pesanan pembelian hanya untuk Manajer produksi, Admin sistem, dan Pimpinan. Lot tidak menyimpan harga: lot menunjuk baris pembelian, dan dari situ Tahap 6 menghitung biaya. `pf_stock_lot.location_id` (gudang) ditunda karena belum ada pohon lokasi gudang.
+34. Absen memakai jam server, bukan jam ponsel. Di luar area atau tanpa lokasi tetap tersimpan dan ditandai untuk diperiksa, tidak ditolak. Foto wajib untuk absen dari ponsel, dan yang tidak setuju atau tidak punya ponsel dicatat manual oleh Staf SDM.
+35. Foto ada di bucket privat `pf-attendance`, satu folder per orang. Hanya orangnya, Staf SDM, dan Pimpinan yang bisa membuka. Admin sistem dan Manajer produksi sengaja tidak. Kontrak mengikuti aturan yang sama, kecuali hanya Staf SDM yang bisa mengubah.
+36. Foto dihapus setelah 90 hari. Tanpa penjadwal, penghapusan berjalan saat Staf SDM membuka halaman Kehadiran, dan foto lewat masa simpan tetap ada sampai itu terjadi. `pf_attendance` tidak masuk audit log, supaya koordinat tidak tersalin ke catatan yang lebih lama hidupnya.
+37. `pf_work_area` menyimpan titik dan radius lokasi kerja, terpisah dari `pf_location`. `pf_labor_log.task_id` belum ada karena `pf_task` ditunda; kegiatan dicatat sebagai teks.
+38. Biaya batch terdiri dari bahan, tenaga, tagihan langsung, dan bagian tagihan ruang. Semua dihitung di database dan dikembalikan bersama barisnya, supaya bisa dicek dengan kalkulator. Yang belum punya harga dilaporkan di samping angkanya, tidak dianggap gratis.
+39. Tenaga memakai tarif standar per jenis orang (`pf_labor_rate`) yang bertanggal, bukan upah di kontrak. Pembaca biaya (Manajer produksi, Admin, Pimpinan) sengaja tidak semuanya boleh membaca kontrak, dan batch yang dikerjakan satu orang akan membocorkan upahnya.
+40. Tagihan ruang dibagi menurut nampan-hari (Persemaian) atau lubang-hari (Plant factory) pada periodenya. Seluruh tagihan jatuh ke batch yang ada, jadi ruang yang sepi membuat batch di dalamnya terlihat mahal. Tagihan untuk periode ruang kosong ditandai belum terbagi. Batch yang berjalan bertanda sementara, karena bagiannya bisa berubah.
+41. Harga lot tanpa pesanan pembelian ada di `pf_lot_price`, terpisah dari `pf_stock_lot` yang terbaca semua anggota lab. Selisih opname dan koreksi stok tidak masuk biaya batch atau ringkasan bulanan. Pemakaian listrik belum terbaca dari sensor, jadi tagihan dicatat manual.
+42. Perintah kerja perawatan dibuka manual dari rencana yang jatuh tempo, karena belum ada penjadwal. Biaya yang dicatat saat selesai menjadi tagihan ruang untuk bulan tersebut. Penggantian suku cadang dari stok belum tersambung ke perintah kerja.
 

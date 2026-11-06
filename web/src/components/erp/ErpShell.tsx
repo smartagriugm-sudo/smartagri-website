@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, ArrowLeft, BellRing, BookOpen, ClipboardList, Contact, Cpu, Factory, FileText, History, LayoutDashboard, Leaf, MapPin, Menu, Package, Search, ShoppingCart, Sprout, Users, X, type LucideIcon } from "lucide-react";
+import { Activity, ArrowLeft, BellRing, CalendarDays, Wallet, Wrench, Fingerprint, UserCheck, BookOpen, Boxes, ClipboardCheck, ClipboardList, Contact, Cpu, Factory, FileText, History, LayoutDashboard, Leaf, MapPin, Menu, Package, Search, ShoppingBag, ShoppingCart, Sprout, Users, X, type LucideIcon } from "lucide-react";
 import { A } from "../../lib/assets";
 import { body, display } from "../../lib/fonts";
 import type { StoreMode } from "../../lib/pf/store";
@@ -12,8 +12,8 @@ import { useErpAccess } from "./page";
 // their width. Below that, a top bar whose button opens the menu as a full sheet.
 // Modules that are not built yet are named once at the foot, not offered as links.
 
-type NavItem = { to: NavPath; label: string; icon: LucideIcon; exact?: boolean };
-type NavPath = "/erp" | "/erp/pesanan" | "/erp/invoice" | "/erp/pelanggan" | "/erp/telusur" | "/erp/monitoring" | "/erp/alarm" | "/erp/perangkat" | "/erp/batch" | "/erp/persemaian" | "/erp/plant-factory" | "/erp/benih" | "/erp/tanaman" | "/erp/resep" | "/erp/pengaturan/lokasi" | "/erp/pengaturan/peran" | "/erp/pengaturan/audit";
+type NavItem = { to: NavPath; label: string; icon: LucideIcon; exact?: boolean; purchase?: boolean; people?: boolean; cost?: boolean; maintenance?: boolean };
+type NavPath = "/erp" | "/erp/biaya" | "/erp/perawatan" | "/erp/absen" | "/erp/kehadiran" | "/erp/jadwal" | "/erp/orang" | "/erp/stok" | "/erp/pembelian" | "/erp/opname" | "/erp/pesanan" | "/erp/invoice" | "/erp/pelanggan" | "/erp/telusur" | "/erp/monitoring" | "/erp/alarm" | "/erp/perangkat" | "/erp/batch" | "/erp/persemaian" | "/erp/plant-factory" | "/erp/benih" | "/erp/tanaman" | "/erp/resep" | "/erp/pengaturan/lokasi" | "/erp/pengaturan/peran" | "/erp/pengaturan/audit";
 
 const HOME: NavItem = { to: "/erp", label: "Ringkasan", icon: LayoutDashboard, exact: true };
 
@@ -40,11 +40,35 @@ const GROUPS: { label: string; items: NavItem[]; sales?: boolean }[] = [
     ],
   },
   {
+    label: "Inventory",
+    items: [
+      { to: "/erp/stok", label: "Stok", icon: Boxes },
+      { to: "/erp/pembelian", label: "Pembelian", icon: ShoppingBag, purchase: true },
+      { to: "/erp/opname", label: "Opname", icon: ClipboardCheck },
+    ],
+  },
+  {
     label: "Monitoring",
     items: [
       { to: "/erp/monitoring", label: "Kondisi", icon: Activity },
       { to: "/erp/alarm", label: "Alarm", icon: BellRing },
       { to: "/erp/perangkat", label: "Perangkat", icon: Cpu },
+    ],
+  },
+  {
+    label: "SDM",
+    items: [
+      { to: "/erp/absen", label: "Absen", icon: Fingerprint },
+      { to: "/erp/kehadiran", label: "Kehadiran", icon: UserCheck, people: true },
+      { to: "/erp/jadwal", label: "Jadwal", icon: CalendarDays, people: true },
+      { to: "/erp/orang", label: "Orang", icon: Contact, people: true },
+    ],
+  },
+  {
+    label: "Biaya",
+    items: [
+      { to: "/erp/biaya", label: "Biaya", icon: Wallet, cost: true },
+      { to: "/erp/perawatan", label: "Perawatan", icon: Wrench, maintenance: true },
     ],
   },
   {
@@ -58,7 +82,6 @@ const GROUPS: { label: string; items: NavItem[]; sales?: boolean }[] = [
 ];
 
 const ALL_ITEMS = [HOME, ...GROUPS.flatMap((g) => g.items)];
-const LATER = "Inventory, SDM, Biaya";
 
 const MODE_CHIP: Record<StoreMode, { label: string; dot: string }> = {
   loading: { label: "Memuat data", dot: "bg-[#8D9398]" },
@@ -111,7 +134,8 @@ function RetryLoad() {
 
 function NavBody({ pathname, rail }: { pathname: string; rail: boolean }) {
   const store = useErpStore();
-  const { canReadSales } = useErpAccess();
+  const { canReadSales, canReadPurchase, canReadPeople, canReadCost, canReadMaintenance } = useErpAccess();
+  const allowed = (item: NavItem) => (!item.purchase || canReadPurchase) && (!item.people || canReadPeople) && (!item.cost || canReadCost) && (!item.maintenance || canReadMaintenance);
   const ready = store.readyToMove().reduce((n, r) => n + r.seedlings, 0);
   const alarms = store.monitoring?.alarms.filter((a) => !a.ack_at).length ?? 0;
   const counts: Partial<Record<NavPath, { n: number; label: string }>> = {
@@ -126,18 +150,17 @@ function NavBody({ pathname, rail }: { pathname: string; rail: boolean }) {
     <>
       <nav className="min-h-0 flex-1 space-y-3 overflow-y-auto px-2.5 py-2.5" aria-label="Menu ERP">
         <NavRow item={HOME} pathname={pathname} rail={rail} />
-        {GROUPS.filter((g) => !g.sales || canReadSales).map((g) => (
+        {GROUPS.filter((g) => (!g.sales || canReadSales) && g.items.some(allowed)).map((g) => (
           <div key={g.label}>
             <p className={`mb-1 px-2.5 text-[12.5px] text-[#4F6B73] ${hideOnRail}`}>{g.label}</p>
             {rail && <div className="mx-2.5 mb-2 border-t border-[#DCE7E8] xl:hidden" />}
             <div className="space-y-0.5">
-              {g.items.map((item) => (
+              {g.items.filter(allowed).map((item) => (
                 <NavRow key={item.to} item={item} pathname={pathname} rail={rail} count={counts[item.to]?.n} countLabel={counts[item.to]?.label} />
               ))}
             </div>
           </div>
         ))}
-        <p className={`px-2.5 text-[12.5px] leading-[1.45] text-[#4F6B73] ${hideOnRail}`}>Menyusul: {LATER}</p>
       </nav>
 
       <div className="space-y-1 border-t border-[#DCE7E8] px-2.5 py-2.5">

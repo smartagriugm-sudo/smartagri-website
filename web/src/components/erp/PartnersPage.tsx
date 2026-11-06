@@ -38,7 +38,6 @@ function PartnerEditor({ partner, onDone }: { partner: Partner | null; onDone: (
             <select className={inputClass} value={form.kind} onChange={(e) => set({ kind: e.target.value as PartnerKind })}>
               <option value="pelanggan">Pelanggan</option>
               <option value="keduanya">Pelanggan dan pemasok</option>
-              <option value="pemasok">Pemasok</option>
             </select>
           </Field>
         </div>
@@ -72,7 +71,9 @@ export default function PartnersPage() {
       actions={canSell && editing === null && !state.error?.notInstalled ? <PrimaryButton onClick={() => setEditing("new")}><Plus className="h-4 w-4" /> Pelanggan baru</PrimaryButton> : undefined}
     >
       <DataState state={state}>
-        {(partners) => (
+        {(all) => {
+          const partners = all.filter((p) => p.kind !== "pemasok");
+          return (
           <div className={`grid grid-cols-1 items-start gap-4 ${editing ? "lg:grid-cols-[minmax(0,1fr)_360px]" : ""}`}>
             <div className="min-w-0 space-y-3">
               {!canSell && <ReadOnlyNote who="Staf penjualan" />}
@@ -100,7 +101,8 @@ export default function PartnersPage() {
             </div>
             {editing && <PartnerEditor key={editing} partner={partners.find((p) => p.id === editing) ?? null} onDone={(saved) => void done(saved)} />}
           </div>
-        )}
+          );
+        }}
       </DataState>
     </ErpPage>
   );

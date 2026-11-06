@@ -34,7 +34,7 @@ import { Card, Disclosure, Note } from "./ui";
 // a page that prints as itself: the browser's print dialog saves it as a PDF, and the
 // ERP's frame and side panels stay off the paper.
 
-function PaperHead({ kind, number, children }: { kind: string; number: string; children: ReactNode }) {
+export function PaperHead({ kind, number, children }: { kind: string; number: string; children: ReactNode }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#DCE7E8] pb-4">
       <div>

@@ -52,7 +52,7 @@ export function OrderEditor({ order, initialLines, partners, crops, onCancel, on
   onSaved: (id: string) => void;
 }) {
   const today = jakartaToday();
-  const active = partners.filter((p) => p.active);
+  const active = partners.filter((p) => p.active && p.kind !== "pemasok");
   const usableCrops = crops.filter((c) => c.active);
   const emptyRow = (): LineForm => ({ cropId: usableCrops[0]?.id ?? "", grade: "A", qtyKg: "", pricePerKg: "" });
   const [partnerId, setPartnerId] = useState(order?.partner_id ?? active[0]?.id ?? "");
