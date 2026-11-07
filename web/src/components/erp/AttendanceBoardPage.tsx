@@ -27,7 +27,7 @@ function PhotoButton({ path, label }: { path: string; label: string }) {
   if (url) return <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={label} className="h-24 w-24 rounded-lg border border-[#DCE7E8] object-cover" /></a>;
   return (
     <button type="button" disabled={action.busy} onClick={() => void action.run(async () => setUrl(await photoLink(path)))} className={textButton}>
-      {action.busy ? "Membuka..." : label}
+      {action.busy ? "Opening..." : label}
       {action.error && <span className="block text-[13px] font-normal text-[#8A5A07]">{action.error}</span>}
     </button>
   );
@@ -41,12 +41,12 @@ function CorrectForm({ record, onDone }: { record: Attendance; onDone: () => Pro
   return (
     <form className="mt-2 space-y-2 rounded-lg bg-[#F3F7F7] p-2.5" onSubmit={(e) => { e.preventDefault(); void action.run(async () => { await correctAttendance(record.id, fromLocalInput(came), fromLocalInput(went), why); await onDone(); }); }}>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <Field label="Masuk"><input type="datetime-local" className={inputClass} value={came} onChange={(e) => setCame(e.target.value)} /></Field>
-        <Field label="Pulang"><input type="datetime-local" className={inputClass} value={went} onChange={(e) => setWent(e.target.value)} /></Field>
+        <Field label="In"><input type="datetime-local" className={inputClass} value={came} onChange={(e) => setCame(e.target.value)} /></Field>
+        <Field label="Out"><input type="datetime-local" className={inputClass} value={went} onChange={(e) => setWent(e.target.value)} /></Field>
       </div>
-      <Field label="Alasan koreksi"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
+      <Field label="Reason for correction"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
       <ActionNote action={{ error: action.error, saved: false }} />
-      <SecondaryButton type="submit" disabled={action.busy || !why.trim()}>{action.busy ? "Menyimpan..." : "Simpan koreksi"}</SecondaryButton>
+      <SecondaryButton type="submit" disabled={action.busy || !why.trim()}>{action.busy ? "Saving..." : "Save correction"}</SecondaryButton>
     </form>
   );
 }
@@ -63,13 +63,13 @@ function RosterItem({ row, canManage, canSeePhotos, reload }: { row: RosterRow; 
         <span className="min-w-0 flex-1 basis-[180px]">
           <span className="block truncate text-[14px] font-medium text-[#0F2F36]">{row.name}</span>
           <span className="block text-[13px] tabular-nums text-[#4F6B73]">
-            {row.shift ? `Jadwal ${clockText(row.shift.start_at)} sampai ${clockText(row.shift.end_at)}` : "Tanpa jadwal"}
-            {record ? ` · masuk ${timeOfDay(record.clock_in)}${record.clock_out ? `, pulang ${timeOfDay(record.clock_out)}` : ""}` : ""}
+            {row.shift ? `Scheduled ${clockText(row.shift.start_at)} to ${clockText(row.shift.end_at)}` : "No schedule"}
+            {record ? ` · in ${timeOfDay(record.clock_in)}${record.clock_out ? `, out ${timeOfDay(record.clock_out)}` : ""}` : ""}
             {row.leave && !record ? ` · ${LEAVE_TYPES.find((t) => t.key === row.leave!.type)?.label}` : ""}
           </span>
         </span>
         <span className={`shrink-0 rounded-md px-2 py-0.5 text-[12.5px] font-medium ${state.className}`}>{state.label}</span>
-        {expandable && <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className={`${textButton} shrink-0`}>{open ? "Tutup" : "Rincian"}</button>}
+        {expandable && <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className={`${textButton} shrink-0`}>{open ? "Close" : "Details"}</button>}
       </div>
       {row.flags.length > 0 && <p className="mt-1 text-[13px] font-medium text-[#8A5A07]">{row.flags.join(" · ")}</p>}
       {open && record && (
@@ -77,12 +77,12 @@ function RosterItem({ row, canManage, canSeePhotos, reload }: { row: RosterRow; 
           {record.note && <p className="text-[13.5px] text-[#36525A]">{record.note}</p>}
           {canSeePhotos && (
             <div className="flex flex-wrap items-center gap-3">
-              {record.in_photo_path && <PhotoButton path={record.in_photo_path} label="Lihat foto masuk" />}
-              {record.out_photo_path && <PhotoButton path={record.out_photo_path} label="Lihat foto pulang" />}
-              {record.photos_removed_at && <p className="text-[13px] text-[#4F6B73]">Foto sudah dihapus setelah masa simpan.</p>}
+              {record.in_photo_path && <PhotoButton path={record.in_photo_path} label="View clock-in photo" />}
+              {record.out_photo_path && <PhotoButton path={record.out_photo_path} label="View clock-out photo" />}
+              {record.photos_removed_at && <p className="text-[13px] text-[#4F6B73]">The photo was removed after its retention period.</p>}
             </div>
           )}
-          {canManage && !fixing && <button type="button" onClick={() => setFixing(true)} className={textButton}>Koreksi jam</button>}
+          {canManage && !fixing && <button type="button" onClick={() => setFixing(true)} className={textButton}>Correct the times</button>}
           {fixing && <CorrectForm record={record} onDone={async () => { setFixing(false); await reload(); }} />}
         </div>
       )}
@@ -99,20 +99,20 @@ function ManualForm({ people, date, onDone }: { people: { id: string; full_name:
   const action = useAction();
   return (
     <Card className="p-4">
-      <p className="mb-2 text-[13px] text-[#4F6B73]">Untuk yang tidak punya ponsel atau akun, atau yang tidak menyetujui lokasi dan foto.</p>
+      <p className="mb-2 text-[13px] text-[#4F6B73]">For those with no phone or account, or who have not agreed to location and photo.</p>
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void action.run(async () => { await addManualAttendance(person, fromLocalInput(came), fromLocalInput(went), why); setWhy(""); await onDone(); }); }}>
-        <Field label="Orang">
+        <Field label="People">
           <select className={inputClass} value={person} onChange={(e) => setPerson(e.target.value)}>
             {active.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
           </select>
         </Field>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Field label="Masuk"><input type="datetime-local" className={inputClass} value={came} onChange={(e) => setCame(e.target.value)} /></Field>
-          <Field label="Pulang"><input type="datetime-local" className={inputClass} value={went} onChange={(e) => setWent(e.target.value)} /></Field>
+          <Field label="In"><input type="datetime-local" className={inputClass} value={came} onChange={(e) => setCame(e.target.value)} /></Field>
+          <Field label="Out"><input type="datetime-local" className={inputClass} value={went} onChange={(e) => setWent(e.target.value)} /></Field>
         </div>
-        <Field label="Alasan"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
+        <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
         <ActionNote action={action} />
-        <PrimaryButton type="submit" disabled={action.busy || !why.trim()}>{action.busy ? "Menyimpan..." : "Catat kehadiran"}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={action.busy || !why.trim()}>{action.busy ? "Saving..." : "Record attendance"}</PrimaryButton>
       </form>
     </Card>
   );
@@ -127,21 +127,21 @@ function LeaveRow({ leave, reload }: { leave: Leave; reload: () => Promise<void>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <span className="min-w-0 text-[14px]">
           <span className="font-medium text-[#0F2F36]">{leave.full_name} · {LEAVE_TYPES.find((t) => t.key === leave.type)?.label}</span>
-          <span className="block text-[13px] text-[#4F6B73]">{formatLongDate(leave.start_date)}{leave.end_date !== leave.start_date ? ` sampai ${formatLongDate(leave.end_date)}` : ""}{leave.reason ? ` · ${leave.reason}` : ""}</span>
+          <span className="block text-[13px] text-[#4F6B73]">{formatLongDate(leave.start_date)}{leave.end_date !== leave.start_date ? ` to ${formatLongDate(leave.end_date)}` : ""}{leave.reason ? ` · ${leave.reason}` : ""}</span>
         </span>
         {!rejecting && (
           <span className="flex flex-wrap gap-2">
-            <SecondaryButton disabled={action.busy} onClick={() => void action.run(async () => { await decideLeave(leave.id, true, ""); await reload(); })}>Setujui</SecondaryButton>
-            <SecondaryButton disabled={action.busy} onClick={() => setRejecting(true)}>Tolak</SecondaryButton>
+            <SecondaryButton disabled={action.busy} onClick={() => void action.run(async () => { await decideLeave(leave.id, true, ""); await reload(); })}>Approve</SecondaryButton>
+            <SecondaryButton disabled={action.busy} onClick={() => setRejecting(true)}>Reject</SecondaryButton>
           </span>
         )}
       </div>
       {rejecting && (
         <div className="mt-2 space-y-2">
-          <Field label="Alasan penolakan"><input className={inputClass} value={note} onChange={(e) => setNote(e.target.value)} autoFocus /></Field>
+          <Field label="Reason for rejecting"><input className={inputClass} value={note} onChange={(e) => setNote(e.target.value)} autoFocus /></Field>
           <div className="flex flex-wrap gap-2">
-            <SecondaryButton disabled={action.busy || !note.trim()} onClick={() => void action.run(async () => { await decideLeave(leave.id, false, note); await reload(); })}>Ya, tolak</SecondaryButton>
-            <SecondaryButton onClick={() => setRejecting(false)}>Batal</SecondaryButton>
+            <SecondaryButton disabled={action.busy || !note.trim()} onClick={() => void action.run(async () => { await decideLeave(leave.id, false, note); await reload(); })}>Yes, reject</SecondaryButton>
+            <SecondaryButton onClick={() => setRejecting(false)}>Cancel</SecondaryButton>
           </div>
         </div>
       )}
@@ -168,15 +168,15 @@ export default function AttendanceBoardPage() {
     sweepExpiredPhotos()
       .then((n) => {
         if (!n) return;
-        setSwept(`${n} catatan absen melewati 90 hari, fotonya sudah dihapus.`);
+        setSwept(`${n} attendance records passed 90 days, and their photos have been removed.`);
         void reload();
       })
       .catch((e: Error) => setSwept(e.message));
   }, [canSweepPhotos, reload]);
 
   return (
-    <ErpPage eyebrow="SDM" title="Kehadiran" sub="Tanda lokasi dan foto membantu memeriksa, bukan memutuskan. Lokasi ponsel bisa dipalsukan.">
-      {!canReadPeople ? <Note>Halaman ini untuk Staf SDM, Manajer produksi, Admin, dan Pimpinan.</Note> : (
+    <ErpPage eyebrow="Team" title="Attendance" sub="Location flags and photos help a person check, they do not decide. A phone's location can be faked.">
+      {!canReadPeople ? <Note>This page is for HR staff, Production managers, Admins and Leadership.</Note> : (
         <DataState state={state}>
           {({ shifts, attendance, leaves, people }) => {
             const roster = buildRoster(date, today, new Date(), shifts, attendance, leaves);
@@ -187,23 +187,23 @@ export default function AttendanceBoardPage() {
             return (
               <div className="space-y-3">
                 {swept && <Note>{swept}</Note>}
-                <Segmented value={tab} options={[{ key: "hadir" as const, label: "Kehadiran" }, { key: "izin" as const, label: `Pengajuan izin (${pending.length})` }]} onChange={setTab} />
+                <Segmented value={tab} options={[{ key: "hadir" as const, label: "Attendance" }, { key: "izin" as const, label: `Leave requests (${pending.length})` }]} onChange={setTab} />
                 {tab === "hadir" ? (
                   <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
                     <div className="min-w-0 space-y-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <SecondaryButton onClick={() => setDate(addDays(date, -1))}>Sebelumnya</SecondaryButton>
-                        <input type="date" aria-label="Tanggal" className={`${inputClass} max-w-[170px]`} value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
-                        <SecondaryButton disabled={date >= today} onClick={() => setDate(addDays(date, 1))}>Berikutnya</SecondaryButton>
-                        {date !== today && <SecondaryButton onClick={() => setDate(today)}>Hari ini</SecondaryButton>}
+                        <SecondaryButton onClick={() => setDate(addDays(date, -1))}>Previous</SecondaryButton>
+                        <input type="date" aria-label="Date" className={`${inputClass} max-w-[170px]`} value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
+                        <SecondaryButton disabled={date >= today} onClick={() => setDate(addDays(date, 1))}>Next</SecondaryButton>
+                        {date !== today && <SecondaryButton onClick={() => setDate(today)}>Today</SecondaryButton>}
                       </div>
                       <Card>
                         <div className="flex flex-wrap items-baseline justify-between gap-x-3 px-4 py-3">
                           <h2 className={sectionTitle}>{formatLongDate(date)}</h2>
-                          <p className="text-[13px] tabular-nums text-[#4F6B73]">{counts.hadir} hadir{counts.kurang ? `, ${counts.kurang} belum absen` : ""}</p>
+                          <p className="text-[13px] tabular-nums text-[#4F6B73]">{counts.hadir} present{counts.kurang ? `, ${counts.kurang} not clocked in` : ""}</p>
                         </div>
                         {roster.length === 0 ? (
-                          <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">Tidak ada jadwal dan absen pada tanggal ini.</p>
+                          <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">No schedules or attendance on this date.</p>
                         ) : (
                           <ul className="border-t border-[#EDF2F2]">{roster.map((r) => <RosterItem key={r.key} row={r} canManage={canManagePeople} canSeePhotos={canReadPrivate} reload={state.reload} />)}</ul>
                         )}
@@ -212,7 +212,7 @@ export default function AttendanceBoardPage() {
                     <div className="min-w-0 space-y-4">
                       {missed.length > 0 && (
                         <Card>
-                          <h2 className={`${sectionTitle} px-4 py-3`}>Lupa absen pulang</h2>
+                          <h2 className={`${sectionTitle} px-4 py-3`}>Missed clock-out</h2>
                           <ul>
                             {missed.slice(0, 8).map((a) => (
                               <li key={a.id} className="border-t border-[#EDF2F2] px-4 py-2 text-[14px]">
@@ -223,20 +223,20 @@ export default function AttendanceBoardPage() {
                           </ul>
                         </Card>
                       )}
-                      {canManagePeople && <Disclosure title="Catat kehadiran manual"><ManualForm key={date} people={people} date={date} onDone={state.reload} /></Disclosure>}
+                      {canManagePeople && <Disclosure title="Record attendance by hand"><ManualForm key={date} people={people} date={date} onDone={state.reload} /></Disclosure>}
                     </div>
                   </div>
                 ) : (
-                  <div className="max-w-[820px] space-y-4">
+                  <div className="space-y-4">
                     <Card>
-                      <h2 className={`${sectionTitle} px-4 py-3`}>Menunggu keputusan</h2>
-                      {pending.length === 0 ? <p className="border-t border-[#EDF2F2] px-4 py-5 text-center text-[14px] text-[#4F6B73]">Tidak ada pengajuan.</p> : (
-                        canSchedule ? <ul className="border-t border-[#EDF2F2]">{pending.map((l) => <LeaveRow key={l.id} leave={l} reload={state.reload} />)}</ul> : <p className="border-t border-[#EDF2F2] px-4 py-3 text-[14px] text-[#4F6B73]">{pending.length} pengajuan menunggu Staf SDM atau Manajer produksi.</p>
+                      <h2 className={`${sectionTitle} px-4 py-3`}>Waiting for a decision</h2>
+                      {pending.length === 0 ? <p className="border-t border-[#EDF2F2] px-4 py-5 text-center text-[14px] text-[#4F6B73]">No requests.</p> : (
+                        canSchedule ? <ul className="border-t border-[#EDF2F2]">{pending.map((l) => <LeaveRow key={l.id} leave={l} reload={state.reload} />)}</ul> : <p className="border-t border-[#EDF2F2] px-4 py-3 text-[14px] text-[#4F6B73]">{pending.length} requests waiting for HR staff or a Production manager.</p>
                       )}
                     </Card>
                     {decided.length > 0 && (
                       <Card>
-                        <h2 className={`${sectionTitle} px-4 py-3`}>Sudah diputuskan</h2>
+                        <h2 className={`${sectionTitle} px-4 py-3`}>Already decided</h2>
                         <ul className="border-t border-[#EDF2F2]">
                           {decided.map((l) => (
                             <li key={l.id} className="flex flex-wrap items-center justify-between gap-x-3 border-t border-[#EDF2F2] px-4 py-2 text-[14px] first:border-0">

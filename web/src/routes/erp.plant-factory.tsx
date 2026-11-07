@@ -8,7 +8,7 @@ export const Route = createFileRoute("/erp/plant-factory")({
   component: () => null,
   head: () => ({
     meta: [
-      { title: "Plant factory | smartagri ERP" },
+      { title: "Plant factory | agrosphere" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

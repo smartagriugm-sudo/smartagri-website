@@ -66,8 +66,8 @@ export function useErpAccess(): ErpAccess {
 
 export function ErpPage({ eyebrow, title, sub, actions, children }: { eyebrow: string; title: string; sub?: string; actions?: ReactNode; children: ReactNode }) {
   return (
-    <main className="flex-1 px-4 py-5 print:p-0 sm:px-6 lg:py-6">
-      <div className="max-w-[1240px]">
+    <main className="flex-1 px-3 py-5 print:p-0 md:px-4 lg:py-6">
+      <div>
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3 print:hidden">
           <div className="min-w-0">
             <p className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]" style={body}>{eyebrow}</p>
@@ -85,12 +85,12 @@ export function ErpPage({ eyebrow, title, sub, actions, children }: { eyebrow: s
 function NotInstalled() {
   return (
     <Card className="p-5">
-      <p className="text-[15px] font-medium text-[#0F2F36]">Tabel ERP belum terpasang</p>
+      <p className="text-[15px] font-medium text-[#0F2F36]">ERP tables are not installed yet</p>
       <p className="mt-1 text-[14px] leading-[1.5] text-[#4F6B73]">
         {isAuthConfigured ? (
-          <>Jalankan file SQL ERP dari folder <code className="rounded bg-[#EEF3F4] px-1">web/supabase/</code> di SQL Editor Supabase (<code className="rounded bg-[#EEF3F4] px-1">pf-foundation.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-batch.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-monitoring.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-sales.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-inventory.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-hr.sql</code>, lalu <code className="rounded bg-[#EEF3F4] px-1">pf-cost.sql</code>), kemudian muat ulang halaman ini.</>
+          <>Run the ERP SQL files from the folder <code className="rounded bg-[#EEF3F4] px-1">web/supabase/</code> in the Supabase SQL Editor (<code className="rounded bg-[#EEF3F4] px-1">pf-foundation.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-batch.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-monitoring.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-sales.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-inventory.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-hr.sql</code>, then <code className="rounded bg-[#EEF3F4] px-1">pf-cost.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-profile-media.sql</code>), then reload this page.</>
         ) : (
-          "Supabase belum dikonfigurasi di lingkungan ini, jadi data ERP tidak bisa dibaca."
+          "Supabase is not configured in this environment, so ERP data cannot be read."
         )}
       </p>
     </Card>
@@ -98,7 +98,7 @@ function NotInstalled() {
 }
 
 /** The client retries a failed read for up to about 18 seconds, so a long wait gets a word of its own. */
-export const SLOW_TEXT = "Koneksi lambat, masih mencoba...";
+export const SLOW_TEXT = "Slow connection, still trying...";
 
 export function useSlow(waiting: boolean, afterMs = 6000) {
   const [slow, setSlow] = useState(false);
@@ -128,7 +128,7 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry: () =
     <div role="alert" className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-[#FFF6E5] px-3 py-2 text-[13px] text-[#8A5A07]">
       <span className="min-w-0">{message}</span>
       <button type="button" disabled={busy} onClick={() => void retry()} className="whitespace-nowrap font-medium text-[#0F2F36] underline disabled:cursor-not-allowed disabled:opacity-50">
-        {busy ? "Menghubungkan..." : "Coba lagi"}
+        {busy ? "Connecting..." : "Try again"}
       </button>
     </div>
   );
@@ -138,7 +138,7 @@ function LoadingNote() {
   const slow = useSlow(true);
   return (
     <div className="flex items-center gap-2 py-10 text-[14px] text-[#4F6B73]">
-      <Loader2 className="h-4 w-4 animate-spin text-[#0B6477]" /> {slow ? SLOW_TEXT : "Memuat data..."}
+      <Loader2 className="h-4 w-4 animate-spin text-[#0B6477]" /> {slow ? SLOW_TEXT : "Loading data..."}
     </div>
   );
 }
@@ -192,7 +192,7 @@ export function useAction() {
 /** A form's answer: why it failed, or for a few seconds that it saved. */
 export function ActionNote({ action }: { action: { error: string | null; saved: boolean } }) {
   if (action.error) return <Note tone="warn">{action.error}</Note>;
-  if (action.saved) return <p role="status" className="text-[13px] font-medium text-[#0E7A5C]">Tersimpan</p>;
+  if (action.saved) return <p role="status" className="text-[13px] font-medium text-[#0E7A5C]">Saved</p>;
   return null;
 }
 
@@ -220,8 +220,8 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 export function ReadOnlyNote({ who }: { who: string }) {
-  return <Note>Anda bisa melihat data ini. Mengubahnya perlu peran {who}.</Note>;
+  return <Note>You can see this data. Changing it needs the role {who}.</Note>;
 }
 
 export const formatDateTime = (iso: string) =>
-  new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(iso));
+  new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(iso));

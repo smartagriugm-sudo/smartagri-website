@@ -9,14 +9,14 @@ import { SHELVES, slotId } from "./chamber";
 /* ------------------------------------------------------------------ roles */
 
 export const ERP_ROLES = [
-  { key: "pimpinan", label: "Pimpinan", note: "Melihat semua data dan audit log" },
-  { key: "admin", label: "Admin sistem", note: "Mengatur peran dan lokasi" },
-  { key: "manajer_produksi", label: "Manajer produksi", note: "Mengatur tanaman, resep, lot benih, dan batch" },
-  { key: "staf_penjualan", label: "Staf penjualan", note: "Mengelola pelanggan, pesanan, invoice, dan pembayaran" },
-  { key: "staf_sdm", label: "Staf SDM", note: "Mengelola data orang, kontrak, jadwal, dan absensi" },
-  { key: "teknisi", label: "Teknisi", note: "Mengatur perangkat, kalibrasi, dan token" },
-  { key: "operator", label: "Operator", note: "Mencatat semai, pindah tanam, dan panen" },
-  { key: "peneliti", label: "Peneliti dan mahasiswa", note: "Membaca data" },
+  { key: "pimpinan", label: "Leadership", note: "Sees all data and the audit log" },
+  { key: "admin", label: "System admin", note: "Manages roles and locations" },
+  { key: "manajer_produksi", label: "Production manager", note: "Manages crops, recipes, seed lots and batches" },
+  { key: "staf_penjualan", label: "Sales staff", note: "Manages customers, orders, invoices and payments" },
+  { key: "staf_sdm", label: "HR staff", note: "Manages people, contracts, schedules and attendance" },
+  { key: "teknisi", label: "Technician", note: "Manages devices, calibration and tokens" },
+  { key: "operator", label: "Operator", note: "Records sowing, transplanting and harvest" },
+  { key: "peneliti", label: "Researchers and students", note: "Reading data" },
 ] as const;
 
 export type ErpRole = (typeof ERP_ROLES)[number]["key"];
@@ -59,22 +59,22 @@ export type LocationLevel = "site" | "room" | "rack" | "tier" | "gully" | "hole"
 export type SlotStatus = "available" | "maintenance" | "retired" | "sanitasi";
 
 export const SLOT_STATUSES: { key: SlotStatus; label: string; color: string }[] = [
-  { key: "available", label: "Siap pakai", color: "#2F9E57" },
-  { key: "maintenance", label: "Perawatan", color: "#E0A526" },
-  { key: "retired", label: "Tidak dipakai", color: "#8D9398" },
-  { key: "sanitasi", label: "Sanitasi", color: "#7FB7E8" },
+  { key: "available", label: "Ready to use", color: "#2F9E57" },
+  { key: "maintenance", label: "Maintenance", color: "#E0A526" },
+  { key: "retired", label: "Not in use", color: "#8D9398" },
+  { key: "sanitasi", label: "Sanitation", color: "#7FB7E8" },
 ];
 
 export const LEVEL_LABELS: Record<LocationLevel, string> = {
   site: "Site",
-  room: "Ruang",
-  rack: "Rak",
-  tier: "Tingkat",
-  gully: "Talang",
-  hole: "Lubang",
+  room: "Room",
+  rack: "Rack",
+  tier: "Tier",
+  gully: "Gully",
+  hole: "Hole",
   chamber: "Chamber",
-  chamber_shelf: "Rak chamber",
-  tray_position: "Posisi nampan",
+  chamber_shelf: "Chamber shelf",
+  tray_position: "Tray position",
 };
 
 export type PfLocation = {
@@ -167,11 +167,11 @@ const parseNumber = (s: string) => (s.trim() === "" ? null : Number(s.trim().rep
 
 export function parseCropForm(f: CropForm): { fields: CropFields; error: null } | { fields: null; error: string } {
   const name = f.name.trim();
-  if (!name) return { fields: null, error: "Nama tanaman wajib diisi." };
+  if (!name) return { fields: null, error: "A crop name is required." };
   const cycle = parseNumber(f.cycleDays);
-  if (cycle !== null && (!Number.isInteger(cycle) || cycle <= 0)) return { fields: null, error: "Siklus harus bilangan bulat di atas 0." };
+  if (cycle !== null && (!Number.isInteger(cycle) || cycle <= 0)) return { fields: null, error: "The cycle must be a whole number above 0." };
   const germ = parseNumber(f.germRate);
-  if (germ !== null && (!Number.isFinite(germ) || germ < 0 || germ > 100)) return { fields: null, error: "Daya kecambah harus 0–100%." };
+  if (germ !== null && (!Number.isFinite(germ) || germ < 0 || germ > 100)) return { fields: null, error: "Germination must be 0–100%." };
   return {
     fields: { name, variety: f.variety.trim(), cycle_days: cycle, germ_rate: germ, notes: f.notes.trim(), active: f.active },
     error: null,
@@ -185,17 +185,17 @@ export const cropLabel = (c: Pick<PfCrop, "name" | "variety">) => (c.variety ? `
 export type RecipeStatus = "draft" | "active" | "retired";
 
 export const RECIPE_STATUS: Record<RecipeStatus, { label: string; className: string }> = {
-  draft: { label: "Draf", className: "bg-[#FFF6E5] text-[#8A5A07]" },
-  active: { label: "Aktif", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
-  retired: { label: "Selesai", className: "bg-[#EEF3F4] text-[#4F6B73]" },
+  draft: { label: "Draft", className: "bg-[#FFF6E5] text-[#8A5A07]" },
+  active: { label: "Active", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
+  retired: { label: "Done", className: "bg-[#EEF3F4] text-[#4F6B73]" },
 };
 
 export const RECIPE_PHASES = [
-  { key: "semai", label: "Semai" },
-  { key: "germinasi", label: "Germinasi" },
-  { key: "bibit", label: "Bibit" },
-  { key: "vegetatif", label: "Vegetatif" },
-  { key: "pra_panen", label: "Pra panen" },
+  { key: "semai", label: "Sow" },
+  { key: "germinasi", label: "Germination" },
+  { key: "bibit", label: "Seedlings" },
+  { key: "vegetatif", label: "Vegetative" },
+  { key: "pra_panen", label: "Pre-harvest" },
 ] as const;
 
 export type RecipePhaseKey = (typeof RECIPE_PHASES)[number]["key"];
@@ -258,16 +258,16 @@ export function phaseToForm(p: PfRecipePhase): PhaseForm {
 
 /** Rows in screen order become seq 1, 2, 3... */
 export function parsePhaseForms(forms: readonly PhaseForm[]): { fields: PhaseFields[]; error: null } | { fields: null; error: string } {
-  if (forms.length === 0) return { fields: null, error: "Resep perlu minimal satu fase." };
+  if (forms.length === 0) return { fields: null, error: "A recipe needs at least one phase." };
   const fields: PhaseFields[] = [];
   for (const [i, f] of forms.entries()) {
-    const where = `Fase ${i + 1} (${phaseLabel(f.phase)})`;
+    const where = `Phase ${i + 1} (${phaseLabel(f.phase)})`;
     const days = parseNumber(f.durationDays);
-    if (days === null || !Number.isInteger(days) || days <= 0) return { fields: null, error: `${where}: lama fase harus bilangan bulat di atas 0.` };
+    if (days === null || !Number.isInteger(days) || days <= 0) return { fields: null, error: `${where}: phase length must be a whole number above 0.` };
     const photo = parseNumber(f.photoperiodH);
-    if (photo !== null && (!Number.isFinite(photo) || photo < 0 || photo > 24)) return { fields: null, error: `${where}: fotoperiode harus 0–24 jam.` };
+    if (photo !== null && (!Number.isFinite(photo) || photo < 0 || photo > 24)) return { fields: null, error: `${where}: photoperiod must be 0–24 hours.` };
     const ppfd = parseNumber(f.ppfdUmol);
-    if (ppfd !== null && (!Number.isFinite(ppfd) || ppfd < 0)) return { fields: null, error: `${where}: PPFD tidak boleh negatif.` };
+    if (ppfd !== null && (!Number.isFinite(ppfd) || ppfd < 0)) return { fields: null, error: `${where}: PPFD cannot be negative.` };
     fields.push({ phase: f.phase, seq: i + 1, duration_days: days, photoperiod_h: photo, ppfd_umol: ppfd });
   }
   return { fields, error: null };
@@ -289,44 +289,44 @@ export type AuditEntry = {
 };
 
 export const AUDIT_TABLES: { key: string; label: string }[] = [
-  { key: "pf_location", label: "Lokasi" },
-  { key: "pf_crop", label: "Tanaman" },
-  { key: "pf_recipe", label: "Resep" },
-  { key: "pf_recipe_phase", label: "Fase resep" },
-  { key: "pf_user_role", label: "Peran" },
+  { key: "pf_location", label: "Location" },
+  { key: "pf_crop", label: "Crops" },
+  { key: "pf_recipe", label: "Recipes" },
+  { key: "pf_recipe_phase", label: "Recipe phase" },
+  { key: "pf_user_role", label: "Roles" },
   { key: "pf_batch", label: "Batch" },
-  { key: "pf_harvest_lot", label: "Lot panen" },
-  { key: "pf_stock_lot", label: "Lot benih" },
-  { key: "pf_item", label: "Barang" },
-  { key: "pf_cost_entry", label: "Tagihan" },
-  { key: "pf_labor_rate", label: "Tarif tenaga" },
-  { key: "pf_lot_price", label: "Harga lot" },
-  { key: "pf_maintenance_plan", label: "Rencana perawatan" },
-  { key: "pf_work_order", label: "Perintah kerja" },
-  { key: "pf_person", label: "Orang" },
-  { key: "pf_shift", label: "Jadwal" },
-  { key: "pf_leave", label: "Izin" },
-  { key: "pf_work_area", label: "Lokasi kerja" },
-  { key: "pf_labor_log", label: "Jam kerja" },
-  { key: "pf_purchase_order", label: "Pembelian" },
-  { key: "pf_po_line", label: "Baris pembelian" },
-  { key: "pf_recipe_material", label: "Bahan resep" },
-  { key: "pf_stock_count", label: "Opname" },
-  { key: "pf_stock_shortage", label: "Kekurangan stok" },
-  { key: "pf_partner", label: "Pelanggan" },
-  { key: "pf_sales_order", label: "Pesanan" },
-  { key: "pf_so_allocation", label: "Alokasi lot" },
-  { key: "pf_delivery", label: "Pengiriman" },
+  { key: "pf_harvest_lot", label: "Harvest lots" },
+  { key: "pf_stock_lot", label: "Seed lots" },
+  { key: "pf_item", label: "Item" },
+  { key: "pf_cost_entry", label: "Bills" },
+  { key: "pf_labor_rate", label: "Labour rate" },
+  { key: "pf_lot_price", label: "Lot price" },
+  { key: "pf_maintenance_plan", label: "Maintenance plan" },
+  { key: "pf_work_order", label: "Work order" },
+  { key: "pf_person", label: "People" },
+  { key: "pf_shift", label: "Schedule" },
+  { key: "pf_leave", label: "Leave" },
+  { key: "pf_work_area", label: "Work area" },
+  { key: "pf_labor_log", label: "Work hours" },
+  { key: "pf_purchase_order", label: "Purchasing" },
+  { key: "pf_po_line", label: "Purchase line" },
+  { key: "pf_recipe_material", label: "Recipe materials" },
+  { key: "pf_stock_count", label: "Stock count" },
+  { key: "pf_stock_shortage", label: "Stock shortage" },
+  { key: "pf_partner", label: "Customers" },
+  { key: "pf_sales_order", label: "Orders" },
+  { key: "pf_so_allocation", label: "Lot allocation" },
+  { key: "pf_delivery", label: "Delivery" },
   { key: "pf_invoice", label: "Invoice" },
-  { key: "pf_payment", label: "Pembayaran" },
-  { key: "pf_tax_rate", label: "Tarif pajak" },
-  { key: "pf_asset", label: "Perangkat" },
-  { key: "pf_calibration", label: "Kalibrasi" },
-  { key: "pf_alarm_rule", label: "Aturan alarm" },
-  { key: "pf_recipe_target", label: "Acuan resep" },
+  { key: "pf_payment", label: "Payment" },
+  { key: "pf_tax_rate", label: "Tax rate" },
+  { key: "pf_asset", label: "Devices" },
+  { key: "pf_calibration", label: "Calibration" },
+  { key: "pf_alarm_rule", label: "Alarm rule" },
+  { key: "pf_recipe_target", label: "Recipe reference" },
 ];
 
-export const AUDIT_ACTIONS: Record<AuditEntry["action"], string> = { INSERT: "Dibuat", UPDATE: "Diubah", DELETE: "Dihapus" };
+export const AUDIT_ACTIONS: Record<AuditEntry["action"], string> = { INSERT: "Created", UPDATE: "Changed", DELETE: "Removed" };
 
 export type AuditChange = { field: string; from: unknown; to: unknown };
 
@@ -382,20 +382,20 @@ export function toDataError(e: PostgrestLikeError): ErpDataError {
 const NETWORK_FAILURE = /failed to fetch|networkerror|load failed|fetch failed/i;
 
 function friendlyMessage(e: PostgrestLikeError) {
-  if (NETWORK_FAILURE.test(e.message)) return "Tidak bisa terhubung ke server. Periksa koneksi internet, lalu coba lagi.";
-  if (e.code === "23505") return "Data dengan nama atau kode itu sudah ada.";
-  if (e.code === "42501") return "Akun Anda tidak punya izin untuk tindakan ini.";
+  if (NETWORK_FAILURE.test(e.message)) return "Cannot reach the server. Check your internet connection, then try again.";
+  if (e.code === "23505") return "Something with that name or code already exists.";
+  if (e.code === "42501") return "Your account does not have permission for this.";
   return e.message;
 }
 
 /** Any failure, as an error whose message can be shown to the person using the page. */
 export function toErpError(e: unknown): ErpDataError {
   if (e instanceof ErpDataError) return e;
-  return toDataError({ message: e instanceof Error ? e.message : "Terjadi kesalahan" });
+  return toDataError({ message: e instanceof Error ? e.message : "Something went wrong" });
 }
 
 export function db() {
-  if (!supabase) throw new ErpDataError("Supabase belum dikonfigurasi di lingkungan ini.", true);
+  if (!supabase) throw new ErpDataError("Supabase is not configured in this environment.", true);
   return supabase;
 }
 
@@ -465,13 +465,13 @@ export async function deleteRecipeDraft(id: string) {
   check(await db().from("pf_recipe").delete().eq("id", id));
 }
 
-export type LabMember = { id: string; full_name: string; preferred_name: string | null; lab_role: string };
+export type LabMember = { id: string; full_name: string; preferred_name: string | null; lab_role: string; avatar_url?: string | null };
 
 export async function fetchMembers(): Promise<LabMember[]> {
   return unwrap(await db().rpc("lab_directory")) as LabMember[];
 }
 
-export const memberName = (m: Pick<LabMember, "full_name" | "preferred_name">) => m.preferred_name || m.full_name || "Tanpa nama";
+export const memberName = (m: Pick<LabMember, "full_name" | "preferred_name">) => m.preferred_name || m.full_name || "Unnamed";
 
 export type RoleGrant = { profile_id: string; role: ErpRole };
 
@@ -494,6 +494,12 @@ export async function fetchAudit(table: string | null): Promise<AuditEntry[]> {
   return unwrap(await (table ? query.eq("table_name", table) : query)) as AuditEntry[];
 }
 
+/** What one account changed. Readable by Admin and Pimpinan only, so a refusal comes back empty rather than as an error. */
+export async function fetchActorAudit(actor: string): Promise<AuditEntry[]> {
+  const { data, error } = await db().from("pf_audit_log").select("id,at,actor_id,table_name,row_id,action,old_data,new_data").eq("actor_id", actor).order("id", { ascending: false }).limit(AUDIT_PAGE);
+  return error ? [] : ((data ?? []) as AuditEntry[]);
+}
+
 export type FoundationSummary = { slots: SlotCoverage; crops: number; activeRecipes: number; seedLots: number };
 
 export async function fetchFoundationSummary(): Promise<FoundationSummary> {
@@ -512,4 +518,36 @@ export async function fetchFoundationSummary(): Promise<FoundationSummary> {
     // Tahap 2's table: the rest of this card still works before it is installed.
     seedLots: lots.error ? 0 : (lots.count ?? 0),
   };
+}
+
+/** The strongest thing this person is here as, for the profile menu. */
+export function accessLabel(a: ErpAccess) {
+  if (a.canAdmin) return "System admin";
+  if (a.canManageProduction) return "Production manager";
+  if (a.canSell) return "Sales staff";
+  if (a.canManagePeople) return "HR staff";
+  if (a.canMaintain) return "Technician";
+  if (a.canOperate) return "Operator";
+  if (a.canReadAudit) return "Leadership";
+  return "Researchers and students";
+}
+
+/**
+ * A money amount as people type it, in either habit: 1.500.000, 1,500,000, 12,5 or 12.5.
+ * A separator followed by exactly three digits, every time, groups thousands; otherwise it
+ * marks decimals. NaN when it is not a number at all, null when empty.
+ */
+export function parseAmount(text: string): number | null {
+  const clean = text.trim().replace(/^rp\.?\s*/i, "").replace(/\s/g, "");
+  if (clean === "") return null;
+  if (/^-?\d{1,3}(\.\d{3})+$/.test(clean)) return Number(clean.replace(/\./g, ""));
+  if (/^-?\d{1,3}(,\d{3})+$/.test(clean)) return Number(clean.replace(/,/g, ""));
+  const lastDot = clean.lastIndexOf(".");
+  const lastComma = clean.lastIndexOf(",");
+  if (lastDot >= 0 && lastComma >= 0) {
+    const decimal = lastDot > lastComma ? "." : ",";
+    const group = decimal === "." ? /,/g : /\./g;
+    return Number(clean.replace(group, "").replace(decimal, "."));
+  }
+  return Number(clean.replace(",", "."));
 }

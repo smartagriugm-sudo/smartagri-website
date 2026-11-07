@@ -58,14 +58,14 @@ function AllocationRow({ a, canSell, reload }: { a: Allocation; canSell: boolean
         <span className="font-medium text-[#0F2F36]">{a.lot_code}</span>
         <span className="tabular-nums text-[#0F2F36]"> · {formatKg(a.qty_kg)}</span>
         <span className="block text-[13px] text-[#4F6B73]">
-          Dari <Link to="/erp/batch/$id" params={{ id: a.batch_id }} className="text-[#0B6477] hover:underline">{a.batch_code}</Link>
-          {a.best_before ? ` · simpan sampai ${formatLongDate(a.best_before)}` : ""}
-          {a.delivery_no ? ` · terkirim ${a.delivery_no}` : ""}
+          From <Link to="/erp/batch/$id" params={{ id: a.batch_id }} className="text-[#0B6477] hover:underline">{a.batch_code}</Link>
+          {a.best_before ? ` · keep until ${formatLongDate(a.best_before)}` : ""}
+          {a.delivery_no ? ` · delivered ${a.delivery_no}` : ""}
         </span>
       </span>
       {canSell && !a.delivery_id && (
         <button type="button" disabled={action.busy} onClick={() => void action.run(async () => { await releaseAllocation(a.id); await reload(); })} className="min-h-[44px] text-[14px] font-medium text-[#4F6B73] hover:text-[#B3362C] sm:min-h-[24px]">
-          {action.busy ? "Melepas..." : "Lepas"}
+          {action.busy ? "Releasing..." : "Release"}
         </button>
       )}
       <div className="basis-full empty:hidden"><ActionNote action={{ error: action.error, saved: false }} /></div>
@@ -97,21 +97,21 @@ function LineCard({ line, allocations, lots, canSell, open, reload }: { line: Or
     <div className="rounded-lg border border-[#E3ECED] p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
         <span className="text-[14px] font-medium text-[#0F2F36]">{lineLabel(line)}</span>
-        <span className="text-[13px] tabular-nums text-[#4F6B73]">{formatKg(line.allocated_kg)} dari {formatKg(line.qty_kg)}</span>
+        <span className="text-[13px] tabular-nums text-[#4F6B73]">{formatKg(line.allocated_kg)} of {formatKg(line.qty_kg)}</span>
       </div>
       {allocations.length > 0 && <ul className="mt-1">{allocations.map((a) => <AllocationRow key={a.id} a={a} canSell={canSell} reload={reload} />)}</ul>}
       {open && canSell && needed > 0 && (
         options.length === 0 ? (
-          <p className="mt-2 text-[13px] text-[#4F6B73]">Belum ada lot {line.crop_name} grade {line.grade} yang tersisa. Masih perlu {formatKg(needed)}.</p>
+          <p className="mt-2 text-[13px] text-[#4F6B73]">No lots yet for {line.crop_name} grade {line.grade} left. Still needs {formatKg(needed)}.</p>
         ) : (
           <form className="mt-2 grid grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,1fr)_110px_auto]" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-            <Field label="Lot panen">
+            <Field label="Harvest lot">
               <select className={inputClass} value={chosen?.id ?? ""} onChange={(e) => setLotId(e.target.value)}>
-                {options.map((l) => <option key={l.id} value={l.id}>{l.lot_code} · sisa {formatKg(l.remaining_kg)} · {l.batch_code}{l.best_before ? ` · s.d. ${formatLongDate(l.best_before)}` : ""}</option>)}
+                {options.map((l) => <option key={l.id} value={l.id}>{l.lot_code} · left {formatKg(l.remaining_kg)} · {l.batch_code}{l.best_before ? ` · s.d. ${formatLongDate(l.best_before)}` : ""}</option>)}
               </select>
             </Field>
-            <Field label="Berat (kg)"><input className={inputClass} inputMode="decimal" value={kg} placeholder={String(suggested).replace(".", ",")} onChange={(e) => setKg(e.target.value)} /></Field>
-            <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Pilih lot"}</PrimaryButton>
+            <Field label="Weight (kg)"><input className={inputClass} inputMode="decimal" value={kg} placeholder={String(suggested).replace(".", ",")} onChange={(e) => setKg(e.target.value)} /></Field>
+            <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Choose lots"}</PrimaryButton>
           </form>
         )
       )}
@@ -132,18 +132,18 @@ function DeliveryCard({ order, allocations, deliveries, canSell, reload }: { ord
   const shown = deliveries.filter((d) => !d.cancelled_at);
 
   const submit = async () => {
-    if (chosen.length === 0) return action.setError("Pilih minimal satu lot untuk dikirim.");
+    if (chosen.length === 0) return action.setError("Choose at least one lot to send.");
     let created = "";
     if (await action.run(async () => { created = await createDelivery(order.id, chosen, deliveredOn, recipient, ""); await reload(); })) {
       setPicked(null);
-      void navigate({ to: "/erp/pengiriman/$id", params: { id: created } });
+      void navigate({ to: "/erp/deliveries/$id", params: { id: created } });
     }
   };
 
   if (ready.length === 0 && shown.length === 0) return null;
   return (
     <Card className="p-4">
-      <h2 className={`${sectionTitle} mb-2`}>Pengiriman</h2>
+      <h2 className={`${sectionTitle} mb-2`}>Delivery</h2>
       {shown.length > 0 && (
         <ul className="mb-3">
           {shown.map((d) => <DeliveryRow key={d.id} delivery={d} canSell={canSell} reload={reload} />)}
@@ -152,7 +152,7 @@ function DeliveryCard({ order, allocations, deliveries, canSell, reload }: { ord
       {canSell && ready.length > 0 && order.status === "dikonfirmasi" && (
         <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
           <fieldset>
-            <legend className="mb-1 text-[13px] font-medium text-[#36525A]">Lot yang dikirim</legend>
+            <legend className="mb-1 text-[13px] font-medium text-[#36525A]">Lots delivered</legend>
             {ready.map((a) => (
               <label key={a.id} className="flex min-h-[44px] items-center gap-2 text-[14px] text-[#0F2F36] sm:min-h-[28px]">
                 <input type="checkbox" className="h-4 w-4 accent-[#14919B]" checked={chosen.includes(a.id)} onChange={(e) => setPicked(e.target.checked ? [...chosen, a.id] : chosen.filter((x) => x !== a.id))} />
@@ -161,11 +161,11 @@ function DeliveryCard({ order, allocations, deliveries, canSell, reload }: { ord
             ))}
           </fieldset>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Tanggal kirim"><input type="date" className={inputClass} max={today} value={deliveredOn} onChange={(e) => setDeliveredOn(e.target.value)} /></Field>
-            <Field label="Penerima"><input className={inputClass} value={recipient} onChange={(e) => setRecipient(e.target.value)} /></Field>
+            <Field label="Delivery date"><input type="date" className={inputClass} max={today} value={deliveredOn} onChange={(e) => setDeliveredOn(e.target.value)} /></Field>
+            <Field label="Recipient"><input className={inputClass} value={recipient} onChange={(e) => setRecipient(e.target.value)} /></Field>
           </div>
           <ActionNote action={action} />
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Buat surat jalan"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Create delivery note"}</PrimaryButton>
         </form>
       )}
     </Card>
@@ -180,18 +180,18 @@ function DeliveryRow({ delivery, canSell, reload }: { delivery: Delivery; canSel
     <li className="border-t border-[#EDF2F2] py-2 first:border-0">
       <div className="flex flex-wrap items-center justify-between gap-x-3 text-[14px]">
         <span>
-          <Link to="/erp/pengiriman/$id" params={{ id: delivery.id }} className="inline-flex min-h-[44px] items-center sm:min-h-0 font-medium text-[#0B6477] hover:underline">{delivery.delivery_no}</Link>
+          <Link to="/erp/deliveries/$id" params={{ id: delivery.id }} className="inline-flex min-h-[44px] items-center sm:min-h-0 font-medium text-[#0B6477] hover:underline">{delivery.delivery_no}</Link>
           <span className="text-[#4F6B73]"> · {formatLongDate(delivery.delivered_on)}{delivery.recipient ? ` · ${delivery.recipient}` : ""}</span>
         </span>
-        {canSell && !asking && <button type="button" onClick={() => setAsking(true)} className="min-h-[44px] text-[14px] font-medium text-[#4F6B73] hover:text-[#B3362C] sm:min-h-[24px]">Batalkan</button>}
+        {canSell && !asking && <button type="button" onClick={() => setAsking(true)} className="min-h-[44px] text-[14px] font-medium text-[#4F6B73] hover:text-[#B3362C] sm:min-h-[24px]">Cancel</button>}
       </div>
       {asking && (
         <div className="mt-2 space-y-2 rounded-lg bg-[#FFF6E5] p-2.5">
-          <Field label="Kenapa dibatalkan?" hint="Lot kembali menjadi belum terkirim."><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} autoFocus /></Field>
+          <Field label="Why was it cancelled?" hint="The lots go back to not delivered."><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} autoFocus /></Field>
           <ActionNote action={{ error: action.error, saved: false }} />
           <div className="flex flex-wrap gap-2">
-            <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await cancelDelivery(delivery.id, why); await reload(); })}>Ya, batalkan</SecondaryButton>
-            <SecondaryButton onClick={() => setAsking(false)}>Tutup</SecondaryButton>
+            <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await cancelDelivery(delivery.id, why); await reload(); })}>Yes, cancel</SecondaryButton>
+            <SecondaryButton onClick={() => setAsking(false)}>Close</SecondaryButton>
           </div>
         </div>
       )}
@@ -211,7 +211,7 @@ function InvoiceCard({ order, rates, invoices, canSell, reload }: { order: Order
   const navigate = useNavigate();
 
   const submit = async () => {
-    if (dueOn < issuedOn) return action.setError("Tanggal jatuh tempo sebelum tanggal invoice.");
+    if (dueOn < issuedOn) return action.setError("The due date is before the invoice date.");
     let created = "";
     if (await action.run(async () => { created = await issueInvoice(order.id, issuedOn, dueOn, rate || null, notes); await reload(); })) {
       void navigate({ to: "/erp/invoice/$id", params: { id: created } });
@@ -240,20 +240,20 @@ function InvoiceCard({ order, rates, invoices, canSell, reload }: { order: Order
       )}
       {canSell && open > 0 && order.status === "dikonfirmasi" && (
         <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-          <p className="text-[13px] text-[#4F6B73]">Menagih {formatKg(open)} yang sudah terkirim dan belum ditagih.</p>
+          <p className="text-[13px] text-[#4F6B73]">Bills {formatKg(open)} already delivered and not yet invoiced.</p>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Tanggal invoice"><input type="date" className={inputClass} value={issuedOn} onChange={(e) => setIssuedOn(e.target.value)} /></Field>
-            <Field label="Jatuh tempo"><input type="date" className={inputClass} min={issuedOn} value={dueOn} onChange={(e) => setDueOn(e.target.value)} /></Field>
+            <Field label="Invoice date"><input type="date" className={inputClass} value={issuedOn} onChange={(e) => setIssuedOn(e.target.value)} /></Field>
+            <Field label="Due date"><input type="date" className={inputClass} min={issuedOn} value={dueOn} onChange={(e) => setDueOn(e.target.value)} /></Field>
           </div>
-          <Field label="Pajak" hint={active.length ? undefined : "Tarif pajak bisa ditambahkan di halaman Invoice."}>
+          <Field label="Tax" hint={active.length ? undefined : "Tax rates can be added on the Invoice page."}>
             <select className={inputClass} value={rate} onChange={(e) => setRate(e.target.value)}>
-              <option value="">Tanpa pajak</option>
+              <option value="">No tax</option>
               {active.map((r) => <option key={r.id} value={r.id}>{r.name} ({r.percent}%)</option>)}
             </select>
           </Field>
-          <Field label="Catatan di invoice" hint="Mis. nomor rekening tujuan pembayaran."><textarea className={inputClass} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
+          <Field label="Notes on the invoice" hint="For example, the bank account for payment."><textarea className={inputClass} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
           <ActionNote action={action} />
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Menerbitkan..." : "Terbitkan invoice"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Issuing..." : "Issue invoice"}</PrimaryButton>
         </form>
       )}
     </Card>
@@ -265,11 +265,11 @@ function CancelCard({ order, reload }: { order: OrderOverview; reload: Reload })
   const action = useAction();
   return (
     <Card className="p-4">
-      <p className="mb-2 text-[14px] text-[#4F6B73]">Lot yang sudah dipilih kembali ke stok. Nomor pesanan tetap tercatat.</p>
+      <p className="mb-2 text-[14px] text-[#4F6B73]">Chosen lots return to stock. The order number stays on record.</p>
       <div className="space-y-2">
-        <Field label="Alasan"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
+        <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
         <ActionNote action={{ error: action.error, saved: false }} />
-        <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await cancelOrder(order.id, why); await reload(); })}>{action.busy ? "Membatalkan..." : "Ya, batalkan pesanan"}</SecondaryButton>
+        <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await cancelOrder(order.id, why); await reload(); })}>{action.busy ? "Cancelling..." : "Yes, cancel order"}</SecondaryButton>
       </div>
     </Card>
   );
@@ -293,10 +293,10 @@ export default function OrderDetailPage({ id }: { id: string }) {
 
   return (
     <ErpPage
-      eyebrow="Penjualan · Pesanan"
-      title={state.data ? `${state.data.order.so_no} · ${state.data.order.partner_name}` : "Pesanan"}
+      eyebrow="Sales · Orders"
+      title={state.data ? `${state.data.order.so_no} · ${state.data.order.partner_name}` : "Order"}
       sub={state.data ? orderStageLabel(state.data.order) : undefined}
-      actions={<Link to="/erp/pesanan" className="inline-flex min-h-[44px] items-center gap-1 text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]"><ArrowLeft className="h-4 w-4" /> Semua pesanan</Link>}
+      actions={<Link to="/erp/orders" className="inline-flex min-h-[44px] items-center gap-1 text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]"><ArrowLeft className="h-4 w-4" /> All orders</Link>}
     >
       <DataState state={state}>
         {({ order, lines, allocations, lots, deliveries, invoices, rates }) => {
@@ -306,14 +306,14 @@ export default function OrderDetailPage({ id }: { id: string }) {
           return (
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
               <div className="min-w-0 space-y-4">
-                {step !== null && <StepStrip steps={ORDER_STEPS} current={step} label="Langkah pesanan" />}
-                {!canSell && <ReadOnlyNote who="Staf penjualan" />}
-                {order.status === "batal" && <Note tone="warn">Pesanan dibatalkan: {order.cancel_note}</Note>}
+                {step !== null && <StepStrip steps={ORDER_STEPS} current={step} label="Order steps" />}
+                {!canSell && <ReadOnlyNote who="Sales staff" />}
+                {order.status === "batal" && <Note tone="warn">Order cancelled: {order.cancel_note}</Note>}
 
                 {isDraft && editing && editorData.data ? (
                   <OrderEditor
                     order={order}
-                    initialLines={lines.map((l) => ({ cropId: l.crop_id, grade: l.grade, qtyKg: String(l.qty_kg).replace(".", ","), pricePerKg: String(l.price_per_kg) }))}
+                    initialLines={lines.map((l) => ({ cropId: l.crop_id, grade: l.grade, qtyKg: String(l.qty_kg), pricePerKg: String(l.price_per_kg) }))}
                     partners={editorData.data.partners}
                     crops={editorData.data.crops}
                     onCancel={() => setEditing(false)}
@@ -322,10 +322,10 @@ export default function OrderDetailPage({ id }: { id: string }) {
                 ) : (
                   <Card className="p-4">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                      <h2 className={sectionTitle}>{isOpen ? "Pilih lot panen" : "Isi pesanan"}</h2>
-                      {isDraft && canSell && <SecondaryButton onClick={() => setEditing(true)}>Ubah</SecondaryButton>}
+                      <h2 className={sectionTitle}>{isOpen ? "Choose harvest lots" : "Order contents"}</h2>
+                      {isDraft && canSell && <SecondaryButton onClick={() => setEditing(true)}>Edit</SecondaryButton>}
                     </div>
-                    {isOpen && <p className="mb-2 text-[13px] text-[#4F6B73]">Lot terlama tampil lebih dulu. Lot yang dipilih langsung mengurangi stok.</p>}
+                    {isOpen && <p className="mb-2 text-[13px] text-[#4F6B73]">The oldest lot comes first. A chosen lot reduces stock straight away.</p>}
                     <div className="space-y-2">
                       {lines.map((l) => (
                         isDraft ? (
@@ -341,7 +341,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
                     {isDraft && canSell && (
                       <div className="mt-3 space-y-2">
                         <ActionNote action={{ error: confirm.error, saved: false }} />
-                        <PrimaryButton disabled={confirm.busy} onClick={() => void confirm.run(async () => { await confirmOrder(order.id); await reload(); })}>{confirm.busy ? "Menyimpan..." : "Konfirmasi pesanan"}</PrimaryButton>
+                        <PrimaryButton disabled={confirm.busy} onClick={() => void confirm.run(async () => { await confirmOrder(order.id); await reload(); })}>{confirm.busy ? "Saving..." : "Order confirmation"}</PrimaryButton>
                       </div>
                     )}
                   </Card>
@@ -349,29 +349,29 @@ export default function OrderDetailPage({ id }: { id: string }) {
 
                 {order.status !== "draf" && <DeliveryCard key={`d:${allocations.map((a) => a.id).join()}`} order={order} allocations={allocations} deliveries={deliveries} canSell={canSell} reload={reload} />}
                 {order.status !== "draf" && <InvoiceCard order={order} rates={rates} invoices={invoices} canSell={canSell} reload={reload} />}
-                {canSell && order.status !== "batal" && <Disclosure title="Batalkan pesanan"><CancelCard order={order} reload={reload} /></Disclosure>}
+                {canSell && order.status !== "batal" && <Disclosure title="Cancel order"><CancelCard order={order} reload={reload} /></Disclosure>}
               </div>
 
               <div className="min-w-0 space-y-4">
                 <Card className="p-4">
-                  <h2 className={`${sectionTitle} mb-3`}>Ringkasan</h2>
+                  <h2 className={`${sectionTitle} mb-3`}>Overview</h2>
                   <Rows
                     rows={[
-                      ["Pelanggan", order.partner_name],
-                      ["Dipesan", formatLongDate(order.ordered_on)],
-                      ["Diminta", order.requested_on ? formatLongDate(order.requested_on) : "-"],
-                      ["Dipesan (kg)", formatKg(order.ordered_kg)],
-                      ["Lot dipilih", formatKg(order.allocated_kg)],
-                      ["Terkirim", formatKg(order.delivered_kg)],
-                      ["Nilai pesanan", formatRupiah(order.amount)],
-                      ["Ditagih", formatRupiah(order.invoiced_amount)],
-                      ["Dibayar", formatRupiah(order.paid_amount)],
+                      ["Customer", order.partner_name],
+                      ["Ordered", formatLongDate(order.ordered_on)],
+                      ["Requested", order.requested_on ? formatLongDate(order.requested_on) : "-"],
+                      ["Ordered (kg)", formatKg(order.ordered_kg)],
+                      ["Lots chosen", formatKg(order.allocated_kg)],
+                      ["Delivered", formatKg(order.delivered_kg)],
+                      ["Order value", formatRupiah(order.amount)],
+                      ["Invoiced", formatRupiah(order.invoiced_amount)],
+                      ["Paid", formatRupiah(order.paid_amount)],
                     ]}
                   />
                   {order.notes && <p className="mt-3 text-[13.5px] text-[#36525A]">{order.notes}</p>}
                 </Card>
                 {allocations.length > 0 && (
-                  <Link to="/erp/telusur" search={{ code: order.so_no }} className={`${link} gap-1.5`}><Search className="h-4 w-4" /> Telusuri sampai lot benih</Link>
+                  <Link to="/erp/trace" search={{ code: order.so_no }} className={`${link} gap-1.5`}><Search className="h-4 w-4" /> Trace back to the seed lot</Link>
                 )}
               </div>
             </div>

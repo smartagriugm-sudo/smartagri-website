@@ -21,7 +21,7 @@ type SignFile = (bucket: string, path: string, seconds: number) => Promise<strin
 
 const signWithSupabase: SignFile = async (bucket, path, seconds) => {
   const { data, error } = await supabase!.storage.from(bucket).createSignedUrl(path, seconds);
-  if (error || !data) throw new Error(`Model ${path} tidak bisa dibuka: ${error?.message ?? "tanpa keterangan"}`);
+  if (error || !data) throw new Error(`Model ${path} cannot be opened: ${error?.message ?? "no description"}`);
   return data.signedUrl;
 };
 

@@ -38,7 +38,7 @@ function TreeRow({ node, depth, selected, open, onToggle, onSelect }: {
     <>
       <div className={`flex items-center rounded-lg ${selected === node.id ? "bg-[#E3F7F0]" : "hover:bg-[#F3F7F7]"}`} style={{ paddingLeft: depth * 14 }}>
         {branches.length > 0 ? (
-          <button type="button" onClick={() => onToggle(node.id)} className="grid h-11 w-9 shrink-0 place-items-center text-[#4F6B73] sm:h-8 sm:w-8" aria-label={isOpen ? `Tutup ${node.code}` : `Buka ${node.code}`} aria-expanded={isOpen}>
+          <button type="button" onClick={() => onToggle(node.id)} className="grid h-11 w-9 shrink-0 place-items-center text-[#4F6B73] sm:h-8 sm:w-8" aria-label={isOpen ? `Close ${node.code}` : `Open ${node.code}`} aria-expanded={isOpen}>
             <ChevronRight className={`h-4 w-4 transition-transform ${isOpen ? "rotate-90" : ""}`} />
           </button>
         ) : (
@@ -85,7 +85,7 @@ function Detail({ node, canEdit, onChanged }: { node: LocationNode; canEdit: boo
     <Card className="p-4">
       <p className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]">{LEVEL_LABELS[node.level]}</p>
       <h2 className="text-[20px] font-semibold tracking-[-0.025em] text-[#0F2F36]">{node.code}</h2>
-      <p className="mb-3 text-[14px] text-[#4F6B73]">{node.name}{node.capacity != null && !isSlot(node) ? ` · kapasitas ${node.capacity}` : ""}</p>
+      <p className="mb-3 text-[14px] text-[#4F6B73]">{node.name}{node.capacity != null && !isSlot(node) ? ` · capacity ${node.capacity}` : ""}</p>
 
       {slots.length > 1 && <StatusLegend slots={slots} />}
 
@@ -113,24 +113,24 @@ function Detail({ node, canEdit, onChanged }: { node: LocationNode; canEdit: boo
           <span className="text-[#4F6B73]">{statusOf(current.slot_status)?.label}</span>
           {current.level === "hole" ? (
             <Link to="/erp/plant-factory" search={{ hole: current.code }} className="flex items-center gap-1 font-medium text-[#0B6477] hover:underline">
-              Lihat di 3D <ArrowRight className="h-3.5 w-3.5" />
+              View in 3D <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           ) : (
-            <Link to="/erp/persemaian" search={{ slot: current.code }} className="flex items-center gap-1 font-medium text-[#0B6477] hover:underline">
-              Lihat di 3D <ArrowRight className="h-3.5 w-3.5" />
+            <Link to="/erp/seedlings" search={{ slot: current.code }} className="flex items-center gap-1 font-medium text-[#0B6477] hover:underline">
+              View in 3D <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           )}
         </div>
       )}
 
       {canEdit && targets.length === 0 && (
-        <p className="mt-3 text-[13px] text-[#4F6B73]">Pilih tingkat, talang, atau rak chamber untuk mengubah status.</p>
+        <p className="mt-3 text-[13px] text-[#4F6B73]">Choose a tier, gully or chamber shelf to change its status.</p>
       )}
 
       {canEdit && targets.length > 0 && (
         <div className="mt-4 border-t border-[#E3ECED] pt-3">
           <p className="mb-2 text-[13px] font-medium text-[#36525A]">
-            Ubah status {targets.length === 1 ? targets[0].code : `${targets.length} posisi di ${node.code}`}
+            Change status {targets.length === 1 ? targets[0].code : `${targets.length} positions in ${node.code}`}
           </p>
           <div className="flex flex-wrap gap-2">
             {SLOT_STATUSES.map((s) => (
@@ -228,23 +228,23 @@ export default function LocationsPage() {
   }, [tree, selected]);
 
   return (
-    <ErpPage eyebrow="Pengaturan" title="Lokasi" sub="Semua tempat dalam satu pohon. Kodenya sama dengan model 3D dan tidak bisa diubah.">
+    <ErpPage eyebrow="Master data" title="Location" sub="Every place in one tree. The codes match the 3D model and cannot be changed.">
       <DataState state={state}>
         {() => (
           <div className="space-y-4">
             {coverage.missing.length === 0 ? (
-              <Note>Semua {coverage.expected} lubang dan posisi nampan sudah punya kode.</Note>
+              <Note>All {coverage.expected} holes and tray positions already have a code.</Note>
             ) : (
-              <Note tone="warn">{coverage.missing.length} kode belum ada, antara lain {coverage.missing.slice(0, 3).join(", ")}. Jalankan lagi pf-foundation.sql.</Note>
+              <Note tone="warn">{coverage.missing.length} codes are missing, among them {coverage.missing.slice(0, 3).join(", ")}. Run pf-foundation.sql again.</Note>
             )}
-            {!canAdmin && <ReadOnlyNote who="Admin sistem" />}
+            {!canAdmin && <ReadOnlyNote who="System admin" />}
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
               <Card className="p-3">
                 <form className="mb-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); find(); }}>
-                  <input className={inputClass} value={search} onChange={(e) => { setSearch(e.target.value); setNotFound(false); }} placeholder="Cari kode, contoh R1-T2-G3" aria-label="Cari kode lokasi" />
-                  <SecondaryButton type="submit">Cari</SecondaryButton>
+                  <input className={inputClass} value={search} onChange={(e) => { setSearch(e.target.value); setNotFound(false); }} placeholder="Search a code, e.g. R1-T2-G3" aria-label="Search location code" />
+                  <SecondaryButton type="submit">Search</SecondaryButton>
                 </form>
-                {notFound && <div className="mb-2"><Note tone="warn">Kode itu tidak ditemukan.</Note></div>}
+                {notFound && <div className="mb-2"><Note tone="warn">That code was not found.</Note></div>}
                 {tree.map((n) => <TreeRow key={n.id} node={n} depth={0} selected={node?.id ?? null} open={open} onToggle={toggle} onSelect={setSelected} />)}
               </Card>
               {node && <Detail key={node.id} node={node} canEdit={canAdmin} onChanged={state.reload} />}

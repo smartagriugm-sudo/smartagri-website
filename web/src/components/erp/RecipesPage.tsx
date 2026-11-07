@@ -49,31 +49,31 @@ function NewRecipe({ crops, onCreated, onCancel }: { crops: PfCrop[]; onCreated:
 
   const submit = async () => {
     const normalized = normalizeRecipeCode(code);
-    if (!cropId) return action.setError("Pilih tanaman dulu.");
-    if (!RECIPE_CODE.test(normalized)) return action.setError("Kode hanya boleh huruf, angka, dan tanda hubung.");
+    if (!cropId) return action.setError("Choose a crop first.");
+    if (!RECIPE_CODE.test(normalized)) return action.setError("A code can only have letters, numbers and hyphens.");
     let created = "";
     if (await action.run(async () => { created = await createRecipe(cropId, normalized, notes.trim()); })) onCreated(created);
   };
 
-  if (usable.length === 0) return <Note tone="warn">Belum ada tanaman aktif. Tambahkan dulu di menu Tanaman.</Note>;
+  if (usable.length === 0) return <Note tone="warn">No active crops yet. Add one first under Crops.</Note>;
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">Resep baru</h2>
+      <h2 className="mb-3 text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">New recipe</h2>
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-        <Field label="Tanaman">
+        <Field label="Crop">
           <select className={inputClass} value={cropId} onChange={(e) => setCropId(e.target.value)}>
             {usable.map((c) => <option key={c.id} value={c.id}>{cropLabel(c)}</option>)}
           </select>
         </Field>
-        <Field label="Kode resep" hint="Contoh RSP-SEL-03. Tidak berubah antar versi.">
+        <Field label="Recipe code" hint="For example RSP-SEL-03. It stays the same between versions.">
           <input className={inputClass} value={code} onChange={(e) => setCode(e.target.value)} placeholder="RSP-SEL-03" />
         </Field>
-        <Field label="Catatan"><textarea className={inputClass} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
+        <Field label="Notes"><textarea className={inputClass} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>Buat draf</PrimaryButton>
-          <SecondaryButton onClick={onCancel}>Batal</SecondaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>Create draft</PrimaryButton>
+          <SecondaryButton onClick={onCancel}>Cancel</SecondaryButton>
         </div>
       </form>
     </Card>
@@ -89,13 +89,13 @@ function MaterialsSection({ recipe, canEdit }: { recipe: PfRecipe; canEdit: bool
   if (state.error?.notInstalled) return null;
   return (
     <div className="mt-4 border-t border-[#E3ECED] pt-3">
-      <h3 className="mb-1 text-[15px] font-medium text-[#0F2F36]">Bahan yang terpakai otomatis</h3>
-      <p className="mb-2 text-[13px] text-[#4F6B73]">Stok berkurang saat operator mencatat semai, pindah tanam, atau panen. Kalau stok kurang, pekerjaan tetap jalan dan kekurangannya muncul di halaman Stok.</p>
+      <h3 className="mb-1 text-[15px] font-medium text-[#0F2F36]">Materials used up automatically</h3>
+      <p className="mb-2 text-[13px] text-[#4F6B73]">Stock goes down when an operator records sowing, transplanting or harvest. If stock runs short, the work carries on and the shortage shows on the Stock page.</p>
       <DataState state={state}>
         {({ materials, items }) => (canEdit && recipe.status === "draft"
           ? <MaterialRows key={recipe.id} recipe={recipe} initial={materials.map((m) => ({ itemId: m.item_id, basis: m.basis, qty: String(m.qty).replace(".", ",") }))} items={items} onSaved={state.reload} />
           : materials.length === 0
-            ? <p className="text-[14px] text-[#4F6B73]">Belum ada bahan.{recipe.status !== "draft" ? " Buat versi baru untuk menambahkannya." : ""}</p>
+            ? <p className="text-[14px] text-[#4F6B73]">No materials yet.{recipe.status !== "draft" ? " Create a new version to add it." : ""}</p>
             : (
               <ul className="text-[14px]">
                 {materials.map((m) => (
@@ -129,21 +129,21 @@ function MaterialRows({ recipe, initial, items, onSaved }: { recipe: PfRecipe; i
     <div className="space-y-2">
       {rows.map((r, i) => (
         <div key={i} className="grid grid-cols-[minmax(0,1fr)_40px] gap-2 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_100px_40px]">
-          <select className={`${inputClass} sm:order-none`} aria-label={`Barang ${i + 1}`} value={r.itemId} onChange={(e) => change(i, { itemId: e.target.value })}>
+          <select className={`${inputClass} sm:order-none`} aria-label={`Item ${i + 1}`} value={r.itemId} onChange={(e) => change(i, { itemId: e.target.value })}>
             {usable.map((x) => <option key={x.id} value={x.id}>{x.name} ({x.unit})</option>)}
           </select>
-          <button type="button" onClick={() => setRows((all) => all.filter((_, n) => n !== i))} aria-label={`Hapus bahan ${i + 1}`} className="grid h-11 w-10 place-items-center rounded-lg text-[#4F6B73] hover:bg-[#FBEDEC] hover:text-[#D9433B] sm:order-last sm:h-9"><Trash2 className="h-4 w-4" /></button>
-          <select className={inputClass} aria-label={`Dasar pemakaian ${i + 1}`} value={r.basis} onChange={(e) => change(i, { basis: e.target.value as MaterialBasis })}>
+          <button type="button" onClick={() => setRows((all) => all.filter((_, n) => n !== i))} aria-label={`Remove material ${i + 1}`} className="grid h-11 w-10 place-items-center rounded-lg text-[#4F6B73] hover:bg-[#FBEDEC] hover:text-[#D9433B] sm:order-last sm:h-9"><Trash2 className="h-4 w-4" /></button>
+          <select className={inputClass} aria-label={`Usage basis ${i + 1}`} value={r.basis} onChange={(e) => change(i, { basis: e.target.value as MaterialBasis })}>
             {MATERIAL_BASES.map((b) => <option key={b.key} value={b.key}>{b.label}, {b.when}</option>)}
           </select>
-          <input className={inputClass} inputMode="decimal" aria-label={`Jumlah ${i + 1}`} placeholder="Jumlah" value={r.qty} onChange={(e) => change(i, { qty: e.target.value })} />
+          <input className={inputClass} inputMode="decimal" aria-label={`Quantity ${i + 1}`} placeholder="Quantity" value={r.qty} onChange={(e) => change(i, { qty: e.target.value })} />
         </div>
       ))}
-      {usable.length === 0 && <p className="text-[14px] text-[#4F6B73]">Tambahkan dulu barangnya di halaman Stok.</p>}
+      {usable.length === 0 && <p className="text-[14px] text-[#4F6B73]">Add the item first on the Stock page.</p>}
       <ActionNote action={action} />
       <div className="flex flex-wrap gap-2">
-        <SecondaryButton disabled={usable.length === 0} onClick={() => setRows((all) => [...all, { itemId: usable[0].id, basis: "per_tanaman", qty: "" }])}><Plus className="h-4 w-4" /> Tambah bahan</SecondaryButton>
-        <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Menyimpan..." : "Simpan bahan"}</PrimaryButton>
+        <SecondaryButton disabled={usable.length === 0} onClick={() => setRows((all) => [...all, { itemId: usable[0].id, basis: "per_tanaman", qty: "" }])}><Plus className="h-4 w-4" /> Add material</SecondaryButton>
+        <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Saving..." : "Save materials"}</PrimaryButton>
       </div>
     </div>
   );
@@ -160,7 +160,7 @@ function TargetsSection({ recipe, phases, canEdit }: { recipe: PfRecipe; phases:
   return (
     <div className="mt-4 border-t border-[#E3ECED] pt-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-[15px] font-medium text-[#0F2F36]">Acuan sensor</h3>
+        <h3 className="text-[15px] font-medium text-[#0F2F36]">Sensor reference</h3>
         <Segmented value={current} options={phases.map((p) => ({ key: p.phase as string, label: phaseLabel(p.phase) }))} onChange={setPhase} />
       </div>
       <DataState state={targets}>
@@ -180,7 +180,7 @@ function TargetRows({ recipe, phase, list, editable, onSaved }: { recipe: PfReci
   const change = (i: number, patch: Partial<TargetRow>) => setRows((r) => r.map((row, n) => (n === i ? { ...row, ...patch } : row)));
 
   if (!editable) {
-    if (list.length === 0) return <p className="text-[14px] text-[#4F6B73]">Fase ini belum punya acuan.{recipe.status !== "draft" ? " Buat versi baru untuk menambahkannya." : ""}</p>;
+    if (list.length === 0) return <p className="text-[14px] text-[#4F6B73]">This phase has no reference yet.{recipe.status !== "draft" ? " Create a new version to add it." : ""}</p>;
     return (
       <ul className="text-[14px]">
         {list.map((t) => (
@@ -204,20 +204,20 @@ function TargetRows({ recipe, phase, list, editable, onSaved }: { recipe: PfReci
 
   return (
     <div className="space-y-2">
-      <div className="hidden grid-cols-[1.4fr_1fr_1fr_1fr] gap-2 text-[13px] font-medium text-[#4F6B73] sm:grid"><span>Bacaan</span><span>Bawah</span><span>Sasaran</span><span>Atas</span></div>
+      <div className="hidden grid-cols-[1.4fr_1fr_1fr_1fr] gap-2 text-[13px] font-medium text-[#4F6B73] sm:grid"><span>Reading</span><span>Lower</span><span>Target</span><span>Top</span></div>
       {rows.map((r, i) => {
         const info = metricInfo(r.metric);
         return (
           <div key={r.metric} className="grid grid-cols-3 items-center gap-2 sm:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <span className="col-span-3 text-[14px] text-[#0F2F36] sm:col-span-1">{info.label}{info.unit ? <span className="text-[#4F6B73]"> ({info.unit})</span> : null}</span>
-            <input className={inputClass} inputMode="decimal" aria-label={`${info.label} batas bawah`} placeholder="Bawah" value={r.low} onChange={(e) => change(i, { low: e.target.value })} />
-            <input className={inputClass} inputMode="decimal" aria-label={`${info.label} sasaran`} placeholder="Sasaran" value={r.target} onChange={(e) => change(i, { target: e.target.value })} />
-            <input className={inputClass} inputMode="decimal" aria-label={`${info.label} batas atas`} placeholder="Atas" value={r.high} onChange={(e) => change(i, { high: e.target.value })} />
+            <input className={inputClass} inputMode="decimal" aria-label={`${info.label} lower limit`} placeholder="Lower" value={r.low} onChange={(e) => change(i, { low: e.target.value })} />
+            <input className={inputClass} inputMode="decimal" aria-label={`${info.label} target`} placeholder="Target" value={r.target} onChange={(e) => change(i, { target: e.target.value })} />
+            <input className={inputClass} inputMode="decimal" aria-label={`${info.label} upper limit`} placeholder="Top" value={r.high} onChange={(e) => change(i, { high: e.target.value })} />
           </div>
         );
       })}
       <ActionNote action={action} />
-      <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Menyimpan..." : "Simpan acuan"}</PrimaryButton>
+      <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Saving..." : "Save references"}</PrimaryButton>
     </div>
   );
 }
@@ -254,17 +254,17 @@ function PhaseEditor({ recipe, phases, onSaved }: { recipe: PfRecipe; phases: Pf
     <div>
       <div className="space-y-2">
         <div className="hidden grid-cols-[1.3fr_1fr_1fr_1fr_36px] gap-2 text-[13px] font-medium text-[#4F6B73] sm:grid">
-          <span>Fase</span><span>Lama (hari)</span><span>Fotoperiode (jam)</span><span>PPFD (µmol/m²/s)</span><span />
+          <span>Phase</span><span>Length (days)</span><span>Photoperiod (hours)</span><span>PPFD (µmol/m²/s)</span><span />
         </div>
         {rows.map((r, i) => (
           <div key={i} className="grid grid-cols-2 gap-2 rounded-lg border border-[#E3ECED] p-2 sm:grid-cols-[1.3fr_1fr_1fr_1fr_36px] sm:border-0 sm:p-0">
-            <select className={`${inputClass} col-span-2 sm:col-span-1`} aria-label={`Fase ${i + 1}`} value={r.phase} onChange={(e) => change(i, { phase: e.target.value as RecipePhaseKey })}>
+            <select className={`${inputClass} col-span-2 sm:col-span-1`} aria-label={`Phase ${i + 1}`} value={r.phase} onChange={(e) => change(i, { phase: e.target.value as RecipePhaseKey })}>
               {RECIPE_PHASES.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
             </select>
-            <input className={inputClass} inputMode="numeric" aria-label={`Lama fase ${i + 1} dalam hari`} placeholder="Hari" value={r.durationDays} onChange={(e) => change(i, { durationDays: e.target.value })} />
-            <input className={inputClass} inputMode="decimal" aria-label={`Fotoperiode fase ${i + 1} dalam jam`} placeholder="Jam" value={r.photoperiodH} onChange={(e) => change(i, { photoperiodH: e.target.value })} />
-            <input className={inputClass} inputMode="decimal" aria-label={`PPFD fase ${i + 1}`} placeholder="PPFD" value={r.ppfdUmol} onChange={(e) => change(i, { ppfdUmol: e.target.value })} />
-            <button type="button" onClick={() => remove(i)} className="grid h-9 w-9 place-items-center rounded-lg text-[#4F6B73] hover:bg-[#FBEDEC] hover:text-[#D9433B]" aria-label={`Hapus fase ${i + 1}`}>
+            <input className={inputClass} inputMode="numeric" aria-label={`Length of phase ${i + 1} in days`} placeholder="Day" value={r.durationDays} onChange={(e) => change(i, { durationDays: e.target.value })} />
+            <input className={inputClass} inputMode="decimal" aria-label={`Photoperiod of phase ${i + 1} in hours`} placeholder="Hours" value={r.photoperiodH} onChange={(e) => change(i, { photoperiodH: e.target.value })} />
+            <input className={inputClass} inputMode="decimal" aria-label={`PPFD of phase ${i + 1}`} placeholder="PPFD" value={r.ppfdUmol} onChange={(e) => change(i, { ppfdUmol: e.target.value })} />
+            <button type="button" onClick={() => remove(i)} className="grid h-9 w-9 place-items-center rounded-lg text-[#4F6B73] hover:bg-[#FBEDEC] hover:text-[#D9433B]" aria-label={`Remove phase ${i + 1}`}>
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
@@ -272,9 +272,9 @@ function PhaseEditor({ recipe, phases, onSaved }: { recipe: PfRecipe; phases: Pf
       </div>
       <div className="mt-2"><ActionNote action={action} /></div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <SecondaryButton onClick={add}><Plus className="h-4 w-4" /> Tambah fase</SecondaryButton>
-        <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Menyimpan..." : "Simpan fase"}</PrimaryButton>
-        {saved && <span className="text-[13px] font-medium text-[#0E7A5C]">Tersimpan</span>}
+        <SecondaryButton onClick={add}><Plus className="h-4 w-4" /> Add phase</SecondaryButton>
+        <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Saving..." : "Save phases"}</PrimaryButton>
+        {saved && <span className="text-[13px] font-medium text-[#0E7A5C]">Saved</span>}
       </div>
     </div>
   );
@@ -315,17 +315,17 @@ function Detail({ recipe, siblings, crop, canEdit, onChanged, onSelect }: {
     <Card className="p-4">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E3ECED] pb-3">
         <div>
-          <p className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]">{crop ? cropLabel(crop) : "Tanaman"}</p>
+          <p className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]">{crop ? cropLabel(crop) : "Crops"}</p>
           <h2 className="flex flex-wrap items-center gap-2 text-[20px] font-semibold tracking-[-0.025em] text-[#0F2F36]">
             {recipe.code} v{recipe.version} <StatusBadge status={recipe.status} />
           </h2>
         </div>
         {canEdit && (
           <div className="flex flex-wrap gap-2">
-            {!isDraft && !hasDraft && <SecondaryButton disabled={action.busy} onClick={() => void copyToNewVersion()}><Copy className="h-4 w-4" /> Buat versi baru</SecondaryButton>}
-            {isDraft && <SecondaryButton disabled={action.busy} onClick={() => setConfirming("delete")}>Hapus draf</SecondaryButton>}
-            {recipe.status === "active" && <SecondaryButton disabled={action.busy} onClick={() => setConfirming("retire")}>Akhiri resep</SecondaryButton>}
-            {isDraft && <PrimaryButton disabled={action.busy || !phases.data?.length} onClick={() => setConfirming("activate")}>Aktifkan</PrimaryButton>}
+            {!isDraft && !hasDraft && <SecondaryButton disabled={action.busy} onClick={() => void copyToNewVersion()}><Copy className="h-4 w-4" /> Create a new version</SecondaryButton>}
+            {isDraft && <SecondaryButton disabled={action.busy} onClick={() => setConfirming("delete")}>Delete draft</SecondaryButton>}
+            {recipe.status === "active" && <SecondaryButton disabled={action.busy} onClick={() => setConfirming("retire")}>End recipe</SecondaryButton>}
+            {isDraft && <PrimaryButton disabled={action.busy || !phases.data?.length} onClick={() => setConfirming("activate")}>Activate</PrimaryButton>}
           </div>
         )}
       </div>
@@ -333,9 +333,9 @@ function Detail({ recipe, siblings, crop, canEdit, onChanged, onSelect }: {
       {confirming && (
         <div className="mt-3 rounded-lg bg-[#FFF6E5] p-3 text-[14px] text-[#8A5A07]">
           <p>
-            {confirming === "activate" && <>Setelah aktif, versi ini tidak bisa diedit lagi.{activeNow ? ` ${activeNow.code} v${activeNow.version} akan diakhiri.` : ""}</>}
-            {confirming === "retire" && <>Resep ini diakhiri dan tidak lagi bisa dipilih untuk batch baru. Isinya tetap tersimpan.</>}
-            {confirming === "delete" && <>Draf ini dan semua fasenya akan dihapus.</>}
+            {confirming === "activate" && <>Once active, this version can no longer be edited.{activeNow ? ` ${activeNow.code} v${activeNow.version} will be ended.` : ""}</>}
+            {confirming === "retire" && <>This recipe is ended and can no longer be chosen for a new batch. Its contents stay on record.</>}
+            {confirming === "delete" && <>This draft and all its phases will be deleted.</>}
           </p>
           <div className="mt-2 flex gap-2">
             <PrimaryButton
@@ -346,35 +346,35 @@ function Detail({ recipe, siblings, crop, canEdit, onChanged, onSelect }: {
                 else void run(() => deleteRecipeDraft(recipe.id), activeNow?.id ?? null);
               }}
             >
-              {confirming === "activate" ? "Ya, aktifkan" : confirming === "retire" ? "Ya, akhiri" : "Ya, hapus"}
+              {confirming === "activate" ? "Yes, activate" : confirming === "retire" ? "Yes, end it" : "Yes, delete"}
             </PrimaryButton>
-            <SecondaryButton onClick={() => setConfirming(null)}>Batal</SecondaryButton>
+            <SecondaryButton onClick={() => setConfirming(null)}>Cancel</SecondaryButton>
           </div>
         </div>
       )}
       {action.error && <div className="mt-3"><Note tone="warn">{action.error}</Note></div>}
 
       <div className="mt-4">
-        <h3 className="mb-2 text-[15px] font-medium text-[#0F2F36]">Fase</h3>
+        <h3 className="mb-2 text-[15px] font-medium text-[#0F2F36]">Phase</h3>
         <DataState state={phases}>
           {(list) =>
             isDraft && canEdit ? (
               <PhaseEditor key={recipe.id} recipe={recipe} phases={list} onSaved={phases.reload} />
             ) : list.length === 0 ? (
-              <p className="text-[14px] text-[#4F6B73]">Belum ada fase.</p>
+              <p className="text-[14px] text-[#4F6B73]">No phases yet.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-[14px]">
                   <thead className="text-[13px] text-[#4F6B73]">
-                    <tr><th className="pb-2 font-medium">Fase</th><th className="pb-2 font-medium">Lama</th><th className="pb-2 font-medium">Fotoperiode</th><th className="pb-2 font-medium">PPFD</th></tr>
+                    <tr><th className="pb-2 font-medium">Phase</th><th className="pb-2 font-medium">Length</th><th className="pb-2 font-medium">Photoperiod</th><th className="pb-2 font-medium">PPFD</th></tr>
                   </thead>
                   <tbody className="text-[#0F2F36]">
                     {list.map((p) => (
                       <tr key={p.id} className="border-t border-[#E3ECED]">
                         <td className="py-2 font-medium">{phaseLabel(p.phase)}</td>
-                        <td className="py-2">{p.duration_days} hari</td>
-                        <td className="py-2">{p.photoperiod_h != null ? `${p.photoperiod_h} jam` : "Belum diisi"}</td>
-                        <td className="py-2">{p.ppfd_umol != null ? `${p.ppfd_umol} µmol/m²/s` : "Belum diisi"}</td>
+                        <td className="py-2">{p.duration_days} days</td>
+                        <td className="py-2">{p.photoperiod_h != null ? `${p.photoperiod_h} hours` : "Not set"}</td>
+                        <td className="py-2">{p.ppfd_umol != null ? `${p.ppfd_umol} µmol/m²/s` : "Not set"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -385,8 +385,8 @@ function Detail({ recipe, siblings, crop, canEdit, onChanged, onSelect }: {
         </DataState>
         {total > 0 && (
           <p className="mt-2 text-[13px] text-[#4F6B73]">
-            Total {total} hari{crop?.cycle_days ? `, siklus tanaman ${crop.cycle_days} hari` : ""}.
-            {crop?.cycle_days && crop.cycle_days !== total ? " Keduanya berbeda, periksa lagi kalau tidak disengaja." : ""}
+            Total {total} days{crop?.cycle_days ? `, crop cycle ${crop.cycle_days} days` : ""}.
+            {crop?.cycle_days && crop.cycle_days !== total ? " The two differ. Check again if that was not intended." : ""}
           </p>
         )}
         <TargetsSection recipe={recipe} phases={phases.data ?? []} canEdit={canEdit} />
@@ -395,7 +395,7 @@ function Detail({ recipe, siblings, crop, canEdit, onChanged, onSelect }: {
 
       <div className="mt-4 border-t border-[#E3ECED] pt-3">
         {isDraft && canEdit ? (
-          <Field label="Catatan">
+          <Field label="Notes">
             <textarea
               className={inputClass}
               rows={2}
@@ -425,15 +425,15 @@ export default function RecipesPage() {
 
   return (
     <ErpPage
-      eyebrow="Budidaya"
-      title="Resep"
-      sub="Setiap perubahan pada resep aktif menjadi versi baru, jadi batch lama tetap menunjuk resep yang dipakainya."
-      actions={canManageProduction && !creating && !state.error?.notInstalled ? <PrimaryButton onClick={() => setCreating(true)}><Plus className="h-4 w-4" /> Resep baru</PrimaryButton> : undefined}
+      eyebrow="Master data"
+      title="Recipes"
+      sub="Any change to an active recipe becomes a new version, so older batches keep pointing at the recipe they used."
+      actions={canManageProduction && !creating && !state.error?.notInstalled ? <PrimaryButton onClick={() => setCreating(true)}><Plus className="h-4 w-4" /> New recipe</PrimaryButton> : undefined}
     >
       <DataState state={state}>
         {({ crops }) => (
           <div className="space-y-3">
-            {!canManageProduction && <ReadOnlyNote who="Manajer produksi" />}
+            {!canManageProduction && <ReadOnlyNote who="Production manager" />}
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
               <div className="space-y-3">
                 {creating && (
@@ -447,7 +447,7 @@ export default function RecipesPage() {
                   />
                 )}
                 <Card className="p-2">
-                  {groups.length === 0 && <p className="px-2 py-6 text-center text-[14px] text-[#4F6B73]">Belum ada resep.</p>}
+                  {groups.length === 0 && <p className="px-2 py-6 text-center text-[14px] text-[#4F6B73]">No recipes yet.</p>}
                   {groups.map((g) => {
                     const crop = crops.find((c) => c.id === g.cropId);
                     return (
@@ -462,7 +462,7 @@ export default function RecipesPage() {
                             aria-current={recipe?.id === v.id}
                             className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[14px] ${recipe?.id === v.id ? "bg-[#E3F7F0]" : "hover:bg-[#F3F7F7]"}`}
                           >
-                            <span className="text-[#0F2F36]">Versi {v.version}</span>
+                            <span className="text-[#0F2F36]">Version {v.version}</span>
                             <StatusBadge status={v.status} />
                           </button>
                         ))}

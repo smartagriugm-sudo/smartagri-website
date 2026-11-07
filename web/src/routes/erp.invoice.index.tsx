@@ -5,7 +5,7 @@ export const Route = createFileRoute("/erp/invoice/")({
   component: InvoicesPage,
   head: () => ({
     meta: [
-      { title: "Invoice | smartagri ERP" },
+      { title: "Invoice | agrosphere" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

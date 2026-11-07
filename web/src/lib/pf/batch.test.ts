@@ -58,11 +58,11 @@ describe("a batch's stage from the recipe's days", () => {
 
   it("says where a batch is", () => {
     const b = { status: "berjalan", sown_at: "2026-11-01", cycle_days: 30, plants_now: 0, trays_now: 2 } as BatchOverview;
-    expect(batchStage(b, "2026-11-06")).toBe("Persemaian · hari 5 dari 30");
-    expect(batchStage({ ...b, plants_now: 3 }, "2026-11-06")).toMatch(/^Sebagian di plant factory/);
+    expect(batchStage(b, "2026-11-06")).toBe("Seedlings · day 5 of 30");
+    expect(batchStage({ ...b, plants_now: 3 }, "2026-11-06")).toMatch(/^Partly in the plant factory/);
     expect(batchStage({ ...b, plants_now: 3, trays_now: 0 }, "2026-11-06")).toMatch(/^Plant factory/);
-    expect(batchStage({ ...b, status: "direncanakan" }, "2026-11-06")).toBe("Menunggu semai");
-    expect(batchStage({ ...b, status: "gagal" }, "2026-11-06")).toBe("Gagal");
+    expect(batchStage({ ...b, status: "direncanakan" }, "2026-11-06")).toBe("Waiting to be sown");
+    expect(batchStage({ ...b, status: "gagal" }, "2026-11-06")).toBe("Failed");
   });
 });
 
@@ -97,33 +97,33 @@ describe("forms", () => {
   it("checks a seed lot", () => {
     expect(parseSeedLotForm(lot)).toMatchObject({ error: null, qty: 100 });
     expect(parseSeedLotForm({ ...lot, unit: "gram", qty: "12,5" })).toMatchObject({ error: null, qty: 12.5 });
-    expect(parseSeedLotForm({ ...lot, qty: "12,5" }).error).toMatch(/bulat/);
-    expect(parseSeedLotForm({ ...lot, cropId: "" }).error).toMatch(/tanaman/);
+    expect(parseSeedLotForm({ ...lot, qty: "12,5" }).error).toMatch(/whole/);
+    expect(parseSeedLotForm({ ...lot, cropId: "" }).error).toMatch(/crop/);
     expect(parseSeedLotForm({ ...lot, lotNo: " " }).error).toMatch(/lot/);
-    expect(parseSeedLotForm({ ...lot, qty: "0" }).error).toMatch(/lebih dari 0/);
-    expect(parseSeedLotForm({ ...lot, expiryOn: "2026-09-01" }).error).toMatch(/kedaluwarsa/);
+    expect(parseSeedLotForm({ ...lot, qty: "0" }).error).toMatch(/above 0/);
+    expect(parseSeedLotForm({ ...lot, expiryOn: "2026-09-01" }).error).toMatch(/expiry/);
   });
 
   it("checks a sowing, asking for the weight only on lots kept in grams", () => {
     expect(parseSowForm(["a"], "20", "2026-11-06", "2026-11-06", "biji", "")).toMatchObject({ error: null, perTray: 20, seedUsed: null });
-    expect(parseSowForm(["a"], "20", "2026-11-06", "2026-11-06", "gram", "").error).toMatch(/berat/);
+    expect(parseSowForm(["a"], "20", "2026-11-06", "2026-11-06", "gram", "").error).toMatch(/weight/);
     expect(parseSowForm(["a"], "20", "2026-11-06", "2026-11-06", "gram", "2,5")).toMatchObject({ seedUsed: 2.5 });
-    expect(parseSowForm([], "20", "2026-11-06", "2026-11-06", "biji", "").error).toMatch(/posisi/);
-    expect(parseSowForm(["a"], "2.5", "2026-11-06", "2026-11-06", "biji", "").error).toMatch(/bulat/);
-    expect(parseSowForm(["a"], "20", "2026-11-07", "2026-11-06", "biji", "").error).toMatch(/masa depan/);
+    expect(parseSowForm([], "20", "2026-11-06", "2026-11-06", "biji", "").error).toMatch(/position/);
+    expect(parseSowForm(["a"], "2.5", "2026-11-06", "2026-11-06", "biji", "").error).toMatch(/whole/);
+    expect(parseSowForm(["a"], "20", "2026-11-07", "2026-11-06", "biji", "").error).toMatch(/future/);
   });
 
   it("checks a harvest", () => {
     expect(parseHarvestForm("2,5", "2026-11-06", "", "2026-10-01", "2026-11-06")).toMatchObject({ error: null, weight: 2.5 });
-    expect(parseHarvestForm("0", "2026-11-06", "", "2026-10-01", "2026-11-06").error).toMatch(/Berat/);
-    expect(parseHarvestForm("1", "2026-09-01", "", "2026-10-01", "2026-11-06").error).toMatch(/antara/);
-    expect(parseHarvestForm("1", "2026-11-07", "", "2026-10-01", "2026-11-06").error).toMatch(/antara/);
-    expect(parseHarvestForm("1", "2026-11-06", "2026-11-01", "2026-10-01", "2026-11-06").error).toMatch(/Batas simpan/);
+    expect(parseHarvestForm("0", "2026-11-06", "", "2026-10-01", "2026-11-06").error).toMatch(/weight/);
+    expect(parseHarvestForm("1", "2026-09-01", "", "2026-10-01", "2026-11-06").error).toMatch(/between/);
+    expect(parseHarvestForm("1", "2026-11-07", "", "2026-10-01", "2026-11-06").error).toMatch(/between/);
+    expect(parseHarvestForm("1", "2026-11-06", "2026-11-01", "2026-10-01", "2026-11-06").error).toMatch(/keep-until/);
   });
 
   it("keeps a tray's count within its seeds, counting what already moved", () => {
     expect(parseGerminated("8", { qty: 10, moved: 2 })).toMatchObject({ error: null, count: 8 });
-    expect(parseGerminated("9", { qty: 10, moved: 2 }).error).toMatch(/melebihi/);
-    expect(parseGerminated("-1", { qty: 10, moved: 0 }).error).toMatch(/bulat/);
+    expect(parseGerminated("9", { qty: 10, moved: 2 }).error).toMatch(/more than/);
+    expect(parseGerminated("-1", { qty: 10, moved: 0 }).error).toMatch(/whole/);
   });
 });

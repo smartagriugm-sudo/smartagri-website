@@ -5,7 +5,8 @@ import { SHELVES, slotColor, SLOT_STATE_KEYS, SLOT_STATES, type Slot } from "../
 import { batchStage, fetchBatches, fetchSeedLots, batchLabel, jakartaToday } from "../../lib/pf/batch";
 import { HOLES_TOTAL, HOLE_STATE_KEYS, HOLE_STATES, addDays, isPlanted, stateColor, type Hole, type HoleState } from "../../lib/pf/facility";
 import { fetchFoundationSummary } from "../../lib/pf/foundation";
-import { buildWork, formatShortDate, positionOf, scheduleBar, scheduleWindow, weekTicks, workSummary, type BatchWork, type WorkItem, type WorkLink, type WorkTone } from "../../lib/pf/dashboard";
+import { buildWork, formatShortDate, positionOf, scheduleBar, scheduleWindow, weekTicks, type WorkItem, type WorkTone } from "../../lib/pf/dashboard";
+import { batchWork } from "../../lib/pf/work";
 import { ago, formatWithUnit, latestAt, metricInfo } from "../../lib/pf/monitoring";
 import { fetchPlans, fetchWorkOrders } from "../../lib/pf/cost";
 import { attendanceFlags, buildRoster, clockText, contractEndingSoon, fetchAllContracts, fetchAttendance, fetchLeaves, fetchPeople, fetchShifts } from "../../lib/pf/people";
@@ -17,14 +18,14 @@ import { cropLabel } from "../../lib/pf/foundation";
 import type { ErpStore } from "../../lib/pf/store";
 import { RACK_NUMBERS, TIER_NUMBERS } from "../../lib/pf/provider";
 import { useErpStore } from "./ErpContext";
-import FacilityViewer, { useLargeScreen } from "./FacilityViewer";
-import { ErpPage, ErrorNote, SLOW_TEXT, formatDateTime, useErpAccess, useLoad, useSlow } from "./page";
+import ConditionStage from "./ConditionStage";
+import { WorkLinkTo } from "./WorkLinkTo";
+import { ErrorNote, SLOW_TEXT, formatDateTime, useErpAccess, useLoad, useSlow } from "./page";
 
-// The ERP's front page answers one question: what needs doing today? The queue of
-// work comes first, beside the live 3D model. Under them, how full the two
-// facilities are, drawn from their own tiers and trays, then every running batch
-// on one calendar. Rows one and two span the same width: 1fr + 16 + 1fr.
-// Flat panels on purpose: a 1px edge and no shadow, as the taste skill's app rules ask.
+// The ERP's front page, top to bottom: the facility and its conditions, what fills it
+// beside what needs doing today, then every running batch on one calendar. It takes
+// the full width, so hiding the menu really gives the work more room. Flat panels on
+// purpose: a 1px edge and no shadow, as the taste skill's app rules ask.
 
 const panel = "rounded-xl border border-[#DCE7E8] bg-white";
 const sectionTitle = "text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]";
@@ -32,27 +33,6 @@ const WORK_SHOWN = 6;
 const WORK_SHOWN_ON_PHONE = 4;
 
 /* ------------------------------------------------------------- reading the store */
-
-function batchWork(store: ErpStore): BatchWork[] {
-  return [...store.batches.values()].map((b) => {
-    const holes = store.holesOfBatch(b.code);
-    const trays = store.traysOfBatch(b.code);
-    return {
-      id: b.id,
-      code: b.code,
-      crop: b.crop,
-      sownAt: b.sownAt,
-      age: b.age,
-      cycle: b.cycle,
-      transplantDay: b.transplantDay,
-      plants: holes.length,
-      harvestReady: holes.filter((h) => h.state === "siap_panen").length,
-      problemHoles: holes.filter((h) => h.state === "masalah").map((h) => h.id),
-      problemTrays: trays.filter((t) => t.state === "masalah").map((t) => t.id),
-      readySeedlings: trays.filter((t) => t.state === "siap_pindah").reduce((n, t) => n + t.germinated, 0),
-    };
-  });
-}
 
 async function fetchRecords() {
   const [batches, lots, setup] = await Promise.all([fetchBatches(), fetchSeedLots(), fetchFoundationSummary()]);
@@ -122,11 +102,6 @@ const TONE: Record<WorkTone, string> = {
   later: "bg-[#EEF3F4] text-[#4F6B73]",
 };
 
-function WorkAction({ link, label, className }: { link: WorkLink; label: string; className: string }) {
-  if ("id" in link) return <Link to={link.to} params={{ id: link.id }} className={className}>{label}</Link>;
-  return <Link to={link.to} className={className}>{label}</Link>;
-}
-
 // On a phone the tag and the action share the first line, so a row stays two lines of text under one of controls.
 function WorkRow({ item, canAct, phoneHidden }: { item: WorkItem; canAct: boolean; phoneHidden: boolean }) {
   return (
@@ -136,11 +111,9 @@ function WorkRow({ item, canAct, phoneHidden }: { item: WorkItem; canAct: boolea
         <span className="block text-[14px] font-medium text-[#0F2F36]">{item.title}</span>
         <span className="block truncate text-[13px] text-[#4F6B73]">{item.detail}</span>
       </span>
-      <WorkAction
-        link={item.link}
-        label={canAct ? item.action : "Lihat"}
-        className="ml-auto inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-0"
-      />
+      <WorkLinkTo link={item.link} className="ml-auto inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-0">
+        {canAct ? item.action : "View"}
+      </WorkLinkTo>
     </li>
   );
 }
@@ -161,23 +134,28 @@ function WorkPlaceholder() {
   );
 }
 
-function WorkPanel({ items, known, loading, canAct }: { items: WorkItem[]; known: boolean; loading: boolean; canAct: boolean }) {
+function WorkPanel({ items, known, loading, canAct, stamp, refreshing, onRefresh }: { items: WorkItem[]; known: boolean; loading: boolean; canAct: boolean; stamp: string | null; refreshing: boolean; onRefresh: () => void }) {
   const [all, setAll] = useState(false);
   const slow = useSlow(loading);
   const shown = all ? items : items.slice(0, WORK_SHOWN);
   return (
     <section className={`${panel} flex min-w-0 flex-col`} aria-labelledby="work-title">
-      <div className="flex items-baseline justify-between gap-3 px-4 py-3">
+      <div className="flex min-h-[48px] items-center justify-between gap-3 py-1.5 pl-4 pr-2">
         <h2 id="work-title" className={sectionTitle}>
-          Perlu tindakan{known && <span className="ml-1.5 tabular-nums text-[#4F6B73]">{items.length}</span>}
+          Needs action{known && <span className="ml-1.5 tabular-nums text-[#4F6B73]">{items.length}</span>}
         </h2>
-        {loading && <span role="status" className="text-[13px] text-[#4F6B73]">{slow ? SLOW_TEXT : "Memuat..."}</span>}
+        <div className="flex items-center gap-1.5 text-[12.5px] tabular-nums text-[#4F6B73]">
+          {loading ? <span role="status">{slow ? SLOW_TEXT : "Loading..."}</span> : stamp && <span className="whitespace-nowrap">Data at {stamp}</span>}
+          <button type="button" disabled={refreshing} onClick={onRefresh} aria-label="Reload data" className="grid h-11 w-11 place-items-center rounded-lg text-[#36525A] hover:bg-[#EEF5F5] disabled:opacity-50 sm:h-8 sm:w-8">
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "motion-safe:animate-spin" : ""}`} strokeWidth={1.75} />
+          </button>
+        </div>
       </div>
       {!known ? (
-        loading ? <WorkPlaceholder /> : <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">Daftar pekerjaan belum bisa ditampilkan.</p>
+        loading ? <WorkPlaceholder /> : <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">The task list cannot be shown yet.</p>
       ) : items.length === 0 ? (
         <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">
-          Tidak ada pekerjaan tertunda.
+          Nothing pending.
         </p>
       ) : (
         <ul>{shown.map((item, i) => <WorkRow key={item.key} item={item} canAct={canAct} phoneHidden={!all && i >= WORK_SHOWN_ON_PHONE} />)}</ul>
@@ -185,10 +163,10 @@ function WorkPanel({ items, known, loading, canAct }: { items: WorkItem[]; known
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-[#EDF2F2] px-4 text-[14px] font-medium text-[#0B6477]">
         {items.length > WORK_SHOWN_ON_PHONE ? (
           <button type="button" aria-expanded={all} onClick={() => setAll(!all)} className={`${items.length > WORK_SHOWN ? "" : "sm:invisible"} min-h-[44px] text-left hover:underline`}>
-            {all ? "Tampilkan lebih sedikit" : `Lihat semua (${items.length})`}
+            {all ? "Show less" : `View all (${items.length})`}
           </button>
         ) : <span />}
-        <Link to="/erp/batch" className="inline-flex min-h-[44px] items-center gap-1 whitespace-nowrap hover:underline">Semua batch <ArrowRight className="h-3.5 w-3.5" /></Link>
+        <Link to="/erp/batch" className="inline-flex min-h-[44px] items-center gap-1 whitespace-nowrap hover:underline">All batches <ArrowRight className="h-3.5 w-3.5" /></Link>
       </div>
     </section>
   );
@@ -203,14 +181,14 @@ function TierCell({ code, holes, known }: { code: string; holes: Hole[]; known: 
   for (const h of holes) counts.set(h.state, (counts.get(h.state) ?? 0) + 1);
   const planted = holes.filter((h) => isPlanted(h.state));
   const batch = planted.find((h) => h.batch)?.batch;
-  const label = !known ? dash : (batch ?? (counts.get("sanitasi") ? "Sanitasi" : "Kosong"));
+  const label = !known ? dash : (batch ?? (counts.get("sanitasi") ? "Sanitation" : "Empty"));
   const target = holes[0];
   return (
     <Link
       to="/erp/plant-factory"
       search={target ? { hole: target.id } : {}}
       className="block rounded-lg border border-[#E3ECED] px-2.5 py-2 hover:border-[#14919B]"
-      aria-label={known ? `${code}: ${label}, ${planted.length} dari ${holes.length} lubang terisi` : code}
+      aria-label={known ? `${code}: ${label}, ${planted.length} of ${holes.length} holes filled` : code}
     >
       <span className="flex items-baseline justify-between gap-2 text-[12.5px]">
         <span className="font-medium text-[#0F2F36]">{code}</span>
@@ -221,7 +199,7 @@ function TierCell({ code, holes, known }: { code: string; holes: Hole[]; known: 
           <span key={s} style={{ width: `${((counts.get(s) ?? 0) / Math.max(holes.length, 1)) * 100}%`, background: stateColor(s) }} />
         ))}
       </span>
-      <span className="mt-1 block text-[12px] tabular-nums text-[#4F6B73]">{known ? planted.length : dash} dari {holes.length}</span>
+      <span className="mt-1 block text-[12px] tabular-nums text-[#4F6B73]">{known ? planted.length : dash} of {holes.length}</span>
     </Link>
   );
 }
@@ -230,7 +208,7 @@ function TrayMark({ slot }: { slot: Slot }) {
   const empty = slot.state === "kosong";
   return (
     <span
-      title={empty ? `${slot.id}: kosong` : `${slot.id}: ${slot.batch ?? ""}, ${SLOT_STATES[slot.state].label}`}
+      title={empty ? `${slot.id}: empty` : `${slot.id}: ${slot.batch ?? ""}, ${SLOT_STATES[slot.state].label}`}
       className={`h-[22px] flex-1 rounded-[3px] ${empty ? "border border-[#DCE7E8] bg-white" : ""}`}
       style={empty ? undefined : { background: slotColor(slot.state) }}
     />
@@ -249,25 +227,25 @@ function Legend({ items }: { items: { key: string; label: string; color: string 
 }
 
 /** Temperature and humidity at a place, from its sensors. Says nothing where none report. */
-function Conditions({ store, place }: { store: ErpStore; place: string }) {
+function Conditions({ store, place, note }: { store: ErpStore; place: string; note?: string }) {
   const latest = store.monitoring?.latest ?? [];
   const parts = ["suhu", "rh"].map((m) => latestAt(latest, place, m)).filter((r) => r !== null);
   return (
     <Link to="/erp/monitoring" className="mb-2.5 flex min-h-[44px] items-center text-[13px] sm:block sm:min-h-0 text-[#4F6B73] hover:text-[#0B6477]">
-      {parts.length ? parts.map((r) => formatWithUnit(r.metric, r.value)).join(" · ") : "Sensor belum tersambung"}
+      {note && `${note} · `}{parts.length ? parts.map((r) => formatWithUnit(r.metric, r.value)).join(" · ") : "Sensors not connected yet"}
     </Link>
   );
 }
 
-function FacilityHead({ title, to, value, unit }: { title: string; to: "/erp/plant-factory" | "/erp/persemaian"; value: string; unit: string }) {
+function FacilityHead({ title, to, value, unit }: { title: string; to: "/erp/plant-factory" | "/erp/seedlings"; value: string; unit: string }) {
   return (
     <div className="mb-1 flex items-end justify-between gap-3">
       <div>
         <h3 className="text-[13px] font-medium text-[#4F6B73]">{title}</h3>
-        <p className="tabular-nums text-[#0F2F36]"><span className="text-[24px] font-semibold leading-tight tracking-[-0.02em]">{value}</span> <span className="text-[13px] text-[#4F6B73]">{unit}</span></p>
+        <p className="tabular-nums text-[#0F2F36]"><span className="text-[24px] font-semibold leading-tight tracking-[-0.02em]">{value}</span> <span className="whitespace-nowrap text-[13px] text-[#4F6B73]">{unit}</span></p>
       </div>
       <Link to={to} className="inline-flex min-h-[44px] items-center gap-1 whitespace-nowrap text-[13px] font-medium text-[#0B6477] hover:underline sm:min-h-0">
-        Buka 3D <ArrowRight className="h-3.5 w-3.5" />
+        Open 3D <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </div>
   );
@@ -283,13 +261,13 @@ function FacilityPanel({ store }: { store: ErpStore }) {
   const trayStates = SLOT_STATE_KEYS.filter((s) => s !== "kosong" && slots.some((t) => t.state === s));
 
   return (
-    <section className={`${panel} min-w-0`} aria-labelledby="facility-title">
-      <h2 id="facility-title" className={`${sectionTitle} px-4 pt-3`}>Isi fasilitas</h2>
+    <section className={`${panel} @container min-w-0`} aria-labelledby="facility-title">
+      <h2 id="facility-title" className={`${sectionTitle} px-4 pt-3`}>Inside the facility</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2">
+      <div className="grid grid-cols-1 @[620px]:grid-cols-2">
         <div className="min-w-0 px-4 pb-3 pt-2.5">
-          <FacilityHead title="Plant factory · PF01" to="/erp/plant-factory" value={shown(filled)} unit={`dari ${HOLES_TOTAL} lubang · ${store.hasData ? store.freeCapacity() : dash} siap pakai`} />
-          <Conditions store={store} place="PF01" />
+          <FacilityHead title="Plant factory · PF01" to="/erp/plant-factory" value={shown(filled)} unit={`of ${HOLES_TOTAL} holes`} />
+          <Conditions store={store} place="PF01" note={`${store.hasData ? store.freeCapacity() : dash} ready to use`} />
           <div className="grid grid-cols-2 gap-2">
             {TIER_NUMBERS.flatMap((tier) =>
               RACK_NUMBERS.map((rack) => (
@@ -300,13 +278,13 @@ function FacilityPanel({ store }: { store: ErpStore }) {
           <Legend items={holeStates.map((s) => ({ key: s, label: HOLE_STATES[s].label, color: stateColor(s) }))} />
         </div>
 
-        <div className="min-w-0 border-t border-[#EDF2F2] px-4 pb-3 pt-2.5 md:border-l md:border-t-0">
-          <FacilityHead title="Persemaian · CH1" to="/erp/persemaian" value={shown(trays)} unit={`dari ${slots.length} nampan`} />
+        <div className="min-w-0 border-t border-[#EDF2F2] px-4 pb-3 pt-2.5 @[620px]:border-l @[620px]:border-t-0">
+          <FacilityHead title="Seedlings · CH1" to="/erp/seedlings" value={shown(trays)} unit={`of ${slots.length} trays`} />
           <Conditions store={store} place="CH1" />
           <div className="space-y-2">
             {SHELVES.map((shelf) => (
               <div key={shelf.shelf} className="flex items-center gap-2">
-                <span className="w-[40px] shrink-0 text-[12px] text-[#4F6B73]">Rak {shelf.shelf}</span>
+                <span className="w-[40px] shrink-0 text-[12px] text-[#4F6B73]">Rack {shelf.shelf}</span>
                 {/* Rak 4 is shorter than the rest, and stays shorter here: two empty cells keep the columns in line. */}
                 <div className="grid flex-1 grid-cols-6 gap-1">
                   {slots.filter((s) => s.shelf === shelf.shelf).map((s) => <span key={s.id} className="flex"><TrayMark slot={s} /></span>)}
@@ -342,17 +320,17 @@ function SchedulePanel({ store }: { store: ErpStore }) {
   return (
     <section className={panel} aria-labelledby="schedule-title">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3">
-        <h2 id="schedule-title" className={sectionTitle}>Jadwal batch</h2>
+        <h2 id="schedule-title" className={sectionTitle}>Batch schedule</h2>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#4F6B73]">
-          <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: CHAMBER_BAR }} />Persemaian</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: CHAMBER_BAR }} />Seedlings</span>
           <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: FACTORY_BAR }} />Plant factory</span>
-          {anyOverdue && <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: OVERDUE_BAR }} />Lewat target</span>}
-          <span>Warna pudar: rencana</span>
+          {anyOverdue && <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: OVERDUE_BAR }} />Past target</span>}
+          <span>Faded colour: planned</span>
         </div>
       </div>
 
       {batches.length === 0 ? (
-        <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">{store.mode === "loading" ? "Memuat data..." : store.hasData ? "Belum ada batch berjalan." : "Jadwal belum bisa ditampilkan."}</p>
+        <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">{store.mode === "loading" ? "Loading data..." : store.hasData ? "No running batches yet." : "The schedule cannot be shown yet."}</p>
       ) : (
         <>
           <div className="hidden border-t border-[#EDF2F2] px-4 pt-2 text-[12px] text-[#4F6B73] md:grid md:grid-cols-[230px_minmax(0,1fr)_84px] md:gap-3">
@@ -360,7 +338,7 @@ function SchedulePanel({ store }: { store: ErpStore }) {
             <div className="relative h-4" aria-hidden="true">
               {labelledTicks.map((d, i) => <span key={d} className={`absolute -translate-x-1/2 whitespace-nowrap tabular-nums ${i % 2 ? "hidden lg:inline" : ""}`} style={{ left: left(d) }}>{formatShortDate(d)}</span>)}
             </div>
-            <span className="text-right">Panen</span>
+            <span className="text-right">Harvest</span>
           </div>
           <ul className="px-4 pb-2 pt-1">
             {batches.map((b) => {
@@ -389,7 +367,7 @@ function SchedulePanel({ store }: { store: ErpStore }) {
               );
             })}
           </ul>
-          <p className="border-t border-[#EDF2F2] px-4 py-2 text-[12px] text-[#4F6B73]">Garis tegak: hari ini, {formatShortDate(today)}</p>
+          <p className="border-t border-[#EDF2F2] px-4 py-2 text-[12px] text-[#4F6B73]">Vertical line: today, {formatShortDate(today)}</p>
         </>
       )}
     </section>
@@ -406,7 +384,6 @@ export default function ErpDashboard() {
   const team = useLoad(async () => (canReadPeople ? fetchPeopleWork(canReadPrivate) : { shifts: [], attendance: [], leaves: [], contracts: [], people: [] }), [canReadPeople, canReadPrivate]);
   const stock = useLoad(async () => (canManageProduction ? fetchStockWork() : { items: [], shortages: [], purchases: [], lots: [] }), [canManageProduction]);
   const sales = useLoad(async () => (canReadSales ? fetchSalesWork() : { orders: [], invoices: [], lots: [] }), [canReadSales]);
-  const large = useLargeScreen();
   const [refreshing, setRefreshing] = useState(false);
 
   // The queue is only as true as what it read. A table that is not installed yet is not a failure.
@@ -434,7 +411,7 @@ export default function ErpDashboard() {
         purchasesLate: stock.data?.purchases.filter((p) => p.status === "dipesan" && p.open_lines > 0 && p.expected_on && p.expected_on < store.today).map((p) => ({ id: p.id, no: p.po_no, supplier: p.supplier_name, expected: p.expected_on! })),
         setup: records.data?.setup ?? null,
         alarms: store.monitoring?.alarms.map((a) => ({ id: a.id, level: a.level, label: metricInfo(a.metric).label, value: formatWithUnit(a.metric, a.value), place: a.location_code, since: formatDateTime(a.opened_at) })),
-        silentDevices: store.monitoring?.assets.filter((a) => a.link_state === "terlambat").map((a) => ({ id: a.id, code: a.code, since: a.last_seen_at ? ago(a.last_seen_at) : "tidak diketahui" })),
+        silentDevices: store.monitoring?.assets.filter((a) => a.link_state === "terlambat").map((a) => ({ id: a.id, code: a.code, since: a.last_seen_at ? ago(a.last_seen_at) : "unknown" })),
         calibrationsDue: store.monitoring?.assets.filter((a) => a.status === "aktif" && a.next_due && a.next_due < store.today).map((a) => ({ id: a.id, code: a.code, due: a.next_due! })),
         ordersDue: sales.data?.orders.filter((o) => o.status === "dikonfirmasi" && o.requested_on && o.requested_on <= store.today && o.delivered_kg < o.ordered_kg).map((o) => ({ id: o.id, no: o.so_no, customer: o.partner_name, requested: o.requested_on!, openKg: formatKg(roundKg(o.ordered_kg - o.delivered_kg)) })),
         invoicesOverdue: sales.data?.invoices.filter((i) => i.status === "terbit" && i.balance > 0 && i.due_on < store.today).map((i) => ({ id: i.id, no: i.invoice_no, customer: i.partner_name, due: i.due_on, balance: formatRupiah(i.balance) })),
@@ -449,37 +426,19 @@ export default function ErpDashboard() {
   };
 
   const failure = store.mode === "error" ? store.loadError : recordsFailed ? records.error!.message : sales.error?.message ?? stock.error?.message ?? team.error?.message ?? maintenance.error?.message ?? null;
-  const dateLabel = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${store.today}T00:00:00Z`));
+
+  const stamp = store.loadedAt ? new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(store.loadedAt) : null;
 
   return (
-    <ErpPage
-      eyebrow={store.hasData ? dateLabel : "Dashboard"}
-      title="Ringkasan"
-      sub={known ? workSummary(items) : undefined}
-      actions={
-        store.hasData ? (
-          <div className="flex items-center gap-2 text-[13px] tabular-nums text-[#4F6B73]">
-            {store.mode === "sample" ? (
-              <span className="rounded-md bg-[#FFF6E5] px-2 py-1 font-medium text-[#8A5A07]">Data contoh</span>
-            ) : store.loadedAt ? (
-              <span>Data pukul {new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(store.loadedAt)}</span>
-            ) : null}
-            <button type="button" disabled={refreshing} onClick={() => void refresh()} aria-label="Muat ulang data" className="grid h-11 w-11 place-items-center rounded-lg text-[#36525A] hover:bg-white disabled:opacity-50 sm:h-8 sm:w-8">
-              <RefreshCw className={`h-4 w-4 ${refreshing ? "motion-safe:animate-spin" : ""}`} />
-            </button>
-          </div>
-        ) : undefined
-      }
-    >
-      <div className="space-y-4">
-        {failure && <ErrorNote message={`${failure}${store.hasData ? " Angka di bawah dari pemuatan terakhir." : ""}`} onRetry={refresh} />}
-        <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
-          <WorkPanel items={items} known={known} loading={loading && !known} canAct={canOperate} />
-          {large && <FacilityViewer store={store} />}
-        </div>
+    <main className="flex-1 space-y-4 px-3 pb-6 pt-4 md:px-4">
+      <h1 className="sr-only">agrosphere overview</h1>
+      {failure && <ErrorNote message={`${failure}${store.hasData ? " The figures below are from the last load." : ""}`} onRetry={refresh} />}
+      <ConditionStage store={store} />
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
         <FacilityPanel store={store} />
-        <SchedulePanel store={store} />
+        <WorkPanel items={items} known={known} loading={loading && !known} canAct={canOperate} stamp={stamp} refreshing={refreshing} onRefresh={() => void refresh()} />
       </div>
-    </ErpPage>
+      <SchedulePanel store={store} />
+    </main>
   );
 }

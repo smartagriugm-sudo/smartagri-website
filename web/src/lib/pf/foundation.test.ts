@@ -110,8 +110,8 @@ describe("cost access", () => {
 
 describe("crop form", () => {
   it("trims and converts", () => {
-    const { fields } = parseCropForm({ ...emptyCropForm, name: " Selada ", variety: " Romaine ", cycleDays: "35", germRate: "92,5" });
-    expect(fields).toMatchObject({ name: "Selada", variety: "Romaine", cycle_days: 35, germ_rate: 92.5 });
+    const { fields } = parseCropForm({ ...emptyCropForm, name: " Lettuce ", variety: " Romaine ", cycleDays: "35", germRate: "92,5" });
+    expect(fields).toMatchObject({ name: "Lettuce", variety: "Romaine", cycle_days: 35, germ_rate: 92.5 });
   });
 
   it("leaves empty numbers empty and refuses bad ones", () => {
@@ -164,7 +164,7 @@ describe("recipes", () => {
     expect(fields?.[1]).toMatchObject({ phase: "vegetatif", duration_days: 21, photoperiod_h: null, ppfd_umol: null });
     expect(totalDays(fields!)).toBe(25);
     expect(parsePhaseForms([]).error).toBeTruthy();
-    expect(parsePhaseForms([{ ...row, durationDays: "0" }]).error).toContain("Fase 1");
+    expect(parsePhaseForms([{ ...row, durationDays: "0" }]).error).toContain("Phase 1");
     expect(parsePhaseForms([{ ...row, durationDays: "" }]).error).toBeTruthy();
     expect(parsePhaseForms([{ ...row, photoperiodH: "25" }]).error).toContain("24");
     expect(parsePhaseForms([{ ...row, ppfdUmol: "-1" }]).error).toBeTruthy();
@@ -181,7 +181,7 @@ describe("audit entries", () => {
     expect(auditSubject({ row_id: "x", old_data: null, new_data: { code: "RSP-1", version: 2 } })).toBe("RSP-1 v2");
     expect(auditSubject({ row_id: "x", old_data: null, new_data: { code: "R1-T1-G1-H01" } })).toBe("R1-T1-G1-H01");
     expect(auditSubject({ row_id: "x", old_data: { role: "operator" }, new_data: null })).toBe("Operator");
-    expect(auditSubject({ row_id: "x", old_data: null, new_data: { name: "Selada", variety: "Romaine" } })).toBe("Selada Romaine");
+    expect(auditSubject({ row_id: "x", old_data: null, new_data: { name: "Lettuce", variety: "Romaine" } })).toBe("Lettuce Romaine");
     expect(auditSubject({ row_id: "x", old_data: null, new_data: {} })).toBe("x");
   });
 });
@@ -199,11 +199,11 @@ describe("data errors", () => {
   it("says in plain words when the server cannot be reached", () => {
     for (const message of ["TypeError: Failed to fetch", "NetworkError when attempting to fetch resource.", "Load failed"]) {
       const e = toDataError({ code: "", message });
-      expect(e.message).toMatch(/^Tidak bisa terhubung/);
+      expect(e.message).toMatch(/^Cannot reach/);
       expect(e.notInstalled).toBe(false);
     }
-    expect(toErpError(new TypeError("Failed to fetch")).message).toMatch(/^Tidak bisa terhubung/);
-    expect(toErpError(new Error("Alasan wajib diisi")).message).toBe("Alasan wajib diisi");
+    expect(toErpError(new TypeError("Failed to fetch")).message).toMatch(/^Cannot reach/);
+    expect(toErpError(new Error("A reason is required")).message).toBe("A reason is required");
   });
 
   it("recognizes a table that is not installed yet", () => {
@@ -213,8 +213,23 @@ describe("data errors", () => {
   });
 
   it("explains a duplicate and a refusal in plain words", () => {
-    expect(toDataError({ code: "23505", message: "duplicate key" }).message).toContain("sudah ada");
-    expect(toDataError({ code: "42501", message: "denied" }).message).toContain("izin");
-    expect(toDataError({ code: "P0001", message: "Resep harus punya fase" }).message).toBe("Resep harus punya fase");
+    expect(toDataError({ code: "23505", message: "duplicate key" }).message).toContain("already exists");
+    expect(toDataError({ code: "42501", message: "denied" }).message).toContain("permission");
+    expect(toDataError({ code: "P0001", message: "A recipe must have phases" }).message).toBe("A recipe must have phases");
+  });
+});
+
+describe("amounts as typed", () => {
+  it("reads either habit, and never takes a decimal for thousands", async () => {
+    const { parseAmount } = await import("./foundation");
+    expect(parseAmount("1.500.000")).toBe(1500000);
+    expect(parseAmount("1,500,000")).toBe(1500000);
+    expect(parseAmount("Rp 25,000")).toBe(25000);
+    expect(parseAmount("12,5")).toBe(12.5);
+    expect(parseAmount("12.5")).toBe(12.5);
+    expect(parseAmount("1,234.50")).toBe(1234.5);
+    expect(parseAmount("1.234,50")).toBe(1234.5);
+    expect(parseAmount("")).toBeNull();
+    expect(parseAmount("abc")).toBeNaN();
   });
 });

@@ -16,12 +16,12 @@ export default function ErpGate({ children }: { children: ReactNode }) {
         <SiteHeader />
         <section className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-white px-4 text-center" style={body}>
           <div>
-            <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-[#0F2F36]" style={display}>ERP belum bisa dibuka di sini</h1>
-            <p className="mt-2 text-[15px] leading-[1.5] text-[#4F6B73]">Pengaturan login belum diisi untuk deployment ini.</p>
+            <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-[#0F2F36]" style={display}>The ERP cannot open here yet</h1>
+            <p className="mt-2 text-[15px] leading-[1.5] text-[#4F6B73]">Login settings are not filled in for this deployment.</p>
           </div>
         </section>
       </main>
     );
   }
-  return <AuthGate checkingText="Memeriksa akses..." slowText="Koneksi lambat, masih mencoba...">{children}</AuthGate>;
+  return <AuthGate checkingText="Checking access..." slowText="Slow connection, still trying...">{children}</AuthGate>;
 }

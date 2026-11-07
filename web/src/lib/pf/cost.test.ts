@@ -15,8 +15,8 @@ describe("a batch's figure", () => {
 
   it("says what the total leaves out", () => {
     expect(costGaps(row())).toEqual([]);
-    expect(costGaps(row({ unpriced_lots: 2, unrated_minutes: 90 }))).toEqual(["2 lot tanpa harga", "1,5 jam kerja tanpa tarif"]);
-    expect(formatHours(120)).toBe("2 jam");
+    expect(costGaps(row({ unpriced_lots: 2, unrated_minutes: 90 }))).toEqual(["2 lots without a price", "1.5 hours without a rate"]);
+    expect(formatHours(120)).toBe("2 hours");
   });
 });
 
@@ -39,7 +39,7 @@ describe("the monthly table", () => {
 describe("forms", () => {
   it("reads rupiah as people write it", () => {
     expect(parseRupiah("1.500.000")).toBe(1500000);
-    expect(parseRupiah("Rp 25.000")).toBe(25000);
+    expect(parseRupiah("Rp 25,000")).toBe(25000);
     expect(parseRupiah("12,5")).toBe(12.5);
     expect(parseRupiah("0")).toBe(0);
     expect(parseRupiah("")).toBeNull();
@@ -50,9 +50,9 @@ describe("forms", () => {
   it("checks a bill", () => {
     const base = { amount: "1.000", scope: "ruang" as const, batch: "", area: "persemaian", start: "2026-11-01", end: "2026-11-30" };
     expect(parseEntryForm(base)).toEqual({ error: null, amount: 1000, end: "2026-11-30" });
-    expect(parseEntryForm({ ...base, amount: "0" }).error).toMatch(/nol/);
-    expect(parseEntryForm({ ...base, area: "" }).error).toMatch(/ruang/);
-    expect(parseEntryForm({ ...base, end: "2026-10-01" }).error).toMatch(/periode/);
+    expect(parseEntryForm({ ...base, amount: "0" }).error).toMatch(/zero/);
+    expect(parseEntryForm({ ...base, area: "" }).error).toMatch(/room/);
+    expect(parseEntryForm({ ...base, end: "2026-10-01" }).error).toMatch(/period/);
     expect(parseEntryForm({ ...base, scope: "batch" }).error).toMatch(/batch/);
     expect(parseEntryForm({ ...base, scope: "batch", batch: "b", end: "" })).toEqual({ error: null, amount: 1000, end: "2026-11-01" });
   });
@@ -78,6 +78,6 @@ describe("export", () => {
     const csv = batchCostsCsv([row(), row({ code: 'B;"2', harvested_kg: 0, sellable_kg: 0, unpriced_lots: 1 })]).split("\r\n");
     expect(csv[1]).toBe("B-001;Pakcoy Nauli;selesai;9000;30000;15000;2000;56000;2;1.5;28000;37333;80000;1;");
     expect(csv[2].startsWith('"B;""2";')).toBe(true);
-    expect(csv[2].endsWith(";;;80000;1;1 lot tanpa harga")).toBe(true);
+    expect(csv[2].endsWith(";;;80000;1;1 lots without a price")).toBe(true);
   });
 });

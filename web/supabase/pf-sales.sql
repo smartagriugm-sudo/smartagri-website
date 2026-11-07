@@ -39,7 +39,7 @@ set search_path = public
 as $$
 begin
   if not public.pf_can_sell() then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
 end;
 $$;
@@ -186,7 +186,7 @@ set search_path = public
 as $$
 begin
   if new.grade <> old.grade and exists (select 1 from public.pf_so_allocation a where a.harvest_lot_id = old.id) then
-    raise exception 'Grade lot % tidak bisa diubah karena sudah dialokasikan ke pesanan', old.lot_code;
+    raise exception 'The grade of lot % cannot change because it is allocated to an order', old.lot_code;
   end if;
   return new;
 end;
@@ -330,7 +330,7 @@ declare
 begin
   select * into found_order from public.pf_sales_order o where o.id = target for update;
   if not found then
-    raise exception 'Pesanan tidak ditemukan';
+    raise exception 'Order not found';
   end if;
   return found_order;
 end;
@@ -349,7 +349,7 @@ declare
 begin
   perform public.pf_require_seller();
   if coalesce(trim(new_name), '') = '' then
-    raise exception 'Nama wajib diisi';
+    raise exception 'A name is required';
   end if;
   if partner is null then
     insert into public.pf_partner (name, kind, contact_name, phone, email, address, tax_id, notes, active)
@@ -362,7 +362,7 @@ begin
      where p.id = partner
     returning p.id into saved;
     if saved is null then
-      raise exception 'Pelanggan tidak ditemukan';
+      raise exception 'Customer not found';
     end if;
   end if;
   return saved;
@@ -380,10 +380,10 @@ declare
 begin
   perform public.pf_require_seller();
   if coalesce(trim(new_name), '') = '' then
-    raise exception 'Nama tarif wajib diisi';
+    raise exception 'A rate name is required';
   end if;
   if new_percent is null or new_percent < 0 or new_percent > 100 then
-    raise exception 'Tarif harus antara 0 dan 100 persen';
+    raise exception 'The rate must be between 0 and 100 percent';
   end if;
   if rate is null then
     insert into public.pf_tax_rate (name, percent, valid_from, active) values (trim(new_name), new_percent, coalesce(starts_on, public.pf_today()), coalesce(is_active, true))
@@ -394,7 +394,7 @@ begin
      where r.id = rate
     returning r.id into saved;
     if saved is null then
-      raise exception 'Tarif tidak ditemukan';
+      raise exception 'Rate not found';
     end if;
   end if;
   return saved;
@@ -417,16 +417,16 @@ declare
 begin
   perform public.pf_require_seller();
   if not exists (select 1 from public.pf_partner p where p.id = partner and p.active) then
-    raise exception 'Pilih pelanggan yang aktif';
+    raise exception 'Choose an active customer';
   end if;
   if ordered is null then
-    raise exception 'Tanggal pesanan wajib diisi';
+    raise exception 'An order date is required';
   end if;
   if requested is not null and requested < ordered then
-    raise exception 'Tanggal diminta sebelum tanggal pesanan';
+    raise exception 'The requested date is before the order date';
   end if;
   if jsonb_typeof(lines) is distinct from 'array' or jsonb_array_length(lines) = 0 then
-    raise exception 'Pesanan minimal satu baris';
+    raise exception 'An order needs at least one line';
   end if;
   if target is null then
     insert into public.pf_sales_order (so_no, partner_id, ordered_on, requested_on, notes)
@@ -435,7 +435,7 @@ begin
   else
     current_order := public.pf_order_lock(target);
     if current_order.status <> 'draf' then
-      raise exception 'Hanya pesanan draf yang bisa diubah';
+      raise exception 'Only a draft order can be changed';
     end if;
     update public.pf_sales_order o set partner_id = partner, ordered_on = ordered, requested_on = requested, notes = trim(coalesce(new_notes, '')) where o.id = target;
     delete from public.pf_so_line l where l.sales_order_id = target;
@@ -443,7 +443,7 @@ begin
   end if;
   for item in select * from jsonb_array_elements(lines) loop
     if not exists (select 1 from public.pf_crop c where c.id = (item ->> 'crop_id')::uuid) then
-      raise exception 'Tanaman tidak ditemukan';
+      raise exception 'Crop not found';
     end if;
     insert into public.pf_so_line (sales_order_id, crop_id, grade, qty_kg, price_per_kg)
     values (saved, (item ->> 'crop_id')::uuid, item ->> 'grade', (item ->> 'qty_kg')::numeric, (item ->> 'price_per_kg')::numeric);
@@ -464,7 +464,7 @@ begin
   perform public.pf_require_seller();
   current_order := public.pf_order_lock(target);
   if current_order.status <> 'draf' then
-    raise exception 'Pesanan ini sudah dikonfirmasi atau dibatalkan';
+    raise exception 'This order was already confirmed or cancelled';
   end if;
   update public.pf_sales_order o set status = 'dikonfirmasi' where o.id = target;
 end;
@@ -483,17 +483,17 @@ declare
 begin
   perform public.pf_require_seller();
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan wajib diisi';
+    raise exception 'A reason is required';
   end if;
   current_order := public.pf_order_lock(target);
   if current_order.status = 'batal' then
-    raise exception 'Pesanan ini sudah dibatalkan';
+    raise exception 'This order was already cancelled';
   end if;
   if exists (select 1 from public.pf_so_allocation a join public.pf_so_line l on l.id = a.so_line_id where l.sales_order_id = target and a.delivery_id is not null) then
-    raise exception 'Pesanan sudah ada yang dikirim. Batalkan pengirimannya dulu.';
+    raise exception 'Part of the order was delivered. Cancel the delivery first.';
   end if;
   if exists (select 1 from public.pf_invoice i where i.sales_order_id = target and i.status = 'terbit') then
-    raise exception 'Pesanan punya invoice terbit. Batalkan invoice-nya dulu.';
+    raise exception 'The order has an issued invoice. Cancel the invoice first.';
   end if;
   for reserved in
     select a.id, a.harvest_lot_id, a.qty_kg from public.pf_so_allocation a join public.pf_so_line l on l.id = a.so_line_id where l.sales_order_id = target
@@ -524,35 +524,35 @@ begin
   perform public.pf_require_seller();
   select * into the_line from public.pf_so_line l where l.id = line;
   if not found then
-    raise exception 'Baris pesanan tidak ditemukan';
+    raise exception 'Order line not found';
   end if;
   current_order := public.pf_order_lock(the_line.sales_order_id);
   if current_order.status <> 'dikonfirmasi' then
-    raise exception 'Konfirmasi pesanan dulu sebelum memilih lot';
+    raise exception 'Confirm the order before choosing lots';
   end if;
   if kg is null or kg <= 0 then
-    raise exception 'Berat harus lebih dari 0';
+    raise exception 'Weight must be above 0';
   end if;
   select * into the_lot from public.pf_harvest_lot h where h.id = lot for update;
   if not found then
-    raise exception 'Lot panen tidak ditemukan';
+    raise exception 'Harvest lot not found';
   end if;
   select r.crop_id into lot_crop from public.pf_batch b join public.pf_recipe r on r.id = b.recipe_id where b.id = the_lot.batch_id;
   if lot_crop <> the_line.crop_id then
-    raise exception 'Lot % berisi tanaman lain', the_lot.lot_code;
+    raise exception 'Lot % holds another crop', the_lot.lot_code;
   end if;
   if the_lot.grade <> the_line.grade then
-    raise exception 'Lot % grade %, baris ini minta grade %', the_lot.lot_code, the_lot.grade, the_line.grade;
+    raise exception 'Lot % is grade %, this line asks for grade %', the_lot.lot_code, the_lot.grade, the_line.grade;
   end if;
   if the_lot.best_before is not null and the_lot.best_before < public.pf_today() then
-    raise exception 'Lot % sudah lewat batas simpan', the_lot.lot_code;
+    raise exception 'Lot % is past its keep-until date', the_lot.lot_code;
   end if;
   if kg > the_lot.remaining_kg then
-    raise exception 'Lot % hanya tersisa % kg', the_lot.lot_code, the_lot.remaining_kg;
+    raise exception 'Lot % only has % kg left', the_lot.lot_code, the_lot.remaining_kg;
   end if;
   select coalesce(sum(a.qty_kg), 0) into taken from public.pf_so_allocation a where a.so_line_id = line;
   if taken + kg > the_line.qty_kg then
-    raise exception 'Melebihi jumlah pesanan: baris ini % kg, sudah terpilih % kg', the_line.qty_kg, taken;
+    raise exception 'More than ordered: this line is % kg, with % kg already chosen', the_line.qty_kg, taken;
   end if;
   update public.pf_harvest_lot h set remaining_kg = h.remaining_kg - kg where h.id = lot;
   insert into public.pf_so_allocation (so_line_id, harvest_lot_id, qty_kg) values (line, lot, kg) returning id into saved;
@@ -572,10 +572,10 @@ begin
   perform public.pf_require_seller();
   select * into the_row from public.pf_so_allocation a where a.id = allocation for update;
   if not found then
-    raise exception 'Alokasi tidak ditemukan';
+    raise exception 'Allocation not found';
   end if;
   if the_row.delivery_id is not null then
-    raise exception 'Lot ini sudah dikirim. Batalkan pengirimannya dulu.';
+    raise exception 'This lot was already delivered. Cancel the delivery first.';
   end if;
   update public.pf_harvest_lot h set remaining_kg = h.remaining_kg + the_row.qty_kg where h.id = the_row.harvest_lot_id;
   delete from public.pf_so_allocation a where a.id = allocation;
@@ -598,22 +598,22 @@ begin
   perform public.pf_require_seller();
   current_order := public.pf_order_lock(target);
   if current_order.status <> 'dikonfirmasi' then
-    raise exception 'Pesanan ini belum dikonfirmasi atau sudah dibatalkan';
+    raise exception 'This order is not confirmed yet or was cancelled';
   end if;
   if coalesce(cardinality(allocations), 0) = 0 then
-    raise exception 'Pilih minimal satu lot untuk dikirim';
+    raise exception 'Choose at least one lot to send';
   end if;
   if delivered is null or delivered > public.pf_today() then
-    raise exception 'Tanggal kirim tidak boleh di masa depan';
+    raise exception 'The delivery date cannot be in the future';
   end if;
   if delivered < current_order.ordered_on then
-    raise exception 'Tanggal kirim sebelum tanggal pesanan';
+    raise exception 'The delivery date is before the order date';
   end if;
   select count(*) into matched
     from public.pf_so_allocation a join public.pf_so_line l on l.id = a.so_line_id
    where a.id = any (allocations) and l.sales_order_id = target and a.delivery_id is null;
   if matched <> cardinality(allocations) then
-    raise exception 'Ada lot yang bukan milik pesanan ini atau sudah dikirim';
+    raise exception 'A lot does not belong to this order or was already delivered';
   end if;
   insert into public.pf_delivery (delivery_no, sales_order_id, delivered_on, recipient, notes)
   values (public.pf_next_doc_no('SJ', delivered), target, delivered, trim(coalesce(new_recipient, '')), trim(coalesce(new_notes, '')))
@@ -634,11 +634,11 @@ declare
 begin
   perform public.pf_require_seller();
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan wajib diisi';
+    raise exception 'A reason is required';
   end if;
   select * into the_row from public.pf_delivery d where d.id = delivery for update;
   if not found or the_row.cancelled_at is not null then
-    raise exception 'Pengiriman tidak ditemukan atau sudah dibatalkan';
+    raise exception 'Delivery not found or already cancelled';
   end if;
   perform public.pf_order_lock(the_row.sales_order_id);
   -- What is invoiced must stay delivered.
@@ -649,7 +649,7 @@ begin
          select sum(a.qty_kg) from public.pf_so_allocation a where a.so_line_id = v.id and a.delivery_id = delivery
        ), 0)
   ) then
-    raise exception 'Pengiriman ini sudah ditagih. Batalkan invoice-nya dulu.';
+    raise exception 'This delivery is already invoiced. Cancel the invoice first.';
   end if;
   update public.pf_so_allocation a set delivery_id = null where a.delivery_id = delivery;
   update public.pf_delivery d set cancelled_at = now(), cancel_note = trim(why) where d.id = delivery;
@@ -679,15 +679,15 @@ begin
   perform public.pf_require_seller();
   current_order := public.pf_order_lock(target);
   if current_order.status <> 'dikonfirmasi' then
-    raise exception 'Pesanan ini belum dikonfirmasi atau sudah dibatalkan';
+    raise exception 'This order is not confirmed yet or was cancelled';
   end if;
   if issued is null or due is null or due < issued then
-    raise exception 'Tanggal jatuh tempo sebelum tanggal invoice';
+    raise exception 'The due date is before the invoice date';
   end if;
   if rate is not null then
     select * into the_rate from public.pf_tax_rate r where r.id = rate and r.active;
     if not found then
-      raise exception 'Tarif pajak tidak aktif';
+      raise exception 'The tax rate is not active';
     end if;
   end if;
   insert into public.pf_invoice (invoice_no, sales_order_id, issued_on, due_on, subtotal, tax_rate_id, tax_name, tax_percent, tax_amount, total, notes)
@@ -708,7 +708,7 @@ begin
     billed := true;
   end loop;
   if not billed then
-    raise exception 'Belum ada kiriman yang bisa ditagih';
+    raise exception 'No deliveries to invoice yet';
   end if;
   tax := round(sum_amount * coalesce(the_rate.percent, 0) / 100);
   update public.pf_invoice i set subtotal = sum_amount, tax_amount = tax, total = sum_amount + tax where i.id = saved;
@@ -727,14 +727,14 @@ declare
 begin
   perform public.pf_require_seller();
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan wajib diisi';
+    raise exception 'A reason is required';
   end if;
   select * into the_row from public.pf_invoice i where i.id = invoice for update;
   if not found or the_row.status <> 'terbit' then
-    raise exception 'Invoice tidak ditemukan atau sudah dibatalkan';
+    raise exception 'Invoice not found or already cancelled';
   end if;
   if exists (select 1 from public.pf_payment p where p.invoice_id = invoice and p.voided_at is null) then
-    raise exception 'Invoice sudah ada pembayaran. Batalkan pembayarannya dulu.';
+    raise exception 'The invoice has a payment. Cancel the payment first.';
   end if;
   update public.pf_invoice i set status = 'batal', void_note = trim(why) where i.id = invoice;
 end;
@@ -754,17 +754,17 @@ begin
   perform public.pf_require_seller();
   select * into the_row from public.pf_invoice i where i.id = invoice for update;
   if not found or the_row.status <> 'terbit' then
-    raise exception 'Invoice tidak ditemukan atau sudah dibatalkan';
+    raise exception 'Invoice not found or already cancelled';
   end if;
   if paid is null or paid > public.pf_today() then
-    raise exception 'Tanggal bayar tidak boleh di masa depan';
+    raise exception 'The payment date cannot be in the future';
   end if;
   if new_amount is null or new_amount <= 0 then
-    raise exception 'Jumlah bayar harus lebih dari 0';
+    raise exception 'The payment must be above 0';
   end if;
   select coalesce(sum(p.amount), 0) into already from public.pf_payment p where p.invoice_id = invoice and p.voided_at is null;
   if already + new_amount > the_row.total then
-    raise exception 'Melebihi sisa tagihan: sisa %', the_row.total - already;
+    raise exception 'More than the balance: % left', the_row.total - already;
   end if;
   insert into public.pf_payment (invoice_id, paid_on, amount, method, reference)
   values (invoice, paid, new_amount, new_method, trim(coalesce(new_reference, '')))
@@ -782,11 +782,11 @@ as $$
 begin
   perform public.pf_require_seller();
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan wajib diisi';
+    raise exception 'A reason is required';
   end if;
   update public.pf_payment p set voided_at = now(), void_note = trim(why) where p.id = payment and p.voided_at is null;
   if not found then
-    raise exception 'Pembayaran tidak ditemukan atau sudah dibatalkan';
+    raise exception 'Payment not found or already cancelled';
   end if;
 end;
 $$;
@@ -807,7 +807,7 @@ declare
   rows jsonb;
 begin
   if not public.pf_can_read_sales() then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
   if wanted = '' then
     return '[]'::jsonb;

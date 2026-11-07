@@ -100,7 +100,7 @@ export function Readings({ title, items }: { title: string; items: Reading[] }) 
             <p className="text-[16px] font-semibold tracking-[-0.01em] text-[#0F2F36]">
               {r.value} <span className="text-[12px] font-normal text-[#4F6B73]">{r.unit}</span>
             </p>
-            {!r.ok && <p className="text-[12px] font-medium text-[#B26205]">Di luar rentang</p>}
+            {!r.ok && <p className="text-[12px] font-medium text-[#B26205]">Out of range</p>}
           </div>
         ))}
       </div>
@@ -199,7 +199,7 @@ export function Lifecycle({ batch, phase, compact = false }: { batch: Batch; pha
   return (
     <Card className="h-full px-5 py-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F2F36]" style={display}>Alur batch</p>
+        <p className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F2F36]" style={display}>Batch flow</p>
         <p className="text-[12.5px] text-[#4F6B73]">{batch.code} · {batch.crop} · {batch.recipe}</p>
       </div>
       <ol className="grid grid-cols-5">
@@ -217,7 +217,7 @@ export function Lifecycle({ batch, phase, compact = false }: { batch: Batch; pha
                 {i + 1}
               </span>
               <span className={`mt-1.5 text-[12.5px] font-medium ${now ? "text-[#0F2F36]" : "text-[#4F6B73]"}`}>{p.label}</span>
-              <span className="text-[12px] text-[#4F6B73]">{compact ? "" : `${p.place} · `}hari {lifecycleDay(i, batch)}</span>
+              <span className="text-[12px] text-[#4F6B73]">{compact ? "" : `${p.place} · `}day {lifecycleDay(i, batch)}</span>
             </li>
           );
         })}
@@ -230,11 +230,11 @@ export function SceneStatus({ failed }: { failed: boolean }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center text-[#4F6B73]">
       {failed ? (
-        <span className="text-[13px]">Model 3D gagal dimuat. Muat ulang halaman untuk mencoba lagi.</span>
+        <span className="text-[13px]">The 3D model could not be loaded. Reload the page to try again.</span>
       ) : (
         <>
           <Loader2 className="mr-2 h-5 w-5 animate-spin text-[#0B6477]" />
-          <span className="text-[13px]" style={body}>Memuat model 3D...</span>
+          <span className="text-[13px]" style={body}>Loading 3D model...</span>
         </>
       )}
     </div>

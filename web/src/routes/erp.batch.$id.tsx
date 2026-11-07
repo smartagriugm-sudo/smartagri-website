@@ -6,7 +6,7 @@ export const Route = createFileRoute("/erp/batch/$id")({
   validateSearch: (search: Record<string, unknown>): { hole?: string } => (typeof search.hole === "string" ? { hole: search.hole } : {}),
   head: () => ({
     meta: [
-      { title: "Batch | smartagri ERP" },
+      { title: "Batch | agrosphere" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

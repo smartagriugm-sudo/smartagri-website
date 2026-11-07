@@ -52,7 +52,7 @@ describe("sample data", () => {
     const tiers = sample().tiersFor("B-121");
     expect(tiers).toHaveLength(6);
     expect(tiers.find((t) => t.rack === 1 && t.tier === 3)).toMatchObject({ code: "R1-T3", free: 80, blocked: null });
-    expect(tiers.find((t) => t.rack === 2 && t.tier === 1)?.blocked).toBe("Masih sanitasi");
+    expect(tiers.find((t) => t.rack === 2 && t.tier === 1)?.blocked).toBe("Still in sanitation");
     expect(tiers.find((t) => t.rack === 1 && t.tier === 1)?.blocked).toMatch(/B-112/);
   });
 

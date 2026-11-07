@@ -31,6 +31,7 @@ export default function SeedChamberScene({ provider, onReady, onSelect, onError 
           ...urls,
           provider,
           slotStates: SLOT_STATES,
+          tooltip: false,
         }),
       )
       .then((created) => {

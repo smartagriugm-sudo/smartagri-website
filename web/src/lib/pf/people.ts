@@ -8,11 +8,11 @@ import { check, db, unwrap } from "./foundation";
 /* -------------------------------------------------------------------- types */
 
 export const PERSON_TYPES = [
-  { key: "karyawan", label: "Karyawan" },
-  { key: "peneliti", label: "Peneliti" },
-  { key: "mahasiswa", label: "Mahasiswa" },
-  { key: "magang", label: "Magang" },
-  { key: "harian", label: "Pekerja harian" },
+  { key: "karyawan", label: "Employee" },
+  { key: "peneliti", label: "Researcher" },
+  { key: "mahasiswa", label: "Student" },
+  { key: "magang", label: "Intern" },
+  { key: "harian", label: "Daily worker" },
 ] as const;
 export type PersonType = (typeof PERSON_TYPES)[number]["key"];
 export const personTypeLabel = (key: string) => PERSON_TYPES.find((t) => t.key === key)?.label ?? key;
@@ -29,19 +29,25 @@ export type Person = {
   left_on: string | null;
   status: "aktif" | "nonaktif";
   has_account: boolean;
+  /** The rest arrive once pf-profile-media.sql has run. */
+  email?: string;
+  address?: string;
+  emergency_contact?: string;
+  skills?: string;
+  notes?: string;
 };
 
 export const CONTRACT_TYPES = [
-  { key: "tetap", label: "Tetap" },
-  { key: "kontrak", label: "Kontrak" },
-  { key: "magang", label: "Magang" },
-  { key: "harian", label: "Harian" },
-  { key: "lainnya", label: "Lainnya" },
+  { key: "tetap", label: "Permanent" },
+  { key: "kontrak", label: "Contract" },
+  { key: "magang", label: "Intern" },
+  { key: "harian", label: "Daily worker" },
+  { key: "lainnya", label: "Other" },
 ] as const;
 export const RATE_BASES = [
-  { key: "bulan", label: "per bulan" },
-  { key: "hari", label: "per hari" },
-  { key: "jam", label: "per jam" },
+  { key: "bulan", label: "per month" },
+  { key: "hari", label: "per day" },
+  { key: "jam", label: "per hour" },
 ] as const;
 
 export type Contract = { id: string; person_id: string; type: string; position: string; start_date: string; end_date: string | null; rate_idr: number | null; rate_basis: string; notes: string };
@@ -51,17 +57,17 @@ export type WorkArea = { id: string; name: string; lat: number; lng: number; rad
 export type Shift = { id: string; person_id: string; full_name: string; work_date: string; start_at: string; end_at: string; area_id: string | null; area_name: string | null; notes: string };
 
 export const LEAVE_TYPES = [
-  { key: "izin", label: "Izin" },
-  { key: "sakit", label: "Sakit" },
-  { key: "cuti", label: "Cuti" },
+  { key: "izin", label: "Leave" },
+  { key: "sakit", label: "Sick" },
+  { key: "cuti", label: "Time off" },
 ] as const;
 export type LeaveType = (typeof LEAVE_TYPES)[number]["key"];
 export type LeaveStatus = "diajukan" | "disetujui" | "ditolak" | "batal";
 export const LEAVE_STATUS: Record<LeaveStatus, { label: string; className: string }> = {
-  diajukan: { label: "Menunggu", className: "bg-[#FFF6E5] text-[#8A5A07]" },
-  disetujui: { label: "Disetujui", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
-  ditolak: { label: "Ditolak", className: "bg-[#FDECEA] text-[#B3362C]" },
-  batal: { label: "Dibatalkan", className: "bg-[#EEF3F4] text-[#4F6B73]" },
+  diajukan: { label: "Waiting", className: "bg-[#FFF6E5] text-[#8A5A07]" },
+  disetujui: { label: "Approved", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
+  ditolak: { label: "Rejected", className: "bg-[#FDECEA] text-[#B3362C]" },
+  batal: { label: "Cancelled", className: "bg-[#EEF3F4] text-[#4F6B73]" },
 };
 export type Leave = { id: string; person_id: string; full_name: string; type: LeaveType; start_date: string; end_date: string; reason: string; status: LeaveStatus; decide_note: string };
 
@@ -95,7 +101,7 @@ export const GRACE_MINUTES = 10;
 
 export const clockText = (t: string) => t.slice(0, 5).replace(":", ".");
 
-export const timeOfDay = (iso: string) => new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(iso));
+export const timeOfDay = (iso: string) => new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(iso));
 
 const jakartaMinutes = (d: Date) => {
   const parts = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Asia/Jakarta" }).format(d).split(":");
@@ -106,18 +112,20 @@ const minutesOf = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 
 export const formatMinutes = (minutes: number) => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return h && m ? `${h} jam ${m} menit` : h ? `${h} jam` : `${m} menit`;
+  const hours = `${h} ${h === 1 ? "hour" : "hours"}`;
+  const mins = `${m} ${m === 1 ? "minute" : "minutes"}`;
+  return h && m ? `${hours} ${mins}` : h ? hours : mins;
 };
 
 export type RosterState = "hadir" | "terlambat" | "belum_datang" | "tidak_hadir" | "izin" | "tanpa_jadwal";
 
 export const ROSTER_STATE: Record<RosterState, { label: string; className: string }> = {
-  hadir: { label: "Hadir", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
-  terlambat: { label: "Terlambat", className: "bg-[#FFF6E5] text-[#8A5A07]" },
-  belum_datang: { label: "Belum waktunya", className: "bg-[#EEF3F4] text-[#4F6B73]" },
-  tidak_hadir: { label: "Belum absen", className: "bg-[#FDECEA] text-[#B3362C]" },
-  izin: { label: "Izin", className: "bg-[#E3F4F4] text-[#0B6477]" },
-  tanpa_jadwal: { label: "Tanpa jadwal", className: "bg-[#EEF3F4] text-[#4F6B73]" },
+  hadir: { label: "Present", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
+  terlambat: { label: "Late", className: "bg-[#FFF6E5] text-[#8A5A07]" },
+  belum_datang: { label: "Not due yet", className: "bg-[#EEF3F4] text-[#4F6B73]" },
+  tidak_hadir: { label: "Not clocked in", className: "bg-[#FDECEA] text-[#B3362C]" },
+  izin: { label: "Leave", className: "bg-[#E3F4F4] text-[#0B6477]" },
+  tanpa_jadwal: { label: "No schedule", className: "bg-[#EEF3F4] text-[#4F6B73]" },
 };
 
 export type RosterRow = { key: string; personId: string; name: string; state: RosterState; shift: Shift | null; attendance: Attendance | null; leave: Leave | null; flags: string[] };
@@ -125,12 +133,12 @@ export type RosterRow = { key: string; personId: string; name: string; state: Ro
 /** What to check about one attendance record. An unknown location is said to be unknown, not called outside. */
 export function attendanceFlags(a: Pick<Attendance, "in_within_area" | "out_within_area" | "missed_out" | "source" | "clock_out">) {
   const flags: string[] = [];
-  if (a.in_within_area === false) flags.push("Masuk di luar area");
-  if (a.out_within_area === false) flags.push("Pulang di luar area");
-  if (a.source === "ponsel" && a.in_within_area === null) flags.push("Lokasi masuk tidak diketahui");
-  if (a.source === "ponsel" && a.clock_out && a.out_within_area === null) flags.push("Lokasi pulang tidak diketahui");
-  if (a.missed_out) flags.push("Lupa absen pulang");
-  if (a.source === "manual") flags.push("Dicatat manual");
+  if (a.in_within_area === false) flags.push("Clocked in outside the area");
+  if (a.out_within_area === false) flags.push("Clocked out outside the area");
+  if (a.source === "ponsel" && a.in_within_area === null) flags.push("Clock-in location unknown");
+  if (a.source === "ponsel" && a.clock_out && a.out_within_area === null) flags.push("Clock-out location unknown");
+  if (a.missed_out) flags.push("Missed clock-out");
+  if (a.source === "manual") flags.push("Recorded by hand");
   return flags;
 }
 
@@ -175,31 +183,31 @@ export function datesOnWeekdays(from: string, to: string, weekdays: readonly num
 }
 
 export function parseShiftForm(personId: string, from: string, to: string, weekdays: readonly number[], start: string, end: string) {
-  if (!personId) return { error: "Pilih orang." } as const;
-  if (!from || !to || to < from) return { error: "Tanggal sampai sebelum tanggal mulai." } as const;
-  if (!start || !end || end <= start) return { error: "Jam selesai harus setelah jam mulai." } as const;
+  if (!personId) return { error: "Choose a person." } as const;
+  if (!from || !to || to < from) return { error: "The end date is before the start date." } as const;
+  if (!start || !end || end <= start) return { error: "The end time must be after the start time." } as const;
   const dates = datesOnWeekdays(from, to, weekdays);
-  if (dates.length === 0) return { error: "Tidak ada tanggal yang cocok dengan hari yang dipilih." } as const;
+  if (dates.length === 0) return { error: "No date matches the chosen days." } as const;
   return { error: null, dates } as const;
 }
 
 export function parseDuration(hours: string, minutes: string) {
   const h = hours.trim() === "" ? 0 : Number(hours.trim().replace(",", "."));
   const m = minutes.trim() === "" ? 0 : Number(minutes.trim());
-  if (!Number.isFinite(h) || !Number.isFinite(m) || h < 0 || m < 0) return { error: "Durasi harus berupa angka." } as const;
+  if (!Number.isFinite(h) || !Number.isFinite(m) || h < 0 || m < 0) return { error: "Duration must be a number." } as const;
   const total = Math.round(h * 60 + m);
-  if (total < 1 || total > 960) return { error: "Durasi harus antara 1 menit dan 16 jam." } as const;
+  if (total < 1 || total > 960) return { error: "Duration must be between 1 minute and 16 hours." } as const;
   return { error: null, minutes: total } as const;
 }
 
 export function parseArea(name: string, lat: string, lng: string, radius: string) {
-  if (!name.trim()) return { error: "Nama lokasi wajib diisi." } as const;
+  if (!name.trim()) return { error: "A location name is required." } as const;
   const la = Number(lat.trim().replace(",", "."));
   const ln = Number(lng.trim().replace(",", "."));
-  if (lat.trim() === "" || !Number.isFinite(la) || la < -90 || la > 90) return { error: "Lintang harus antara -90 dan 90." } as const;
-  if (lng.trim() === "" || !Number.isFinite(ln) || ln < -180 || ln > 180) return { error: "Bujur harus antara -180 dan 180." } as const;
+  if (lat.trim() === "" || !Number.isFinite(la) || la < -90 || la > 90) return { error: "Latitude must be between -90 and 90." } as const;
+  if (lng.trim() === "" || !Number.isFinite(ln) || ln < -180 || ln > 180) return { error: "Longitude must be between -180 and 180." } as const;
   const r = Number(radius.trim());
-  if (!Number.isInteger(r) || r < 10 || r > 5000) return { error: "Radius harus antara 10 dan 5000 meter." } as const;
+  if (!Number.isInteger(r) || r < 10 || r > 5000) return { error: "The radius must be between 10 and 5000 metres." } as const;
   return { error: null, lat: la, lng: ln, radius: r } as const;
 }
 
@@ -262,6 +270,37 @@ export async function fetchBatchLabor(batch: string): Promise<LaborEntry[]> {
   return unwrap(await db().from("pf_labor_overview").select("*").eq("batch_id", batch).order("work_date", { ascending: false }).limit(200)) as LaborEntry[];
 }
 
+/** Everything one profile page shows, asked for that person only. */
+export async function fetchPersonRecords(person: string) {
+  const [shifts, attendance, leaves] = await Promise.all([
+    db().from("pf_shift_overview").select("*").eq("person_id", person).order("work_date", { ascending: false }).limit(400),
+    db().from("pf_attendance_overview").select("*").eq("person_id", person).order("clock_in", { ascending: false }).limit(400),
+    db().from("pf_leave_overview").select("*").eq("person_id", person).order("start_date", { ascending: false }).limit(100),
+  ]);
+  return {
+    shifts: unwrap(shifts) as Shift[],
+    attendance: (unwrap(attendance) as Attendance[]).map((a) => numbers(a, ["in_accuracy_m"])),
+    leaves: unwrap(leaves) as Leave[],
+  };
+}
+
+/** Minutes between clocking in and out. Null while still in, or when the clock-out was missed. */
+export const workedMinutes = (a: Pick<Attendance, "clock_in" | "clock_out">) => (a.clock_out ? Math.max(0, Math.round((new Date(a.clock_out).getTime() - new Date(a.clock_in).getTime()) / 60_000)) : null);
+
+/** Whether someone came late against their shift. Without a shift, nobody can be late. */
+export function cameLate(a: Pick<Attendance, "clock_in" | "start_at">) {
+  if (!a.start_at) return false;
+  return jakartaMinutes(new Date(a.clock_in)) > minutesOf(a.start_at) + GRACE_MINUTES;
+}
+
+export async function fetchPersonLabor(person: string): Promise<LaborEntry[]> {
+  return unwrap(await db().from("pf_labor_overview").select("*").eq("person_id", person).order("work_date", { ascending: false }).limit(200)) as LaborEntry[];
+}
+
+export async function savePersonDetails(person: string, f: { email: string; address: string; emergency: string; skills: string; notes: string }) {
+  check(await db().rpc("pf_person_details_save", { target: person, new_email: f.email, new_address: f.address, new_emergency: f.emergency, new_skills: f.skills, new_notes: f.notes }));
+}
+
 export async function savePerson(id: string | null, f: { account: string; name: string; type: PersonType; supervisor: string; phone: string; joined: string; left: string; status: Person["status"] }): Promise<string> {
   return unwrap(await db().rpc("pf_person_save", { target: id, account: f.account || null, new_name: f.name, new_type: f.type, supervisor: f.supervisor || null, new_phone: f.phone, joined: f.joined || null, left_day: f.left || null, new_status: f.status })) as string;
 }
@@ -307,7 +346,7 @@ export type Fix = { lat: number; lng: number; accuracy: number } | null;
 export async function uploadPhoto(person: string, photo: Blob): Promise<string> {
   const path = `${person}/${crypto.randomUUID()}.jpg`;
   const { error } = await db().storage.from(PHOTO_BUCKET).upload(path, photo, { contentType: "image/jpeg", upsert: false });
-  if (error) throw new Error(`Foto gagal diunggah: ${error.message}`);
+  if (error) throw new Error(`The photo could not be uploaded: ${error.message}`);
   return path;
 }
 
@@ -329,7 +368,7 @@ export async function correctAttendance(attendance: string, came: string, went: 
 
 export async function photoLink(path: string): Promise<string> {
   const { data, error } = await db().storage.from(PHOTO_BUCKET).createSignedUrl(path, 60);
-  if (error || !data) throw new Error("Foto tidak bisa dibuka. Mungkin sudah lewat masa simpan.");
+  if (error || !data) throw new Error("The photo cannot be opened. It may be past its retention period.");
   return data.signedUrl;
 }
 
@@ -338,7 +377,7 @@ export async function sweepExpiredPhotos(): Promise<number> {
   const expired = unwrap(await db().rpc("pf_photos_expired")) as { id: string; paths: string[] }[];
   if (expired.length === 0) return 0;
   const { error } = await db().storage.from(PHOTO_BUCKET).remove(expired.flatMap((e) => e.paths));
-  if (error) throw new Error(`Foto lama gagal dihapus: ${error.message}`);
+  if (error) throw new Error(`The old photo could not be removed: ${error.message}`);
   check(await db().rpc("pf_photos_mark_removed", { attendances: expired.map((e) => e.id) }));
   return expired.length;
 }
@@ -374,5 +413,5 @@ export async function compressPhoto(file: Blob, maxSide = 720): Promise<Blob> {
   canvas.height = Math.round(bitmap.height * scale);
   canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
-  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Foto gagal diproses"))), "image/jpeg", 0.7));
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("The photo could not be processed"))), "image/jpeg", 0.7));
 }

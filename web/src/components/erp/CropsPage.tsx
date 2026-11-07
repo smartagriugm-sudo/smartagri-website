@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { cropToForm, emptyCropForm, fetchCrops, parseCropForm, saveCrop, type CropForm } from "../../lib/pf/foundation";
+import { cropToForm, emptyCropForm, fetchCrops, parseCropForm, saveCrop, type CropForm, type PfCrop } from "../../lib/pf/foundation";
 import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
 import { Card } from "./ui";
+import DataTable, { CellTitle, Chip, type Column } from "./DataTable";
 
 // Crops the recipes and, later, the batches point at. A crop is switched off
 // instead of deleted, so old records keep their meaning.
@@ -20,23 +21,23 @@ function CropEditor({ id, initial, onDone }: { id: string | null; initial: CropF
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">{id ? "Ubah tanaman" : "Tanaman baru"}</h2>
+      <h2 className="mb-3 text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">{id ? "Edit crop" : "New crop"}</h2>
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-        <Field label="Nama"><input className={inputClass} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Selada" autoFocus /></Field>
-        <Field label="Varietas"><input className={inputClass} value={form.variety} onChange={(e) => set("variety", e.target.value)} placeholder="Romaine" /></Field>
+        <Field label="Name"><input className={inputClass} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Lettuce" autoFocus /></Field>
+        <Field label="Variety"><input className={inputClass} value={form.variety} onChange={(e) => set("variety", e.target.value)} placeholder="Romaine" /></Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Siklus (hari)"><input className={inputClass} inputMode="numeric" value={form.cycleDays} onChange={(e) => set("cycleDays", e.target.value)} placeholder="35" /></Field>
-          <Field label="Daya kecambah (%)"><input className={inputClass} inputMode="decimal" value={form.germRate} onChange={(e) => set("germRate", e.target.value)} placeholder="90" /></Field>
+          <Field label="Cycle (days)"><input className={inputClass} inputMode="numeric" value={form.cycleDays} onChange={(e) => set("cycleDays", e.target.value)} placeholder="35" /></Field>
+          <Field label="Germination (%)"><input className={inputClass} inputMode="decimal" value={form.germRate} onChange={(e) => set("germRate", e.target.value)} placeholder="90" /></Field>
         </div>
-        <Field label="Catatan"><textarea className={inputClass} rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Field>
+        <Field label="Notes"><textarea className={inputClass} rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Field>
         <label className="flex items-center gap-2 text-[14px] text-[#0F2F36]">
           <input type="checkbox" checked={form.active} onChange={(e) => set("active", e.target.checked)} className="h-4 w-4 accent-[#14919B]" />
-          Aktif, bisa dipilih untuk resep baru
+          Active, can be chosen for new recipes
         </label>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Simpan"}</PrimaryButton>
-          <SecondaryButton onClick={() => onDone(false)}>Batal</SecondaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+          <SecondaryButton onClick={() => onDone(false)}>Cancel</SecondaryButton>
         </div>
       </form>
     </Card>
@@ -56,64 +57,35 @@ export default function CropsPage() {
 
   return (
     <ErpPage
-      eyebrow="Budidaya"
-      title="Tanaman"
-      sub="Daftar tanaman yang dipakai resep dan batch."
-      actions={canManageProduction && editing === null && !state.error?.notInstalled ? <PrimaryButton onClick={() => setEditing("new")}><Plus className="h-4 w-4" /> Tambah tanaman</PrimaryButton> : undefined}
+      eyebrow="Master data"
+      title="Crops"
+      sub="The crops that recipes and batches use."
+      actions={canManageProduction && editing === null && !state.error?.notInstalled ? <PrimaryButton onClick={() => setEditing("new")}><Plus className="h-4 w-4" /> Add crop</PrimaryButton> : undefined}
     >
       <DataState state={state}>
         {(crops) => (
           <div className={`grid grid-cols-1 items-start gap-4 ${editing ? "lg:grid-cols-[minmax(0,1fr)_360px]" : ""}`}>
             <div className="min-w-0 space-y-3">
-              {!canManageProduction && <ReadOnlyNote who="Manajer produksi" />}
-              <Card className="p-4">
-                {crops.length === 0 ? (
-                  <p className="py-6 text-center text-[14px] text-[#4F6B73]">Belum ada tanaman.</p>
-                ) : (
-                  <>
-                  <ul className="-my-2 md:hidden">
-                    {crops.map((c) => (
-                      <li key={c.id} className="flex items-center gap-3 border-t border-[#E3ECED] py-2 first:border-0">
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[14px] font-medium text-[#0F2F36]">{c.name}{c.variety && <span className="font-normal text-[#4F6B73]"> {c.variety}</span>}</span>
-                          <span className="block text-[13px] text-[#4F6B73]">{c.active ? "Aktif" : "Nonaktif"} · siklus {c.cycle_days != null ? `${c.cycle_days} hari` : "-"} · kecambah {c.germ_rate != null ? `${c.germ_rate}%` : "-"}</span>
-                        </span>
-                        {canManageProduction && <button type="button" onClick={() => setEditing(c.id)} className="min-h-[44px] shrink-0 text-[14px] font-medium text-[#0B6477] hover:underline">Ubah</button>}
-                      </li>
-                    ))}
-                  </ul>
-                  <table className="hidden w-full text-left text-[14px] md:table">
-                    <thead className="text-[13px] text-[#4F6B73]">
-                      <tr>
-                        <th className="pb-2 font-medium">Tanaman</th>
-                        <th className="pb-2 font-medium">Siklus</th>
-                        <th className="pb-2 font-medium">Daya kecambah</th>
-                        <th className="pb-2 font-medium">Status</th>
-                        <th className="pb-2" />
-                      </tr>
-                    </thead>
-                    <tbody className="text-[#0F2F36]">
-                      {crops.map((c) => (
-                        <tr key={c.id} className="border-t border-[#E3ECED]">
-                          <td className="py-2.5">
-                            <span className="font-medium">{c.name}</span>{c.variety && <span className="text-[#4F6B73]"> {c.variety}</span>}
-                            {c.notes && <span className="block text-[13px] text-[#4F6B73]">{c.notes}</span>}
-                          </td>
-                          <td className="py-2.5">{c.cycle_days != null ? `${c.cycle_days} hari` : "Belum diisi"}</td>
-                          <td className="py-2.5">{c.germ_rate != null ? `${c.germ_rate}%` : "Belum diisi"}</td>
-                          <td className="py-2.5">
-                            <span className={`rounded-full px-2 py-0.5 text-[12.5px] font-medium ${c.active ? "bg-[#E3F7F0] text-[#0E7A5C]" : "bg-[#EEF3F4] text-[#4F6B73]"}`}>{c.active ? "Aktif" : "Nonaktif"}</span>
-                          </td>
-                          <td className="py-2.5 text-right">
-                            {canManageProduction && <button type="button" onClick={() => setEditing(c.id)} className="min-h-[24px] text-[14px] font-medium text-[#0B6477] hover:underline">Ubah</button>}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  </>
-                )}
-              </Card>
+              {!canManageProduction && <ReadOnlyNote who="Production manager" />}
+              <DataTable
+                rows={crops}
+                rowKey={(c) => c.id}
+                noun="crops"
+                searchText={(c) => `${c.name} ${c.variety ?? ""} ${c.notes ?? ""}`}
+                searchLabel="Search by name or variety"
+                pills={[
+                  { key: "active", label: "Active", dot: "#0E9B7A", match: (c) => c.active },
+                  { key: "inactive", label: "Inactive", dot: "#8FA3A8", match: (c) => !c.active },
+                ]}
+                empty="No crops yet."
+                columns={[
+                  { key: "name", label: "Crop", track: "minmax(0,1.6fr)", phone: "title", sort: (a, b) => a.name.localeCompare(b.name), cell: (c) => <CellTitle title={<>{c.name}{c.variety && <span className="font-normal text-[#4F6B73]"> {c.variety}</span>}</>} sub={c.notes || undefined} muted={!c.active} /> },
+                  { key: "cycle", label: "Cycle", track: "110px", align: "right", sort: (a, b) => (a.cycle_days ?? 0) - (b.cycle_days ?? 0), cell: (c) => <span className="tabular-nums">{c.cycle_days != null ? `${c.cycle_days} days` : "Not set"}</span> },
+                  { key: "germ", label: "Germination", track: "120px", align: "right", sort: (a, b) => (a.germ_rate ?? 0) - (b.germ_rate ?? 0), cell: (c) => <span className="tabular-nums">{c.germ_rate != null ? `${c.germ_rate}%` : "Not set"}</span> },
+                  { key: "status", label: "Status", track: "110px", cell: (c) => <Chip label={c.active ? "Active" : "Inactive"} className={c.active ? "bg-[#E3F7F0] text-[#0E7A5C]" : undefined} /> },
+                  { key: "edit", label: "", track: "48px", align: "right", interactive: true, cell: (c) => canManageProduction ? <button type="button" onClick={() => setEditing(c.id)} className="min-h-[44px] text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]">Edit</button> : null },
+                ] satisfies Column<PfCrop>[]}
+              />
             </div>
             {editing && (
               <CropEditor

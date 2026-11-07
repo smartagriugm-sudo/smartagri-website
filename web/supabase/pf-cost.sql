@@ -423,13 +423,13 @@ begin
   perform public.pf_require(public.pf_can_manage_production());
   select po_line_id into line from public.pf_stock_lot where id = lot;
   if not found then
-    raise exception 'Lot tidak ditemukan';
+    raise exception 'Lot not found';
   end if;
   if line is not null then
-    raise exception 'Harga lot ini mengikuti pesanan pembeliannya';
+    raise exception 'This lot''s price follows its purchase order';
   end if;
   if price is null or price < 0 then
-    raise exception 'Harga tidak boleh negatif';
+    raise exception 'Price cannot be negative';
   end if;
   insert into public.pf_lot_price (lot_id, unit_cost, note) values (lot, price, coalesce(trim(new_note), ''))
   on conflict (lot_id) do update set unit_cost = excluded.unit_cost, note = excluded.note, by_id = auth.uid(), updated_at = now();
@@ -445,10 +445,10 @@ as $$
 begin
   perform public.pf_require(public.pf_can_manage_production());
   if starts is null then
-    raise exception 'Tanggal berlaku wajib diisi';
+    raise exception 'A start date is required';
   end if;
   if hourly is null or hourly < 0 then
-    raise exception 'Tarif tidak boleh negatif';
+    raise exception 'A rate cannot be negative';
   end if;
   insert into public.pf_labor_rate (person_type, valid_from, hourly_idr) values (new_type, starts, hourly)
   on conflict (person_type, valid_from) do update set hourly_idr = excluded.hourly_idr, by_id = auth.uid();
@@ -466,16 +466,16 @@ declare
 begin
   perform public.pf_require(public.pf_can_manage_production());
   if batch is null and new_area is null then
-    raise exception 'Pilih batch atau ruang';
+    raise exception 'Choose a batch or a room';
   end if;
   if batch is not null and new_area is not null then
-    raise exception 'Pilih batch atau ruang, tidak keduanya';
+    raise exception 'Choose a batch or a room, not both';
   end if;
   if starts is null or ends is null or ends < starts then
-    raise exception 'Periode tidak valid';
+    raise exception 'Invalid period';
   end if;
   if new_amount is null or new_amount <= 0 then
-    raise exception 'Jumlah harus lebih dari nol';
+    raise exception 'Quantity must be above zero';
   end if;
   insert into public.pf_cost_entry (category, description, amount, batch_id, area, period_start, period_end)
   values (new_category, coalesce(trim(what), ''), new_amount, batch, new_area, starts, ends)
@@ -494,11 +494,11 @@ as $$
 begin
   perform public.pf_require(public.pf_can_manage_production());
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan wajib diisi';
+    raise exception 'A reason is required';
   end if;
   update public.pf_cost_entry set voided_at = now(), void_note = trim(why) where id = entry and voided_at is null;
   if not found then
-    raise exception 'Catatan tidak ditemukan atau sudah dibatalkan';
+    raise exception 'Record not found or already cancelled';
   end if;
 end;
 $$;
@@ -516,10 +516,10 @@ declare
 begin
   perform public.pf_require(public.pf_can_maintain());
   if coalesce(trim(new_title), '') = '' then
-    raise exception 'Nama pekerjaan wajib diisi';
+    raise exception 'A task name is required';
   end if;
   if every is null or every < 1 then
-    raise exception 'Jarak perawatan minimal 1 hari';
+    raise exception 'Maintenance must be at least 1 day apart';
   end if;
   if target is null then
     insert into public.pf_maintenance_plan (title, asset_id, every_days, last_done, notes, active)
@@ -530,7 +530,7 @@ begin
        set title = trim(new_title), asset_id = asset, every_days = every, last_done = last_day, notes = coalesce(trim(new_notes), ''), active = is_active
      where id = target;
     if not found then
-      raise exception 'Rencana tidak ditemukan';
+      raise exception 'Plan not found';
     end if;
   end if;
   return saved;
@@ -551,13 +551,13 @@ begin
   if plan is not null then
     select * into the_plan from public.pf_maintenance_plan p where p.id = plan for update;
     if not found then
-      raise exception 'Rencana tidak ditemukan';
+      raise exception 'Plan not found';
     end if;
     if exists (select 1 from public.pf_work_order w where w.plan_id = plan and w.status = 'terbuka') then
-      raise exception 'Rencana ini sudah punya perintah kerja yang terbuka';
+      raise exception 'This plan already has an open work order';
     end if;
   elsif coalesce(trim(new_title), '') = '' then
-    raise exception 'Nama pekerjaan wajib diisi';
+    raise exception 'A task name is required';
   end if;
   insert into public.pf_work_order (wo_no, plan_id, asset_id, title, kind, due_on)
   values (
@@ -587,17 +587,17 @@ begin
   perform public.pf_require(public.pf_can_maintain());
   select * into the_row from public.pf_work_order w where w.id = work_order for update;
   if not found or the_row.status <> 'terbuka' then
-    raise exception 'Perintah kerja tidak ditemukan atau sudah ditutup';
+    raise exception 'Work order not found or already closed';
   end if;
   if done is null or done > public.pf_today() then
-    raise exception 'Tanggal selesai tidak boleh di masa depan';
+    raise exception 'The end date cannot be in the future';
   end if;
   if coalesce(cost, 0) < 0 then
-    raise exception 'Biaya tidak boleh negatif';
+    raise exception 'Cost cannot be negative';
   end if;
   if coalesce(cost, 0) > 0 then
     if room is null then
-      raise exception 'Pilih ruang yang menanggung biayanya';
+      raise exception 'Choose the rooms that carry the cost';
     end if;
     insert into public.pf_cost_entry (category, description, amount, area, period_start, period_end)
     values (
@@ -624,11 +624,11 @@ as $$
 begin
   perform public.pf_require(public.pf_can_maintain());
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan wajib diisi';
+    raise exception 'A reason is required';
   end if;
   update public.pf_work_order set status = 'batal', done_note = trim(why) where id = work_order and status = 'terbuka';
   if not found then
-    raise exception 'Perintah kerja tidak ditemukan atau sudah ditutup';
+    raise exception 'Work order not found or already closed';
   end if;
 end;
 $$;

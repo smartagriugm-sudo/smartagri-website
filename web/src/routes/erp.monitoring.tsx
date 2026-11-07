@@ -5,7 +5,7 @@ export const Route = createFileRoute("/erp/monitoring")({
   component: MonitoringPage,
   head: () => ({
     meta: [
-      { title: "Kondisi | smartagri ERP" },
+      { title: "Conditions | agrosphere" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

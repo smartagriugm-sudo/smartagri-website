@@ -1,119 +1,108 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, ArrowLeft, BellRing, CalendarDays, Wallet, Wrench, Fingerprint, UserCheck, BookOpen, Boxes, ClipboardCheck, ClipboardList, Contact, Cpu, Factory, FileText, History, LayoutDashboard, Leaf, MapPin, Menu, Package, Search, ShoppingBag, ShoppingCart, Sprout, Users, X, type LucideIcon } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { A } from "../../lib/assets";
-import { body, display } from "../../lib/fonts";
-import type { StoreMode } from "../../lib/pf/store";
+import { body } from "../../lib/fonts";
+import type { ErpAccess } from "../../lib/pf/foundation";
 import { useErpStore } from "./ErpContext";
+import ErpHeadbar, { ProfileRow } from "./ErpHeadbar";
+import { NAV_GROUPS, NAV_HOME, navActive, navAllowed, navGroupOf, type NavGroup, type NavItem, type NavPath } from "./erpNav";
 import { useErpAccess } from "./page";
 
-// The frame around every ERP page. On a large screen, a sidebar on the page's own
-// ground: labelled from 1280px, a rail of icons from 1024px so the 3D screens keep
-// their width. Below that, a top bar whose button opens the menu as a full sheet.
-// Modules that are not built yet are named once at the foot, not offered as links.
+// The frame around every ERP page: the agrosphere menu on the page's own ground, and
+// the headbar above the work. Each section of the menu folds, a folded one carries
+// its section's counts so nothing waiting goes out of sight, and the whole menu can
+// hide to give the work the full width. The choices last while the ERP is open: the
+// project keeps no localStorage. Below 1024px the menu is a full sheet.
 
-type NavItem = { to: NavPath; label: string; icon: LucideIcon; exact?: boolean; purchase?: boolean; people?: boolean; cost?: boolean; maintenance?: boolean };
-type NavPath = "/erp" | "/erp/biaya" | "/erp/perawatan" | "/erp/absen" | "/erp/kehadiran" | "/erp/jadwal" | "/erp/orang" | "/erp/stok" | "/erp/pembelian" | "/erp/opname" | "/erp/pesanan" | "/erp/invoice" | "/erp/pelanggan" | "/erp/telusur" | "/erp/monitoring" | "/erp/alarm" | "/erp/perangkat" | "/erp/batch" | "/erp/persemaian" | "/erp/plant-factory" | "/erp/benih" | "/erp/tanaman" | "/erp/resep" | "/erp/pengaturan/lokasi" | "/erp/pengaturan/peran" | "/erp/pengaturan/audit";
+const SIDEBAR_WIDTH = 240;
 
-const HOME: NavItem = { to: "/erp", label: "Ringkasan", icon: LayoutDashboard, exact: true };
+type Counts = Partial<Record<NavPath, { n: number; label: string }>>;
 
-const GROUPS: { label: string; items: NavItem[]; sales?: boolean }[] = [
-  {
-    label: "Budidaya",
-    items: [
-      { to: "/erp/batch", label: "Batch", icon: ClipboardList },
-      { to: "/erp/persemaian", label: "Persemaian", icon: Sprout },
-      { to: "/erp/plant-factory", label: "Plant factory", icon: Factory },
-      { to: "/erp/benih", label: "Lot benih", icon: Package },
-      { to: "/erp/tanaman", label: "Tanaman", icon: Leaf },
-      { to: "/erp/resep", label: "Resep", icon: BookOpen },
-    ],
-  },
-  {
-    label: "Penjualan",
-    sales: true,
-    items: [
-      { to: "/erp/pesanan", label: "Pesanan", icon: ShoppingCart },
-      { to: "/erp/invoice", label: "Invoice", icon: FileText },
-      { to: "/erp/pelanggan", label: "Pelanggan", icon: Contact },
-      { to: "/erp/telusur", label: "Telusur", icon: Search },
-    ],
-  },
-  {
-    label: "Inventory",
-    items: [
-      { to: "/erp/stok", label: "Stok", icon: Boxes },
-      { to: "/erp/pembelian", label: "Pembelian", icon: ShoppingBag, purchase: true },
-      { to: "/erp/opname", label: "Opname", icon: ClipboardCheck },
-    ],
-  },
-  {
-    label: "Monitoring",
-    items: [
-      { to: "/erp/monitoring", label: "Kondisi", icon: Activity },
-      { to: "/erp/alarm", label: "Alarm", icon: BellRing },
-      { to: "/erp/perangkat", label: "Perangkat", icon: Cpu },
-    ],
-  },
-  {
-    label: "SDM",
-    items: [
-      { to: "/erp/absen", label: "Absen", icon: Fingerprint },
-      { to: "/erp/kehadiran", label: "Kehadiran", icon: UserCheck, people: true },
-      { to: "/erp/jadwal", label: "Jadwal", icon: CalendarDays, people: true },
-      { to: "/erp/orang", label: "Orang", icon: Contact, people: true },
-    ],
-  },
-  {
-    label: "Biaya",
-    items: [
-      { to: "/erp/biaya", label: "Biaya", icon: Wallet, cost: true },
-      { to: "/erp/perawatan", label: "Perawatan", icon: Wrench, maintenance: true },
-    ],
-  },
-  {
-    label: "Pengaturan",
-    items: [
-      { to: "/erp/pengaturan/lokasi", label: "Lokasi", icon: MapPin },
-      { to: "/erp/pengaturan/peran", label: "Peran", icon: Users },
-      { to: "/erp/pengaturan/audit", label: "Audit log", icon: History },
-    ],
-  },
-];
-
-const ALL_ITEMS = [HOME, ...GROUPS.flatMap((g) => g.items)];
-
-const MODE_CHIP: Record<StoreMode, { label: string; dot: string }> = {
-  loading: { label: "Memuat data", dot: "bg-[#8D9398]" },
-  live: { label: "Data asli", dot: "bg-[#0E9F6E]" },
-  sample: { label: "Data contoh", dot: "bg-[#E0A526]" },
-  error: { label: "Data gagal dimuat", dot: "bg-[#D9433B]" },
-};
-
-const isActive = (item: NavItem, pathname: string) => (item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`));
-
-/** One row of the menu. `rail` hides the label from 1024 to 1279px, leaving the icon and its name for assistive tech. */
-function NavRow({ item, pathname, rail, count, countLabel }: { item: NavItem; pathname: string; rail: boolean; count?: number; countLabel?: string }) {
-  const active = isActive(item, pathname);
+function NavRow({ item, pathname, count, countLabel }: { item: NavItem; pathname: string; count?: number; countLabel?: string }) {
+  const active = navActive(item, pathname);
   const Icon = item.icon;
-  const showCount = !!count;
   return (
     <Link
       to={item.to}
       aria-current={active ? "page" : undefined}
-      aria-label={rail ? (showCount ? `${item.label}, ${countLabel}` : item.label) : undefined}
-      title={rail ? (showCount ? `${item.label}: ${countLabel}` : item.label) : undefined}
-      className={`relative flex min-h-[44px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] lg:min-h-[32px] ${rail ? "justify-center xl:justify-start" : ""} ${active ? "bg-[#DDE8E8] font-medium text-[#0F2F36]" : "text-[#36525A] hover:bg-[#E9EFEF] hover:text-[#0F2F36]"}`}
+      className={`flex min-h-[44px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] transition-colors lg:min-h-[32px] ${active ? "bg-[#DDE8E8] font-medium text-[#0F2F36]" : "text-[#36525A] hover:bg-[#E9EFEF] hover:text-[#0F2F36]"}`}
     >
       <Icon className={`h-4 w-4 shrink-0 ${active ? "text-[#0B6477]" : "text-[#4F6B73]"}`} strokeWidth={1.75} />
-      <span className={rail ? "hidden xl:inline" : ""}>{item.label}</span>
-      {showCount && (
-        <span title={countLabel} className={`rounded-md bg-[#E3F4F4] px-1.5 text-[12px] font-medium tabular-nums text-[#0B6477] ${rail ? "absolute right-0.5 top-0.5 xl:static xl:ml-auto" : "ml-auto"}`}>
+      <span className="truncate">{item.label}</span>
+      {!!count && (
+        <span title={countLabel} className="ml-auto rounded-md bg-[#E3F4F4] px-1.5 text-[12px] font-medium tabular-nums text-[#0B6477]">
           {count}
-          {!rail && <span className="sr-only"> {countLabel}</span>}
+          <span className="sr-only"> {countLabel}</span>
         </span>
       )}
     </Link>
+  );
+}
+
+function NavSection({ group, items, pathname, counts, open, onToggle }: { group: NavGroup; items: NavItem[]; pathname: string; counts: Counts; open: boolean; onToggle: () => void }) {
+  const waiting = items.reduce((n, i) => n + (counts[i.to]?.n ?? 0), 0);
+  const panel = `nav-${group.key}`;
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={panel}
+        onClick={onToggle}
+        className="group flex min-h-[44px] w-full items-center gap-1.5 rounded-lg px-2.5 text-left text-[12.5px] text-[#4F6B73] hover:text-[#0F2F36] lg:min-h-[28px]"
+      >
+        <span className="truncate">{group.label}</span>
+        {!open && waiting > 0 && <span className="rounded-md bg-[#E3F4F4] px-1.5 text-[12px] font-medium tabular-nums text-[#0B6477]">{waiting}</span>}
+        <ChevronDown className={`ml-auto h-3.5 w-3.5 shrink-0 opacity-60 transition-transform duration-150 group-hover:opacity-100 motion-reduce:transition-none ${open ? "" : "-rotate-90"}`} strokeWidth={2} />
+      </button>
+      <div id={panel} hidden={!open} className="mt-0.5 space-y-0.5">
+        {items.map((item) => (
+          <NavRow key={item.to} item={item} pathname={pathname} count={counts[item.to]?.n} countLabel={counts[item.to]?.label} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NavBody({ pathname, access }: { pathname: string; access: ErpAccess }) {
+  const store = useErpStore();
+  const ready = store.readyToMove().reduce((n, r) => n + r.seedlings, 0);
+  const alarms = store.monitoring?.alarms.filter((a) => !a.ack_at).length ?? 0;
+  const counts: Counts = {
+    "/erp/seedlings": { n: ready, label: `${ready} seedlings ready to transplant` },
+    "/erp/alarms": { n: alarms, label: `${alarms} alarms not handled` },
+  };
+
+  const [openKeys, setOpenKeys] = useState(() => new Set(NAV_GROUPS.filter((g) => g.startsOpen).map((g) => g.key)));
+  // Going to a page in a folded section opens it, so the place you are in stays visible.
+  const here = navGroupOf(pathname)?.key;
+  useEffect(() => {
+    if (here) setOpenKeys((keys) => (keys.has(here) ? keys : new Set(keys).add(here)));
+  }, [here]);
+
+  const toggle = (key: string) =>
+    setOpenKeys((keys) => {
+      const next = new Set(keys);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+
+  return (
+    <>
+      <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto px-2.5 py-2" aria-label="ERP menu">
+        <NavRow item={NAV_HOME} pathname={pathname} />
+        {NAV_GROUPS.map((g) => {
+          const items = g.items.filter((i) => navAllowed(i, access));
+          if (items.length === 0) return null;
+          return <NavSection key={g.key} group={g} items={items} pathname={pathname} counts={counts} open={openKeys.has(g.key)} onToggle={() => toggle(g.key)} />;
+        })}
+      </nav>
+      {store.mode === "error" && <RetryLoad />}
+      <div className="border-t border-[#DCE7E8] px-2 py-2">
+        <ProfileRow access={access} />
+      </div>
+    </>
   );
 }
 
@@ -126,77 +115,25 @@ function RetryLoad() {
     setBusy(false);
   };
   return (
-    <button type="button" disabled={busy} onClick={() => void retry()} className="min-h-[36px] whitespace-nowrap text-[13px] font-medium text-[#0F2F36] underline disabled:cursor-not-allowed disabled:opacity-50">
-      {busy ? "Menghubungkan..." : "Coba lagi"}
-    </button>
+    <div className="flex items-center justify-between gap-2 border-t border-[#DCE7E8] px-4 py-1.5 text-[13px] text-[#B3362C]">
+      Could not load data
+      <button type="button" disabled={busy} onClick={() => void retry()} className="min-h-[36px] whitespace-nowrap font-medium text-[#0F2F36] underline disabled:cursor-not-allowed disabled:opacity-50">
+        {busy ? "Connecting..." : "Try again"}
+      </button>
+    </div>
   );
 }
 
-function NavBody({ pathname, rail }: { pathname: string; rail: boolean }) {
-  const store = useErpStore();
-  const { canReadSales, canReadPurchase, canReadPeople, canReadCost, canReadMaintenance } = useErpAccess();
-  const allowed = (item: NavItem) => (!item.purchase || canReadPurchase) && (!item.people || canReadPeople) && (!item.cost || canReadCost) && (!item.maintenance || canReadMaintenance);
-  const ready = store.readyToMove().reduce((n, r) => n + r.seedlings, 0);
-  const alarms = store.monitoring?.alarms.filter((a) => !a.ack_at).length ?? 0;
-  const counts: Partial<Record<NavPath, { n: number; label: string }>> = {
-    "/erp/persemaian": { n: ready, label: `${ready} bibit siap pindah` },
-    "/erp/alarm": { n: alarms, label: `${alarms} alarm belum ditangani` },
-  };
-  const live = store.mode === "live" && !store.monitoring?.latest.length;
-  const chip = live ? { ...MODE_CHIP.live, label: "Batch asli, iklim contoh" } : MODE_CHIP[store.mode];
-  const hideOnRail = rail ? "hidden xl:block" : "";
-
+function Brand() {
   return (
-    <>
-      <nav className="min-h-0 flex-1 space-y-3 overflow-y-auto px-2.5 py-2.5" aria-label="Menu ERP">
-        <NavRow item={HOME} pathname={pathname} rail={rail} />
-        {GROUPS.filter((g) => (!g.sales || canReadSales) && g.items.some(allowed)).map((g) => (
-          <div key={g.label}>
-            <p className={`mb-1 px-2.5 text-[12.5px] text-[#4F6B73] ${hideOnRail}`}>{g.label}</p>
-            {rail && <div className="mx-2.5 mb-2 border-t border-[#DCE7E8] xl:hidden" />}
-            <div className="space-y-0.5">
-              {g.items.filter(allowed).map((item) => (
-                <NavRow key={item.to} item={item} pathname={pathname} rail={rail} count={counts[item.to]?.n} countLabel={counts[item.to]?.label} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </nav>
-
-      <div className="space-y-1 border-t border-[#DCE7E8] px-2.5 py-2.5">
-        <div className={`flex items-center gap-2 px-2.5 py-1 text-[12.5px] text-[#36525A] ${rail ? "justify-center xl:justify-start" : ""}`} title={chip.label}>
-          <span className={`h-2 w-2 shrink-0 rounded-full ${chip.dot}`} />
-          <span className={rail ? "sr-only xl:not-sr-only" : ""} role="status">{chip.label}</span>
-        </div>
-        {store.mode === "error" && <div className={`px-2.5 ${hideOnRail}`}><RetryLoad /></div>}
-        <Link
-          to="/indoor-farming/dashboard"
-          aria-label={rail ? "Keluar dari ERP" : undefined}
-          title={rail ? "Keluar dari ERP" : undefined}
-          className={`flex min-h-[44px] items-center gap-2.5 rounded-lg px-2.5 text-[14px] text-[#36525A] hover:bg-[#E9EFEF] lg:min-h-[32px] ${rail ? "justify-center xl:justify-start" : ""}`}
-        >
-          <ArrowLeft className="h-4 w-4 shrink-0 text-[#4F6B73]" strokeWidth={1.75} />
-          <span className={rail ? "hidden xl:inline" : ""}>Keluar dari ERP</span>
-        </Link>
-      </div>
-    </>
-  );
-}
-
-function Brand({ rail }: { rail: boolean }) {
-  return (
-    <Link to="/erp" aria-label="smartagri ERP, ke Ringkasan" className={`flex items-center gap-2 ${rail ? "justify-center xl:justify-start" : ""}`}>
-      <img src={A.iconColor} alt="" className="h-7 w-7 shrink-0" />
-      <span className={rail ? "hidden xl:block" : ""}>
-        <span className="block text-[15px] font-semibold leading-tight tracking-[-0.02em] text-[#0F2F36]" style={display}>smartagri <span className="font-medium text-[#0B6477]">ERP</span></span>
-        <span className="block text-[12px] leading-tight text-[#4F6B73]">SARC UGM</span>
-      </span>
+    <Link to="/erp" aria-label="agrosphere, to Overview" className="block min-w-0">
+      <img src={A.agrosphereLogo} alt="agrosphere" className="h-[26px] w-auto" />
     </Link>
   );
 }
 
 /** The phone's menu: one full sheet, closed by its button, Escape, or going somewhere. */
-function MenuSheet({ pathname, onClose }: { pathname: string; onClose: () => void }) {
+function MenuSheet({ pathname, access, onClose }: { pathname: string; access: ErpAccess; onClose: () => void }) {
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     close.current?.focus();
@@ -212,21 +149,24 @@ function MenuSheet({ pathname, onClose }: { pathname: string; onClose: () => voi
     };
   }, [onClose]);
   return (
-    <div role="dialog" aria-modal="true" aria-label="Menu ERP" className="fixed inset-0 z-50 flex flex-col bg-[#F4F7F7] lg:hidden">
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-[#DCE7E8] px-3">
-        <Brand rail={false} />
-        <button ref={close} type="button" onClick={onClose} aria-label="Tutup menu" className="grid h-11 w-11 place-items-center rounded-lg text-[#36525A] hover:bg-[#E9EFEF]">
+    <div role="dialog" aria-modal="true" aria-label="ERP menu" className="fixed inset-0 z-50 flex flex-col bg-[#F4F7F7] lg:hidden">
+      <div className="flex h-16 shrink-0 items-center justify-between border-b border-[#DCE7E8] pl-4 pr-2">
+        <Brand />
+        <button ref={close} type="button" onClick={onClose} aria-label="Close menu" className="grid h-11 w-11 place-items-center rounded-lg text-[#36525A] hover:bg-[#E9EFEF]">
           <X className="h-5 w-5" />
         </button>
       </div>
-      <NavBody pathname={pathname} rail={false} />
+      <NavBody pathname={pathname} access={access} />
     </div>
   );
 }
 
 export default function ErpShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname }).replace(/\/$/, "");
+  const access = useErpAccess();
   const [menuOpen, setMenuOpen] = useState(false);
+  // Null until someone chooses: shown from 1280px, tucked away on a smaller laptop.
+  const [sidebarChoice, setSidebarChoice] = useState<boolean | null>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -242,32 +182,61 @@ export default function ErpShell({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const current = ALL_ITEMS.find((i) => isActive(i, pathname));
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1280px)");
+    const update = () => setWide(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  const sidebarShown = sidebarChoice ?? wide;
+  const toggleSidebar = () => setSidebarChoice(!sidebarShown);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
   const closeMenu = () => {
     setMenuOpen(false);
     menuButton.current?.focus();
   };
 
+  const sidebarClass = sidebarChoice === null ? "invisible w-0 xl:visible xl:w-[240px]" : sidebarChoice ? "w-[240px]" : "invisible w-0";
+  const headLogoClass = sidebarChoice === null ? "xl:hidden" : sidebarChoice ? "lg:hidden" : "";
+
   return (
     <div
-      className="flex min-h-screen flex-col bg-[#F4F7F7] print:block print:bg-white lg:flex-row [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-offset-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-[#0B6477]"
+      className="flex min-h-screen bg-[#F4F7F7] print:block print:bg-white [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-offset-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-[#0B6477]"
       style={body}
     >
-      <aside className="sticky top-0 hidden h-screen print:hidden w-[64px] shrink-0 flex-col border-r border-[#DCE7E8] lg:flex xl:w-[232px]">
-        <div className="flex h-14 shrink-0 items-center px-2.5 xl:px-4"><Brand rail /></div>
-        <NavBody pathname={pathname} rail />
+      <aside className={`sticky top-0 hidden h-screen shrink-0 overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none print:hidden lg:block ${sidebarClass}`}>
+        <div className="flex h-full flex-col border-r border-[#DCE7E8]" style={{ width: SIDEBAR_WIDTH }}>
+          <div className="flex h-[76px] shrink-0 items-center pl-[18px] pr-2 pt-3"><Brand /></div>
+          <NavBody pathname={pathname} access={access} />
+        </div>
       </aside>
 
-      <header className="sticky top-0 z-40 flex h-14 print:hidden shrink-0 items-center gap-1 border-b border-[#DCE7E8] bg-[#F4F7F7] px-1.5 lg:hidden">
-        <button ref={menuButton} type="button" onClick={() => setMenuOpen(true)} aria-label="Buka menu" aria-expanded={menuOpen} className="grid h-11 w-11 place-items-center rounded-lg text-[#36525A] hover:bg-[#E9EFEF]">
-          <Menu className="h-5 w-5" />
-        </button>
-        <img src={A.iconColor} alt="" className="h-6 w-6 shrink-0" />
-        <p className="ml-1.5 truncate text-[15px] font-medium tracking-[-0.01em] text-[#0F2F36]" style={display}>{current?.label ?? "ERP"}</p>
-      </header>
-      {menuOpen && <MenuSheet pathname={pathname} onClose={closeMenu} />}
-
-      <div className="relative flex min-w-0 flex-1 flex-col">{children}</div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <ErpHeadbar
+          pathname={pathname}
+          access={access}
+          sidebarShown={sidebarShown}
+          showLogo={headLogoClass}
+          onToggleSidebar={toggleSidebar}
+          onOpenMenu={() => setMenuOpen(true)}
+          menuButton={menuButton}
+        />
+        {menuOpen && <MenuSheet pathname={pathname} access={access} onClose={closeMenu} />}
+        <div className="relative flex min-w-0 flex-1 flex-col">{children}</div>
+      </div>
     </div>
   );
 }

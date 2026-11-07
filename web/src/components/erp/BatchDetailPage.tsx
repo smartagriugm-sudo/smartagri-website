@@ -9,6 +9,7 @@ import {
   BATCH_STEPS,
   EVENT_LABELS,
   HARVEST_GRADES,
+  gradeLabel,
   addBatchNote,
   addHarvest,
   ageOn,
@@ -86,8 +87,8 @@ function SowCard({ batch, lot, reload }: { batch: BatchOverview; lot: SeedLot; r
 
   return (
     <Card className="p-4">
-      <h2 className={sectionTitle}>Semai</h2>
-      <p className="mb-3 text-[13px] text-[#4F6B73]">Pilih posisi nampan di chamber. Lot {lot.lot_no} tersisa {lot.qty_on_hand.toLocaleString("id-ID")} {lot.unit}.</p>
+      <h2 className={sectionTitle}>Sow</h2>
+      <p className="mb-3 text-[13px] text-[#4F6B73]">Choose tray positions in the chamber. Lot {lot.lot_no} has {formatQty(lot.qty_on_hand, lot.unit)}.</p>
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
         <div className="space-y-2">
           {SHELVES.map((s) => (
@@ -106,12 +107,12 @@ function SowCard({ batch, lot, reload }: { batch: BatchOverview; lot: SeedLot; r
                       type="button"
                       disabled={taken || off}
                       aria-pressed={on}
-                      title={taken ? `Dipakai ${slot?.batch}` : off ? "Tidak siap pakai" : code}
+                      title={taken ? `Used ${slot?.batch}` : off ? "Not ready to use" : code}
                       onClick={() => toggle(code)}
                       className={`min-h-[44px] rounded-lg border px-1 py-1.5 text-[13px] font-medium ${on ? "border-[#14919B] bg-[#14919B] text-white" : taken || off ? "cursor-not-allowed border-[#E3ECED] bg-[#F3F7F7] text-[#4F6B73]" : "border-[#DCE7E8] bg-white text-[#0F2F36] hover:border-[#14919B]"}`}
                     >
                       P{String(i + 1).padStart(2, "0")}
-                      <span className="block text-[12px] font-normal">{taken ? slot?.batch : off ? "Tutup" : "Kosong"}</span>
+                      <span className="block text-[12px] font-normal">{taken ? slot?.batch : off ? "Close" : "Empty"}</span>
                     </button>
                   );
                 })}
@@ -120,12 +121,12 @@ function SowCard({ batch, lot, reload }: { batch: BatchOverview; lot: SeedLot; r
           ))}
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Benih per nampan"><input className={inputClass} inputMode="numeric" value={seeds} onChange={(e) => setSeeds(e.target.value)} /></Field>
-          <Field label="Tanggal semai"><input type="date" className={inputClass} max={today} value={sownOn} onChange={(e) => setSownOn(e.target.value)} /></Field>
-          {lot.unit !== "biji" && <Field label="Benih terpakai (gram)"><input className={inputClass} inputMode="decimal" value={used} onChange={(e) => setUsed(e.target.value)} /></Field>}
+          <Field label="Seeds per tray"><input className={inputClass} inputMode="numeric" value={seeds} onChange={(e) => setSeeds(e.target.value)} /></Field>
+          <Field label="Sowing date"><input type="date" className={inputClass} max={today} value={sownOn} onChange={(e) => setSownOn(e.target.value)} /></Field>
+          {lot.unit !== "biji" && <Field label="Seed used (gram)"><input className={inputClass} inputMode="decimal" value={used} onChange={(e) => setUsed(e.target.value)} /></Field>}
         </div>
         <ActionNote action={action} />
-        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : picked.length ? `Semai di ${picked.length} nampan` : "Semai"}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : picked.length ? `Sow in ${picked.length} trays` : "Sow"}</PrimaryButton>
       </form>
     </Card>
   );
@@ -154,13 +155,13 @@ function TrayRow({ tray, reload, canOperate, startOpen }: { tray: OpenSlot; relo
   return (
     <div className="rounded-lg border border-[#E3ECED] p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <Link to="/erp/persemaian" search={{ slot: tray.location_code }} className="inline-flex min-h-[44px] items-center sm:min-h-[24px] text-[14px] font-medium text-[#0F2F36] hover:text-[#0B6477]">{tray.location_code}</Link>
-        <span className="text-[13px] text-[#4F6B73]">{tray.qty} benih{tray.moved > 0 ? ` · ${tray.moved} sudah dipindah` : ""}</span>
+        <Link to="/erp/seedlings" search={{ slot: tray.location_code }} className="inline-flex min-h-[44px] items-center sm:min-h-[24px] text-[14px] font-medium text-[#0F2F36] hover:text-[#0B6477]">{tray.location_code}</Link>
+        <span className="text-[13px] text-[#4F6B73]">{tray.qty} seeds{tray.moved > 0 ? ` · ${tray.moved} already moved` : ""}</span>
       </div>
       {canOperate && !open && (
         <div className="mt-1 flex items-center justify-between gap-3">
-          <p className="text-[13px] text-[#4F6B73]">{SLOT_STATES[tray.state === "tumbuh" ? "berkecambah" : tray.state].label} · {tray.germinated} berkecambah{tray.note ? ` · ${tray.note}` : ""}</p>
-          <button type="button" onClick={() => setOpen(true)} className="min-h-[44px] shrink-0 text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]">Catat</button>
+          <p className="text-[13px] text-[#4F6B73]">{SLOT_STATES[tray.state === "tumbuh" ? "berkecambah" : tray.state].label} · {tray.germinated} germinated{tray.note ? ` · ${tray.note}` : ""}</p>
+          <button type="button" onClick={() => setOpen(true)} className="min-h-[44px] shrink-0 text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]">Record</button>
         </div>
       )}
       {canOperate && open && (
@@ -171,27 +172,27 @@ function TrayRow({ tray, reload, canOperate, startOpen }: { tray: OpenSlot; relo
                 {SLOT_STATE_KEYS.filter((s) => s !== "kosong").map((s) => <option key={s} value={s}>{SLOT_STATES[s].label}</option>)}
               </select>
             </Field>
-            <Field label="Berkecambah"><input className={inputClass} inputMode="numeric" value={germinated} onChange={(e) => setGerminated(e.target.value)} /></Field>
+            <Field label="Germinated"><input className={inputClass} inputMode="numeric" value={germinated} onChange={(e) => setGerminated(e.target.value)} /></Field>
           </div>
-          <Field label="Catatan"><input className={inputClass} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+          <Field label="Notes"><input className={inputClass} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
           <ActionNote action={action} />
           {closing ? (
             <div className="space-y-2 rounded-lg bg-[#FFF6E5] p-2.5">
-              <Field label="Kenapa nampan ini ditutup?" hint="Benihnya tetap terhitung terpakai. Kalau salah catat, koreksi stok di halaman Lot benih."><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} autoFocus /></Field>
+              <Field label="Why is this tray being closed?" hint="The seed still counts as used. If it was recorded wrongly, correct the stock on the Seed lots page."><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} autoFocus /></Field>
               <div className="flex gap-2">
-                <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await closeTray(tray.id, why); await reload(); })}>Tutup nampan</SecondaryButton>
-                <SecondaryButton onClick={() => setClosing(false)}>Batal</SecondaryButton>
+                <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await closeTray(tray.id, why); await reload(); })}>Close tray</SecondaryButton>
+                <SecondaryButton onClick={() => setClosing(false)}>Cancel</SecondaryButton>
               </div>
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Simpan"}</PrimaryButton>
-              <button type="button" onClick={() => setClosing(true)} className="px-2 py-2 text-[14px] font-medium text-[#4F6B73] hover:text-[#B3362C]">Tutup nampan</button>
+              <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+              <button type="button" onClick={() => setClosing(true)} className="px-2 py-2 text-[14px] font-medium text-[#4F6B73] hover:text-[#B3362C]">Close tray</button>
             </div>
           )}
         </form>
       )}
-      {!canOperate && <p className="mt-1 text-[13px] text-[#4F6B73]">{SLOT_STATES[tray.state === "tumbuh" ? "berkecambah" : tray.state].label} · {tray.germinated} berkecambah{tray.note ? ` · ${tray.note}` : ""}</p>}
+      {!canOperate && <p className="mt-1 text-[13px] text-[#4F6B73]">{SLOT_STATES[tray.state === "tumbuh" ? "berkecambah" : tray.state].label} · {tray.germinated} germinated{tray.note ? ` · ${tray.note}` : ""}</p>}
     </div>
   );
 }
@@ -199,8 +200,8 @@ function TrayRow({ tray, reload, canOperate, startOpen }: { tray: OpenSlot; relo
 function TrayCard({ trays, reload, canOperate }: { trays: OpenSlot[]; reload: Reload; canOperate: boolean }) {
   return (
     <Card className="p-4">
-      <h2 className={`${sectionTitle} mb-1`}>Persemaian</h2>
-      <p className="mb-3 text-[13px] text-[#4F6B73]">Catat jumlah yang berkecambah. Nampan berstatus Siap pindah tanam masuk ke langkah pindah tanam.</p>
+      <h2 className={`${sectionTitle} mb-1`}>Seedlings</h2>
+      <p className="mb-3 text-[13px] text-[#4F6B73]">Record how many germinated. Trays marked Ready to transplant go on to the transplant step.</p>
       <div className="space-y-2">
         {/* Keyed by what the server holds, so a form never keeps a stale count after a move. */}
         {trays.map((t) => <TrayRow key={`${t.id}:${t.germinated}:${t.moved}:${t.state}`} tray={t} reload={reload} canOperate={canOperate} startOpen={trays.length === 1 && t.state !== "siap_pindah"} />)}
@@ -221,22 +222,22 @@ function TransplantCard({ batch, ready, reload, onMoved }: { batch: BatchOvervie
 
   return (
     <Card className="p-4">
-      <h2 className={sectionTitle}>Pindah tanam</h2>
-      <p className="mb-3 text-[13px] text-[#4F6B73]">{ready} bibit siap pindah. Satu tingkat hanya menerima satu batch.</p>
-      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2" role="radiogroup" aria-label="Tingkat tujuan">
+      <h2 className={sectionTitle}>Transplant</h2>
+      <p className="mb-3 text-[13px] text-[#4F6B73]">{ready} seedlings ready to transplant. A tier takes only one batch.</p>
+      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2" role="radiogroup" aria-label="Target tier">
         {tiers.map((t) => (
           <label key={t.code} className={`flex min-h-[44px] items-center gap-2 rounded-lg border px-3 py-2 text-[13.5px] ${t.blocked ? "border-[#E3ECED] bg-[#F3F7F7] text-[#4F6B73]" : chosen?.code === t.code ? "border-[#14919B] bg-[#14919B]/5" : "cursor-pointer border-[#E3ECED] hover:border-[#14919B]"}`}>
             <input type="radio" name="tier" className="accent-[#14919B]" disabled={!!t.blocked} checked={chosen?.code === t.code} onChange={() => setTarget(t.code)} />
             <span>
-              <span className={`block font-medium ${t.blocked ? "" : "text-[#0F2F36]"}`}>Rak {t.rack} · Tingkat {t.tier}</span>
-              <span className="block text-[12.5px]">{t.blocked ?? `${t.free} lubang kosong`}</span>
+              <span className={`block font-medium ${t.blocked ? "" : "text-[#0F2F36]"}`}>Rack {t.rack} · Tier {t.tier}</span>
+              <span className="block text-[12.5px]">{t.blocked ?? `${t.free} empty holes`}</span>
             </span>
           </label>
         ))}
       </div>
       <div className="mt-3 space-y-2">
-        {!chosen && <Note tone="warn">Belum ada tingkat yang bisa menerima batch ini.</Note>}
-        {chosen && count < ready && <Note tone="warn">Tingkat ini memuat {count} bibit. Sisa {ready - count} bibit tetap di chamber.</Note>}
+        {!chosen && <Note tone="warn">No tier can take this batch yet.</Note>}
+        {chosen && count < ready && <Note tone="warn">This tier holds {count} seedlings. The other {ready - count} seedlings stay in the chamber.</Note>}
         <ActionNote action={action} />
         <PrimaryButton
           disabled={action.busy || !chosen}
@@ -246,7 +247,7 @@ function TransplantCard({ batch, ready, reload, onMoved }: { batch: BatchOvervie
             await reload();
           })}
         >
-          {action.busy ? "Memindahkan..." : `Pindahkan ${count} bibit`}
+          {action.busy ? "Moving..." : `Move ${count} seedlings`}
         </PrimaryButton>
       </div>
     </Card>
@@ -277,7 +278,7 @@ function HoleMap({ holes, selected, onPick }: { holes: OpenSlot[]; selected: str
                     <button
                       key={code}
                       type="button"
-                      aria-label={`${code}${problem ? ", bermasalah" : ""}`}
+                      aria-label={`${code}${problem ? ", with a problem" : ""}`}
                       aria-pressed={selected === code}
                       title={`${code}${hole.note ? `: ${hole.note}` : ""}`}
                       onClick={() => onPick(hole)}
@@ -317,13 +318,13 @@ function HoleCard({ holes, reload, canOperate, focus }: { holes: OpenSlot[]; rel
         {[...tiers.entries()].map(([tier, list]) => (
           <Link key={tier} to="/erp/plant-factory" search={{ hole: list[0].location_code }} className="flex items-center justify-between rounded-lg border border-[#E3ECED] px-3 py-2 text-[14px] hover:border-[#14919B]">
             <span className="font-medium text-[#0F2F36]">{tier}</span>
-            <span className="text-[#4F6B73]">{list.length} tanaman <ArrowRight className="ml-0.5 inline h-3.5 w-3.5 text-[#0B6477]" /></span>
+            <span className="text-[#4F6B73]">{list.length} plants <ArrowRight className="ml-0.5 inline h-3.5 w-3.5 text-[#0B6477]" /></span>
           </Link>
         ))}
       </div>
       {problems.length > 0 && (
         <div className="mt-3">
-          <p className="mb-1 text-[13px] font-medium text-[#B3362C]">{problems.length} tanaman bermasalah</p>
+          <p className="mb-1 text-[13px] font-medium text-[#B3362C]">{problems.length} plants with a problem</p>
           <ul className="space-y-1 text-[13.5px] text-[#0F2F36]">
             {problems.map((h) => (
               <li key={h.id}>
@@ -336,24 +337,24 @@ function HoleCard({ holes, reload, canOperate, focus }: { holes: OpenSlot[]; rel
       )}
       {canOperate && (
         <div className="mt-3 space-y-2 border-t border-[#E3ECED] pt-3">
-          <p className="text-[13px] font-medium text-[#36525A]">Catat satu lubang</p>
+          <p className="text-[13px] font-medium text-[#36525A]">Record one hole</p>
           <HoleMap holes={holes} selected={code} onPick={(h) => { setCode(h.location_code); setNote(h.note); setDiscarding(false); }} />
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Field label="Lubang">
+            <Field label="Hole">
               <select className={inputClass} value={code} onChange={(e) => { setCode(e.target.value); setDiscarding(false); }}>
-                <option value="">Pilih lubang</option>
-                {holes.map((h) => <option key={h.id} value={h.location_code}>{h.location_code}{h.state === "masalah" ? " (bermasalah)" : ""}</option>)}
+                <option value="">Choose a hole</option>
+                {holes.map((h) => <option key={h.id} value={h.location_code}>{h.location_code}{h.state === "masalah" ? " (problem)" : ""}</option>)}
               </select>
             </Field>
-            <Field label="Catatan"><input className={inputClass} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Daun menguning" /></Field>
+            <Field label="Notes"><input className={inputClass} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Yellowing leaves" /></Field>
           </div>
-          {hole?.source_code && <p className="text-[13px] text-[#4F6B73]">Nampan asal {hole.source_code}</p>}
+          {hole?.source_code && <p className="text-[13px] text-[#4F6B73]">Source tray {hole.source_code}</p>}
           <ActionNote action={action} />
           {discarding && hole ? (
             <div className="space-y-2 rounded-lg bg-[#FFF6E5] p-2.5">
-              <p className="text-[14px] font-medium text-[#0F2F36]">Buang tanaman di {hole.location_code}?</p>
-              <p className="text-[13.5px] text-[#4F6B73]">Tanaman keluar dari batch dan lubangnya kosong lagi. Ini tidak bisa dibatalkan.</p>
-              <p className="text-[13.5px] text-[#4F6B73]">Alasan: {note.trim()}</p>
+              <p className="text-[14px] font-medium text-[#0F2F36]">Discard the plant in {hole.location_code}?</p>
+              <p className="text-[13.5px] text-[#4F6B73]">The plant leaves the batch and its hole is empty again. This cannot be undone.</p>
+              <p className="text-[13.5px] text-[#4F6B73]">Reason: {note.trim()}</p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -365,26 +366,26 @@ function HoleCard({ holes, reload, canOperate, focus }: { holes: OpenSlot[]; rel
                     setDiscarding(false);
                   })}
                 >
-                  {action.busy ? "Membuang..." : "Ya, buang tanaman"}
+                  {action.busy ? "Discarding..." : "Yes, discard plant"}
                 </button>
-                <SecondaryButton disabled={action.busy} onClick={() => setDiscarding(false)}>Batal</SecondaryButton>
+                <SecondaryButton disabled={action.busy} onClick={() => setDiscarding(false)}>Cancel</SecondaryButton>
               </div>
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              <SecondaryButton disabled={!hole || action.busy} onClick={() => void run(() => updateHole(hole!.id, "masalah", note))}>Tandai bermasalah</SecondaryButton>
-              {hole?.state === "masalah" && <SecondaryButton disabled={action.busy} onClick={() => void run(() => updateHole(hole.id, "tumbuh", note))}>Kembali normal</SecondaryButton>}
+              <SecondaryButton disabled={!hole || action.busy} onClick={() => void run(() => updateHole(hole!.id, "masalah", note))}>Mark as a problem</SecondaryButton>
+              {hole?.state === "masalah" && <SecondaryButton disabled={action.busy} onClick={() => void run(() => updateHole(hole.id, "tumbuh", note))}>Back to normal</SecondaryButton>}
               <button
                 type="button"
                 disabled={!hole || action.busy}
                 className="px-2 py-2 text-[14px] font-medium text-[#B3362C] hover:underline disabled:cursor-not-allowed disabled:opacity-50 sm:ml-auto"
                 onClick={() => {
-                  if (!note.trim()) return action.setError("Tulis alasan tanaman dibuang di kolom catatan.");
+                  if (!note.trim()) return action.setError("Write why the plant was discarded in the notes box.");
                   action.setError(null);
                   setDiscarding(true);
                 }}
               >
-                Buang tanaman
+                Discard plant
               </button>
             </div>
           )}
@@ -407,8 +408,8 @@ function CorrectLot({ lot, reload, onClose }: { lot: HarvestLot; reload: Reload;
       onSubmit={(e) => {
         e.preventDefault();
         const weight = Number(kg.trim().replace(",", "."));
-        if (!Number.isFinite(weight) || weight <= 0) return action.setError("Berat harus lebih dari 0.");
-        if (!why.trim()) return action.setError("Alasan koreksi wajib diisi.");
+        if (!Number.isFinite(weight) || weight <= 0) return action.setError("Weight must be above 0.");
+        if (!why.trim()) return action.setError("A reason for the correction is required.");
         void action.run(async () => {
           await correctHarvest(lot.id, weight, grade, why);
           await reload();
@@ -417,18 +418,18 @@ function CorrectLot({ lot, reload, onClose }: { lot: HarvestLot; reload: Reload;
       }}
     >
       <div className="grid grid-cols-2 gap-2">
-        <Field label="Berat (kg)"><input className={inputClass} inputMode="decimal" value={kg} onChange={(e) => setKg(e.target.value)} /></Field>
+        <Field label="Weight (kg)"><input className={inputClass} inputMode="decimal" value={kg} onChange={(e) => setKg(e.target.value)} /></Field>
         <Field label="Grade">
           <select className={inputClass} value={grade} onChange={(e) => setGrade(e.target.value as HarvestGrade)}>
-            {HARVEST_GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
+            {HARVEST_GRADES.map((g) => <option key={g} value={g}>{gradeLabel(g)}</option>)}
           </select>
         </Field>
       </div>
-      <Field label="Alasan"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
+      <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
       <ActionNote action={action} />
       <div className="flex gap-2">
-        <PrimaryButton type="submit" disabled={action.busy}>Simpan koreksi</PrimaryButton>
-        <SecondaryButton onClick={onClose}>Batal</SecondaryButton>
+        <PrimaryButton type="submit" disabled={action.busy}>Save correction</PrimaryButton>
+        <SecondaryButton onClick={onClose}>Cancel</SecondaryButton>
       </div>
     </form>
   );
@@ -459,21 +460,21 @@ function HarvestCard({ batch, lots, open, canOperate, canCorrect, canTrace, relo
 
   return (
     <Card className="p-4">
-      <h2 className={`${sectionTitle} mb-1`}>Panen</h2>
-      <p className="mb-3 text-[13px] text-[#4F6B73]">Setiap grade dicatat sebagai satu lot panen.</p>
+      <h2 className={`${sectionTitle} mb-1`}>Harvest</h2>
+      <p className="mb-3 text-[13px] text-[#4F6B73]">Each grade is recorded as one harvest lot.</p>
       {lots.length > 0 && (
         <ul className="mb-3 space-y-2">
           {lots.map((l) => (
             <li key={l.id} className="rounded-lg border border-[#E3ECED] px-3 py-2 text-[14px]">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                <span className="font-medium text-[#0F2F36]">{l.lot_code} · grade {l.grade}</span>
-                <span className="tabular-nums text-[#0F2F36]">{l.fresh_kg.toLocaleString("id-ID")} kg{l.remaining_kg < l.fresh_kg ? `, sisa ${l.remaining_kg.toLocaleString("id-ID")} kg` : ""}</span>
+                <span className="font-medium text-[#0F2F36]">{l.lot_code} · grade {gradeLabel(l.grade)}</span>
+                <span className="tabular-nums text-[#0F2F36]">{l.fresh_kg.toLocaleString("en-GB")} kg{l.remaining_kg < l.fresh_kg ? `, left ${l.remaining_kg.toLocaleString("en-GB")} kg` : ""}</span>
               </div>
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-[13px] text-[#4F6B73]">
-                <span>{formatLongDate(l.harvested_at)}{l.best_before ? ` · simpan sampai ${formatLongDate(l.best_before)}` : ""}{l.notes ? ` · ${l.notes}` : ""}</span>
+                <span>{formatLongDate(l.harvested_at)}{l.best_before ? ` · keep until ${formatLongDate(l.best_before)}` : ""}{l.notes ? ` · ${l.notes}` : ""}</span>
                 <span className="flex items-center gap-3">
-                  {canTrace && <Link to="/erp/telusur" search={{ code: l.lot_code }} className={link}>Telusuri</Link>}
-                  {canCorrect && correcting !== l.id && <button type="button" className={link} onClick={() => setCorrecting(l.id)}>Koreksi</button>}
+                  {canTrace && <Link to="/erp/trace" search={{ code: l.lot_code }} className={link}>Trace</Link>}
+                  {canCorrect && correcting !== l.id && <button type="button" className={link} onClick={() => setCorrecting(l.id)}>Correct</button>}
                 </span>
               </div>
               {correcting === l.id && <CorrectLot lot={l} reload={reload} onClose={() => setCorrecting(null)} />}
@@ -481,25 +482,25 @@ function HarvestCard({ batch, lots, open, canOperate, canCorrect, canTrace, relo
           ))}
         </ul>
       )}
-      {open && canOperate && batch.plants_now === 0 && <Note>Panen bisa dicatat setelah ada tanaman di plant factory.</Note>}
+      {open && canOperate && batch.plants_now === 0 && <Note>A harvest can be recorded once there are plants in the plant factory.</Note>}
       {open && canOperate && batch.plants_now > 0 && (
         <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Berat segar (kg)"><input className={inputClass} inputMode="decimal" value={kg} onChange={(e) => setKg(e.target.value)} /></Field>
+            <Field label="Fresh weight (kg)"><input className={inputClass} inputMode="decimal" value={kg} onChange={(e) => setKg(e.target.value)} /></Field>
             <Field label="Grade">
               <select className={inputClass} value={grade} onChange={(e) => setGrade(e.target.value as HarvestGrade)}>
-                {HARVEST_GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
+                {HARVEST_GRADES.map((g) => <option key={g} value={g}>{gradeLabel(g)}</option>)}
               </select>
             </Field>
-            <Field label="Tanggal panen"><input type="date" className={inputClass} max={today} value={harvestedOn} onChange={(e) => setHarvestedOn(e.target.value)} /></Field>
-            <Field label="Batas simpan"><input type="date" className={inputClass} value={bestBefore} onChange={(e) => setBestBefore(e.target.value)} /></Field>
+            <Field label="Harvest date"><input type="date" className={inputClass} max={today} value={harvestedOn} onChange={(e) => setHarvestedOn(e.target.value)} /></Field>
+            <Field label="Keep until"><input type="date" className={inputClass} value={bestBefore} onChange={(e) => setBestBefore(e.target.value)} /></Field>
           </div>
-          <Field label="Catatan"><input className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
+          <Field label="Notes"><input className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
           <ActionNote action={action} />
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Catat lot panen"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Record harvest lot"}</PrimaryButton>
         </form>
       )}
-      {!open && lots.length === 0 && <p className="text-[14px] text-[#4F6B73]">Tidak ada lot panen.</p>}
+      {!open && lots.length === 0 && <p className="text-[14px] text-[#4F6B73]">No harvest lots.</p>}
     </Card>
   );
 }
@@ -510,26 +511,26 @@ function FinishCard({ batch, hasHarvest, reload }: { batch: BatchOverview; hasHa
   const [confirm, setConfirm] = useState<"selesai" | "gagal" | null>(null);
   const [why, setWhy] = useState("");
   const action = useAction();
-  const consequence = batch.plants_now > 0 ? `${batch.plants_now} lubang akan kosong dan masuk sanitasi. ` : "";
+  const consequence = batch.plants_now > 0 ? `${batch.plants_now} holes will be emptied and go into sanitation. ` : "";
 
   if (!confirm) {
     return (
       <Card className="p-4">
-        <h2 className={`${sectionTitle} mb-3`}>Tutup batch</h2>
+        <h2 className={`${sectionTitle} mb-3`}>Close batch</h2>
         <div className="flex flex-wrap gap-2">
-          <SecondaryButton disabled={!hasHarvest} title={hasHarvest ? undefined : "Catat lot panen dulu"} onClick={() => setConfirm("selesai")}>Selesaikan batch</SecondaryButton>
-          <SecondaryButton onClick={() => setConfirm("gagal")}>Tandai gagal</SecondaryButton>
+          <SecondaryButton disabled={!hasHarvest} title={hasHarvest ? undefined : "Record a harvest lot first"} onClick={() => setConfirm("selesai")}>Finish batch</SecondaryButton>
+          <SecondaryButton onClick={() => setConfirm("gagal")}>Mark as failed</SecondaryButton>
         </div>
-        {!hasHarvest && <p className="mt-2 text-[13px] text-[#4F6B73]">Batch bisa diselesaikan setelah ada lot panen.</p>}
+        {!hasHarvest && <p className="mt-2 text-[13px] text-[#4F6B73]">A batch can be finished once it has a harvest lot.</p>}
       </Card>
     );
   }
   return (
     <Card className="p-4">
-      <h2 className={`${sectionTitle} mb-2`}>{confirm === "selesai" ? "Selesaikan batch ini?" : "Tandai batch ini gagal?"}</h2>
-      <p className="mb-3 text-[14px] text-[#4F6B73]">{consequence}Setelah ditutup, batch tidak bisa dicatat lagi.</p>
+      <h2 className={`${sectionTitle} mb-2`}>{confirm === "selesai" ? "Finish this batch?" : "Mark this batch as failed?"}</h2>
+      <p className="mb-3 text-[14px] text-[#4F6B73]">{consequence}Once closed, nothing more can be recorded on the batch.</p>
       <div className="space-y-3">
-        {confirm === "gagal" && <Field label="Alasan"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} autoFocus /></Field>}
+        {confirm === "gagal" && <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} autoFocus /></Field>}
         <ActionNote action={action} />
         <div className="flex gap-2">
           <PrimaryButton
@@ -539,9 +540,9 @@ function FinishCard({ batch, hasHarvest, reload }: { batch: BatchOverview; hasHa
               await reload();
             })}
           >
-            {confirm === "selesai" ? "Ya, selesaikan" : "Ya, tandai gagal"}
+            {confirm === "selesai" ? "Yes, finish" : "Yes, mark as failed"}
           </PrimaryButton>
-          <SecondaryButton onClick={() => setConfirm(null)}>Batal</SecondaryButton>
+          <SecondaryButton onClick={() => setConfirm(null)}>Cancel</SecondaryButton>
         </div>
       </div>
     </Card>
@@ -578,7 +579,7 @@ function LaborCard({ batch, open }: { batch: BatchOverview; open: boolean }) {
       <DataState state={entries}>
         {(rows) => (
           <>
-            {rows.length === 0 ? <p className="mb-2 text-[14px] text-[#4F6B73]">Belum ada jam kerja tercatat.</p> : (
+            {rows.length === 0 ? <p className="mb-2 text-[14px] text-[#4F6B73]">No work hours recorded yet.</p> : (
               <>
                 <p className="mb-1 text-[14px] text-[#4F6B73]">Total <span className="font-medium tabular-nums text-[#0F2F36]">{formatMinutes(rows.reduce((n, r) => n + r.minutes, 0))}</span></p>
                 <ul className="mb-3 text-[14px]">
@@ -589,7 +590,7 @@ function LaborCard({ batch, open }: { batch: BatchOverview; open: boolean }) {
                         <span className="tabular-nums text-[#0F2F36]"> · {formatMinutes(r.minutes)}</span>
                         <span className="block text-[13px] text-[#4F6B73]">{formatLongDate(r.work_date)}{r.activity ? ` · ${r.activity}` : ""}</span>
                       </span>
-                      <button type="button" onClick={() => void action.run(async () => { await removeLabor(r.id); await entries.reload(); })} className="min-h-[44px] shrink-0 text-[13px] font-medium text-[#4F6B73] hover:text-[#B3362C] sm:min-h-[24px]">Hapus</button>
+                      <button type="button" onClick={() => void action.run(async () => { await removeLabor(r.id); await entries.reload(); })} className="min-h-[44px] shrink-0 text-[13px] font-medium text-[#4F6B73] hover:text-[#B3362C] sm:min-h-[24px]">Delete</button>
                     </li>
                   ))}
                 </ul>
@@ -598,13 +599,13 @@ function LaborCard({ batch, open }: { batch: BatchOverview; open: boolean }) {
             {open && (
               <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
                 <div className="grid grid-cols-3 gap-2">
-                  <Field label="Tanggal"><input type="date" className={inputClass} max={today} value={workDate} onChange={(e) => setWorkDate(e.target.value)} /></Field>
-                  <Field label="Jam"><input className={inputClass} inputMode="decimal" value={hours} onChange={(e) => setHours(e.target.value)} /></Field>
-                  <Field label="Menit"><input className={inputClass} inputMode="numeric" value={minutes} onChange={(e) => setMinutes(e.target.value)} /></Field>
+                  <Field label="Date"><input type="date" className={inputClass} max={today} value={workDate} onChange={(e) => setWorkDate(e.target.value)} /></Field>
+                  <Field label="Hours"><input className={inputClass} inputMode="decimal" value={hours} onChange={(e) => setHours(e.target.value)} /></Field>
+                  <Field label="Minutes"><input className={inputClass} inputMode="numeric" value={minutes} onChange={(e) => setMinutes(e.target.value)} /></Field>
                 </div>
-                <Field label="Kegiatan"><input className={inputClass} value={activity} onChange={(e) => setActivity(e.target.value)} placeholder="Pindah tanam" /></Field>
+                <Field label="Activity"><input className={inputClass} value={activity} onChange={(e) => setActivity(e.target.value)} placeholder="Transplant" /></Field>
                 <ActionNote action={action} />
-                <SecondaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Catat jam kerja saya"}</SecondaryButton>
+                <SecondaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Log my work hours"}</SecondaryButton>
               </form>
             )}
           </>
@@ -650,7 +651,7 @@ function MaterialsCard({ batch, open, canOperate }: { batch: BatchOverview; open
           };
           return (
             <>
-              {used.size === 0 ? <p className="mb-2 text-[14px] text-[#4F6B73]">Belum ada bahan tercatat.</p> : (
+              {used.size === 0 ? <p className="mb-2 text-[14px] text-[#4F6B73]">No materials recorded yet.</p> : (
                 <ul className="mb-2 text-[14px]">
                   {[...used.values()].map((u) => (
                     <li key={u.name} className="flex justify-between gap-3 border-t border-[#EDF2F2] py-1.5 first:border-0">
@@ -662,13 +663,13 @@ function MaterialsCard({ batch, open, canOperate }: { batch: BatchOverview; open
               )}
               {open && canOperate && usable.length > 0 && (
                 <form className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,1fr)_110px_auto]" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-                  <Field label="Barang">
+                  <Field label="Item">
                     <select className={inputClass} value={chosen?.id ?? ""} onChange={(e) => setItemId(e.target.value)}>
-                      {usable.map((i) => <option key={i.id} value={i.id}>{i.name} · sisa {formatQty(i.usable_qty, i.unit)}</option>)}
+                      {usable.map((i) => <option key={i.id} value={i.id}>{i.name} · left {formatQty(i.usable_qty, i.unit)}</option>)}
                     </select>
                   </Field>
-                  <Field label={`Jumlah${chosen ? ` (${chosen.unit})` : ""}`}><input className={inputClass} inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} /></Field>
-                  <SecondaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Catat"}</SecondaryButton>
+                  <Field label={`Quantity${chosen ? ` (${chosen.unit})` : ""}`}><input className={inputClass} inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} /></Field>
+                  <SecondaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Record"}</SecondaryButton>
                   <div className="col-span-full empty:hidden"><ActionNote action={action} /></div>
                 </form>
               )}
@@ -687,15 +688,15 @@ function Diary({ batch, events, names, open, canOperate, reload }: { batch: Batc
   const action = useAction();
   const qtyText = (e: BatchEvent) => {
     if (e.qty === null) return "";
-    if (e.type === "panen" || e.type === "koreksi_panen") return ` · ${e.qty.toLocaleString("id-ID")} kg`;
-    if (e.type === "semai") return ` · ${e.qty} benih`;
-    if (e.type === "germinasi" || e.type === "masalah") return e.location_code?.startsWith("CH") ? ` · ${e.qty} berkecambah` : "";
-    if (e.type === "pindah_tanam") return ` · ${e.qty} bibit`;
+    if (e.type === "panen" || e.type === "koreksi_panen") return ` · ${e.qty.toLocaleString("en-GB")} kg`;
+    if (e.type === "semai") return ` · ${e.qty} seeds`;
+    if (e.type === "germinasi" || e.type === "masalah") return e.location_code?.startsWith("CH") ? ` · ${e.qty} germinated` : "";
+    if (e.type === "pindah_tanam") return ` · ${e.qty} seedlings`;
     return "";
   };
   return (
     <Card className="p-4">
-      <h2 className={`${sectionTitle} mb-3`}>Riwayat</h2>
+      <h2 className={`${sectionTitle} mb-3`}>History</h2>
       {open && canOperate && (
         <form
           className="mb-3 space-y-2"
@@ -708,9 +709,9 @@ function Diary({ batch, events, names, open, canOperate, reload }: { batch: Batc
             });
           }}
         >
-          <Field label="Pengamatan"><textarea className={inputClass} rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Daun sehat, akar putih" /></Field>
+          <Field label="Observation"><textarea className={inputClass} rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Healthy leaves, white roots" /></Field>
           <ActionNote action={action} />
-          <SecondaryButton type="submit" disabled={action.busy || !note.trim()}>Tambah catatan</SecondaryButton>
+          <SecondaryButton type="submit" disabled={action.busy || !note.trim()}>Add a note</SecondaryButton>
         </form>
       )}
       <ol className="space-y-2.5">
@@ -754,10 +755,10 @@ export default function BatchDetailPage({ id, focusHole }: { id: string; focusHo
 
   return (
     <ErpPage
-      eyebrow="Budidaya · Batch"
+      eyebrow="Growing · Batches"
       title={state.data ? `${state.data.batch.code} · ${batchLabel(state.data.batch)}` : "Batch"}
       sub={state.data ? batchStage(state.data.batch, today) : undefined}
-      actions={<Link to="/erp/batch" className="inline-flex min-h-[44px] items-center gap-1 text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]"><ArrowLeft className="h-4 w-4" /> Semua batch</Link>}
+      actions={<Link to="/erp/batch" className="inline-flex min-h-[44px] items-center gap-1 text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]"><ArrowLeft className="h-4 w-4" /> All batches</Link>}
     >
       <DataState state={state}>
         {({ batch, slots, events, lots, seedLot, names }) => {
@@ -770,16 +771,16 @@ export default function BatchDetailPage({ id, focusHole }: { id: string; focusHo
           return (
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
               <div className="min-w-0 space-y-4">
-                <StepStrip steps={BATCH_STEPS} current={step} label="Langkah batch" />
-                {!canOperate && <ReadOnlyNote who="Operator atau Manajer produksi" />}
+                <StepStrip steps={BATCH_STEPS} current={step} label="Batch steps" />
+                {!canOperate && <ReadOnlyNote who="Operator or Production manager" />}
                 <div className="lg:hidden">
-                  <Segmented value={phoneTab} options={[{ key: "kerja", label: "Pencatatan" }, { key: "ringkasan", label: "Ringkasan" }, { key: "riwayat", label: `Riwayat (${events.length})` }]} onChange={setPhoneTab} />
+                  <Segmented value={phoneTab} options={[{ key: "kerja", label: "Records" }, { key: "ringkasan", label: "Overview" }, { key: "riwayat", label: `History (${events.length})` }]} onChange={setPhoneTab} />
                 </div>
                 <div className={`space-y-4 ${phoneTab === "kerja" ? "" : "hidden lg:block"}`}>
                   {moved && (
                     <Note>
-                      {moved.count} bibit kini di {moved.tier}.{moved.left > 0 ? ` ${moved.left} bibit tidak muat dan tetap di chamber.` : ""}{" "}
-                      <Link to="/erp/plant-factory" search={{ hole: moved.first_hole }} className="font-medium text-[#0B6477] hover:underline">Lihat di plant factory</Link>
+                      {moved.count} seedlings now at {moved.tier}.{moved.left > 0 ? ` ${moved.left} seedlings do not fit and stay in the chamber.` : ""}{" "}
+                      <Link to="/erp/plant-factory" search={{ hole: moved.first_hole }} className="font-medium text-[#0B6477] hover:underline">View in the plant factory</Link>
                     </Note>
                   )}
                   {open && canOperate && ready > 0 && <TransplantCard batch={batch} ready={ready} reload={reload} onMoved={setMoved} />}
@@ -787,30 +788,30 @@ export default function BatchDetailPage({ id, focusHole }: { id: string; focusHo
                   {open && canOperate && batch.status === "direncanakan" && <SowCard batch={batch} lot={seedLot} reload={reload} />}
                   {holes.length > 0 && <HoleCard key={holes.length} holes={holes} reload={reload} canOperate={canOperate && open} focus={focusHole} />}
                   {(batch.plants_now > 0 || lots.length > 0) && <HarvestCard batch={batch} lots={lots} open={open} canOperate={canOperate} canCorrect={canManageProduction} canTrace={canReadSales} reload={reload} />}
-                  {batch.status !== "direncanakan" && canReadCost && <Link to="/erp/biaya/$id" params={{ id: batch.id }} className="flex min-h-[44px] items-center rounded-xl border border-[#DCE7E8] bg-white px-4 text-[14px] font-medium text-[#0B6477] hover:border-[#14919B]">Lihat biaya batch ini</Link>}
-                  {batch.status !== "direncanakan" && <Disclosure title="Jam kerja"><LaborCard batch={batch} open={open} /></Disclosure>}
-                  {batch.status !== "direncanakan" && <Disclosure title="Bahan terpakai"><MaterialsCard batch={batch} open={open} canOperate={canOperate} /></Disclosure>}
-                  {open && canOperate && batch.status === "berjalan" && batch.plants_now === 0 && <Disclosure title="Semai di nampan lain"><SowCard batch={batch} lot={seedLot} reload={reload} /></Disclosure>}
-                  {open && canOperate && <Disclosure title="Tutup batch"><FinishCard batch={batch} hasHarvest={lots.length > 0} reload={reload} /></Disclosure>}
+                  {batch.status !== "direncanakan" && canReadCost && <Link to="/erp/costs/$id" params={{ id: batch.id }} className="flex min-h-[44px] items-center rounded-xl border border-[#DCE7E8] bg-white px-4 text-[14px] font-medium text-[#0B6477] hover:border-[#14919B]">View this batch's costs</Link>}
+                  {batch.status !== "direncanakan" && <Disclosure title="Work hours"><LaborCard batch={batch} open={open} /></Disclosure>}
+                  {batch.status !== "direncanakan" && <Disclosure title="Materials used"><MaterialsCard batch={batch} open={open} canOperate={canOperate} /></Disclosure>}
+                  {open && canOperate && batch.status === "berjalan" && batch.plants_now === 0 && <Disclosure title="Sow in other trays"><SowCard batch={batch} lot={seedLot} reload={reload} /></Disclosure>}
+                  {open && canOperate && <Disclosure title="Close batch"><FinishCard batch={batch} hasHarvest={lots.length > 0} reload={reload} /></Disclosure>}
                 </div>
               </div>
               <div className="min-w-0 space-y-4">
                 <Card className={`p-4 ${phoneTab === "ringkasan" ? "" : "hidden lg:block"}`}>
                   <div className="mb-3 flex items-center justify-between gap-2">
-                    <h2 className={sectionTitle}>Ringkasan</h2>
+                    <h2 className={sectionTitle}>Overview</h2>
                     <span className={`rounded-full px-2 py-0.5 text-[12.5px] font-medium ${BATCH_STATUS[batch.status].className}`}>{BATCH_STATUS[batch.status].label}</span>
                   </div>
                   {batch.sown_at && batch.cycle_days > 0 && <div className="mb-3"><Bar value={Math.min(age, batch.cycle_days)} max={batch.cycle_days} /></div>}
                   <Rows
                     rows={[
-                      ["Resep", `${batch.recipe_code} v${batch.recipe_version}`],
-                      ["Lot benih", batch.seed_lot_no],
-                      ["Tanggal semai", batch.sown_at ? formatLongDate(batch.sown_at) : "Belum"],
-                      ["Umur", batch.sown_at ? `${age} dari ${batch.cycle_days} hari` : "Belum"],
-                      ["Benih disemai", `${batch.seeds}`],
-                      ["Daya kecambah", batch.seeds ? `${Math.round(germinationRate(batch) * 100)}%` : "Belum"],
-                      ["Tanaman sekarang", `${batch.plants_now}`],
-                      ["Total panen", `${batch.harvested_kg.toLocaleString("id-ID")} kg`],
+                      ["Recipe", `${batch.recipe_code} v${batch.recipe_version}`],
+                      ["Seed lot", batch.seed_lot_no],
+                      ["Sowing date", batch.sown_at ? formatLongDate(batch.sown_at) : "Not yet"],
+                      ["Age", batch.sown_at ? `${age} of ${batch.cycle_days} days` : "Not yet"],
+                      ["Seeds sown", `${batch.seeds}`],
+                      ["Germination", batch.seeds ? `${Math.round(germinationRate(batch) * 100)}%` : "Not yet"],
+                      ["Plants now", `${batch.plants_now}`],
+                      ["Total harvest", `${batch.harvested_kg.toLocaleString("en-GB")} kg`],
                     ]}
                   />
                   {batch.notes && <p className="mt-3 text-[13.5px] text-[#36525A]">{batch.notes}</p>}

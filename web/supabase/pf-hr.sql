@@ -36,7 +36,7 @@ returns void language plpgsql immutable
 as $$
 begin
   if not coalesce(allowed, false) then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
 end;
 $$;
@@ -267,16 +267,16 @@ declare
 begin
   perform public.pf_require(public.pf_can_manage_people());
   if coalesce(trim(new_name), '') = '' then
-    raise exception 'Nama wajib diisi';
+    raise exception 'A name is required';
   end if;
   if target is not null and supervisor = target then
-    raise exception 'Seseorang tidak bisa menjadi atasannya sendiri';
+    raise exception 'A person cannot be their own supervisor';
   end if;
   if joined is not null and left_day is not null and left_day < joined then
-    raise exception 'Tanggal keluar sebelum tanggal masuk';
+    raise exception 'The leaving date is before the joining date';
   end if;
   if account is not null and exists (select 1 from public.pf_person p where p.profile_id = account and p.id is distinct from target) then
-    raise exception 'Akun itu sudah terhubung ke orang lain';
+    raise exception 'That account is already connected to another person';
   end if;
   if target is null then
     insert into public.pf_person (profile_id, full_name, person_type, supervisor_id, phone, joined_on, left_on, status)
@@ -289,7 +289,7 @@ begin
      where p.id = target
     returning p.id into saved;
     if saved is null then
-      raise exception 'Orang tidak ditemukan';
+      raise exception 'Person not found';
     end if;
   end if;
   return saved;
@@ -306,13 +306,13 @@ declare
 begin
   perform public.pf_require(public.pf_has_role(array['staf_sdm']));
   if starts is null then
-    raise exception 'Tanggal mulai wajib diisi';
+    raise exception 'A start date is required';
   end if;
   if ends is not null and ends < starts then
-    raise exception 'Tanggal selesai sebelum tanggal mulai';
+    raise exception 'The end date is before the start date';
   end if;
   if rate is not null and rate < 0 then
-    raise exception 'Upah tidak boleh negatif';
+    raise exception 'Pay cannot be negative';
   end if;
   if target is null then
     insert into public.pf_contract (person_id, type, position, start_date, end_date, rate_idr, rate_basis, notes)
@@ -324,7 +324,7 @@ begin
      where c.id = target
     returning c.id into saved;
     if saved is null then
-      raise exception 'Kontrak tidak ditemukan';
+      raise exception 'Contract not found';
     end if;
   end if;
   return saved;
@@ -344,7 +344,7 @@ begin
   else
     update public.pf_work_area a set name = trim(new_name), lat = new_lat, lng = new_lng, radius_m = radius, active = coalesce(is_active, true) where a.id = target returning a.id into saved;
     if saved is null then
-      raise exception 'Lokasi kerja tidak ditemukan';
+      raise exception 'Work area not found';
     end if;
   end if;
   return saved;
@@ -362,13 +362,13 @@ declare
 begin
   perform public.pf_require(public.pf_can_schedule());
   if coalesce(cardinality(dates), 0) = 0 then
-    raise exception 'Pilih minimal satu tanggal';
+    raise exception 'Choose at least one date';
   end if;
   if starts is null or ends is null or ends <= starts then
-    raise exception 'Jam selesai harus setelah jam mulai';
+    raise exception 'The end time must be after the start time';
   end if;
   if not exists (select 1 from public.pf_person p where p.id = person and p.status = 'aktif') then
-    raise exception 'Orang tidak ditemukan atau nonaktif';
+    raise exception 'Person not found or inactive';
   end if;
   insert into public.pf_shift (person_id, work_date, start_at, end_at, area_id, notes)
   select person, d, starts, ends, area, trim(coalesce(new_notes, '')) from unnest(dates) d
@@ -385,11 +385,11 @@ as $$
 begin
   perform public.pf_require(public.pf_can_schedule());
   if exists (select 1 from public.pf_attendance a where a.shift_id = shift) then
-    raise exception 'Jadwal ini sudah punya catatan absen';
+    raise exception 'This shift already has an attendance record';
   end if;
   delete from public.pf_shift s where s.id = shift;
   if not found then
-    raise exception 'Jadwal tidak ditemukan';
+    raise exception 'Shift not found';
   end if;
 end;
 $$;
@@ -404,14 +404,14 @@ declare
   saved uuid;
 begin
   if who is null then
-    raise exception 'Akun Anda belum terdaftar di data orang. Hubungi Staf SDM.';
+    raise exception 'Your account is not in the people records yet. Contact HR staff.';
   end if;
   perform public.pf_require(who = public.pf_my_person_id() or public.pf_can_manage_people());
   if starts is null or ends is null or ends < starts then
-    raise exception 'Tanggal selesai sebelum tanggal mulai';
+    raise exception 'The end date is before the start date';
   end if;
   if exists (select 1 from public.pf_leave l where l.person_id = who and l.status in ('diajukan', 'disetujui') and l.start_date <= ends and l.end_date >= starts) then
-    raise exception 'Sudah ada pengajuan pada tanggal itu';
+    raise exception 'There is already a request on that date';
   end if;
   insert into public.pf_leave (person_id, type, start_date, end_date, reason) values (who, new_type, starts, ends, trim(coalesce(why, ''))) returning id into saved;
   return saved;
@@ -428,13 +428,13 @@ begin
   perform public.pf_require(public.pf_can_schedule());
   select * into the_row from public.pf_leave l where l.id = leave for update;
   if not found or the_row.status <> 'diajukan' then
-    raise exception 'Pengajuan tidak ditemukan atau sudah diputuskan';
+    raise exception 'Request not found or already decided';
   end if;
   if the_row.person_id = public.pf_my_person_id() then
-    raise exception 'Pengajuan sendiri diputuskan oleh orang lain';
+    raise exception 'Your own request must be decided by someone else';
   end if;
   if not approve and coalesce(trim(note), '') = '' then
-    raise exception 'Tulis alasan penolakan';
+    raise exception 'Write the reason for rejecting';
   end if;
   update public.pf_leave l set status = case when approve then 'disetujui' else 'ditolak' end, decided_by = auth.uid(), decided_at = now(), decide_note = trim(coalesce(note, '')) where l.id = leave;
 end;
@@ -448,7 +448,7 @@ begin
   update public.pf_leave l set status = 'batal'
    where l.id = leave and l.status = 'diajukan' and (l.person_id = public.pf_my_person_id() or public.pf_can_manage_people());
   if not found then
-    raise exception 'Pengajuan tidak bisa dibatalkan';
+    raise exception 'This request cannot be cancelled';
   end if;
 end;
 $$;
@@ -497,7 +497,7 @@ declare
   me uuid := public.pf_my_person_id();
 begin
   if me is null then
-    raise exception 'Akun Anda belum terdaftar di data orang. Hubungi Staf SDM.';
+    raise exception 'Your account is not in the people records yet. Contact HR staff.';
   end if;
   insert into public.pf_attendance_consent as c (person_id, accepted_at, withdrawn_at) values (me, now(), null)
   on conflict (person_id) do update set accepted_at = now(), withdrawn_at = null;
@@ -519,10 +519,10 @@ language plpgsql immutable
 as $$
 begin
   if coalesce(path, '') = '' then
-    raise exception 'Foto absen wajib ada';
+    raise exception 'A clock-in photo is required';
   end if;
   if split_part(path, '/', 1) <> me::text then
-    raise exception 'Foto bukan milik akun ini';
+    raise exception 'The photo does not belong to this account';
   end if;
 end;
 $$;
@@ -538,17 +538,17 @@ declare
   saved uuid;
 begin
   if me is null then
-    raise exception 'Akun Anda belum terdaftar di data orang. Hubungi Staf SDM.';
+    raise exception 'Your account is not in the people records yet. Contact HR staff.';
   end if;
   if not exists (select 1 from public.pf_attendance_consent c where c.person_id = me and c.withdrawn_at is null) then
-    raise exception 'Setujui dulu pemakaian lokasi dan foto untuk absen';
+    raise exception 'Agree to the use of location and photo for clocking in first';
   end if;
   perform public.pf_check_photo(me, photo);
   update public.pf_attendance a set missed_out = true
    where a.person_id = me and a.clock_out is null and not a.missed_out
      and (a.clock_in at time zone 'Asia/Jakarta')::date < public.pf_today();
   if exists (select 1 from public.pf_attendance a where a.person_id = me and a.clock_out is null and not a.missed_out) then
-    raise exception 'Anda sudah absen masuk. Absen pulang dulu.';
+    raise exception 'You have already clocked in. Clock out first.';
   end if;
   select s.* into the_shift from public.pf_shift s
    where s.person_id = me and s.work_date = public.pf_today()
@@ -571,12 +571,12 @@ declare
   area uuid;
 begin
   if me is null then
-    raise exception 'Akun Anda belum terdaftar di data orang. Hubungi Staf SDM.';
+    raise exception 'Your account is not in the people records yet. Contact HR staff.';
   end if;
   perform public.pf_check_photo(me, photo);
   select * into the_row from public.pf_attendance a where a.person_id = me and a.clock_out is null and not a.missed_out for update;
   if not found then
-    raise exception 'Belum ada absen masuk';
+    raise exception 'No clock-in yet';
   end if;
   select s.area_id into area from public.pf_shift s where s.id = the_row.shift_id;
   update public.pf_attendance a
@@ -598,13 +598,13 @@ declare
 begin
   perform public.pf_require(public.pf_can_manage_people());
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan wajib diisi';
+    raise exception 'A reason is required';
   end if;
   if came is null or came > now() then
-    raise exception 'Waktu masuk tidak boleh di masa depan';
+    raise exception 'The clock-in time cannot be in the future';
   end if;
   if went is not null and went < came then
-    raise exception 'Waktu pulang sebelum waktu masuk';
+    raise exception 'The clock-out time is before the clock-in time';
   end if;
   select s.id into the_shift from public.pf_shift s
    where s.person_id = person and s.work_date = (came at time zone 'Asia/Jakarta')::date
@@ -624,17 +624,17 @@ as $$
 begin
   perform public.pf_require(public.pf_can_manage_people());
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan koreksi wajib diisi';
+    raise exception 'A reason for the correction is required';
   end if;
   if came is null or (went is not null and went < came) then
-    raise exception 'Waktu pulang sebelum waktu masuk';
+    raise exception 'The clock-out time is before the clock-in time';
   end if;
   update public.pf_attendance a
      set clock_in = came, clock_out = went, missed_out = (went is null and a.missed_out),
          note = trim(concat_ws(' · ', nullif(a.note, ''), 'Dikoreksi: ' || trim(why)))
    where a.id = attendance;
   if not found then
-    raise exception 'Catatan absen tidak ditemukan';
+    raise exception 'Attendance record not found';
   end if;
 end;
 $$;
@@ -684,17 +684,17 @@ declare
   saved uuid;
 begin
   if who is null then
-    raise exception 'Akun Anda belum terdaftar di data orang. Hubungi Staf SDM.';
+    raise exception 'Your account is not in the people records yet. Contact HR staff.';
   end if;
   perform public.pf_require(who = public.pf_my_person_id() or public.pf_can_schedule());
   if not exists (select 1 from public.pf_batch b where b.id = batch and b.status <> 'direncanakan') then
-    raise exception 'Batch belum disemai atau tidak ditemukan';
+    raise exception 'The batch is not sown yet or was not found';
   end if;
   if worked is null or worked > public.pf_today() then
-    raise exception 'Tanggal kerja tidak boleh di masa depan';
+    raise exception 'The work date cannot be in the future';
   end if;
   if mins is null or mins < 1 or mins > 960 then
-    raise exception 'Durasi harus antara 1 menit dan 16 jam';
+    raise exception 'Duration must be between 1 minute and 16 hours';
   end if;
   insert into public.pf_labor_log (person_id, batch_id, work_date, minutes, activity) values (who, batch, worked, mins, trim(coalesce(what, ''))) returning id into saved;
   return saved;
@@ -709,7 +709,7 @@ begin
   delete from public.pf_labor_log l
    where l.id = entry and (public.pf_can_schedule() or (l.person_id = public.pf_my_person_id() and l.created_at > now() - interval '7 days'));
   if not found then
-    raise exception 'Catatan tidak bisa dihapus';
+    raise exception 'This record cannot be removed';
   end if;
 end;
 $$;

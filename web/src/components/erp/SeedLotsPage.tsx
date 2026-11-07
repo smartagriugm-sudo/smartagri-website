@@ -2,15 +2,17 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { formatLongDate } from "../../lib/pf/dashboard";
 import { Plus } from "lucide-react";
+import { unitLabel } from "../../lib/pf/inventory";
 import { addSeedLot, adjustSeedLot, fetchSeedLots, isLotUsable, jakartaToday, parseSeedLotForm, type SeedLot, type SeedLotForm, type SeedUnit } from "../../lib/pf/batch";
 import { cropLabel, fetchCrops, type PfCrop } from "../../lib/pf/foundation";
 import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
 import { Card, Note } from "./ui";
+import DataTable, { CellTitle, Chip, type Column } from "./DataTable";
 
 // Seed lots, so every harvest can be traced to the seed it came from. Stock moves
 // only through recorded movements: receiving, sowing, or a correction with a reason.
 
-const formatQty = (n: number, unit: string) => `${n.toLocaleString("id-ID")} ${unit}`;
+const formatQty = (n: number, unit: string) => `${n.toLocaleString("en-GB")} ${unit}`;
 
 function LotEditor({ crops, onDone }: { crops: PfCrop[]; onDone: (saved: boolean) => void }) {
   const today = jakartaToday();
@@ -26,31 +28,31 @@ function LotEditor({ crops, onDone }: { crops: PfCrop[]; onDone: (saved: boolean
 
   return (
     <Card className="p-4">
-      <h2 className="mb-3 text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">Lot benih baru</h2>
+      <h2 className="mb-3 text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">New seed lot</h2>
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-        <Field label="Tanaman">
+        <Field label="Crop">
           <select className={inputClass} value={form.cropId} onChange={(e) => set("cropId", e.target.value)}>
             {crops.filter((c) => c.active).map((c) => <option key={c.id} value={c.id}>{cropLabel(c)}</option>)}
           </select>
         </Field>
-        <Field label="Nomor lot" hint="Sesuai kemasan benih."><input className={inputClass} value={form.lotNo} onChange={(e) => set("lotNo", e.target.value)} autoFocus /></Field>
+        <Field label="Lot number" hint="As on the seed packet."><input className={inputClass} value={form.lotNo} onChange={(e) => set("lotNo", e.target.value)} autoFocus /></Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Jumlah"><input className={inputClass} inputMode="decimal" value={form.qty} onChange={(e) => set("qty", e.target.value)} /></Field>
-          <Field label="Satuan">
+          <Field label="Quantity"><input className={inputClass} inputMode="decimal" value={form.qty} onChange={(e) => set("qty", e.target.value)} /></Field>
+          <Field label="Unit">
             <select className={inputClass} value={form.unit} onChange={(e) => set("unit", e.target.value as SeedUnit)}>
               <option value="biji">biji</option>
               <option value="gram">gram</option>
             </select>
           </Field>
-          <Field label="Diterima"><input type="date" className={inputClass} value={form.receivedOn} onChange={(e) => set("receivedOn", e.target.value)} /></Field>
-          <Field label="Kedaluwarsa"><input type="date" className={inputClass} value={form.expiryOn} onChange={(e) => set("expiryOn", e.target.value)} /></Field>
+          <Field label="Received"><input type="date" className={inputClass} value={form.receivedOn} onChange={(e) => set("receivedOn", e.target.value)} /></Field>
+          <Field label="Expires"><input type="date" className={inputClass} value={form.expiryOn} onChange={(e) => set("expiryOn", e.target.value)} /></Field>
         </div>
-        <Field label="Pemasok"><input className={inputClass} value={form.supplier} onChange={(e) => set("supplier", e.target.value)} /></Field>
-        <Field label="Catatan"><textarea className={inputClass} rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Field>
+        <Field label="Supplier"><input className={inputClass} value={form.supplier} onChange={(e) => set("supplier", e.target.value)} /></Field>
+        <Field label="Notes"><textarea className={inputClass} rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Field>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Simpan"}</PrimaryButton>
-          <SecondaryButton onClick={() => onDone(false)}>Batal</SecondaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+          <SecondaryButton onClick={() => onDone(false)}>Cancel</SecondaryButton>
         </div>
       </form>
     </Card>
@@ -64,22 +66,22 @@ function AdjustEditor({ lot, onDone }: { lot: SeedLot; onDone: (saved: boolean) 
 
   const submit = async () => {
     const value = Number(qty.trim().replace(",", "."));
-    if (qty.trim() === "" || !Number.isFinite(value) || value < 0) return action.setError("Jumlah tidak boleh negatif.");
-    if (!why.trim()) return action.setError("Alasan koreksi wajib diisi.");
+    if (qty.trim() === "" || !Number.isFinite(value) || value < 0) return action.setError("Quantity cannot be negative.");
+    if (!why.trim()) return action.setError("A reason for the correction is required.");
     if (await action.run(() => adjustSeedLot(lot.id, value, why.trim()))) onDone(true);
   };
 
   return (
     <Card className="p-4">
-      <h2 className="mb-1 text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">Koreksi stok {lot.lot_no}</h2>
-      <p className="mb-3 text-[13px] text-[#4F6B73]">Isi jumlah hasil hitung fisik. Perubahannya tercatat bersama alasan.</p>
+      <h2 className="mb-1 text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">Correct stock {lot.lot_no}</h2>
+      <p className="mb-3 text-[13px] text-[#4F6B73]">Enter the physical count. The change is recorded with its reason.</p>
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-        <Field label={`Jumlah sebenarnya (${lot.unit})`}><input className={inputClass} inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} autoFocus /></Field>
-        <Field label="Alasan"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Hitung ulang, benih rusak" /></Field>
+        <Field label={`Actual quantity (${unitLabel(lot.unit)})`}><input className={inputClass} inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} autoFocus /></Field>
+        <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Recounted, damaged seed" /></Field>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Menyimpan..." : "Simpan"}</PrimaryButton>
-          <SecondaryButton onClick={() => onDone(false)}>Batal</SecondaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+          <SecondaryButton onClick={() => onDone(false)}>Cancel</SecondaryButton>
         </div>
       </form>
     </Card>
@@ -105,10 +107,10 @@ export default function SeedLotsPage() {
 
   return (
     <ErpPage
-      eyebrow="Budidaya"
-      title="Lot benih"
-      sub="Benih yang diterima dan sisanya. Setiap batch memakai satu lot, supaya hasil panen bisa ditelusuri sampai benihnya."
-      actions={canManageProduction && editing === null && hasCrops ? <PrimaryButton onClick={() => setEditing("new")}><Plus className="h-4 w-4" /> Tambah lot</PrimaryButton> : undefined}
+      eyebrow="Inventory"
+      title="Seed lots"
+      sub="Seed received and what is left. Each batch uses one lot, so a harvest can be traced back to its seed."
+      actions={canManageProduction && editing === null && hasCrops ? <PrimaryButton onClick={() => setEditing("new")}><Plus className="h-4 w-4" /> Add lot</PrimaryButton> : undefined}
     >
       <DataState state={state}>
         {({ lots, crops }) => {
@@ -116,68 +118,31 @@ export default function SeedLotsPage() {
           return (
             <div className={`grid grid-cols-1 items-start gap-4 ${editing ? "lg:grid-cols-[minmax(0,1fr)_360px]" : ""}`}>
               <div className="min-w-0 space-y-3">
-                {!canManageProduction && <ReadOnlyNote who="Manajer produksi" />}
+                {!canManageProduction && <ReadOnlyNote who="Production manager" />}
                 {canManageProduction && !hasCrops && (
-                  <Note>Tambahkan tanaman dulu di halaman <Link to="/erp/tanaman" className="font-medium text-[#0B6477] hover:underline">Tanaman</Link>.</Note>
+                  <Note>Add a crop first on the page <Link to="/erp/crops" className="font-medium text-[#0B6477] hover:underline">Crops</Link>.</Note>
                 )}
-                <Card className="p-4">
-                  {lots.length === 0 ? (
-                    <p className="py-6 text-center text-[14px] text-[#4F6B73]">Belum ada lot benih.</p>
-                  ) : (
-                    <>
-                    <ul className="-my-2 md:hidden">
-                      {lots.map((l) => {
-                        const expired = !isLotUsable({ qty_on_hand: 1, expiry_date: l.expiry_date }, today);
-                        return (
-                          <li key={l.id} className="flex items-center gap-3 border-t border-[#E3ECED] py-2 first:border-0">
-                            <span className="min-w-0 flex-1">
-                              <span className="flex flex-wrap items-center gap-x-2 text-[14px] font-medium text-[#0F2F36]">
-                                {l.lot_no}
-                                {expired && <span className="rounded-full bg-[#FDECEA] px-2 py-0.5 text-[12.5px] font-medium text-[#B3362C]">Kedaluwarsa</span>}
-                              </span>
-                              <span className="block text-[13px] text-[#4F6B73]">{cropLabel({ name: l.crop_name, variety: l.crop_variety })} · sisa {formatQty(l.qty_on_hand, l.unit)}</span>
-                              <span className="block text-[13px] text-[#4F6B73]">Sampai {l.expiry_date ? formatLongDate(l.expiry_date) : "-"}</span>
-                            </span>
-                            {canManageProduction && <button type="button" onClick={() => setEditing(l.id)} className="min-h-[44px] shrink-0 text-[14px] font-medium text-[#0B6477] hover:underline">Koreksi</button>}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    <table className="hidden w-full text-left text-[14px] md:table">
-                      <thead className="text-[13px] text-[#4F6B73]">
-                        <tr>
-                          <th className="pb-2 font-medium">Lot</th>
-                          <th className="pb-2 font-medium">Tanaman</th>
-                          <th className="pb-2 pr-6 text-right font-medium">Sisa</th>
-                          <th className="pb-2 font-medium">Diterima</th>
-                          <th className="pb-2 font-medium">Kedaluwarsa</th>
-                          <th className="pb-2" />
-                        </tr>
-                      </thead>
-                      <tbody className="text-[#0F2F36]">
-                        {lots.map((l) => (
-                          <tr key={l.id} className="border-t border-[#E3ECED]">
-                            <td className="py-2.5">
-                              <span className="font-medium">{l.lot_no}</span>
-                              {l.supplier && <span className="block text-[13px] text-[#4F6B73]">{l.supplier}</span>}
-                            </td>
-                            <td className="py-2.5">{cropLabel({ name: l.crop_name, variety: l.crop_variety })}</td>
-                            <td className="py-2.5 pr-6 text-right tabular-nums">{formatQty(l.qty_on_hand, l.unit)}</td>
-                            <td className="py-2.5">{formatLongDate(l.received_at)}</td>
-                            <td className="py-2.5">
-                              {l.expiry_date ? formatLongDate(l.expiry_date) : "Belum diisi"}
-                              {!isLotUsable({ qty_on_hand: 1, expiry_date: l.expiry_date }, today) && <span className="ml-1.5 rounded-full bg-[#FDECEA] px-2 py-0.5 text-[12.5px] font-medium text-[#B3362C]">Kedaluwarsa</span>}
-                            </td>
-                            <td className="py-2.5 text-right">
-                              {canManageProduction && <button type="button" onClick={() => setEditing(l.id)} className="min-h-[24px] text-[14px] font-medium text-[#0B6477] hover:underline">Koreksi</button>}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    </>
-                  )}
-                </Card>
+                <DataTable
+                  rows={lots}
+                  rowKey={(l) => l.id}
+                  noun="seed lots"
+                  searchText={(l) => `${l.lot_no} ${l.supplier} ${cropLabel({ name: l.crop_name, variety: l.crop_variety })}`}
+                  searchLabel="Search by lot, crop or supplier"
+                  pills={[
+                    { key: "usable", label: "Usable", dot: "#0E9B7A", match: (l) => isLotUsable({ qty_on_hand: 1, expiry_date: l.expiry_date }, today) },
+                    { key: "expired", label: "Expired", dot: "#B3362C", match: (l) => !isLotUsable({ qty_on_hand: 1, expiry_date: l.expiry_date }, today) },
+                  ]}
+                  filters={[{ label: "Filter by crop", all: "All crops", value: (l) => cropLabel({ name: l.crop_name, variety: l.crop_variety }) }]}
+                  empty="No seed lots yet."
+                  columns={[
+                    { key: "lot", label: "Lot", phone: "title", sort: (a, b) => a.lot_no.localeCompare(b.lot_no), cell: (l) => <CellTitle title={l.lot_no} sub={l.supplier || undefined} /> },
+                    { key: "crop", label: "Crop", sort: (a, b) => a.crop_name.localeCompare(b.crop_name), cell: (l) => cropLabel({ name: l.crop_name, variety: l.crop_variety }) },
+                    { key: "qty", label: "Remaining", track: "120px", align: "right", sort: (a, b) => a.qty_on_hand - b.qty_on_hand, cell: (l) => <span className="font-medium tabular-nums text-[#0F2F36]">{formatQty(l.qty_on_hand, l.unit)}</span> },
+                    { key: "received", label: "Received", track: "130px", phone: "hidden", sort: (a, b) => a.received_at.localeCompare(b.received_at), cell: (l) => <span className="text-[13px]">{formatLongDate(l.received_at)}</span> },
+                    { key: "expiry", label: "Expires", track: "190px", sort: (a, b) => (a.expiry_date ?? "9999").localeCompare(b.expiry_date ?? "9999"), cell: (l) => isLotUsable({ qty_on_hand: 1, expiry_date: l.expiry_date }, today) ? <span className="text-[13px]">{l.expiry_date ? formatLongDate(l.expiry_date) : "Not set"}</span> : <Chip label={`Expired ${l.expiry_date ? formatLongDate(l.expiry_date) : ""}`} className="bg-[#FDECEA] text-[#B3362C]" /> },
+                    { key: "edit", label: "", track: "70px", align: "right", interactive: true, cell: (l) => canManageProduction ? <button type="button" onClick={() => setEditing(l.id)} className="min-h-[44px] text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]">Correct</button> : null },
+                  ] satisfies Column<SeedLot>[]}
+                />
               </div>
               {editing === "new" && <LotEditor crops={crops} onDone={(saved) => void done(saved)} />}
               {adjusting && <AdjustEditor key={adjusting.id} lot={adjusting} onDone={(saved) => void done(saved)} />}

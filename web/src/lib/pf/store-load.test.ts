@@ -25,7 +25,7 @@ describe("what a load leaves behind", () => {
     await s.load();
     expect(s.mode).toBe("error");
     expect(s.hasData).toBe(false);
-    expect(s.loadError).toMatch(/^Tidak bisa terhubung/);
+    expect(s.loadError).toMatch(/^Cannot reach/);
   });
 
   it("keeps what it had when a later load fails, and recovers", async () => {

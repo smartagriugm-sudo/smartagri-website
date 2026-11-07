@@ -15,9 +15,9 @@ describe("an order's stage follows its numbers", () => {
   });
 
   it("puts it in words", () => {
-    expect(orderStageLabel({ ...base, status: "batal" })).toBe("Dibatalkan");
-    expect(orderStageLabel({ ...base, paid_amount: 0 })).toBe("Menunggu pembayaran");
-    expect(orderStageLabel(base)).toBe("Selesai");
+    expect(orderStageLabel({ ...base, status: "batal" })).toBe("Cancelled");
+    expect(orderStageLabel({ ...base, paid_amount: 0 })).toBe("Waiting for payment");
+    expect(orderStageLabel(base)).toBe("Done");
   });
 });
 
@@ -54,10 +54,10 @@ describe("choosing lots", () => {
     const the = { remaining_kg: 5, lot_code: "H-1" };
     expect(parseAllocation("2,5", line, the)).toEqual({ error: null, kg: 2.5 });
     expect(parseAllocation("3", line, the)).toEqual({ error: null, kg: 3 });
-    expect(parseAllocation("3,1", line, the).error).toMatch(/Melebihi/);
-    expect(parseAllocation("6", { qty_kg: 10, allocated_kg: 0 }, the).error).toMatch(/tersisa/);
-    expect(parseAllocation("0", line, the).error).toMatch(/lebih dari 0/);
-    expect(parseAllocation("1", line, undefined).error).toMatch(/Pilih lot/);
+    expect(parseAllocation("3,1", line, the).error).toMatch(/More than/);
+    expect(parseAllocation("6", { qty_kg: 10, allocated_kg: 0 }, the).error).toMatch(/only has/);
+    expect(parseAllocation("0", line, the).error).toMatch(/above 0/);
+    expect(parseAllocation("1", line, undefined).error).toMatch(/harvest lot/);
   });
 
   it("does not trip on the tenths of a kilogram", () => {
@@ -74,25 +74,25 @@ describe("forms", () => {
   });
 
   it("names the row that is wrong", () => {
-    expect(parseOrderForm("", "2026-11-06", "", [row]).error).toMatch(/pelanggan/);
-    expect(parseOrderForm("p", "2026-11-06", "2026-11-01", [row]).error).toMatch(/sebelum/);
-    expect(parseOrderForm("p", "2026-11-06", "", []).error).toMatch(/minimal/);
-    expect(parseOrderForm("p", "2026-11-06", "", [row, { ...row, qtyKg: "0" }]).error).toMatch(/^Baris 2/);
-    expect(parseOrderForm("p", "2026-11-06", "", [{ ...row, pricePerKg: "abc" }]).error).toMatch(/^Baris 1: harga/);
-    expect(parseOrderForm("p", "2026-11-06", "", [{ ...row, cropId: "" }]).error).toMatch(/tanaman/);
+    expect(parseOrderForm("", "2026-11-06", "", [row]).error).toMatch(/customer/);
+    expect(parseOrderForm("p", "2026-11-06", "2026-11-01", [row]).error).toMatch(/before/);
+    expect(parseOrderForm("p", "2026-11-06", "", []).error).toMatch(/at least/);
+    expect(parseOrderForm("p", "2026-11-06", "", [row, { ...row, qtyKg: "0" }]).error).toMatch(/^Line 2/);
+    expect(parseOrderForm("p", "2026-11-06", "", [{ ...row, pricePerKg: "abc" }]).error).toMatch(/^Line 1: price/);
+    expect(parseOrderForm("p", "2026-11-06", "", [{ ...row, cropId: "" }]).error).toMatch(/crop/);
   });
 
   it("checks a payment against the balance", () => {
     const today = "2026-11-06";
     expect(parsePayment("100.000", today, 100000, today)).toEqual({ error: null, amount: 100000 });
-    expect(parsePayment("100.001", today, 100000, today).error).toMatch(/sisa/);
-    expect(parsePayment("0", today, 100000, today).error).toMatch(/lebih dari 0/);
-    expect(parsePayment("1", "2026-11-07", 100000, today).error).toMatch(/masa depan/);
+    expect(parsePayment("100.001", today, 100000, today).error).toMatch(/balance/);
+    expect(parsePayment("0", today, 100000, today).error).toMatch(/above 0/);
+    expect(parsePayment("1", "2026-11-07", 100000, today).error).toMatch(/future/);
   });
 
-  it("writes money and weight the Indonesian way", () => {
-    expect(formatRupiah(1234567)).toBe("Rp 1.234.567");
-    expect(formatKg(2.5)).toBe("2,5 kg");
+  it("writes money and weight the English way", () => {
+    expect(formatRupiah(1234567)).toBe("Rp 1,234,567");
+    expect(formatKg(2.5)).toBe("2.5 kg");
     expect(formatKg(12)).toBe("12 kg");
   });
 });

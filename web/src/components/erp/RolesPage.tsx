@@ -22,10 +22,10 @@ export default function RolesPage() {
   };
 
   return (
-    <ErpPage eyebrow="Pengaturan" title="Peran pengguna" sub="Peran menentukan siapa boleh mengubah apa. Setiap perubahan tercatat di audit log.">
+    <ErpPage eyebrow="Administration" title="User roles" sub="Roles decide who may change what. Every change is recorded in the audit log.">
       <div className="mb-3 space-y-2">
-        <Note>Admin lab selalu punya akses Admin sistem, walau tidak dicentang di sini.</Note>
-        {!canAdmin && <Note tone="warn">{canReadAudit ? "Anda bisa melihat daftar ini. Mengubahnya perlu peran Admin sistem." : "Daftar lengkap hanya untuk Admin sistem dan Pimpinan. Anda hanya melihat peran Anda sendiri."}</Note>}
+        <Note>Lab admins always have System admin access, even when not ticked here.</Note>
+        {!canAdmin && <Note tone="warn">{canReadAudit ? "You can see this list. Changing it needs the System admin role." : "The full list is for System admins and Leadership. You only see your own roles."}</Note>}
         <ActionNote action={action} />
       </div>
       <DataState state={state}>
@@ -52,9 +52,9 @@ export default function RolesPage() {
           </div>
           <Card className="hidden overflow-x-auto p-4 md:block">
             <table className="w-full min-w-[920px] text-left text-[14px]">
-              <thead className="text-[13px] text-[#4F6B73]">
+              <thead className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#6B8187]">
                 <tr>
-                  <th className="sticky left-0 bg-white pb-2 pr-3 font-medium">Anggota</th>
+                  <th className="sticky left-0 bg-white pb-2 pr-3 font-medium">Member</th>
                   {ERP_ROLES.map((r) => <th key={r.key} title={r.note} className="px-2 pb-2 text-center font-medium">{r.label}</th>)}
                 </tr>
               </thead>
@@ -74,7 +74,7 @@ export default function RolesPage() {
                             checked={on}
                             disabled={!canAdmin || action.busy}
                             onChange={() => void toggle(m.id, r.key, !on)}
-                            aria-label={`${r.label} untuk ${memberName(m)}`}
+                            aria-label={`${r.label} for ${memberName(m)}`}
                             className="h-4 w-4 accent-[#14919B] disabled:opacity-50"
                           />
                         </td>

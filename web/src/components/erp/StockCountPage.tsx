@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { jakartaToday } from "../../lib/pf/batch";
 import { formatLongDate } from "../../lib/pf/dashboard";
-import { ITEM_CATEGORIES, applyCount, fetchCounts, fetchStockLots, formatQty, parseCountRows, type ItemCategory, type StockLotRow } from "../../lib/pf/inventory";
+import { ITEM_CATEGORIES, applyCount, fetchCounts, fetchStockLots, formatQty, parseCountRows, type StockLotRow } from "../../lib/pf/inventory";
 import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
-import { Card, Segmented } from "./ui";
+import { Card } from "./ui";
+import DataTable, { CellTitle, type Column } from "./DataTable";
 
 // Counting the shelf. Type what is really there; what differs becomes a stock move
 // with the date on it. A box left empty means that lot was not counted, so a count
@@ -16,7 +17,6 @@ export default function StockCountPage() {
   });
   const { canManageProduction } = useErpAccess();
   const today = jakartaToday();
-  const [category, setCategory] = useState<ItemCategory | "semua">("semua");
   const [values, setValues] = useState<Record<string, string>>({});
   const [countedOn, setCountedOn] = useState(today);
   const [notes, setNotes] = useState("");
@@ -28,10 +28,10 @@ export default function StockCountPage() {
   const diff = (l: StockLotRow) => (typed(l) ? number(values[l.id]) - l.qty_on_hand : 0);
 
   return (
-    <ErpPage eyebrow="Inventory" title="Opname" sub="Hitung stok fisik lalu bandingkan dengan catatan. Kolom yang dikosongkan berarti lot itu tidak ikut dihitung.">
+    <ErpPage eyebrow="Inventory" title="Stock count" sub="Count the physical stock, then compare it with the record. A box left empty means that lot was not counted.">
       <DataState state={state}>
         {({ lots, counts }) => {
-          const shown = lots.filter((l) => (l.qty_on_hand > 0 || typed(l)) && (category === "semua" || l.category === category)).sort((a, b) => a.item_name.localeCompare(b.item_name) || a.lot_no.localeCompare(b.lot_no));
+          const shown = lots.filter((l) => l.qty_on_hand > 0 || typed(l)).sort((a, b) => a.item_name.localeCompare(b.item_name) || a.lot_no.localeCompare(b.lot_no));
           const filled = lots.filter(typed);
           const differing = filled.filter((l) => Math.abs(diff(l)) > 0);
 
@@ -52,72 +52,67 @@ export default function StockCountPage() {
           return (
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
               <div className="min-w-0 space-y-3">
-                {!canManageProduction && <ReadOnlyNote who="Manajer produksi" />}
-                <Segmented value={category} options={[{ key: "semua" as const, label: "Semua" }, ...ITEM_CATEGORIES.map((c) => ({ key: c.key, label: c.label }))]} onChange={setCategory} />
-                <Card>
-                  {shown.length === 0 ? (
-                    <p className="px-4 py-8 text-center text-[14px] text-[#4F6B73]">Tidak ada lot bersisa di sini.</p>
-                  ) : (
-                    <ul>
-                      {shown.map((l) => {
-                        const d = diff(l);
-                        return (
-                          <li key={l.id} className="grid grid-cols-[minmax(0,1fr)_100px] items-center gap-x-3 gap-y-1 border-t border-[#EDF2F2] px-4 py-2.5 first:border-0 sm:grid-cols-[minmax(0,1fr)_150px_100px_90px]">
-                            <span className="col-span-2 min-w-0 sm:col-span-1">
-                              <span className="block truncate text-[14px] font-medium text-[#0F2F36]">{l.item_name}</span>
-                              <span className="block truncate text-[13px] text-[#4F6B73]">{l.lot_no}{l.expiry_date ? ` · sampai ${formatLongDate(l.expiry_date)}` : ""}</span>
-                            </span>
-                            <span className="whitespace-nowrap text-[13.5px] tabular-nums text-[#4F6B73] sm:text-right">Catatan {formatQty(l.qty_on_hand, l.unit)}</span>
-                            <input
-                              className={inputClass}
-                              inputMode="decimal"
-                              disabled={!canManageProduction}
-                              aria-label={`Hasil hitung ${l.item_name} lot ${l.lot_no} dalam ${l.unit}`}
-                              placeholder="Hitung"
-                              value={values[l.id] ?? ""}
-                              onChange={(e) => { setAsking(false); setValues((v) => ({ ...v, [l.id]: e.target.value })); }}
-                            />
-                            <span className={`col-span-2 text-[13px] tabular-nums sm:col-span-1 sm:text-right ${typed(l) && d !== 0 ? "font-medium text-[#8A5A07]" : "text-[#4F6B73]"}`}>
-                              {!typed(l) ? "" : Number.isNaN(d) ? "Bukan angka" : d === 0 ? "Cocok" : `${d > 0 ? "+" : ""}${d.toLocaleString("id-ID", { maximumFractionDigits: 2 })} ${l.unit}`}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </Card>
+                {!canManageProduction && <ReadOnlyNote who="Production manager" />}
+                <DataTable
+                  rows={shown}
+                  rowKey={(l) => l.id}
+                  noun="lots"
+                  searchText={(l) => `${l.item_name} ${l.lot_no} ${l.sku}`}
+                  searchLabel="Search by item, SKU or lot"
+                  pills={ITEM_CATEGORIES.map((c) => ({ key: c.key, label: c.label, match: (l: StockLotRow) => l.category === c.key }))}
+                  empty="No lots with stock left."
+                  columns={[
+                    { key: "item", label: "Item and lot", phone: "title", sort: (a, b) => a.item_name.localeCompare(b.item_name), cell: (l) => <CellTitle title={l.item_name} sub={`${l.lot_no}${l.expiry_date ? ` · until ${formatLongDate(l.expiry_date)}` : ""}`} /> },
+                    { key: "book", label: "On record", track: "130px", align: "right", sort: (a, b) => a.qty_on_hand - b.qty_on_hand, cell: (l) => <span className="whitespace-nowrap tabular-nums">{formatQty(l.qty_on_hand, l.unit)}</span> },
+                    { key: "count", label: "Counted", track: "120px", interactive: true, cell: (l) => (
+                      <input
+                        className={inputClass}
+                        inputMode="decimal"
+                        disabled={!canManageProduction}
+                        aria-label={`Counted ${l.item_name} lot ${l.lot_no} in ${l.unit}`}
+                        placeholder="Count"
+                        value={values[l.id] ?? ""}
+                        onChange={(e) => { setAsking(false); setValues((v) => ({ ...v, [l.id]: e.target.value })); }}
+                      />
+                    ) },
+                    { key: "diff", label: "Difference", track: "110px", align: "right", cell: (l) => {
+                      const d = diff(l);
+                      return <span className={`text-[13px] tabular-nums ${typed(l) && d !== 0 ? "font-medium text-[#8A5A07]" : "text-[#4F6B73]"}`}>{!typed(l) ? "" : Number.isNaN(d) ? "Not a number" : d === 0 ? "Matches" : `${d > 0 ? "+" : ""}${d.toLocaleString("en-GB", { maximumFractionDigits: 2 })} ${l.unit}`}</span>;
+                    } },
+                  ] satisfies Column<StockLotRow>[]}
+                />
               </div>
               <div className="min-w-0 space-y-4">
                 {canManageProduction && (
                   <Card className="space-y-3 p-4">
-                    <h2 className="text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">Simpan hasil</h2>
-                    <p className="text-[14px] text-[#4F6B73]">{filled.length} lot dihitung, {differing.length} berbeda dari catatan.</p>
-                    <Field label="Tanggal opname"><input type="date" className={inputClass} max={today} value={countedOn} onChange={(e) => setCountedOn(e.target.value)} /></Field>
-                    <Field label="Catatan"><input className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
+                    <h2 className="text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">Save results</h2>
+                    <p className="text-[14px] text-[#4F6B73]">{filled.length} lots counted, {differing.length} differ from the record.</p>
+                    <Field label="Count date"><input type="date" className={inputClass} max={today} value={countedOn} onChange={(e) => setCountedOn(e.target.value)} /></Field>
+                    <Field label="Notes"><input className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
                     <ActionNote action={action} />
                     {asking ? (
                       <div className="space-y-2 rounded-lg bg-[#FFF6E5] p-2.5">
-                        <p className="text-[13.5px] text-[#4F6B73]">Stok {differing.length} lot akan diubah mengikuti hasil hitung. Perubahan tercatat, dan hanya bisa dibalik dengan koreksi baru.</p>
+                        <p className="text-[13.5px] text-[#4F6B73]">Stock {differing.length} lots will change to match the count. The change is recorded and can only be reversed with a new correction.</p>
                         <div className="flex flex-wrap gap-2">
-                          <PrimaryButton disabled={action.busy} onClick={() => void apply()}>{action.busy ? "Menyimpan..." : "Ya, simpan"}</PrimaryButton>
-                          <SecondaryButton onClick={() => setAsking(false)}>Batal</SecondaryButton>
+                          <PrimaryButton disabled={action.busy} onClick={() => void apply()}>{action.busy ? "Saving..." : "Yes, save"}</PrimaryButton>
+                          <SecondaryButton onClick={() => setAsking(false)}>Cancel</SecondaryButton>
                         </div>
                       </div>
                     ) : (
-                      <PrimaryButton disabled={filled.length === 0} onClick={() => setAsking(true)}>Simpan hasil opname</PrimaryButton>
+                      <PrimaryButton disabled={filled.length === 0} onClick={() => setAsking(true)}>Save stock count</PrimaryButton>
                     )}
                   </Card>
                 )}
                 <Card>
-                  <h2 className="px-4 py-3 text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">Opname sebelumnya</h2>
+                  <h2 className="px-4 py-3 text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">Earlier stock counts</h2>
                   {counts.length === 0 ? (
-                    <p className="border-t border-[#EDF2F2] px-4 py-3 text-[14px] text-[#4F6B73]">Belum pernah opname.</p>
+                    <p className="border-t border-[#EDF2F2] px-4 py-3 text-[14px] text-[#4F6B73]">No stock count yet.</p>
                   ) : (
                     <ul>
                       {counts.map((c) => (
                         <li key={c.id} className="border-t border-[#EDF2F2] px-4 py-2 text-[14px]">
                           <span className="font-medium text-[#0F2F36]">{formatLongDate(c.counted_on)}</span>
-                          <span className="block text-[13px] text-[#4F6B73]">{c.lots} lot dihitung, {c.changed} dikoreksi{c.notes ? ` · ${c.notes}` : ""}</span>
+                          <span className="block text-[13px] text-[#4F6B73]">{c.lots} lots counted, {c.changed} corrected{c.notes ? ` · ${c.notes}` : ""}</span>
                         </li>
                       ))}
                     </ul>

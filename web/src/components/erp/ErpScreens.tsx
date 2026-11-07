@@ -18,7 +18,7 @@ const PRELOAD_DELAY_MS = 800;
 
 function Screen({ active, children }: { active: boolean; children: ReactNode }) {
   return (
-    <div className={active ? "flex flex-1 flex-col" : "invisible absolute left-0 top-0 h-screen w-full overflow-hidden"}>
+    <div className={active ? "flex flex-1 flex-col" : "invisible absolute left-0 top-0 h-[calc(100vh-76px)] w-full overflow-hidden"}>
       {children}
     </div>
   );
@@ -27,7 +27,7 @@ function Screen({ active, children }: { active: boolean; children: ReactNode }) 
 export default function ErpScreens() {
   const pathname = useRouterState({ select: (s) => s.location.pathname }).replace(/\/$/, "");
   const search = useSearch({ strict: false }) as { hole?: string; slot?: string };
-  const chamber = pathname.endsWith("/persemaian");
+  const chamber = pathname.endsWith("/seedlings");
   const factory = pathname.endsWith("/plant-factory");
 
   const [visited, setVisited] = useState(false);

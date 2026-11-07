@@ -227,10 +227,10 @@ declare
 begin
   select qty_on_hand into on_hand from public.pf_stock_lot where id = lot for update;
   if not found then
-    raise exception 'Lot tidak ditemukan';
+    raise exception 'Lot not found';
   end if;
   if on_hand + delta < 0 then
-    raise exception 'Stok lot tidak cukup: tersisa %, diminta %', trim_scale(on_hand), trim_scale(-delta);
+    raise exception 'Not enough lot stock: % left, % requested', trim_scale(on_hand), trim_scale(-delta);
   end if;
   update public.pf_stock_lot set qty_on_hand = on_hand + delta where id = lot;
   insert into public.pf_stock_move (lot_id, type, qty, batch_id, reason) values (lot, kind, delta, batch, coalesce(why, ''));
@@ -333,14 +333,14 @@ declare
 begin
   perform public.pf_require_manager();
   if coalesce(trim(new_name), '') = '' then
-    raise exception 'Nama barang wajib diisi';
+    raise exception 'An item name is required';
   end if;
   if reorder is not null and reorder < 0 then
-    raise exception 'Batas minimum tidak boleh negatif';
+    raise exception 'The minimum level cannot be negative';
   end if;
   if target is null then
     if new_category = 'benih' then
-      raise exception 'Benih didaftarkan lewat halaman Lot benih';
+      raise exception 'Seed is registered on the Seed lots page';
     end if;
     prefix := case new_category when 'nutrisi' then 'NUT' when 'media' then 'MED' when 'kemasan' then 'KMS' when 'suku_cadang' then 'SKC' else 'LNY' end;
     insert into public.pf_doc_counter as c (key, value) values ('SKU-' || prefix, 1)
@@ -351,13 +351,13 @@ begin
   else
     select * into existing from public.pf_item i where i.id = target for update;
     if not found then
-      raise exception 'Barang tidak ditemukan';
+      raise exception 'Item not found';
     end if;
     if existing.unit <> new_unit and exists (select 1 from public.pf_stock_lot l where l.item_id = target) then
-      raise exception 'Satuan tidak bisa diubah karena barang ini sudah punya stok';
+      raise exception 'The unit cannot change because this item has stock';
     end if;
     if existing.category = 'benih' and new_category <> 'benih' or existing.category <> 'benih' and new_category = 'benih' then
-      raise exception 'Kategori benih tidak bisa ditukar';
+      raise exception 'The seed category cannot be swapped';
     end if;
     update public.pf_item i
        set name = trim(new_name), category = new_category, unit = new_unit, reorder_point = reorder,
@@ -383,19 +383,19 @@ begin
   perform public.pf_require_manager();
   select * into the_item from public.pf_item i where i.id = item and i.active;
   if not found then
-    raise exception 'Barang tidak ditemukan atau nonaktif';
+    raise exception 'Item not found or inactive';
   end if;
   if coalesce(trim(new_lot_no), '') = '' then
-    raise exception 'Nomor lot wajib diisi';
+    raise exception 'A lot number is required';
   end if;
   if qty is null or qty <= 0 then
-    raise exception 'Jumlah harus lebih dari 0';
+    raise exception 'Quantity must be above 0';
   end if;
   if received_on is null or received_on > public.pf_today() then
-    raise exception 'Tanggal terima tidak boleh di masa depan';
+    raise exception 'The received date cannot be in the future';
   end if;
   if expiry_on is not null and expiry_on < received_on then
-    raise exception 'Tanggal kedaluwarsa sebelum tanggal diterima';
+    raise exception 'The expiry date is before the received date';
   end if;
   insert into public.pf_stock_lot (item_id, lot_no, supplier, qty_on_hand, received_at, expiry_date, notes)
   values (item, trim(new_lot_no), trim(coalesce(new_supplier, '')), 0, received_on, expiry_on, trim(coalesce(new_notes, '')))
@@ -416,17 +416,17 @@ declare
 begin
   perform public.pf_require_manager();
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan koreksi wajib diisi';
+    raise exception 'A reason for the correction is required';
   end if;
   if new_qty is null or new_qty < 0 then
-    raise exception 'Jumlah tidak boleh negatif';
+    raise exception 'Quantity cannot be negative';
   end if;
   select l.qty_on_hand into on_hand from public.pf_stock_lot l where l.id = lot for update;
   if not found then
-    raise exception 'Lot tidak ditemukan';
+    raise exception 'Lot not found';
   end if;
   if new_qty = on_hand then
-    raise exception 'Jumlahnya sama dengan stok sekarang';
+    raise exception 'That is the same as the current stock';
   end if;
   perform public.pf_stock_apply(lot, 'koreksi', new_qty - on_hand, null, trim(why));
 end;
@@ -445,21 +445,21 @@ declare
 begin
   perform public.pf_require_operator();
   if qty is null or qty <= 0 then
-    raise exception 'Jumlah harus lebih dari 0';
+    raise exception 'Quantity must be above 0';
   end if;
   if not exists (select 1 from public.pf_item i where i.id = item) then
-    raise exception 'Barang tidak ditemukan';
+    raise exception 'Item not found';
   end if;
   if batch is not null and not exists (select 1 from public.pf_batch b where b.id = batch and b.status = 'berjalan') then
-    raise exception 'Batch tidak sedang berjalan';
+    raise exception 'The batch is not running';
   end if;
   if batch is null and coalesce(trim(why), '') = '' then
-    raise exception 'Tulis untuk apa barang ini dipakai';
+    raise exception 'Write what this item is used for';
   end if;
   short := public.pf_stock_consume(item, qty, case when batch is null then 'pakai_lain' else 'pakai_batch' end, batch, trim(coalesce(why, '')));
   if short > 0 then
     select unit into label from public.pf_item i where i.id = item;
-    raise exception 'Stok siap pakai tidak cukup: kurang % %', trim_scale(short), label;
+    raise exception 'Not enough ready stock: short by % %', trim_scale(short), label;
   end if;
 end;
 $$;
@@ -483,10 +483,10 @@ declare
 begin
   perform public.pf_require_manager();
   if counted is null or counted > public.pf_today() then
-    raise exception 'Tanggal opname tidak boleh di masa depan';
+    raise exception 'The count date cannot be in the future';
   end if;
   if jsonb_typeof(rows_in) is distinct from 'array' or jsonb_array_length(rows_in) = 0 then
-    raise exception 'Isi minimal satu lot yang dihitung';
+    raise exception 'Enter a count for at least one lot';
   end if;
   insert into public.pf_stock_count (counted_on, notes) values (counted, trim(coalesce(new_notes, ''))) returning id into created;
   label := 'Opname ' || to_char(counted, 'YYYY-MM-DD');
@@ -494,11 +494,11 @@ begin
     lot_id := (item ->> 'lot_id')::uuid;
     physical := (item ->> 'counted')::numeric;
     if physical is null or physical < 0 then
-      raise exception 'Hasil hitung tidak boleh negatif';
+      raise exception 'The count cannot be negative';
     end if;
     select l.qty_on_hand into on_hand from public.pf_stock_lot l where l.id = lot_id for update;
     if not found then
-      raise exception 'Lot tidak ditemukan';
+      raise exception 'Lot not found';
     end if;
     insert into public.pf_stock_count_line (count_id, lot_id, system, counted) values (created, lot_id, on_hand, physical);
     total := total + 1;
@@ -524,7 +524,7 @@ declare
 begin
   perform public.pf_require_manager();
   if coalesce(trim(new_name), '') = '' then
-    raise exception 'Nama wajib diisi';
+    raise exception 'A name is required';
   end if;
   if partner is null then
     insert into public.pf_partner (name, kind, contact_name, phone, email, address, tax_id, notes, active)
@@ -534,7 +534,7 @@ begin
   end if;
   select p.kind into existing_kind from public.pf_partner p where p.id = partner for update;
   if existing_kind is null or existing_kind = 'pelanggan' then
-    raise exception 'Pemasok tidak ditemukan';
+    raise exception 'Supplier not found';
   end if;
   update public.pf_partner p
      set name = trim(new_name), contact_name = trim(coalesce(new_contact, '')), phone = trim(coalesce(new_phone, '')), email = trim(coalesce(new_email, '')),
@@ -559,16 +559,16 @@ declare
 begin
   perform public.pf_require_manager();
   if not exists (select 1 from public.pf_partner p where p.id = supplier and p.active and p.kind in ('pemasok', 'keduanya')) then
-    raise exception 'Pilih pemasok yang aktif';
+    raise exception 'Choose an active supplier';
   end if;
   if ordered is null then
-    raise exception 'Tanggal pesan wajib diisi';
+    raise exception 'An order date is required';
   end if;
   if expected is not null and expected < ordered then
-    raise exception 'Perkiraan tiba sebelum tanggal pesan';
+    raise exception 'The expected arrival is before the order date';
   end if;
   if jsonb_typeof(lines) is distinct from 'array' or jsonb_array_length(lines) = 0 then
-    raise exception 'Pesanan pembelian minimal satu baris';
+    raise exception 'A purchase order needs at least one line';
   end if;
   if target is null then
     insert into public.pf_purchase_order (po_no, supplier_id, ordered_on, expected_on, notes)
@@ -577,7 +577,7 @@ begin
   else
     select p.status into state from public.pf_purchase_order p where p.id = target for update;
     if state is distinct from 'draf' then
-      raise exception 'Hanya draf yang bisa diubah';
+      raise exception 'Only a draft can be changed';
     end if;
     update public.pf_purchase_order p set supplier_id = supplier, ordered_on = ordered, expected_on = expected, notes = trim(coalesce(new_notes, '')) where p.id = target;
     delete from public.pf_po_line l where l.po_id = target;
@@ -601,7 +601,7 @@ begin
   perform public.pf_require_manager();
   update public.pf_purchase_order p set status = 'dipesan' where p.id = target and p.status = 'draf';
   if not found then
-    raise exception 'Pesanan pembelian ini bukan draf';
+    raise exception 'This purchase order is not a draft';
   end if;
 end;
 $$;
@@ -617,14 +617,14 @@ declare
 begin
   perform public.pf_require_manager();
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan wajib diisi';
+    raise exception 'A reason is required';
   end if;
   select p.status into state from public.pf_purchase_order p where p.id = target for update;
   if state is null or state = 'batal' then
-    raise exception 'Pesanan pembelian tidak ditemukan atau sudah dibatalkan';
+    raise exception 'Purchase order not found or already cancelled';
   end if;
   if exists (select 1 from public.pf_po_line l where l.po_id = target and l.received_qty > 0) then
-    raise exception 'Barang sudah ada yang diterima. Koreksi lewat stok.';
+    raise exception 'Some goods were already received. Correct them through stock.';
   end if;
   update public.pf_purchase_order p set status = 'batal', cancel_note = trim(why) where p.id = target;
 end;
@@ -646,33 +646,33 @@ begin
   perform public.pf_require_manager();
   select * into the_line from public.pf_po_line l where l.id = line for update;
   if not found then
-    raise exception 'Baris tidak ditemukan';
+    raise exception 'Line not found';
   end if;
   select * into the_po from public.pf_purchase_order p where p.id = the_line.po_id for update;
   if the_po.status <> 'dipesan' then
-    raise exception 'Pesanan pembelian belum dipesan atau sudah dibatalkan';
+    raise exception 'The purchase order is not placed yet or was cancelled';
   end if;
   select * into the_item from public.pf_item i where i.id = the_line.item_id;
   if qty is null or qty <= 0 then
-    raise exception 'Jumlah harus lebih dari 0';
+    raise exception 'Quantity must be above 0';
   end if;
   if the_line.received_qty + qty > the_line.qty then
-    raise exception 'Melebihi pesanan: masih kurang % %', trim_scale(the_line.qty - the_line.received_qty), the_item.unit;
+    raise exception 'More than ordered: still short by % %', trim_scale(the_line.qty - the_line.received_qty), the_item.unit;
   end if;
   if coalesce(trim(new_lot_no), '') = '' then
-    raise exception 'Nomor lot wajib diisi';
+    raise exception 'A lot number is required';
   end if;
   if received_on is null or received_on > public.pf_today() then
-    raise exception 'Tanggal terima tidak boleh di masa depan';
+    raise exception 'The received date cannot be in the future';
   end if;
   if received_on < the_po.ordered_on then
-    raise exception 'Tanggal terima sebelum tanggal pesan';
+    raise exception 'The received date is before the order date';
   end if;
   if expiry_on is not null and expiry_on < received_on then
-    raise exception 'Tanggal kedaluwarsa sebelum tanggal diterima';
+    raise exception 'The expiry date is before the received date';
   end if;
   if the_item.track_expiry and expiry_on is null then
-    raise exception 'Tanggal kedaluwarsa wajib diisi untuk barang ini';
+    raise exception 'An expiry date is required for this item';
   end if;
   select p.name into supplier_name from public.pf_partner p where p.id = the_po.supplier_id;
   insert into public.pf_stock_lot (item_id, lot_no, supplier, qty_on_hand, received_at, expiry_date, po_line_id)
@@ -699,7 +699,7 @@ begin
   perform public.pf_require_manager();
   select r.status into state from public.pf_recipe r where r.id = recipe;
   if state is distinct from 'draft' then
-    raise exception 'Bahan hanya bisa diubah pada draf resep. Buat versi baru.';
+    raise exception 'Materials can only be changed on a draft recipe. Create a new version.';
   end if;
   delete from public.pf_recipe_material m where m.recipe_id = recipe;
   for item in select * from jsonb_array_elements(coalesce(materials, '[]'::jsonb)) loop
@@ -718,11 +718,11 @@ as $$
 begin
   perform public.pf_require_manager();
   if coalesce(trim(why), '') = '' then
-    raise exception 'Tulis bagaimana kekurangannya ditangani';
+    raise exception 'Write how the shortage was handled';
   end if;
   update public.pf_stock_shortage s set resolved_at = now(), resolved_by = auth.uid(), note = trim(why) where s.id = shortage and s.resolved_at is null;
   if not found then
-    raise exception 'Sudah ditangani';
+    raise exception 'Already handled';
   end if;
 end;
 $$;

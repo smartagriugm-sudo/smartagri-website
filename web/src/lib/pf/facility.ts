@@ -29,12 +29,12 @@ export type HoleState = "kosong" | "semai" | "vegetatif" | "siap_panen" | "masal
  * package's defaults; sanitasi is ours, for a tier between batches.
  */
 export const HOLE_STATES: Record<HoleState, { label: string; color: number; plant: number }> = {
-  semai: { label: "Bibit", color: 0xa5d66b, plant: 0.35 },
-  vegetatif: { label: "Vegetatif", color: 0x3fa652, plant: 0.75 },
-  siap_panen: { label: "Siap panen", color: 0xe0a526, plant: 1.05 },
-  masalah: { label: "Bermasalah", color: 0xd9433b, plant: 0.55 },
-  kosong: { label: "Kosong", color: 0x8d9398, plant: 0 },
-  sanitasi: { label: "Sanitasi", color: 0x7fb7e8, plant: 0 },
+  semai: { label: "Seedlings", color: 0xa5d66b, plant: 0.35 },
+  vegetatif: { label: "Vegetative", color: 0x3fa652, plant: 0.75 },
+  siap_panen: { label: "Ready to harvest", color: 0xe0a526, plant: 1.05 },
+  masalah: { label: "Problem", color: 0xd9433b, plant: 0.55 },
+  kosong: { label: "Empty", color: 0x8d9398, plant: 0 },
+  sanitasi: { label: "Sanitation", color: 0x7fb7e8, plant: 0 },
 };
 
 export const HOLE_STATE_KEYS = Object.keys(HOLE_STATES) as HoleState[];
@@ -94,13 +94,13 @@ function batch(code: string, crop: string, recipe: string, sownAt: string, cycle
 }
 
 export const BATCHES: Batch[] = [
-  batch("B-112", "Selada romaine", "RSP-SEL-03 v4", "2026-10-01", 35, [100, 86]),
-  batch("B-115", "Selada butterhead", "RSP-SEL-02 v2", "2026-10-12", 35, [100, 91]),
+  batch("B-112", "Romaine lettuce", "RSP-SEL-03 v4", "2026-10-01", 35, [100, 86]),
+  batch("B-115", "Butterhead lettuce", "RSP-SEL-02 v2", "2026-10-12", 35, [100, 91]),
   batch("B-118", "Pakcoy", "RSP-PAK-01 v3", "2026-10-19", 30, [100, 88]),
   batch("B-119", "Pakcoy", "RSP-PAK-01 v3", "2026-10-23", 30, [100, 90]),
-  batch("B-121", "Kangkung", "RSP-KAN-01 v1", "2026-10-24", 25),
-  batch("B-122", "Selada butterhead", "RSP-SEL-02 v2", "2026-10-28", 35),
-  batch("B-123", "Selada romaine", "RSP-SEL-03 v4", "2026-10-30", 35),
+  batch("B-121", "Water spinach", "RSP-KAN-01 v1", "2026-10-24", 25),
+  batch("B-122", "Butterhead lettuce", "RSP-SEL-02 v2", "2026-10-28", 35),
+  batch("B-123", "Romaine lettuce", "RSP-SEL-03 v4", "2026-10-30", 35),
   batch("B-124", "Pakcoy", "RSP-PAK-01 v3", "2026-11-02", 30),
 ];
 
@@ -182,7 +182,7 @@ export type Reading = { label: string; value: string; unit: string; ok: boolean 
 
 /** Placeholder readings until the sensors report. */
 export const GROW_ROOM_READINGS: Reading[] = [
-  { label: "Suhu", value: "22.4", unit: "°C", ok: true },
+  { label: "Temperature", value: "22.4", unit: "°C", ok: true },
   { label: "RH", value: "68", unit: "%", ok: true },
   { label: "CO₂", value: "812", unit: "ppm", ok: true },
   { label: "PPFD", value: "245", unit: "µmol/m²/s", ok: true },
@@ -191,6 +191,6 @@ export const GROW_ROOM_READINGS: Reading[] = [
 export const RESERVOIR_READINGS: Reading[] = [
   { label: "EC", value: "1.62", unit: "mS/cm", ok: true },
   { label: "pH", value: "6.48", unit: "", ok: false },
-  { label: "Suhu larutan", value: "23.1", unit: "°C", ok: true },
-  { label: "Level tandon", value: "74", unit: "%", ok: true },
+  { label: "Solution temperature", value: "23.1", unit: "°C", ok: true },
+  { label: "Tank level", value: "74", unit: "%", ok: true },
 ];

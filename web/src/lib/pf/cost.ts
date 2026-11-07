@@ -1,5 +1,5 @@
 import { addDays } from "./facility";
-import { check, db, unwrap } from "./foundation";
+import { check, db, unwrap, parseAmount } from "./foundation";
 
 // Costs (supabase/pf-cost.sql): what a batch cost, per kg, bills, and maintenance. The
 // sums run in the database and come back with their parts, so every figure on a page can
@@ -8,20 +8,20 @@ import { check, db, unwrap } from "./foundation";
 /* -------------------------------------------------------------------- types */
 
 export const COST_CATEGORIES = [
-  { key: "listrik", label: "Listrik" },
-  { key: "air", label: "Air" },
-  { key: "sewa", label: "Sewa" },
-  { key: "penyusutan", label: "Penyusutan" },
-  { key: "perawatan", label: "Perawatan" },
-  { key: "bahan_lain", label: "Bahan lain" },
-  { key: "tenaga_lain", label: "Tenaga lain" },
-  { key: "lainnya", label: "Lainnya" },
+  { key: "listrik", label: "Power" },
+  { key: "air", label: "Water" },
+  { key: "sewa", label: "Rent" },
+  { key: "penyusutan", label: "Depreciation" },
+  { key: "perawatan", label: "Maintenance" },
+  { key: "bahan_lain", label: "Other materials" },
+  { key: "tenaga_lain", label: "Other labour" },
+  { key: "lainnya", label: "Other" },
 ] as const;
 export type CostCategory = (typeof COST_CATEGORIES)[number]["key"];
 export const costCategoryLabel = (key: string) => COST_CATEGORIES.find((c) => c.key === key)?.label ?? key;
 
 export const COST_AREAS = [
-  { key: "persemaian", label: "Persemaian" },
+  { key: "persemaian", label: "Seedlings" },
   { key: "plant_factory", label: "Plant factory" },
 ] as const;
 export type CostArea = (typeof COST_AREAS)[number]["key"];
@@ -74,17 +74,17 @@ export const perKg = (amount: number, kg: number) => (kg > 0 ? amount / kg : nul
 /** What the total leaves out, in words. Empty when it is complete. */
 export function costGaps(b: Pick<BatchCost, "unpriced_lots" | "unrated_minutes">) {
   const gaps: string[] = [];
-  if (b.unpriced_lots > 0) gaps.push(`${b.unpriced_lots} lot tanpa harga`);
-  if (b.unrated_minutes > 0) gaps.push(`${formatHours(b.unrated_minutes)} kerja tanpa tarif`);
+  if (b.unpriced_lots > 0) gaps.push(`${b.unpriced_lots} lots without a price`);
+  if (b.unrated_minutes > 0) gaps.push(`${formatHours(b.unrated_minutes)} without a rate`);
   return gaps;
 }
 
 export const formatHours = (minutes: number) => {
   const hours = minutes / 60;
-  return `${Number.isInteger(hours) ? hours : hours.toLocaleString("id-ID", { maximumFractionDigits: 1 })} jam`;
+  return `${Number.isInteger(hours) ? hours : hours.toLocaleString("en-GB", { maximumFractionDigits: 1 })} hours`;
 };
 
-export const formatQty = (qty: number) => qty.toLocaleString("id-ID", { maximumFractionDigits: 3 });
+export const formatQty = (qty: number) => qty.toLocaleString("en-GB", { maximumFractionDigits: 3 });
 
 export const MONTH_SIMPLE = ["bahan", "tenaga", "listrik", "air"] as const;
 
@@ -107,20 +107,19 @@ export function monthlyTable(rows: readonly MonthlyRow[]): MonthRow[] {
 }
 
 export function parseRupiah(text: string) {
-  const clean = text.trim().replace(/^rp\s*/i, "").replace(/\./g, "").replace(",", ".");
-  const value = Number(clean);
-  if (clean === "" || !Number.isFinite(value) || value < 0) return null;
+  const value = parseAmount(text);
+  if (value === null || !Number.isFinite(value) || value < 0) return null;
   return value;
 }
 
 export function parseEntryForm(f: { amount: string; scope: "batch" | "ruang"; batch: string; area: string; start: string; end: string }) {
   const amount = parseRupiah(f.amount);
-  if (amount === null || amount === 0) return { error: "Jumlah harus lebih dari nol." } as const;
-  if (f.scope === "batch" && !f.batch) return { error: "Pilih batch." } as const;
-  if (f.scope === "ruang" && !f.area) return { error: "Pilih ruang." } as const;
-  if (!f.start) return { error: "Tanggal wajib diisi." } as const;
+  if (amount === null || amount === 0) return { error: "Quantity must be above zero." } as const;
+  if (f.scope === "batch" && !f.batch) return { error: "Choose a batch." } as const;
+  if (f.scope === "ruang" && !f.area) return { error: "Choose a room." } as const;
+  if (!f.start) return { error: "A date is required." } as const;
   const end = f.scope === "batch" ? f.start : f.end;
-  if (!end || end < f.start) return { error: "Akhir periode sebelum awalnya." } as const;
+  if (!end || end < f.start) return { error: "The period ends before it starts." } as const;
   return { error: null, amount, end } as const;
 }
 
@@ -142,7 +141,7 @@ const csvCell = (value: string | number | null) => {
 
 /** Semicolons, which spreadsheets in an Indonesian locale split on. Whole rupiah, no thousands marks. */
 export function batchCostsCsv(rows: readonly BatchCost[]) {
-  const head = ["Batch", "Tanaman", "Status", "Bahan", "Tenaga", "Langsung", "Bersama", "Total", "Panen (kg)", "Layak jual (kg)", "Biaya per kg", "Biaya per kg layak jual", "Pendapatan", "Terjual (kg)", "Belum lengkap"];
+  const head = ["Batch", "Crop", "Status", "Materials", "Labour", "Direct", "Shared", "Total", "Harvest (kg)", "Sellable (kg)", "Cost per kg", "Cost per sellable kg", "Revenue", "Sold (kg)", "Incomplete"];
   const lines = rows.map((b) => {
     const total = batchTotal(b);
     const whole = perKg(total, b.harvested_kg);

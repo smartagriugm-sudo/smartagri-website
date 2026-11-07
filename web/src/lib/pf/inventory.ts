@@ -1,4 +1,4 @@
-import { check, db, unwrap } from "./foundation";
+import { check, db, parseAmount, unwrap } from "./foundation";
 
 // Inventory (supabase/pf-inventory.sql): every kind of stock, purchasing, what a
 // recipe uses up by itself, and stock takes. Stock changes only through
@@ -7,12 +7,12 @@ import { check, db, unwrap } from "./foundation";
 /* -------------------------------------------------------------------- types */
 
 export const ITEM_CATEGORIES = [
-  { key: "benih", label: "Benih" },
-  { key: "nutrisi", label: "Nutrisi" },
-  { key: "media", label: "Media tanam" },
-  { key: "kemasan", label: "Kemasan" },
-  { key: "suku_cadang", label: "Suku cadang" },
-  { key: "lainnya", label: "Lainnya" },
+  { key: "benih", label: "Seed" },
+  { key: "nutrisi", label: "Nutrients" },
+  { key: "media", label: "Growing media" },
+  { key: "kemasan", label: "Packaging" },
+  { key: "suku_cadang", label: "Spare parts" },
+  { key: "lainnya", label: "Other" },
 ] as const;
 
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number]["key"];
@@ -38,6 +38,8 @@ export type Item = {
   next_expiry: string | null;
   below_reorder: boolean;
   last_counted_on: string | null;
+  /** Null until pf-profile-media.sql has run or a photo is added. */
+  photo_path?: string | null;
 };
 
 export type StockLotRow = {
@@ -58,12 +60,12 @@ export type StockLotRow = {
 export type MoveType = "masuk" | "pakai_semai" | "pakai_batch" | "pakai_lain" | "koreksi" | "opname";
 
 export const MOVE_LABELS: Record<MoveType, string> = {
-  masuk: "Masuk",
-  pakai_semai: "Dipakai semai",
-  pakai_batch: "Dipakai batch",
-  pakai_lain: "Dipakai",
-  koreksi: "Koreksi",
-  opname: "Opname",
+  masuk: "In",
+  pakai_semai: "Used for sowing",
+  pakai_batch: "Used on a batch",
+  pakai_lain: "Used",
+  koreksi: "Correct",
+  opname: "Stock count",
 };
 
 export type StockMove = { id: number; lot_id: string; type: MoveType; qty: number; batch_id: string | null; reason: string; at: string; lot_no: string; item_id: string; item_name: string; unit: string; batch_code: string | null };
@@ -93,9 +95,9 @@ export type PoLine = { id: string; po_id: string; item_id: string; qty: number; 
 export type MaterialBasis = "per_benih" | "per_tanaman" | "per_kg_panen";
 
 export const MATERIAL_BASES: { key: MaterialBasis; label: string; when: string }[] = [
-  { key: "per_benih", label: "Per benih", when: "saat semai" },
-  { key: "per_tanaman", label: "Per tanaman", when: "saat pindah tanam" },
-  { key: "per_kg_panen", label: "Per kg panen", when: "saat panen" },
+  { key: "per_benih", label: "Per seed", when: "at sowing" },
+  { key: "per_tanaman", label: "Per plant", when: "at transplant" },
+  { key: "per_kg_panen", label: "Per kg harvested", when: "at harvest" },
 ];
 
 export type RecipeMaterial = { id: string; recipe_id: string; item_id: string; basis: MaterialBasis; qty: number; sku: string; item_name: string; unit: string };
@@ -107,18 +109,21 @@ export type Supplier = { id: string; name: string; kind: string; contact_name: s
 /* -------------------------------------------------------------------- rules */
 
 const parseQty = (s: string) => (s.trim() === "" ? null : Number(s.trim().replace(",", ".")));
-const parseMoney = (s: string) => (s.trim() === "" ? null : Number(s.trim().replace(/\./g, "").replace(",", ".")));
+const parseMoney = parseAmount;
 
-export const formatQty = (qty: number, unit: string) => `${qty.toLocaleString("id-ID", { maximumFractionDigits: 2 })} ${unit}`;
+/** Units are stored in the database's own words. */
+export const unitLabel = (unit: string) => (unit === "biji" ? "seeds" : unit);
+
+export const formatQty = (qty: number, unit: string) => `${qty.toLocaleString("en-GB", { maximumFractionDigits: 2 })} ${unitLabel(unit)}`;
 
 export type PoStage = "draf" | "menunggu" | "sebagian" | "diterima" | "batal";
 
 export const PO_STAGE: Record<PoStage, { label: string; className: string }> = {
-  draf: { label: "Draf", className: "bg-[#EEF3F4] text-[#4F6B73]" },
-  menunggu: { label: "Menunggu barang", className: "bg-[#E3F4F4] text-[#0B6477]" },
-  sebagian: { label: "Diterima sebagian", className: "bg-[#FFF6E5] text-[#8A5A07]" },
-  diterima: { label: "Diterima", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
-  batal: { label: "Dibatalkan", className: "bg-[#EEF3F4] text-[#4F6B73]" },
+  draf: { label: "Draft", className: "bg-[#EEF3F4] text-[#4F6B73]" },
+  menunggu: { label: "Waiting for goods", className: "bg-[#E3F4F4] text-[#0B6477]" },
+  sebagian: { label: "Partly received", className: "bg-[#FFF6E5] text-[#8A5A07]" },
+  diterima: { label: "Received", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
+  batal: { label: "Cancelled", className: "bg-[#EEF3F4] text-[#4F6B73]" },
 };
 
 export function poStage(p: Pick<PurchaseOrder, "status" | "open_lines" | "received_lines">): PoStage {
@@ -131,45 +136,45 @@ export function poStage(p: Pick<PurchaseOrder, "status" | "open_lines" | "receiv
 export type ItemForm = { name: string; category: ItemCategory; unit: string; reorder: string; expires: boolean; notes: string; active: boolean };
 
 export function parseItemForm(f: ItemForm) {
-  if (!f.name.trim()) return { error: "Nama barang wajib diisi." } as const;
+  if (!f.name.trim()) return { error: "An item name is required." } as const;
   const reorder = parseQty(f.reorder);
-  if (reorder !== null && (!Number.isFinite(reorder) || reorder < 0)) return { error: "Batas minimum harus angka, tidak boleh negatif." } as const;
+  if (reorder !== null && (!Number.isFinite(reorder) || reorder < 0)) return { error: "The minimum level must be a number, not negative." } as const;
   return { error: null, reorder } as const;
 }
 
 export function parseQtyInput(s: string) {
   const qty = parseQty(s);
-  if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: "Jumlah harus lebih dari 0." } as const;
+  if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: "Quantity must be above 0." } as const;
   return { error: null, qty } as const;
 }
 
 export type ReceiveForm = { lotNo: string; qty: string; receivedOn: string; expiryOn: string };
 
 export function parseReceive(f: ReceiveForm, today: string, needsExpiry: boolean, left?: number) {
-  if (!f.lotNo.trim()) return { error: "Nomor lot wajib diisi." } as const;
+  if (!f.lotNo.trim()) return { error: "A lot number is required." } as const;
   const parsed = parseQtyInput(f.qty);
   if (parsed.error !== null) return parsed;
-  if (left !== undefined && parsed.qty > left) return { error: `Melebihi pesanan: masih kurang ${left.toLocaleString("id-ID")}.` } as const;
-  if (!f.receivedOn || f.receivedOn > today) return { error: "Tanggal terima tidak boleh di masa depan." } as const;
-  if (needsExpiry && !f.expiryOn) return { error: "Tanggal kedaluwarsa wajib diisi untuk barang ini." } as const;
-  if (f.expiryOn && f.expiryOn < f.receivedOn) return { error: "Tanggal kedaluwarsa sebelum tanggal diterima." } as const;
+  if (left !== undefined && parsed.qty > left) return { error: `More than ordered: still short by ${left.toLocaleString("en-GB")}.` } as const;
+  if (!f.receivedOn || f.receivedOn > today) return { error: "The received date cannot be in the future." } as const;
+  if (needsExpiry && !f.expiryOn) return { error: "An expiry date is required for this item." } as const;
+  if (f.expiryOn && f.expiryOn < f.receivedOn) return { error: "The expiry date is before the received date." } as const;
   return { error: null, qty: parsed.qty } as const;
 }
 
 export type PoLineForm = { itemId: string; qty: string; unitPrice: string };
 
 export function parsePoForm(supplierId: string, orderedOn: string, expectedOn: string, rows: readonly PoLineForm[]) {
-  if (!supplierId) return { error: "Pilih pemasok." } as const;
-  if (!orderedOn) return { error: "Tanggal pesan wajib diisi." } as const;
-  if (expectedOn && expectedOn < orderedOn) return { error: "Perkiraan tiba sebelum tanggal pesan." } as const;
-  if (rows.length === 0) return { error: "Tambahkan minimal satu baris." } as const;
+  if (!supplierId) return { error: "Choose a supplier." } as const;
+  if (!orderedOn) return { error: "An order date is required." } as const;
+  if (expectedOn && expectedOn < orderedOn) return { error: "The expected arrival is before the order date." } as const;
+  if (rows.length === 0) return { error: "Add at least one line." } as const;
   const lines = [];
   for (const [i, r] of rows.entries()) {
-    if (!r.itemId) return { error: `Baris ${i + 1}: pilih barang.` } as const;
+    if (!r.itemId) return { error: `Line ${i + 1}: choose an item.` } as const;
     const qty = parseQty(r.qty);
-    if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: `Baris ${i + 1}: jumlah harus lebih dari 0.` } as const;
+    if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: `Line ${i + 1}: quantity must be above 0.` } as const;
     const price = parseMoney(r.unitPrice);
-    if (price === null || !Number.isFinite(price) || price < 0) return { error: `Baris ${i + 1}: harga harus berupa angka.` } as const;
+    if (price === null || !Number.isFinite(price) || price < 0) return { error: `Line ${i + 1}: price must be a number.` } as const;
     lines.push({ item_id: r.itemId, qty, unit_price: price });
   }
   return { error: null, lines } as const;
@@ -188,10 +193,10 @@ export function parseCountRows(rows: readonly { lotId: string; counted: string }
   for (const r of rows) {
     const value = parseQty(r.counted);
     if (value === null) continue;
-    if (!Number.isFinite(value) || value < 0) return { error: "Hasil hitung harus angka, tidak boleh negatif." } as const;
+    if (!Number.isFinite(value) || value < 0) return { error: "The count must be a number, not negative." } as const;
     out.push({ lot_id: r.lotId, counted: value });
   }
-  if (out.length === 0) return { error: "Isi hasil hitung minimal satu lot." } as const;
+  if (out.length === 0) return { error: "Enter a count for at least one lot." } as const;
   return { error: null, rows: out } as const;
 }
 
@@ -199,11 +204,11 @@ export function parseMaterialRows(rows: readonly { itemId: string; basis: Materi
   const out: { item_id: string; basis: MaterialBasis; qty: number }[] = [];
   const seen = new Set<string>();
   for (const [i, r] of rows.entries()) {
-    if (!r.itemId) return { error: `Baris ${i + 1}: pilih barang.` } as const;
+    if (!r.itemId) return { error: `Line ${i + 1}: choose an item.` } as const;
     const qty = parseQty(r.qty);
-    if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: `Baris ${i + 1}: jumlah harus lebih dari 0.` } as const;
+    if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: `Line ${i + 1}: quantity must be above 0.` } as const;
     const key = `${r.itemId}:${r.basis}`;
-    if (seen.has(key)) return { error: `Baris ${i + 1}: barang dan dasar pemakaian ini sudah ada.` } as const;
+    if (seen.has(key)) return { error: `Line ${i + 1}: this item and basis are already listed.` } as const;
     seen.add(key);
     out.push({ item_id: r.itemId, basis: r.basis, qty });
   }
@@ -317,4 +322,38 @@ export async function saveRecipeMaterials(recipe: string, materials: readonly ob
 
 export async function resolveShortage(shortage: string, why: string) {
   check(await db().rpc("pf_shortage_resolve", { shortage, why }));
+}
+
+const MEDIA_BUCKET = "pf-media";
+const PHOTO_LINK_SECONDS = 3600;
+
+/** Signed links for the photos on a page, in one request. A failure leaves the placeholders in place. */
+export async function itemPhotoLinks(paths: readonly string[]): Promise<Map<string, string>> {
+  if (paths.length === 0) return new Map();
+  const { data, error } = await db().storage.from(MEDIA_BUCKET).createSignedUrls([...paths], PHOTO_LINK_SECONDS);
+  if (error || !data) return new Map();
+  return new Map(data.flatMap((d) => (d.path && d.signedUrl ? [[d.path, d.signedUrl] as [string, string]] : [])));
+}
+
+/** WebP at a sensible size, so a phone photo of a sack of fertilizer does not cost a megabyte on every list. */
+export async function compressProductPhoto(file: Blob, maxSide = 900): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("The photo could not be processed."))), "image/webp", 0.82));
+}
+
+export async function setItemPhoto(item: string, file: Blob | null, previous: string | null | undefined) {
+  let path: string | null = null;
+  if (file) {
+    path = `items/${item}/${crypto.randomUUID()}.webp`;
+    const { error } = await db().storage.from(MEDIA_BUCKET).upload(path, file, { contentType: "image/webp", upsert: false });
+    if (error) throw new Error(`The photo could not be uploaded: ${error.message}. Has pf-profile-media.sql been run?`);
+  }
+  check(await db().rpc("pf_item_photo_set", { item, path }));
+  if (previous) await db().storage.from(MEDIA_BUCKET).remove([previous]);
 }

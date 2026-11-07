@@ -35,6 +35,7 @@ export default function PlantFactoryScene({ provider, onReady, onSelect, onError
           ...urls,
           provider,
           holeStates: HOLE_STATES,
+          tooltip: false,
         }),
       )
       .then((created) => {

@@ -15,11 +15,11 @@ import { PfProvider, RACK_NUMBERS, TIER_NUMBERS } from "./provider";
 // and says so through `mode`.
 
 export const LIFECYCLE_PHASES = [
-  { label: "Semai", place: "CH1" },
-  { label: "Germinasi", place: "CH1" },
-  { label: "Pindah tanam", place: "ke PF01" },
-  { label: "Vegetatif", place: "PF01" },
-  { label: "Panen", place: "PF01" },
+  { label: "Sow", place: "CH1" },
+  { label: "Germination", place: "CH1" },
+  { label: "Transplant", place: "to PF01" },
+  { label: "Vegetative", place: "PF01" },
+  { label: "Harvest", place: "PF01" },
 ];
 
 /** The day a batch reaches each step of the strip, from its own recipe. */
@@ -289,9 +289,9 @@ export class ErpStore {
         const other = holes.find((h) => isPlanted(h.state) && h.batch !== code);
         const free = holes.filter((h) => h.state === "kosong" && !h.offline).length;
         let blocked: string | null = null;
-        if (holes.some((h) => h.state === "sanitasi")) blocked = "Masih sanitasi";
-        else if (other) blocked = `Dipakai ${other.batch ?? "batch lain"}`;
-        else if (!free) blocked = "Penuh";
+        if (holes.some((h) => h.state === "sanitasi")) blocked = "Still in sanitation";
+        else if (other) blocked = `Used ${other.batch ?? "another batch"}`;
+        else if (!free) blocked = "Full";
         out.push({ rack, tier, code: `R${rack}-T${tier}`, free, blocked });
       }
     }
@@ -300,7 +300,7 @@ export class ErpStore {
 
   /** Tiers waiting for someone to finish cleaning them. */
   tiersInSanitation() {
-    return this.tiersFor("").filter((t) => t.blocked === "Masih sanitasi");
+    return this.tiersFor("").filter((t) => t.blocked === "Still in sanitation");
   }
 
   /** Empty holes across the tiers that could take a new batch. */

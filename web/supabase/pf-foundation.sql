@@ -142,7 +142,7 @@ set search_path = public
 as $$
 begin
   if new.code <> old.code or new.level <> old.level or new.parent_id is distinct from old.parent_id then
-    raise exception 'Kode, level, dan induk lokasi tidak bisa diubah';
+    raise exception 'A location''s code, level and parent cannot be changed';
   end if;
   return new;
 end;
@@ -158,26 +158,26 @@ as $$
 begin
   if tg_op = 'DELETE' then
     if old.status <> 'draft' then
-      raise exception 'Hanya draf resep yang bisa dihapus';
+      raise exception 'Only a draft recipe can be deleted';
     end if;
     return old;
   end if;
   if tg_op = 'INSERT' then
     if new.status <> 'draft' then
-      raise exception 'Resep baru harus berstatus draf';
+      raise exception 'A new recipe must be a draft';
     end if;
     return new;
   end if;
   if old.status <> 'draft'
      and (to_jsonb(new) - 'status' - 'activated_at' is distinct from to_jsonb(old) - 'status' - 'activated_at') then
-    raise exception 'Resep yang sudah aktif tidak bisa diedit. Buat versi baru.';
+    raise exception 'An active recipe cannot be edited. Create a new version.';
   end if;
   if new.status <> old.status then
     if not ((old.status = 'draft' and new.status = 'active') or (old.status = 'active' and new.status = 'retired')) then
-      raise exception 'Perubahan status resep tidak sah: % ke %', old.status, new.status;
+      raise exception 'Invalid recipe status change: % to %', old.status, new.status;
     end if;
     if new.status = 'active' and not exists (select 1 from public.pf_recipe_phase where recipe_id = new.id) then
-      raise exception 'Resep harus punya minimal satu fase sebelum diaktifkan';
+      raise exception 'A recipe needs at least one phase before it can be activated';
     end if;
   end if;
   return new;
@@ -193,13 +193,13 @@ declare
   recipe_status text;
 begin
   if tg_op = 'UPDATE' and new.recipe_id <> old.recipe_id then
-    raise exception 'Fase tidak bisa dipindah ke resep lain';
+    raise exception 'A phase cannot move to another recipe';
   end if;
   select status into recipe_status from public.pf_recipe
    where id = case when tg_op = 'DELETE' then old.recipe_id else new.recipe_id end;
   -- Not found: the draft itself is being deleted and takes its phases with it.
   if found and recipe_status <> 'draft' then
-    raise exception 'Fase hanya bisa diubah pada draf resep. Buat versi baru.';
+    raise exception 'Phases can only be changed on a draft recipe. Create a new version.';
   end if;
   return case when tg_op = 'DELETE' then old else new end;
 end;
@@ -246,12 +246,12 @@ declare
 begin
   select code into recipe_code from public.pf_recipe where id = recipe and status = 'draft';
   if not found then
-    raise exception 'Draf resep tidak ditemukan';
+    raise exception 'Draft recipe not found';
   end if;
   update public.pf_recipe set status = 'retired' where code = recipe_code and status = 'active';
   update public.pf_recipe set status = 'active', activated_at = now() where id = recipe;
   if not found then
-    raise exception 'Anda tidak punya izin mengaktifkan resep ini';
+    raise exception 'You do not have permission to activate this recipe';
   end if;
 end;
 $$;
@@ -267,10 +267,10 @@ declare
 begin
   select * into source from public.pf_recipe where id = recipe;
   if not found then
-    raise exception 'Resep tidak ditemukan';
+    raise exception 'Recipe not found';
   end if;
   if exists (select 1 from public.pf_recipe where code = source.code and status = 'draft') then
-    raise exception 'Resep % masih punya draf. Selesaikan dulu draf itu.', source.code;
+    raise exception 'Recipe % still has a draft. Finish that draft first.', source.code;
   end if;
   insert into public.pf_recipe (crop_id, code, version, parent_version_id, notes)
   values (

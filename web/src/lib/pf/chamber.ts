@@ -15,10 +15,10 @@ export const CHAMBER_CODE = "CH1";
 
 /** S1 is the top shelf, S4 the flat floor of the interior. Positions run left to right, then front to back. */
 export const SHELVES = [
-  { shelf: 1, positions: 6, label: "Rak 1 (atas)" },
-  { shelf: 2, positions: 6, label: "Rak 2 (tengah)" },
-  { shelf: 3, positions: 6, label: "Rak 3 (bawah)" },
-  { shelf: 4, positions: 4, label: "Rak 4 (dasar)" },
+  { shelf: 1, positions: 6, label: "Shelf 1 (top)" },
+  { shelf: 2, positions: 6, label: "Shelf 2 (middle)" },
+  { shelf: 3, positions: 6, label: "Shelf 3 (lower)" },
+  { shelf: 4, positions: 4, label: "Shelf 4 (bottom)" },
 ] as const;
 
 export const CHAMBER_LAMPS = SHELVES.map((s) => ({ id: `LAMP-${CHAMBER_CODE}-L${s.shelf}`, shelf: s.shelf as number }));
@@ -31,11 +31,11 @@ export type SlotState = "kosong" | "disemai" | "berkecambah" | "siap_pindah" | "
  * freshly sown tray with an upturned one.
  */
 export const SLOT_STATES: Record<SlotState, { label: string; color: number; plant: number; plugs: boolean; lid: boolean }> = {
-  disemai: { label: "Baru disemai", color: 0xc9a26a, plant: 0, plugs: true, lid: true },
-  berkecambah: { label: "Berkecambah", color: 0xa5d66b, plant: 0.6, plugs: true, lid: false },
-  siap_pindah: { label: "Siap pindah tanam", color: 0x2f9e57, plant: 1.05, plugs: true, lid: false },
-  masalah: { label: "Bermasalah", color: 0xd9433b, plant: 0.5, plugs: true, lid: false },
-  kosong: { label: "Kosong", color: 0x8d9398, plant: 0, plugs: false, lid: false },
+  disemai: { label: "Just sown", color: 0xc9a26a, plant: 0, plugs: true, lid: true },
+  berkecambah: { label: "Germinated", color: 0xa5d66b, plant: 0.6, plugs: true, lid: false },
+  siap_pindah: { label: "Ready to transplant", color: 0x2f9e57, plant: 1.05, plugs: true, lid: false },
+  masalah: { label: "Problem", color: 0xd9433b, plant: 0.5, plugs: true, lid: false },
+  kosong: { label: "Empty", color: 0x8d9398, plant: 0, plugs: false, lid: false },
 };
 
 export const SLOT_STATE_KEYS = Object.keys(SLOT_STATES) as SlotState[];
@@ -217,9 +217,9 @@ export class ChamberProvider implements SeedChamberProvider {
   /** Drives the screen on the 3D model; the engine shows the first three. */
   readings(): Record<string, ChamberReading> {
     return {
-      suhu: { label: "Suhu", value: this.climate.temp, unit: "°C", d: 1 },
-      rh: { label: "Kelembapan", value: this.climate.rh, unit: "% RH", d: 0 },
-      lux: { label: "Pencahayaan", value: this.climate.lux, unit: "lux", d: 0 },
+      suhu: { label: "Temperature", value: this.climate.temp, unit: "°C", d: 1 },
+      rh: { label: "Humidity", value: this.climate.rh, unit: "% RH", d: 0 },
+      lux: { label: "Light", value: this.climate.lux, unit: "lux", d: 0 },
     };
   }
 

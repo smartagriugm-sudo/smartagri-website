@@ -23,8 +23,8 @@ describe("an ingest request", () => {
 
   it("tells the device what a failure means", () => {
     expect(ingestFailureStatus("28000", "x")).toBe(401);
-    expect(ingestFailureStatus(undefined, "Token perangkat tidak dikenal")).toBe(401);
+    expect(ingestFailureStatus(undefined, "Device token not recognised")).toBe(401);
     expect(ingestFailureStatus("PGRST202", "x")).toBe(503);
-    expect(ingestFailureStatus("P0001", "readings harus berupa daftar")).toBe(400);
+    expect(ingestFailureStatus("P0001", "readings must be a list")).toBe(400);
   });
 });

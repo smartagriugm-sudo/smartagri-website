@@ -27,20 +27,20 @@ function Chain({ row }: { row: TraceRow }) {
   return (
     <li className="flex flex-col gap-2 border-t border-[#EDF2F2] px-4 py-3 first:border-0 md:flex-row">
       <Hop
-        label="Pelanggan"
-        title={row.order_id ? <Link to="/erp/pesanan/$id" params={{ id: row.order_id }} className="text-[#0B6477] hover:underline">{row.partner_name}</Link> : "Belum terjual"}
-        detail={row.order_id ? `${row.so_no}${row.allocated_kg ? ` · ${formatKg(row.allocated_kg)}` : ""}${row.delivered_on ? ` · kirim ${formatLongDate(row.delivered_on)}` : " · belum dikirim"}` : undefined}
+        label="Customer"
+        title={row.order_id ? <Link to="/erp/orders/$id" params={{ id: row.order_id }} className="text-[#0B6477] hover:underline">{row.partner_name}</Link> : "Not sold yet"}
+        detail={row.order_id ? `${row.so_no}${row.allocated_kg ? ` · ${formatKg(row.allocated_kg)}` : ""}${row.delivered_on ? ` · send ${formatLongDate(row.delivered_on)}` : " · not sent yet"}` : undefined}
       />
       <Arrow />
-      <Hop label="Lot panen" title={`${row.lot_code}, grade ${row.grade}`} detail={`Panen ${formatLongDate(row.harvested_at)} · ${formatKg(row.fresh_kg)}`} />
+      <Hop label="Harvest lot" title={`${row.lot_code}, grade ${row.grade}`} detail={`Harvest ${formatLongDate(row.harvested_at)} · ${formatKg(row.fresh_kg)}`} />
       <Arrow />
       <Hop
         label="Batch"
         title={<Link to="/erp/batch/$id" params={{ id: row.batch_id }} className="text-[#0B6477] hover:underline">{row.batch_code}</Link>}
-        detail={`${cropLabel({ name: row.crop_name, variety: row.crop_variety })} · ${row.recipe_code} v${row.recipe_version}${row.sown_at ? ` · semai ${formatLongDate(row.sown_at)}` : ""}`}
+        detail={`${cropLabel({ name: row.crop_name, variety: row.crop_variety })} · ${row.recipe_code} v${row.recipe_version}${row.sown_at ? ` · sown ${formatLongDate(row.sown_at)}` : ""}`}
       />
       <Arrow />
-      <Hop label="Lot benih" title={row.seed_lot_no} detail={row.seed_supplier || undefined} />
+      <Hop label="Seed lot" title={row.seed_lot_no} detail={row.seed_supplier || undefined} />
     </li>
   );
 }
@@ -51,11 +51,11 @@ function Results({ code }: { code: string }) {
     <DataState state={state}>
       {(rows) =>
         rows.length === 0 ? (
-          <Card className="px-4 py-8 text-center text-[14px] text-[#4F6B73]">Tidak ada yang cocok dengan {code}. Periksa lagi nomornya.</Card>
+          <Card className="px-4 py-8 text-center text-[14px] text-[#4F6B73]">Nothing matches {code}. Check the number again.</Card>
         ) : (
           <div className="space-y-3">
             <Note>
-              {new Set(rows.filter((r) => r.partner_name).map((r) => r.partner_name)).size} pelanggan · {new Set(rows.map((r) => r.lot_code)).size} lot panen · {new Set(rows.map((r) => r.batch_code)).size} batch · {new Set(rows.map((r) => r.seed_lot_no)).size} lot benih
+              {new Set(rows.filter((r) => r.partner_name).map((r) => r.partner_name)).size} customers · {new Set(rows.map((r) => r.lot_code)).size} harvest lots · {new Set(rows.map((r) => r.batch_code)).size} batches · {new Set(rows.map((r) => r.seed_lot_no)).size} seed lot
             </Note>
             <Card><ul>{rows.map((r, i) => <Chain key={`${r.lot_code}:${r.so_no}:${i}`} row={r} />)}</ul></Card>
           </div>
@@ -74,19 +74,19 @@ export default function TracePage({ code }: { code?: string }) {
   }, [code]);
 
   return (
-    <ErpPage eyebrow="Penjualan" title="Telusur" sub="Masukkan nomor pesanan, lot panen, batch, atau lot benih untuk melihat rantainya, dari pelanggan sampai benih.">
+    <ErpPage eyebrow="Sales" title="Trace" sub="Enter an order number, harvest lot, batch or seed lot to see its chain, from customer back to seed.">
       <div className="space-y-4">
         <form
           className="flex max-w-[560px] gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            if (query.trim()) void navigate({ to: "/erp/telusur", search: { code: query.trim() } });
+            if (query.trim()) void navigate({ to: "/erp/trace", search: { code: query.trim() } });
           }}
         >
-          <input className={inputClass} aria-label="Nomor yang ditelusuri" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="SO-2026-0001, H-0004, B-012, atau PK-2610-A" />
-          <PrimaryButton type="submit" disabled={!query.trim()}><Search className="h-4 w-4" /> Telusuri</PrimaryButton>
+          <input className={inputClass} aria-label="Number traced" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="SO-2026-0001, H-0004, B-012, or PK-2610-A" />
+          <PrimaryButton type="submit" disabled={!query.trim()}><Search className="h-4 w-4" /> Trace</PrimaryButton>
         </form>
-        {code ? <Results key={code} code={code} /> : <Card className="px-4 py-8 text-center text-[14px] text-[#4F6B73]">Satu nomor saja cukup. Saat lot benih ditarik, nomornya menunjukkan semua pelanggan yang terkena.</Card>}
+        {code ? <Results key={code} code={code} /> : <Card className="px-4 py-8 text-center text-[14px] text-[#4F6B73]">One number is enough. When a seed lot is recalled, its number shows every customer affected.</Card>}
       </div>
     </ErpPage>
   );

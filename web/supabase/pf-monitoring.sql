@@ -357,13 +357,13 @@ begin
     join public.pf_asset a on a.id = t.asset_id
    where t.token_hash = encode(sha256(convert_to(coalesce(token, ''), 'UTF8')), 'hex');
   if not found or device.status = 'pensiun' then
-    raise exception 'Token perangkat tidak dikenal' using errcode = '28000';
+    raise exception 'Device token not recognised' using errcode = '28000';
   end if;
   if jsonb_typeof(readings) is distinct from 'array' then
-    raise exception 'readings harus berupa daftar';
+    raise exception 'readings must be a list';
   end if;
   if jsonb_array_length(readings) > 1000 then
-    raise exception 'Paling banyak 1000 bacaan per kiriman';
+    raise exception 'At most 1000 readings per send';
   end if;
 
   perform public.pf_reading_ensure_partition(now()::date);
@@ -460,7 +460,7 @@ declare
   points jsonb;
 begin
   if not public.is_lab_member() then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
   if hours <= 48 then
     select coalesce(jsonb_agg(jsonb_build_object('t', b.t, 'v', round(b.v, 3), 'lo', round(b.lo, 3), 'hi', round(b.hi, 3)) order by b.t), '[]'::jsonb) into points
@@ -487,7 +487,7 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from public.pf_location l where l.id = place and l.level in ('room', 'chamber')) then
-    raise exception 'Perangkat dan aturan alarm dipasang di ruang atau chamber';
+    raise exception 'Devices and alarm rules belong to a room or chamber';
   end if;
 end;
 $$;
@@ -503,18 +503,18 @@ declare
   metric_key text;
 begin
   if not public.pf_can_maintain() then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
   if coalesce(trim(new_code), '') = '' or coalesce(trim(new_name), '') = '' then
-    raise exception 'Kode dan nama perangkat wajib diisi';
+    raise exception 'A device code and name are required';
   end if;
   perform public.pf_asset_place_ok(place);
   if coalesce(cardinality(new_metrics), 0) = 0 then
-    raise exception 'Pilih minimal satu jenis bacaan';
+    raise exception 'Choose at least one reading type';
   end if;
   foreach metric_key in array new_metrics loop
     if not public.pf_metric_plausible(metric_key, 0) then
-      raise exception 'Jenis bacaan % tidak dikenal', metric_key;
+      raise exception 'Reading type % is not recognised', metric_key;
     end if;
   end loop;
   if asset is null then
@@ -528,7 +528,7 @@ begin
      where a.id = asset
     returning a.id into saved;
     if saved is null then
-      raise exception 'Perangkat tidak ditemukan';
+      raise exception 'Device not found';
     end if;
   end if;
   return saved;
@@ -546,10 +546,10 @@ declare
   fresh text := 'pfd_' || replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '');
 begin
   if not public.pf_can_maintain() then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
   if not exists (select 1 from public.pf_asset a where a.id = asset) then
-    raise exception 'Perangkat tidak ditemukan';
+    raise exception 'Device not found';
   end if;
   insert into public.pf_asset_token as t (asset_id, token_hash, issued_at, issued_by)
   values (asset, encode(sha256(convert_to(fresh, 'UTF8')), 'hex'), now(), auth.uid())
@@ -568,14 +568,14 @@ declare
   listed text[];
 begin
   if not public.pf_can_maintain() then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
   select a.metrics into listed from public.pf_asset a where a.id = asset;
   if listed is null or not (metric_key = any (listed)) then
-    raise exception 'Perangkat ini tidak mengirim bacaan itu';
+    raise exception 'This device does not send that reading';
   end if;
   if coalesce(new_slope, 0) = 0 then
-    raise exception 'Faktor pengali tidak boleh nol';
+    raise exception 'The multiplier cannot be zero';
   end if;
   insert into public.pf_calibration (asset_id, metric, offset_value, slope, next_due, by_id, notes)
   values (asset, metric_key, coalesce(new_offset, 0), new_slope, due, auth.uid(), trim(coalesce(new_notes, '')));
@@ -592,14 +592,14 @@ declare
   saved uuid;
 begin
   if not (public.pf_can_maintain() or public.pf_can_manage_production()) then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
   perform public.pf_asset_place_ok(place);
   if coalesce(warn_lo, warn_hi, crit_lo, crit_hi) is null then
-    raise exception 'Isi minimal satu batas';
+    raise exception 'Fill in at least one limit';
   end if;
   if warn_lo > warn_hi or crit_lo > crit_hi or crit_lo > warn_lo or crit_hi < warn_hi then
-    raise exception 'Batas tidak berurutan: kritis harus di luar peringatan, bawah di bawah atas';
+    raise exception 'Limits are out of order: critical must be outside warning, and lower below upper';
   end if;
   insert into public.pf_alarm_rule as r (location_id, metric, warn_low, warn_high, crit_low, crit_high, delay_s, active)
   values (place, metric_key, warn_lo, warn_hi, crit_lo, crit_hi, coalesce(wait_s, 300), coalesce(is_active, true))
@@ -624,11 +624,11 @@ set search_path = public
 as $$
 begin
   if not (public.pf_can_operate() or public.pf_can_maintain()) then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
   update public.pf_alarm a set ack_by = auth.uid(), ack_at = now() where a.id = alarm and a.closed_at is null and a.ack_at is null;
   if not found then
-    raise exception 'Alarm sudah ditangani atau sudah tertutup';
+    raise exception 'The alarm was already handled or closed';
   end if;
 end;
 $$;
@@ -645,11 +645,11 @@ declare
   item jsonb;
 begin
   if not public.pf_can_manage_production() then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
   select r.status into state from public.pf_recipe r where r.id = recipe;
   if state is distinct from 'draft' then
-    raise exception 'Acuan hanya bisa diubah pada draf resep. Buat versi baru.';
+    raise exception 'References can only be changed on a draft recipe. Create a new version.';
   end if;
   delete from public.pf_recipe_target t where t.recipe_id = recipe and t.phase = phase_key;
   for item in select * from jsonb_array_elements(coalesce(targets, '[]'::jsonb)) loop
@@ -670,14 +670,14 @@ declare
   created uuid;
 begin
   if not public.pf_can_manage_production() then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
   select * into source from public.pf_recipe where id = recipe;
   if not found then
-    raise exception 'Resep tidak ditemukan';
+    raise exception 'Recipe not found';
   end if;
   if exists (select 1 from public.pf_recipe where code = source.code and status = 'draft') then
-    raise exception 'Resep % masih punya draf. Selesaikan dulu draf itu.', source.code;
+    raise exception 'Recipe % still has a draft. Finish that draft first.', source.code;
   end if;
   insert into public.pf_recipe (crop_id, code, version, parent_version_id, notes)
   values (source.crop_id, source.code, (select max(version) + 1 from public.pf_recipe where code = source.code), source.id, source.notes)

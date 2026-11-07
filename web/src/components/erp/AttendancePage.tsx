@@ -16,17 +16,17 @@ function ConsentCard({ onAccepted }: { onAccepted: () => Promise<void> }) {
   const action = useAction();
   return (
     <Card className="space-y-3 p-4">
-      <h2 className={sectionTitle}>Persetujuan lokasi dan foto</h2>
-      <p className="text-[14px] leading-[1.5] text-[#36525A]">Absen di ERP memakai lokasi ponsel dan foto. Sebelum mulai, ini yang perlu Anda ketahui:</p>
+      <h2 className={sectionTitle}>Consent for location and photo</h2>
+      <p className="text-[14px] leading-[1.5] text-[#36525A]">Clocking in on the ERP uses your phone's location and a photo. Before you start, here is what you should know:</p>
       <ul className="list-disc space-y-1.5 pl-5 text-[14px] leading-[1.5] text-[#36525A]">
-        <li><b className="font-medium text-[#0F2F36]">Hanya saat absen.</b> Lokasi dan foto diambil saat Anda menekan absen masuk atau pulang. Lokasi tidak dilacak di waktu lain.</li>
-        <li><b className="font-medium text-[#0F2F36]">Tujuannya</b> mencatat kehadiran dan memastikan absen dilakukan di lokasi kerja.</li>
-        <li><b className="font-medium text-[#0F2F36]">Yang bisa melihat foto:</b> Anda sendiri, Staf SDM, dan Pimpinan. Manajer produksi melihat jam dan tanda lokasi, tanpa foto.</li>
-        <li><b className="font-medium text-[#0F2F36]">Masa simpan:</b> foto dihapus setelah 90 hari. Catatan jam absen tetap ada.</li>
-        <li><b className="font-medium text-[#0F2F36]">Anda bisa menarik persetujuan</b> kapan saja. Setelah itu kehadiran Anda dicatat manual oleh Staf SDM.</li>
+        <li><b className="font-medium text-[#0F2F36]">Only when clocking in.</b> Location and a photo are taken when you press clock in or out. Your location is not tracked at any other time.</li>
+        <li><b className="font-medium text-[#0F2F36]">The purpose:</b> to record attendance and make sure you clock in at the work site.</li>
+        <li><b className="font-medium text-[#0F2F36]">Who can see the photo:</b> You, HR staff and Leadership. Production managers see the times and location flags, without the photo.</li>
+        <li><b className="font-medium text-[#0F2F36]">Retention:</b> photos are removed after 90 days. Your clock times stay.</li>
+        <li><b className="font-medium text-[#0F2F36]">You can withdraw consent</b> at any time. After that your attendance is recorded by hand by HR staff.</li>
       </ul>
       <ActionNote action={{ error: action.error, saved: false }} />
-      <PrimaryButton disabled={action.busy} onClick={() => void action.run(async () => { await acceptConsent(); await onAccepted(); })}>{action.busy ? "Menyimpan..." : "Saya setuju"}</PrimaryButton>
+      <PrimaryButton disabled={action.busy} onClick={() => void action.run(async () => { await acceptConsent(); await onAccepted(); })}>{action.busy ? "Saving..." : "I agree"}</PrimaryButton>
     </Card>
   );
 }
@@ -41,17 +41,17 @@ function ClockCard({ person, open, finished, onDone }: { person: string; open: A
   const handle = async (file: File) => {
     setResult(null);
     await action.run(async () => {
-      setStep("Memproses foto...");
+      setStep("Processing photo...");
       const photo = await compressPhoto(file);
-      setStep("Mengambil lokasi...");
+      setStep("Getting location...");
       const fix = await currentFix();
-      setStep("Mengunggah...");
+      setStep("Uploading...");
       const path = await uploadPhoto(person, photo);
-      setStep("Menyimpan...");
+      setStep("Saving...");
       if (going) await clockOut(fix, path, "");
       else await clockIn(fix, path, "");
       await onDone();
-      setResult(fix ? `Absen ${going ? "pulang" : "masuk"} tercatat.` : `Absen ${going ? "pulang" : "masuk"} tercatat tanpa lokasi, karena ponsel tidak memberikannya. Koordinator akan memeriksa.`);
+      setResult(fix ? `Clock ${going ? "pulang" : "masuk"} recorded.` : `Clock ${going ? "pulang" : "masuk"} recorded without a location, because the phone did not give one. A coordinator will check it.`);
     });
     setStep(null);
     if (input.current) input.current.value = "";
@@ -60,11 +60,11 @@ function ClockCard({ person, open, finished, onDone }: { person: string; open: A
   return (
     <Card className="space-y-3 p-4">
       {going ? (
-        <p className="text-[14px] text-[#36525A]">Masuk pukul <span className="font-medium tabular-nums text-[#0F2F36]">{timeOfDay(open.clock_in)}</span></p>
+        <p className="text-[14px] text-[#36525A]">In at <span className="font-medium tabular-nums text-[#0F2F36]">{timeOfDay(open.clock_in)}</span></p>
       ) : finished?.clock_out ? (
-        <p className="text-[14px] text-[#36525A]">Sudah absen pulang pukul <span className="font-medium tabular-nums text-[#0F2F36]">{timeOfDay(finished.clock_out)}</span>. Absen masuk lagi hanya bila Anda kembali bekerja hari ini.</p>
+        <p className="text-[14px] text-[#36525A]">Clocked out at <span className="font-medium tabular-nums text-[#0F2F36]">{timeOfDay(finished.clock_out)}</span>. Clock in again only if you are coming back to work today.</p>
       ) : (
-        <p className="text-[14px] text-[#36525A]">Belum absen masuk.</p>
+        <p className="text-[14px] text-[#36525A]">Not clocked in yet.</p>
       )}
       <input
         ref={input}
@@ -72,16 +72,16 @@ function ClockCard({ person, open, finished, onDone }: { person: string; open: A
         accept="image/*"
         capture="user"
         className="sr-only"
-        aria-label={going ? "Foto absen pulang" : "Foto absen masuk"}
+        aria-label={going ? "Clock-out photo" : "Clock-in photo"}
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) void handle(file);
         }}
       />
       <PrimaryButton className="w-full py-3 text-[16px]" disabled={action.busy} onClick={() => input.current?.click()}>
-        <Camera className="h-5 w-5" /> {step ?? (going ? "Absen pulang" : "Absen masuk")}
+        <Camera className="h-5 w-5" /> {step ?? (going ? "Clock out" : "Clock in")}
       </PrimaryButton>
-      <p className="text-[13px] text-[#4F6B73]">Kamera terbuka untuk mengambil foto, lalu lokasi diambil sekali. Waktu absen memakai jam server.</p>
+      <p className="text-[13px] text-[#4F6B73]">The camera opens to take a photo, then your location is taken once. The time comes from the server clock.</p>
       {result && <p role="status" className="text-[14px] font-medium text-[#0E7A5C]">{result}</p>}
       <ActionNote action={{ error: action.error, saved: false }} />
     </Card>
@@ -96,7 +96,7 @@ function LeaveForm({ onSaved }: { onSaved: () => Promise<void> }) {
   const [why, setWhy] = useState("");
   const action = useAction();
   const submit = async () => {
-    if (end < start) return action.setError("Tanggal selesai sebelum tanggal mulai.");
+    if (end < start) return action.setError("The end date is before the start date.");
     const saved = await action.run(async () => {
       await requestLeave(null, type, start, end, why);
       await onSaved();
@@ -106,18 +106,18 @@ function LeaveForm({ onSaved }: { onSaved: () => Promise<void> }) {
   return (
     <Card className="p-4">
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-        <Field label="Jenis">
+        <Field label="Type">
           <select className={inputClass} value={type} onChange={(e) => setType(e.target.value as LeaveType)}>
             {LEAVE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
           </select>
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Mulai"><input type="date" className={inputClass} value={start} onChange={(e) => { setStart(e.target.value); if (end < e.target.value) setEnd(e.target.value); }} /></Field>
-          <Field label="Sampai"><input type="date" className={inputClass} min={start} value={end} onChange={(e) => setEnd(e.target.value)} /></Field>
+          <Field label="Starts"><input type="date" className={inputClass} value={start} onChange={(e) => { setStart(e.target.value); if (end < e.target.value) setEnd(e.target.value); }} /></Field>
+          <Field label="To"><input type="date" className={inputClass} min={start} value={end} onChange={(e) => setEnd(e.target.value)} /></Field>
         </div>
-        <Field label="Alasan"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
+        <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
         <ActionNote action={action} />
-        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Mengirim..." : "Ajukan"}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Sending..." : "Submit"}</PrimaryButton>
       </form>
     </Card>
   );
@@ -135,49 +135,49 @@ export default function AttendancePage() {
   const cancel = useAction();
 
   return (
-    <ErpPage eyebrow="SDM" title="Absen" sub={formatLongDate(today)}>
+    <ErpPage eyebrow="Team" title="Clock in" sub={formatLongDate(today)}>
       <DataState state={state}>
         {({ person, consent, shifts, records, leaves }) => {
-          if (!person) return <Card className="p-4 text-[14px] text-[#4F6B73]">Akun Anda belum terdaftar di data orang. Minta Staf SDM menghubungkan akun Anda.</Card>;
+          if (!person) return <Card className="p-4 text-[14px] text-[#4F6B73]">Your account is not in the people records yet. Ask HR staff to connect it.</Card>;
           const agreed = !!consent && !consent.withdrawn_at;
           const todayShifts = shifts.filter((s) => s.work_date === today);
           const open = records.find((r) => !r.clock_out && !r.missed_out) ?? null;
           const upcoming = shifts.filter((s) => s.work_date > today).sort((a, b) => a.work_date.localeCompare(b.work_date)).slice(0, 5);
           return (
-            <div className="grid max-w-[900px] grid-cols-1 items-start gap-4 lg:grid-cols-2">
+            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
               <div className="min-w-0 space-y-4">
                 <Card className="p-4">
-                  <h2 className={`${sectionTitle} mb-1`}>Jadwal hari ini</h2>
-                  {todayShifts.length === 0 ? <p className="text-[14px] text-[#4F6B73]">Tidak ada jadwal hari ini. Absen tetap bisa dilakukan.</p> : todayShifts.map((s) => (
-                    <p key={s.id} className="text-[14px] tabular-nums text-[#0F2F36]">{clockText(s.start_at)} sampai {clockText(s.end_at)}{s.area_name ? ` · ${s.area_name}` : ""}</p>
+                  <h2 className={`${sectionTitle} mb-1`}>Today's schedule</h2>
+                  {todayShifts.length === 0 ? <p className="text-[14px] text-[#4F6B73]">No schedule today. You can still clock in.</p> : todayShifts.map((s) => (
+                    <p key={s.id} className="text-[14px] tabular-nums text-[#0F2F36]">{clockText(s.start_at)} to {clockText(s.end_at)}{s.area_name ? ` · ${s.area_name}` : ""}</p>
                   ))}
                 </Card>
                 {agreed ? <ClockCard person={person} open={open} finished={records.find((r) => r.work_date === today && r.clock_out) ?? null} onDone={state.reload} /> : (
                   <>
-                    {consent?.withdrawn_at && <Note>Anda sudah menarik persetujuan, jadi kehadiran dicatat manual oleh Staf SDM. Anda bisa menyetujui lagi di bawah.</Note>}
+                    {consent?.withdrawn_at && <Note>You have withdrawn consent, so your attendance is recorded by hand by HR staff. You can agree again below.</Note>}
                     <ConsentCard onAccepted={state.reload} />
                   </>
                 )}
-                <Disclosure title="Ajukan izin, sakit, atau cuti"><LeaveForm onSaved={state.reload} /></Disclosure>
+                <Disclosure title="Request leave, sick leave or time off"><LeaveForm onSaved={state.reload} /></Disclosure>
                 {agreed && (
-                  <Disclosure title="Tarik persetujuan lokasi dan foto">
+                  <Disclosure title="Withdraw consent for location and photo">
                     <Card className="space-y-2 p-4">
-                      <p className="text-[14px] text-[#4F6B73]">Anda tidak lagi bisa absen dari ponsel, dan kehadiran dicatat manual oleh Staf SDM. Foto yang sudah ada tetap mengikuti masa simpan 90 hari.</p>
+                      <p className="text-[14px] text-[#4F6B73]">You will no longer be able to clock in from your phone, and your attendance is recorded by hand by HR staff. Existing photos still follow the 90-day retention.</p>
                       <ActionNote action={{ error: withdraw.error, saved: false }} />
-                      <SecondaryButton disabled={withdraw.busy} onClick={() => void withdraw.run(async () => { await withdrawConsent(); await state.reload(); })}>Ya, tarik persetujuan</SecondaryButton>
+                      <SecondaryButton disabled={withdraw.busy} onClick={() => void withdraw.run(async () => { await withdrawConsent(); await state.reload(); })}>Yes, withdraw consent</SecondaryButton>
                     </Card>
                   </Disclosure>
                 )}
               </div>
               <div className="min-w-0 space-y-4">
                 <Card>
-                  <h2 className={`${sectionTitle} px-4 py-3`}>Riwayat absen</h2>
-                  {records.length === 0 ? <p className="border-t border-[#EDF2F2] px-4 py-3 text-[14px] text-[#4F6B73]">Belum ada.</p> : (
+                  <h2 className={`${sectionTitle} px-4 py-3`}>Attendance history</h2>
+                  {records.length === 0 ? <p className="border-t border-[#EDF2F2] px-4 py-3 text-[14px] text-[#4F6B73]">None yet.</p> : (
                     <ul>
                       {records.slice(0, 7).map((r) => (
                         <li key={r.id} className="border-t border-[#EDF2F2] px-4 py-2 text-[14px]">
                           <span className="font-medium text-[#0F2F36]">{formatLongDate(r.work_date)}</span>
-                          <span className="block text-[13px] tabular-nums text-[#4F6B73]">{timeOfDay(r.clock_in)} sampai {r.clock_out ? timeOfDay(r.clock_out) : r.missed_out ? "tidak tercatat" : "sekarang"}</span>
+                          <span className="block text-[13px] tabular-nums text-[#4F6B73]">{timeOfDay(r.clock_in)} to {r.clock_out ? timeOfDay(r.clock_out) : r.missed_out ? "not recorded" : "sekarang"}</span>
                         </li>
                       ))}
                     </ul>
@@ -185,17 +185,17 @@ export default function AttendancePage() {
                 </Card>
                 {leaves.length > 0 && (
                   <Card>
-                    <h2 className={`${sectionTitle} px-4 py-3`}>Pengajuan saya</h2>
+                    <h2 className={`${sectionTitle} px-4 py-3`}>My requests</h2>
                     <ul>
                       {leaves.slice(0, 6).map((l) => (
                         <li key={l.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-[#EDF2F2] px-4 py-2 text-[14px]">
                           <span className="min-w-0">
                             <span className="font-medium text-[#0F2F36]">{LEAVE_TYPES.find((t) => t.key === l.type)?.label}</span>
-                            <span className="block text-[13px] text-[#4F6B73]">{formatLongDate(l.start_date)}{l.end_date !== l.start_date ? ` sampai ${formatLongDate(l.end_date)}` : ""}{l.decide_note ? ` · ${l.decide_note}` : ""}</span>
+                            <span className="block text-[13px] text-[#4F6B73]">{formatLongDate(l.start_date)}{l.end_date !== l.start_date ? ` to ${formatLongDate(l.end_date)}` : ""}{l.decide_note ? ` · ${l.decide_note}` : ""}</span>
                           </span>
                           <span className="flex items-center gap-2">
                             <span className={`rounded-md px-2 py-0.5 text-[12.5px] font-medium ${LEAVE_STATUS[l.status].className}`}>{LEAVE_STATUS[l.status].label}</span>
-                            {l.status === "diajukan" && <button type="button" disabled={cancel.busy} onClick={() => void cancel.run(async () => { await cancelLeave(l.id); await state.reload(); })} className="min-h-[44px] text-[13px] font-medium text-[#4F6B73] hover:text-[#B3362C] sm:min-h-[24px]">Batalkan</button>}
+                            {l.status === "diajukan" && <button type="button" disabled={cancel.busy} onClick={() => void cancel.run(async () => { await cancelLeave(l.id); await state.reload(); })} className="min-h-[44px] text-[13px] font-medium text-[#4F6B73] hover:text-[#B3362C] sm:min-h-[24px]">Cancel</button>}
                           </span>
                         </li>
                       ))}
@@ -204,12 +204,12 @@ export default function AttendancePage() {
                 )}
                 {upcoming.length > 0 && (
                   <Card>
-                    <h2 className={`${sectionTitle} px-4 py-3`}>Jadwal berikutnya</h2>
+                    <h2 className={`${sectionTitle} px-4 py-3`}>Next shift</h2>
                     <ul>
                       {upcoming.map((s) => (
                         <li key={s.id} className="flex justify-between gap-3 border-t border-[#EDF2F2] px-4 py-2 text-[14px]">
                           <span className="text-[#0F2F36]">{formatLongDate(s.work_date)}</span>
-                          <span className="tabular-nums text-[#4F6B73]">{clockText(s.start_at)} sampai {clockText(s.end_at)}</span>
+                          <span className="tabular-nums text-[#4F6B73]">{clockText(s.start_at)} to {clockText(s.end_at)}</span>
                         </li>
                       ))}
                     </ul>

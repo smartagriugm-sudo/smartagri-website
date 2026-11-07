@@ -5,7 +5,7 @@ export const Route = createFileRoute("/erp/batch/")({
   component: BatchListPage,
   head: () => ({
     meta: [
-      { title: "Batch | smartagri ERP" },
+      { title: "Batch | agrosphere" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

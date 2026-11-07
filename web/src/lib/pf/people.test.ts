@@ -48,11 +48,11 @@ describe("one day's roster", () => {
 describe("what to check on a record", () => {
   it("separates outside from unknown", () => {
     expect(attendanceFlags(record())).toEqual([]);
-    expect(attendanceFlags(record({ in_within_area: false }))).toEqual(["Masuk di luar area"]);
-    expect(attendanceFlags(record({ in_within_area: null }))).toEqual(["Lokasi masuk tidak diketahui"]);
-    expect(attendanceFlags(record({ clock_out: "2026-11-06T09:00:00Z", out_within_area: null }))).toEqual(["Lokasi pulang tidak diketahui"]);
-    expect(attendanceFlags(record({ out_within_area: false, missed_out: true }))).toEqual(["Pulang di luar area", "Lupa absen pulang"]);
-    expect(attendanceFlags(record({ source: "manual", in_within_area: null }))).toEqual(["Dicatat manual"]);
+    expect(attendanceFlags(record({ in_within_area: false }))).toEqual(["Clocked in outside the area"]);
+    expect(attendanceFlags(record({ in_within_area: null }))).toEqual(["Clock-in location unknown"]);
+    expect(attendanceFlags(record({ clock_out: "2026-11-06T09:00:00Z", out_within_area: null }))).toEqual(["Clock-out location unknown"]);
+    expect(attendanceFlags(record({ out_within_area: false, missed_out: true }))).toEqual(["Clocked out outside the area", "Missed clock-out"]);
+    expect(attendanceFlags(record({ source: "manual", in_within_area: null }))).toEqual(["Recorded by hand"]);
   });
 });
 
@@ -74,29 +74,29 @@ describe("forms", () => {
   it("checks a schedule", () => {
     const ok = parseShiftForm("p", "2026-11-02", "2026-11-03", [1], "08:00", "16:00");
     expect(ok).toEqual({ error: null, dates: ["2026-11-02"] });
-    expect(parseShiftForm("", "2026-11-02", "2026-11-03", [1], "08:00", "16:00").error).toMatch(/orang/);
-    expect(parseShiftForm("p", "2026-11-03", "2026-11-02", [1], "08:00", "16:00").error).toMatch(/sebelum/);
-    expect(parseShiftForm("p", "2026-11-02", "2026-11-03", [1], "16:00", "08:00").error).toMatch(/setelah/);
-    expect(parseShiftForm("p", "2026-11-03", "2026-11-03", [1], "08:00", "16:00").error).toMatch(/Tidak ada tanggal/);
+    expect(parseShiftForm("", "2026-11-02", "2026-11-03", [1], "08:00", "16:00").error).toMatch(/person/);
+    expect(parseShiftForm("p", "2026-11-03", "2026-11-02", [1], "08:00", "16:00").error).toMatch(/before/);
+    expect(parseShiftForm("p", "2026-11-02", "2026-11-03", [1], "16:00", "08:00").error).toMatch(/after/);
+    expect(parseShiftForm("p", "2026-11-03", "2026-11-03", [1], "08:00", "16:00").error).toMatch(/No date/);
   });
 
   it("reads a duration", () => {
     expect(parseDuration("1,5", "")).toEqual({ error: null, minutes: 90 });
     expect(parseDuration("", "45")).toEqual({ error: null, minutes: 45 });
-    expect(parseDuration("", "").error).toMatch(/antara/);
-    expect(parseDuration("17", "").error).toMatch(/antara/);
-    expect(parseDuration("x", "").error).toMatch(/angka/);
-    expect(formatMinutes(90)).toBe("1 jam 30 menit");
-    expect(formatMinutes(120)).toBe("2 jam");
-    expect(formatMinutes(45)).toBe("45 menit");
+    expect(parseDuration("", "").error).toMatch(/between/);
+    expect(parseDuration("17", "").error).toMatch(/between/);
+    expect(parseDuration("x", "").error).toMatch(/number/);
+    expect(formatMinutes(90)).toBe("1 hour 30 minutes");
+    expect(formatMinutes(120)).toBe("2 hours");
+    expect(formatMinutes(45)).toBe("45 minutes");
   });
 
   it("checks a work area", () => {
     expect(parseArea("SARC", "-7,765", "110.372", "150")).toEqual({ error: null, lat: -7.765, lng: 110.372, radius: 150 });
-    expect(parseArea("", "0", "0", "150").error).toMatch(/Nama/);
-    expect(parseArea("X", "", "0", "150").error).toMatch(/Lintang/);
-    expect(parseArea("X", "0", "181", "150").error).toMatch(/Bujur/);
-    expect(parseArea("X", "0", "0", "5").error).toMatch(/Radius/);
+    expect(parseArea("", "0", "0", "150").error).toMatch(/name/);
+    expect(parseArea("X", "", "0", "150").error).toMatch(/Latitude/);
+    expect(parseArea("X", "0", "181", "150").error).toMatch(/Longitude/);
+    expect(parseArea("X", "0", "0", "5").error).toMatch(/radius/);
   });
 
   it("spots a contract about to end", () => {

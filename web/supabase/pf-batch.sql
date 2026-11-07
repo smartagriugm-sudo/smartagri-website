@@ -193,7 +193,7 @@ set search_path = public
 as $$
 begin
   if not public.pf_can_operate() then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
 end;
 $$;
@@ -207,7 +207,7 @@ set search_path = public
 as $$
 begin
   if not public.pf_can_manage_production() then
-    raise exception 'Akun Anda tidak punya izin untuk tindakan ini.' using errcode = '42501';
+    raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
 end;
 $$;
@@ -232,10 +232,10 @@ declare
 begin
   select * into rec from public.pf_batch where id = batch for update;
   if not found then
-    raise exception 'Batch tidak ditemukan';
+    raise exception 'Batch not found';
   end if;
   if rec.status in ('selesai', 'gagal') then
-    raise exception 'Batch % sudah ditutup', rec.code;
+    raise exception 'Batch % is already closed', rec.code;
   end if;
   return rec;
 end;
@@ -253,10 +253,10 @@ declare
 begin
   select qty_on_hand into on_hand from public.pf_stock_lot where id = lot for update;
   if not found then
-    raise exception 'Lot benih tidak ditemukan';
+    raise exception 'Seed lot not found';
   end if;
   if on_hand + delta < 0 then
-    raise exception 'Stok lot tidak cukup: tersisa %, diminta %', trim_scale(on_hand), trim_scale(-delta);
+    raise exception 'Not enough lot stock: % left, % requested', trim_scale(on_hand), trim_scale(-delta);
   end if;
   update public.pf_stock_lot set qty_on_hand = on_hand + delta where id = lot;
   insert into public.pf_stock_move (lot_id, type, qty, batch_id, reason) values (lot, kind, delta, batch, why);
@@ -277,13 +277,13 @@ begin
   perform public.pf_require_manager();
   select * into crop_row from public.pf_crop where id = crop;
   if not found then
-    raise exception 'Tanaman tidak ditemukan';
+    raise exception 'Crop not found';
   end if;
   if qty is null or qty <= 0 then
-    raise exception 'Jumlah benih harus lebih dari 0';
+    raise exception 'The seed count must be above 0';
   end if;
   if expiry_on is not null and expiry_on < received_on then
-    raise exception 'Tanggal kedaluwarsa sebelum tanggal diterima';
+    raise exception 'The expiry date is before the received date';
   end if;
   select id into item from public.pf_item where crop_id = crop and pf_item.unit = pf_seed_lot_add.unit;
   if not found then
@@ -310,14 +310,14 @@ declare
 begin
   perform public.pf_require_manager();
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan koreksi wajib diisi';
+    raise exception 'A reason for the correction is required';
   end if;
   if new_qty is null or new_qty < 0 then
-    raise exception 'Jumlah tidak boleh negatif';
+    raise exception 'Quantity cannot be negative';
   end if;
   select qty_on_hand into on_hand from public.pf_stock_lot where id = lot;
   if not found then
-    raise exception 'Lot benih tidak ditemukan';
+    raise exception 'Seed lot not found';
   end if;
   if new_qty <> on_hand then
     perform public.pf_stock_apply(lot, 'koreksi', new_qty - on_hand, null, trim(why));
@@ -341,18 +341,18 @@ begin
   perform public.pf_require_manager();
   select * into recipe_row from public.pf_recipe where id = recipe;
   if not found or recipe_row.status <> 'active' then
-    raise exception 'Batch harus memakai resep yang aktif';
+    raise exception 'A batch must use an active recipe';
   end if;
   select i.crop_id, l.expiry_date into lot_crop, lot_expiry
     from public.pf_stock_lot l join public.pf_item i on i.id = l.item_id where l.id = seed_lot;
   if not found then
-    raise exception 'Lot benih tidak ditemukan';
+    raise exception 'Seed lot not found';
   end if;
   if lot_crop is distinct from recipe_row.crop_id then
-    raise exception 'Lot benih bukan untuk tanaman pada resep ini';
+    raise exception 'This seed lot is not for this recipe''s crop';
   end if;
   if lot_expiry is not null and lot_expiry < public.pf_today() then
-    raise exception 'Lot benih sudah kedaluwarsa';
+    raise exception 'The seed lot has expired';
   end if;
   insert into public.pf_batch (recipe_id, seed_lot_id, notes)
   values (recipe, seed_lot, trim(pf_batch_create.notes))
@@ -381,28 +381,28 @@ begin
   perform public.pf_require_operator();
   rec := public.pf_batch_lock(batch);
   if sown_on is null or sown_on > public.pf_today() then
-    raise exception 'Tanggal semai tidak boleh di masa depan';
+    raise exception 'The sowing date cannot be in the future';
   end if;
   if rec.sown_at is not null and sown_on < rec.sown_at then
-    raise exception 'Tanggal semai sebelum semai pertama batch ini (%)', rec.sown_at;
+    raise exception 'The sowing date is before this batch''s first sowing (%)', rec.sown_at;
   end if;
   if jsonb_typeof(trays) <> 'array' or jsonb_array_length(trays) = 0 then
-    raise exception 'Pilih minimal satu posisi nampan';
+    raise exception 'Choose at least one tray position';
   end if;
   for tray in select * from jsonb_array_elements(trays) loop
     seeds := (tray ->> 'seeds')::integer;
     if seeds is null or seeds <= 0 then
-      raise exception 'Jumlah benih per nampan harus lebih dari 0';
+      raise exception 'Seeds per tray must be above 0';
     end if;
     select * into place from public.pf_location where id = (tray ->> 'location_id')::uuid for update;
     if not found or place.level <> 'tray_position' then
-      raise exception 'Posisi nampan tidak dikenal';
+      raise exception 'Tray position not recognised';
     end if;
     if place.slot_status <> 'available' then
-      raise exception 'Posisi % tidak siap pakai', place.code;
+      raise exception 'Position % is not ready to use', place.code;
     end if;
     if exists (select 1 from public.pf_batch_slot where location_id = place.id and removed_at is null) then
-      raise exception 'Posisi % sudah terisi', place.code;
+      raise exception 'Position % is already filled', place.code;
     end if;
     insert into public.pf_batch_slot (batch_id, location_id, kind, qty, state, placed_at)
     values (batch, place.id, 'tray', seeds, 'disemai', sown_on::timestamp at time zone 'Asia/Jakarta');
@@ -415,7 +415,7 @@ begin
     perform public.pf_stock_apply(rec.seed_lot_id, 'pakai_semai', -total, batch, 'Semai');
   else
     if seed_used is null or seed_used <= 0 then
-      raise exception 'Isi berat benih yang terpakai';
+      raise exception 'Enter the weight of seed used';
     end if;
     perform public.pf_stock_apply(rec.seed_lot_id, 'pakai_semai', -seed_used, batch, 'Semai');
   end if;
@@ -439,17 +439,17 @@ begin
   perform public.pf_require_operator();
   select * into tray from public.pf_batch_slot where id = slot and kind = 'tray' and removed_at is null for update;
   if not found then
-    raise exception 'Nampan tidak ditemukan atau sudah kosong';
+    raise exception 'Tray not found or already empty';
   end if;
   perform public.pf_batch_lock(tray.batch_id);
   if new_state not in ('disemai', 'berkecambah', 'siap_pindah', 'masalah') then
-    raise exception 'Status nampan tidak sah';
+    raise exception 'Invalid tray status';
   end if;
   if new_germinated is null or new_germinated < 0 or new_germinated + tray.moved > tray.qty then
-    raise exception 'Jumlah berkecambah melebihi jumlah benih';
+    raise exception 'The germinated count is more than the seeds';
   end if;
   if new_state = 'siap_pindah' and new_germinated = 0 then
-    raise exception 'Nampan tanpa kecambah belum bisa siap pindah';
+    raise exception 'A tray with no sprouts cannot be ready to transplant';
   end if;
   update public.pf_batch_slot set state = new_state, germinated = new_germinated, note = trim(new_note) where id = slot;
   select code into place from public.pf_location where id = tray.location_id;
@@ -472,11 +472,11 @@ declare
 begin
   perform public.pf_require_operator();
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan wajib diisi';
+    raise exception 'A reason is required';
   end if;
   select * into tray from public.pf_batch_slot where id = slot and kind = 'tray' and removed_at is null for update;
   if not found then
-    raise exception 'Nampan tidak ditemukan atau sudah kosong';
+    raise exception 'Tray not found or already empty';
   end if;
   perform public.pf_batch_lock(tray.batch_id);
   update public.pf_batch_slot set removed_at = now() where id = slot;
@@ -506,27 +506,27 @@ begin
   perform public.pf_batch_lock(batch);
   select * into tier_row from public.pf_location where id = tier and level = 'tier' for update;
   if not found then
-    raise exception 'Tingkat tidak dikenal';
+    raise exception 'Tier not recognised';
   end if;
   if exists (
     select 1 from public.pf_location h
      where h.level = 'hole' and h.code like tier_row.code || '-%' and h.slot_status = 'sanitasi'
   ) then
-    raise exception 'Tingkat % masih sanitasi', tier_row.code;
+    raise exception 'Tier % is still in sanitation', tier_row.code;
   end if;
   if exists (
     select 1 from public.pf_batch_slot s
       join public.pf_location h on h.id = s.location_id
      where s.removed_at is null and s.batch_id <> batch and h.code like tier_row.code || '-%'
   ) then
-    raise exception 'Tingkat % dipakai batch lain', tier_row.code;
+    raise exception 'Tier % is used by another batch', tier_row.code;
   end if;
   select array_agg(id order by code), array_agg(code order by code) into free_holes, free_codes
     from public.pf_location h
    where h.level = 'hole' and h.code like tier_row.code || '-%' and h.slot_status = 'available'
      and not exists (select 1 from public.pf_batch_slot s where s.location_id = h.id and s.removed_at is null);
   if free_holes is null then
-    raise exception 'Tingkat % penuh', tier_row.code;
+    raise exception 'Tier % is full', tier_row.code;
   end if;
 
   for tray in
@@ -550,7 +550,7 @@ begin
   end loop;
 
   if ready_total = 0 then
-    raise exception 'Batch ini belum punya bibit siap pindah';
+    raise exception 'This batch has no seedlings ready to transplant yet';
   end if;
   insert into public.pf_batch_event (batch_id, type, qty, location_code) values (batch, 'pindah_tanam', moved_total, tier_row.code);
   return jsonb_build_object('count', moved_total, 'left', ready_total - moved_total, 'first_hole', free_codes[1], 'tier', tier_row.code);
@@ -570,11 +570,11 @@ begin
   perform public.pf_require_operator();
   select * into hole from public.pf_batch_slot where id = slot and kind = 'hole' and removed_at is null for update;
   if not found then
-    raise exception 'Tanaman tidak ditemukan di lubang itu';
+    raise exception 'No plant found in that hole';
   end if;
   perform public.pf_batch_lock(hole.batch_id);
   if new_state not in ('tumbuh', 'masalah') then
-    raise exception 'Status lubang tidak sah';
+    raise exception 'Invalid hole status';
   end if;
   update public.pf_batch_slot set state = new_state, note = trim(new_note) where id = slot;
   select code into place from public.pf_location where id = hole.location_id;
@@ -595,11 +595,11 @@ declare
 begin
   perform public.pf_require_operator();
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan wajib diisi';
+    raise exception 'A reason is required';
   end if;
   select * into hole from public.pf_batch_slot where id = slot and kind = 'hole' and removed_at is null for update;
   if not found then
-    raise exception 'Tanaman tidak ditemukan di lubang itu';
+    raise exception 'No plant found in that hole';
   end if;
   perform public.pf_batch_lock(hole.batch_id);
   update public.pf_batch_slot set removed_at = now() where id = slot;
@@ -618,7 +618,7 @@ begin
   perform public.pf_require_operator();
   perform public.pf_batch_lock(batch);
   if coalesce(trim(note), '') = '' then
-    raise exception 'Catatan masih kosong';
+    raise exception 'The note is empty';
   end if;
   insert into public.pf_batch_event (batch_id, type, note) values (batch, 'pengamatan', trim(pf_batch_note.note));
 end;
@@ -638,19 +638,19 @@ begin
   perform public.pf_require_operator();
   rec := public.pf_batch_lock(batch);
   if rec.status <> 'berjalan' then
-    raise exception 'Batch belum disemai';
+    raise exception 'The batch is not sown yet';
   end if;
   if not exists (select 1 from public.pf_batch_slot s where s.batch_id = rec.id and s.kind = 'hole' and s.removed_at is null) then
-    raise exception 'Belum ada tanaman di plant factory untuk dipanen';
+    raise exception 'No plants in the plant factory to harvest yet';
   end if;
   if kg is null or kg <= 0 then
-    raise exception 'Berat panen harus lebih dari 0';
+    raise exception 'Harvest weight must be above 0';
   end if;
   if harvested_on is null or harvested_on > public.pf_today() or harvested_on < rec.sown_at then
-    raise exception 'Tanggal panen harus antara tanggal semai dan hari ini';
+    raise exception 'The harvest date must be between the sowing date and today';
   end if;
   if best_before is not null and best_before < harvested_on then
-    raise exception 'Batas simpan sebelum tanggal panen';
+    raise exception 'The keep-until date is before the harvest date';
   end if;
   insert into public.pf_harvest_lot (batch_id, harvested_at, fresh_kg, remaining_kg, grade, best_before, notes)
   values (batch, harvested_on, kg, kg, pf_harvest_add.grade, best_before, trim(pf_harvest_add.notes))
@@ -671,14 +671,14 @@ declare
 begin
   perform public.pf_require_manager();
   if coalesce(trim(why), '') = '' then
-    raise exception 'Alasan koreksi wajib diisi';
+    raise exception 'A reason for the correction is required';
   end if;
   select * into old from public.pf_harvest_lot where id = lot for update;
   if not found then
-    raise exception 'Lot panen tidak ditemukan';
+    raise exception 'Harvest lot not found';
   end if;
   if kg is null or kg <= 0 or old.remaining_kg + (kg - old.fresh_kg) < 0 then
-    raise exception 'Berat koreksi lebih kecil dari yang sudah terpakai';
+    raise exception 'The corrected weight is less than what has been used';
   end if;
   update public.pf_harvest_lot
      set fresh_kg = kg, remaining_kg = remaining_kg + (kg - old.fresh_kg), grade = new_grade
@@ -702,13 +702,13 @@ begin
   perform public.pf_require_operator();
   rec := public.pf_batch_lock(batch);
   if outcome not in ('selesai', 'gagal') then
-    raise exception 'Hasil batch tidak sah';
+    raise exception 'Invalid batch outcome';
   end if;
   if outcome = 'selesai' and not exists (select 1 from public.pf_harvest_lot where batch_id = batch) then
-    raise exception 'Catat minimal satu lot panen sebelum menyelesaikan batch';
+    raise exception 'Record at least one harvest lot before finishing the batch';
   end if;
   if outcome = 'gagal' and coalesce(trim(why), '') = '' then
-    raise exception 'Alasan batch gagal wajib diisi';
+    raise exception 'A reason for the failed batch is required';
   end if;
   update public.pf_location
      set slot_status = 'sanitasi'
@@ -733,13 +733,13 @@ begin
   perform public.pf_require_operator();
   select code into tier_code from public.pf_location where id = tier and level = 'tier';
   if not found then
-    raise exception 'Tingkat tidak dikenal';
+    raise exception 'Tier not recognised';
   end if;
   update public.pf_location set slot_status = 'available'
    where level = 'hole' and code like tier_code || '-%' and slot_status = 'sanitasi';
   get diagnostics done = row_count;
   if done = 0 then
-    raise exception 'Tingkat % tidak sedang sanitasi', tier_code;
+    raise exception 'Tier % is not in sanitation', tier_code;
   end if;
   return done;
 end;

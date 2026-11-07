@@ -31,7 +31,7 @@ function GroupRow({ entries, actor }: { entries: AuditEntry[]; actor: string }) 
         <span className="text-[#4F6B73]">{formatDateTime(first.at)}</span>
         <span className="text-[#0F2F36]">{actor}</span>
         <span className="min-w-0 text-[#0F2F36]"><span className="font-medium">{AUDIT_ACTIONS[first.action]}</span> {entries.length} {tableLabel(first.table_name).toLowerCase()}</span>
-        <span className="text-[13px] font-medium text-[#0B6477]">{open ? "Tutup" : "Rincian"}</span>
+        <span className="text-[13px] font-medium text-[#0B6477]">{open ? "Close" : "Details"}</span>
       </button>
       {open && <div className="mt-2 rounded-lg border border-[#E3ECED] px-3">{entries.map((e) => <Row key={e.id} entry={e} actor={actor} />)}</div>}
     </div>
@@ -49,7 +49,7 @@ function Row({ entry, actor }: { entry: AuditEntry; actor: string }) {
         <span className="min-w-0 text-[#0F2F36]">
           <span className="font-medium">{AUDIT_ACTIONS[entry.action]}</span> {tableLabel(entry.table_name).toLowerCase()} <span className="break-all">{auditSubject(entry)}</span>
         </span>
-        <span className="text-[13px] font-medium text-[#0B6477]">{open ? "Tutup" : `${changes.length} kolom`}</span>
+        <span className="text-[13px] font-medium text-[#0B6477]">{open ? "Close" : `${changes.length} columns`}</span>
       </button>
       {open && (
         <dl className="mt-2 space-y-1 rounded-lg bg-[#F3F7F7] p-3 text-[13px]">
@@ -74,25 +74,25 @@ export default function AuditPage() {
 
   return (
     <ErpPage
-      eyebrow="Pengaturan"
+      eyebrow="Administration"
       title="Audit log"
-      sub={`Siapa mengubah apa dan kapan. Menampilkan ${AUDIT_PAGE} perubahan terakhir.`}
+      sub={`Who changed what and when. Showing the last ${AUDIT_PAGE} latest changes.`}
       actions={
-        <select className={`${inputClass} w-auto`} value={table} onChange={(e) => setTable(e.target.value)} aria-label="Saring menurut data">
-          <option value="">Semua data</option>
+        <select className={`${inputClass} w-auto`} value={table} onChange={(e) => setTable(e.target.value)} aria-label="Filter by data">
+          <option value="">All data</option>
           {AUDIT_TABLES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
         </select>
       }
     >
-      {!canReadAudit && <div className="mb-3"><Note tone="warn">Audit log hanya bisa dibaca Admin sistem dan Pimpinan.</Note></div>}
+      {!canReadAudit && <div className="mb-3"><Note tone="warn">The audit log can only be read by System admins and Leadership.</Note></div>}
       <DataState state={entries}>
         {(list) => (
           <Card className="px-4 py-2">
             {list.length === 0 ? (
-              <p className="py-6 text-center text-[14px] text-[#4F6B73]">Belum ada perubahan yang tercatat.</p>
+              <p className="py-6 text-center text-[14px] text-[#4F6B73]">No changes recorded yet.</p>
             ) : (
               groupAudit(list).map(({ key, entries: group }) => {
-                const actor = group[0].actor_id ? names.get(group[0].actor_id) ?? "Anggota lain" : "Sistem";
+                const actor = group[0].actor_id ? names.get(group[0].actor_id) ?? "Another member" : "System";
                 return group.length > 1 ? <GroupRow key={key} entries={group} actor={actor} /> : <Row key={key} entry={group[0]} actor={actor} />;
               })
             )}

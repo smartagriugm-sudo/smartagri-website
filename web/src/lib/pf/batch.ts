@@ -12,10 +12,10 @@ import { daysBetween, type HoleState } from "./facility";
 export type BatchStatus = "direncanakan" | "berjalan" | "selesai" | "gagal";
 
 export const BATCH_STATUS: Record<BatchStatus, { label: string; className: string }> = {
-  direncanakan: { label: "Belum disemai", className: "bg-[#FFF6E5] text-[#8A5A07]" },
-  berjalan: { label: "Berjalan", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
-  selesai: { label: "Selesai", className: "bg-[#EEF3F4] text-[#4F6B73]" },
-  gagal: { label: "Gagal", className: "bg-[#FDECEA] text-[#B3362C]" },
+  direncanakan: { label: "Not sown yet", className: "bg-[#FFF6E5] text-[#8A5A07]" },
+  berjalan: { label: "In progress", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
+  selesai: { label: "Done", className: "bg-[#EEF3F4] text-[#4F6B73]" },
+  gagal: { label: "Failed", className: "bg-[#FDECEA] text-[#B3362C]" },
 };
 
 export type BatchOverview = {
@@ -77,6 +77,8 @@ export type SeedUnit = "biji" | "gram";
 
 export type HarvestGrade = "A" | "B" | "Afkir";
 export const HARVEST_GRADES: HarvestGrade[] = ["A", "B", "Afkir"];
+/** "Afkir" is the stored value; people read it as a reject. */
+export const gradeLabel = (grade: string) => (grade === "Afkir" ? "Reject" : grade);
 
 export type HarvestLot = {
   id: string;
@@ -102,19 +104,19 @@ export type BatchEvent = {
 };
 
 export const EVENT_LABELS: Record<BatchEventType, string> = {
-  dibuat: "Batch dibuat",
-  semai: "Disemai",
-  germinasi: "Perkecambahan dicatat",
-  nampan_ditutup: "Nampan ditutup",
-  pindah_tanam: "Pindah tanam",
-  masalah: "Ditandai bermasalah",
-  pulih: "Kembali normal",
-  tanaman_dibuang: "Tanaman dibuang",
-  pengamatan: "Pengamatan",
-  panen: "Panen",
-  koreksi_panen: "Koreksi panen",
-  selesai: "Batch selesai",
-  gagal: "Batch gagal",
+  dibuat: "Batch created",
+  semai: "Sown",
+  germinasi: "Germination recorded",
+  nampan_ditutup: "Tray closed",
+  pindah_tanam: "Transplant",
+  masalah: "Marked as a problem",
+  pulih: "Back to normal",
+  tanaman_dibuang: "Plant discarded",
+  pengamatan: "Observation",
+  panen: "Harvest",
+  koreksi_panen: "Correct harvest",
+  selesai: "Batch finished",
+  gagal: "Batch failed",
 };
 
 /* --------------------------------------------------------------- reckoning */
@@ -162,16 +164,16 @@ export const trayState = (s: OpenSlot["state"]): SlotState => (s === "tumbuh" ? 
 export const germinationRate = (b: Pick<BatchOverview, "seeds" | "germinated">) => (b.seeds ? b.germinated / b.seeds : 0);
 
 export function batchStage(b: Pick<BatchOverview, "status" | "sown_at" | "cycle_days" | "plants_now" | "trays_now">, today: string) {
-  if (b.status === "direncanakan") return "Menunggu semai";
+  if (b.status === "direncanakan") return "Waiting to be sown";
   if (b.status === "selesai" || b.status === "gagal") return BATCH_STATUS[b.status].label;
-  const day = `hari ${ageOn(b.sown_at, today)} dari ${b.cycle_days}`;
-  if (b.plants_now > 0 && b.trays_now > 0) return `Sebagian di plant factory · ${day}`;
+  const day = `day ${ageOn(b.sown_at, today)} of ${b.cycle_days}`;
+  if (b.plants_now > 0 && b.trays_now > 0) return `Partly in the plant factory · ${day}`;
   if (b.plants_now > 0) return `Plant factory · ${day}`;
-  if (b.trays_now > 0) return `Persemaian · ${day}`;
-  return `Tidak ada tanaman · ${day}`;
+  if (b.trays_now > 0) return `Seedlings · ${day}`;
+  return `No plants · ${day}`;
 }
 
-export const BATCH_STEPS = ["Semai", "Berkecambah", "Pindah tanam", "Tumbuh", "Panen", "Selesai"] as const;
+export const BATCH_STEPS = ["Sow", "Germinated", "Transplant", "Growing", "Harvest", "Done"] as const;
 
 /** Which step of BATCH_STEPS the batch is on, so the page can lead with that work. */
 export function batchStep(b: Pick<BatchOverview, "status" | "plants_now" | "harvested_kg">, readySeedlings: number, harvestReady: boolean) {
@@ -196,40 +198,40 @@ const parseNumber = (s: string) => (s.trim() === "" ? null : Number(s.trim().rep
 export type SeedLotForm = { cropId: string; unit: SeedUnit; lotNo: string; qty: string; receivedOn: string; expiryOn: string; supplier: string; notes: string };
 
 export function parseSeedLotForm(f: SeedLotForm) {
-  if (!f.cropId) return { error: "Pilih tanaman." } as const;
-  if (!f.lotNo.trim()) return { error: "Nomor lot wajib diisi." } as const;
+  if (!f.cropId) return { error: "Choose a crop." } as const;
+  if (!f.lotNo.trim()) return { error: "A lot number is required." } as const;
   const qty = parseNumber(f.qty);
-  if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: "Jumlah harus lebih dari 0." } as const;
-  if (f.unit === "biji" && !Number.isInteger(qty)) return { error: "Jumlah biji harus bilangan bulat." } as const;
-  if (!f.receivedOn) return { error: "Tanggal diterima wajib diisi." } as const;
-  if (f.expiryOn && f.expiryOn < f.receivedOn) return { error: "Tanggal kedaluwarsa sebelum tanggal diterima." } as const;
+  if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: "Quantity must be above 0." } as const;
+  if (f.unit === "biji" && !Number.isInteger(qty)) return { error: "The seed count must be a whole number." } as const;
+  if (!f.receivedOn) return { error: "A received date is required." } as const;
+  if (f.expiryOn && f.expiryOn < f.receivedOn) return { error: "The expiry date is before the received date." } as const;
   return { error: null, qty } as const;
 }
 
 export function parseSowForm(positions: readonly string[], seeds: string, sownOn: string, today: string, unit: SeedUnit, used: string) {
-  if (positions.length === 0) return { error: "Pilih minimal satu posisi nampan." } as const;
+  if (positions.length === 0) return { error: "Choose at least one tray position." } as const;
   const perTray = parseNumber(seeds);
-  if (perTray === null || !Number.isInteger(perTray) || perTray <= 0) return { error: "Jumlah benih per nampan harus bilangan bulat di atas 0." } as const;
-  if (!sownOn || sownOn > today) return { error: "Tanggal semai tidak boleh di masa depan." } as const;
+  if (perTray === null || !Number.isInteger(perTray) || perTray <= 0) return { error: "Seeds per tray must be a whole number above 0." } as const;
+  if (!sownOn || sownOn > today) return { error: "The sowing date cannot be in the future." } as const;
   if (unit === "biji") return { error: null, perTray, seedUsed: null } as const;
   const seedUsed = parseNumber(used);
-  if (seedUsed === null || !Number.isFinite(seedUsed) || seedUsed <= 0) return { error: "Isi berat benih yang terpakai." } as const;
+  if (seedUsed === null || !Number.isFinite(seedUsed) || seedUsed <= 0) return { error: "Enter the weight of seed used." } as const;
   return { error: null, perTray, seedUsed } as const;
 }
 
 export function parseHarvestForm(kg: string, harvestedOn: string, bestBefore: string, sownAt: string | null, today: string) {
   const weight = parseNumber(kg);
-  if (weight === null || !Number.isFinite(weight) || weight <= 0) return { error: "Berat panen harus lebih dari 0." } as const;
-  if (!harvestedOn || harvestedOn > today || (sownAt && harvestedOn < sownAt)) return { error: "Tanggal panen harus antara tanggal semai dan hari ini." } as const;
-  if (bestBefore && bestBefore < harvestedOn) return { error: "Batas simpan sebelum tanggal panen." } as const;
+  if (weight === null || !Number.isFinite(weight) || weight <= 0) return { error: "Harvest weight must be above 0." } as const;
+  if (!harvestedOn || harvestedOn > today || (sownAt && harvestedOn < sownAt)) return { error: "The harvest date must be between the sowing date and today." } as const;
+  if (bestBefore && bestBefore < harvestedOn) return { error: "The keep-until date is before the harvest date." } as const;
   return { error: null, weight } as const;
 }
 
 /** A count typed for a tray: whole, not negative, and no more than what is left of its seeds. */
 export function parseGerminated(s: string, tray: Pick<OpenSlot, "qty" | "moved">) {
   const n = parseNumber(s);
-  if (n === null || !Number.isInteger(n) || n < 0) return { error: "Jumlah berkecambah harus bilangan bulat." } as const;
-  if (n + tray.moved > tray.qty) return { error: "Jumlah berkecambah melebihi jumlah benih." } as const;
+  if (n === null || !Number.isInteger(n) || n < 0) return { error: "The germinated count must be a whole number." } as const;
+  if (n + tray.moved > tray.qty) return { error: "The germinated count is more than the seeds." } as const;
   return { error: null, count: n } as const;
 }
 

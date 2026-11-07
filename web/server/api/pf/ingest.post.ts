@@ -29,6 +29,6 @@ export default defineEventHandler(async (event) => {
   const result = (await res.json().catch(() => null)) as { code?: string; message?: string } | null
   if (res.ok) return reply(result, 200)
   if (res.status >= 500) return reply({ error: 'Database bermasalah, kirim ulang nanti' }, 503)
-  const message = result?.message ?? 'Kiriman ditolak'
+  const message = result?.message ?? 'Send refused'
   return reply({ error: message }, ingestFailureStatus(result?.code, message))
 })

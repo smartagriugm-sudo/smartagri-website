@@ -8,15 +8,15 @@ import { check, db, toErpError, unwrap, ErpDataError } from "./foundation";
 /* ------------------------------------------------------------------ metrics */
 
 export const METRICS = [
-  { key: "suhu", label: "Suhu", unit: "°C", decimals: 1, kind: "iklim" },
-  { key: "rh", label: "Kelembapan", unit: "% RH", decimals: 0, kind: "iklim" },
+  { key: "suhu", label: "Temperature", unit: "°C", decimals: 1, kind: "iklim" },
+  { key: "rh", label: "Humidity", unit: "% RH", decimals: 0, kind: "iklim" },
   { key: "vpd", label: "VPD", unit: "kPa", decimals: 2, kind: "iklim" },
   { key: "co2", label: "CO₂", unit: "ppm", decimals: 0, kind: "iklim" },
-  { key: "cahaya", label: "Cahaya", unit: "lux", decimals: 0, kind: "iklim" },
+  { key: "cahaya", label: "Light", unit: "lux", decimals: 0, kind: "iklim" },
   { key: "ph", label: "pH", unit: "", decimals: 2, kind: "nutrisi" },
   { key: "ec", label: "EC", unit: "mS/cm", decimals: 2, kind: "nutrisi" },
-  { key: "do", label: "Oksigen terlarut", unit: "mg/L", decimals: 1, kind: "nutrisi" },
-  { key: "suhu_larutan", label: "Suhu larutan", unit: "°C", decimals: 1, kind: "nutrisi" },
+  { key: "do", label: "Dissolved oxygen", unit: "mg/L", decimals: 1, kind: "nutrisi" },
+  { key: "suhu_larutan", label: "Solution temperature", unit: "°C", decimals: 1, kind: "nutrisi" },
 ] as const;
 
 export type MetricKey = (typeof METRICS)[number]["key"];
@@ -26,7 +26,7 @@ export const metricInfo = (key: string) => METRICS.find((m) => m.key === key) ??
 
 export function formatValue(metric: string, value: number) {
   const { decimals } = metricInfo(metric);
-  return value.toLocaleString("id-ID", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  return value.toLocaleString("en-GB", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
 export const formatWithUnit = (metric: string, value: number) => {
@@ -37,7 +37,7 @@ export const formatWithUnit = (metric: string, value: number) => {
 /** The two places sensors hang today, by the code in pf_location. */
 export const MONITORED_PLACES = [
   { code: "PF01", label: "Plant factory" },
-  { code: "CH1", label: "Persemaian" },
+  { code: "CH1", label: "Seedlings" },
 ] as const;
 
 export type PlaceCode = (typeof MONITORED_PLACES)[number]["code"];
@@ -47,11 +47,11 @@ export type PlaceCode = (typeof MONITORED_PLACES)[number]["code"];
 export type LinkState = "online" | "terlambat" | "belum_mengirim" | "perawatan" | "pensiun";
 
 export const LINK_STATES: Record<LinkState, { label: string; dot: string }> = {
-  online: { label: "Mengirim", dot: "bg-[#0E9F6E]" },
-  terlambat: { label: "Berhenti mengirim", dot: "bg-[#D9433B]" },
-  belum_mengirim: { label: "Belum mengirim", dot: "bg-[#E0A526]" },
-  perawatan: { label: "Perawatan", dot: "bg-[#8D9398]" },
-  pensiun: { label: "Pensiun", dot: "bg-[#8D9398]" },
+  online: { label: "Sending", dot: "bg-[#0E9F6E]" },
+  terlambat: { label: "Stopped sending", dot: "bg-[#D9433B]" },
+  belum_mengirim: { label: "Not sending yet", dot: "bg-[#E0A526]" },
+  perawatan: { label: "Maintenance", dot: "bg-[#8D9398]" },
+  pensiun: { label: "Retired", dot: "bg-[#8D9398]" },
 };
 
 export type Asset = {
@@ -135,19 +135,19 @@ export const formatBand = (metric: string, band: Pick<RecipeTarget, "low" | "hig
   const { unit } = metricInfo(metric);
   const tail = unit ? ` ${unit}` : "";
   if (band.low !== null && band.high !== null) return `${formatValue(metric, band.low)}–${formatValue(metric, band.high)}${tail}`;
-  if (band.low !== null) return `minimal ${formatValue(metric, band.low)}${tail}`;
-  if (band.high !== null) return `maksimal ${formatValue(metric, band.high)}${tail}`;
+  if (band.low !== null) return `at least ${formatValue(metric, band.low)}${tail}`;
+  if (band.high !== null) return `at most ${formatValue(metric, band.high)}${tail}`;
   return "-";
 };
 
 /** How long ago, in words, for a reading or an alarm. */
 export function ago(iso: string, now: Date = new Date()) {
   const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000);
-  if (minutes < 1) return "baru saja";
-  if (minutes < 60) return `${minutes} menit lalu`;
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return minutes === 1 ? "1 minute ago" : `${minutes} minutes ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} jam lalu`;
-  return `${Math.floor(hours / 24)} hari lalu`;
+  if (hours < 24) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+  return Math.floor(hours / 24) === 1 ? "1 day ago" : `${Math.floor(hours / 24)} days ago`;
 }
 
 /** The newest reading of one metric at one place, whichever device sent it. */
@@ -179,13 +179,13 @@ const parseOptional = (s: string) => (s.trim() === "" ? null : Number(s.trim().r
 export type AssetForm = { code: string; name: string; kind: AssetKind; model: string; serial: string; locationId: string; metrics: string[]; intervalS: string; status: Asset["status"]; notes: string };
 
 export function parseAssetForm(f: AssetForm) {
-  if (!f.code.trim()) return { error: "Kode perangkat wajib diisi." } as const;
-  if (!/^[A-Za-z0-9-]+$/.test(f.code.trim())) return { error: "Kode hanya boleh huruf, angka, dan tanda hubung." } as const;
-  if (!f.name.trim()) return { error: "Nama perangkat wajib diisi." } as const;
-  if (!f.locationId) return { error: "Pilih lokasi perangkat." } as const;
-  if (f.metrics.length === 0) return { error: "Pilih minimal satu jenis bacaan." } as const;
+  if (!f.code.trim()) return { error: "A device code is required." } as const;
+  if (!/^[A-Za-z0-9-]+$/.test(f.code.trim())) return { error: "A code can only have letters, numbers and hyphens." } as const;
+  if (!f.name.trim()) return { error: "A device name is required." } as const;
+  if (!f.locationId) return { error: "Choose the device's location." } as const;
+  if (f.metrics.length === 0) return { error: "Choose at least one reading type." } as const;
   const interval = Number(f.intervalS.trim());
-  if (!Number.isInteger(interval) || interval <= 0) return { error: "Interval kirim harus bilangan bulat detik di atas 0." } as const;
+  if (!Number.isInteger(interval) || interval <= 0) return { error: "The send interval must be a whole number of seconds above 0." } as const;
   return { error: null, interval } as const;
 }
 
@@ -193,23 +193,23 @@ export type RuleForm = { warnLow: string; warnHigh: string; critLow: string; cri
 
 export function parseRuleForm(f: RuleForm) {
   const values = [f.warnLow, f.warnHigh, f.critLow, f.critHigh].map(parseOptional);
-  if (values.some((v) => v !== null && !Number.isFinite(v))) return { error: "Batas harus berupa angka." } as const;
-  if (values.every((v) => v === null)) return { error: "Isi minimal satu batas." } as const;
+  if (values.some((v) => v !== null && !Number.isFinite(v))) return { error: "Limits must be numbers." } as const;
+  if (values.every((v) => v === null)) return { error: "Fill in at least one limit." } as const;
   const [warnLow, warnHigh, critLow, critHigh] = values;
   const out = (a: number | null, b: number | null) => a !== null && b !== null && a > b;
   if (out(warnLow, warnHigh) || out(critLow, critHigh) || out(critLow, warnLow) || out(warnHigh, critHigh)) {
-    return { error: "Batas tidak berurutan: kritis harus di luar peringatan, bawah di bawah atas." } as const;
+    return { error: "Limits are out of order: critical must be outside warning, and lower below upper." } as const;
   }
   const delay = Number((f.delayMin.trim() || "0").replace(",", "."));
-  if (!Number.isFinite(delay) || delay < 0) return { error: "Waktu tunggu tidak boleh negatif." } as const;
+  if (!Number.isFinite(delay) || delay < 0) return { error: "The waiting time cannot be negative." } as const;
   return { error: null, warnLow, warnHigh, critLow, critHigh, delayS: Math.round(delay * 60) } as const;
 }
 
 export function parseCalibrationForm(offset: string, slope: string) {
   const offsetValue = parseOptional(offset) ?? 0;
   const slopeValue = parseOptional(slope) ?? 1;
-  if (!Number.isFinite(offsetValue) || !Number.isFinite(slopeValue)) return { error: "Koreksi dan pengali harus berupa angka." } as const;
-  if (slopeValue === 0) return { error: "Faktor pengali tidak boleh nol." } as const;
+  if (!Number.isFinite(offsetValue) || !Number.isFinite(slopeValue)) return { error: "Offset and multiplier must be numbers." } as const;
+  if (slopeValue === 0) return { error: "The multiplier cannot be zero." } as const;
   return { error: null, offsetValue, slopeValue } as const;
 }
 
@@ -223,8 +223,8 @@ export function parseTargetRows(rows: readonly TargetRow[]) {
     const high = parseOptional(r.high);
     if (low === null && target === null && high === null) continue;
     const label = metricInfo(r.metric).label;
-    if ([low, target, high].some((v) => v !== null && !Number.isFinite(v))) return { error: `Acuan ${label} harus berupa angka.` } as const;
-    if (low !== null && high !== null && low > high) return { error: `Batas bawah ${label} di atas batas atas.` } as const;
+    if ([low, target, high].some((v) => v !== null && !Number.isFinite(v))) return { error: `Reference ${label} must be a number.` } as const;
+    if (low !== null && high !== null && low > high) return { error: `Lower limit ${label} above the upper limit.` } as const;
     out.push({ metric: r.metric, low, target, high });
   }
   return { error: null, targets: out } as const;
