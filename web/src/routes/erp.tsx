@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import RequireAuth from "../components/RequireAuth";
 import { ErpStoreProvider } from "../components/erp/ErpContext";
+import { A } from "../lib/assets";
+import ErpGate from "../components/erp/ErpGate";
 import ErpScreens from "../components/erp/ErpScreens";
 import ErpShell from "../components/erp/ErpShell";
 
@@ -11,21 +12,24 @@ export const Route = createFileRoute("/erp")({
   component: ErpLayout,
   head: () => ({
     meta: [
-      { title: "ERP Plant Factory | smartagri" },
+      { title: "agrosphere | ERP Plant Factory smartagri" },
       { name: "robots", content: "noindex, nofollow" },
+    ],
+    links: [
+      { rel: "icon", type: "image/svg+xml", href: A.agrosphereIcon },
     ],
   }),
 });
 
 function ErpLayout() {
   return (
-    <RequireAuth>
+    <ErpGate>
       <ErpStoreProvider>
         <ErpShell>
           <ErpScreens />
           <Outlet />
         </ErpShell>
       </ErpStoreProvider>
-    </RequireAuth>
+    </ErpGate>
   );
 }

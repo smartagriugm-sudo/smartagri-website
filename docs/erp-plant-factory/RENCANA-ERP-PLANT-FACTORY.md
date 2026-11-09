@@ -1,6 +1,6 @@
 # Rencana ERP Plant Factory (PFMS) · smartagri
 
-Status: rancangan, dengan prototipe Overview 3D di `/erp` (data contoh). Rujukan: `plant-factory-management-system.md` (dokumen PFMS 4 lapisan).
+Status: Tahap 0 live. Tahap 1 (fondasi) ada di `web/supabase/pf-foundation.sql`. Bagian budidaya Tahap 2 ada di `web/supabase/pf-batch.sql`; bagian sensor ada di `web/supabase/pf-monitoring.sql`, dengan kontrak perangkat di `API-SENSOR.md`. Tahap 3 (penjualan) ada di `web/supabase/pf-sales.sql`. Tahap 4 (inventory) ada di `web/supabase/pf-inventory.sql`. Tahap 5 (SDM) ada di `web/supabase/pf-hr.sql`. Tahap 6 (biaya) ada di `web/supabase/pf-cost.sql`. Rujukan: `plant-factory-management-system.md` (dokumen PFMS 4 lapisan).
 Diagram pendukung (ERD, arsitektur, alur fase): buka `diagram-erp-plant-factory.html` di folder ini.
 
 ---
@@ -73,9 +73,9 @@ Alamatnya `/erp/*`, karena SDM dan penjualan bukan bagian dari indoor farming.
 
 Model dan mesin 3D berasal dari paket `plant-factory-3d` (dibangun di proyek sumbernya, `anyscene/plant-factory`):
 
-- **Paket** ada di `web/vendor/plant-factory-3d-<versi>.tgz`, dengan `three` dikunci sesuai syarat paket (`0.170.0`).
-- **Aset** (`plant_factory.glb`, `manifest.json`, `erp_seed/`) ada di `public/brand/plant-factory/`, direferensikan lewat
-  `plantFactoryAssets` di `lib/assets.ts`. GLB tidak disunting di sini; perubahan model dibuat di proyek sumber.
+- **Paket** `web/vendor/plant-factory-3d-<versi>-engine.tgz` berisi kode mesin saja, dengan `three` dikunci sesuai syarat paket (`0.170.0`).
+- **Model** ada di bucket privat `pf-model`, dan lokal di `public/brand/plant-factory/` yang tidak masuk git (`lib/pf/model-assets.ts`).
+  GLB tidak disunting di sini; perubahan model dibuat di proyek sumber.
 - **Provider** `lib/pf/provider.ts` adalah cache yang dibaca mesin secara sinkron. Data ERP dimuat di luar mesin,
   disimpan di cache, lalu ditampilkan dengan `scene.refresh()`.
 - **Overlay HTML** untuk kartu KPI, filter, dan panel detail tetap milik ERP, sesuai brand (Inter, teal).
@@ -92,7 +92,7 @@ Aturan dari paket:
 ### Persemaian: growth chamber FPG450
 
 Fase semai dan germinasi berjalan di growth chamber `CH1` (FAITHFUL FPG450), di `/erp/persemaian`.
-Plant factory tetap di `/erp`. Keduanya memakai paket dan aset yang sama, tetapi mesin 3D masing-masing.
+Plant factory ada di `/erp/plant-factory`, sedangkan `/erp` kini dashboard. Keduanya memakai paket yang sama, tetapi mesin 3D masing-masing.
 
 - **Satu batch, dua fasilitas.** `lib/pf/store.ts` (`ErpStore`) memegang batch, cache chamber, dan cache plant factory.
   Route layout ERP memilikinya, sehingga data tetap sama saat berpindah layar.
@@ -105,7 +105,7 @@ Plant factory tetap di `/erp`. Keduanya memakai paket dan aset yang sama, tetapi
   tetapi tetap memakai memori GPU. Di layar lebar model kedua dimuat setelah yang pertama; di ponsel saat pertama dibuka.
 - **Pintu** pada model hanya tampilan, bukan status pintu asli. **Nilai program germinasi** masih contoh, nantinya dari resep.
 
-Pembaruan model: pasang `.tgz` versi baru, lalu jalankan `npx plant-factory-3d-assets public/brand/plant-factory` dari folder `web/`.
+Pembaruan model dan mesin: lihat `SETUP-ERP-MODEL.md`.
 
 ---
 
@@ -115,7 +115,8 @@ Pembaruan model: pasang `.tgz` versi baru, lalu jalankan `npx plant-factory-3d-a
 |---|---|---|---|
 | 0 | Dasar | Commit, kontrol alat dilepas, alamat pindah ke `/erp`, ERD disetujui | ERD disetujui |
 | 1 | Fondasi | Lokasi, tanaman, resep berversi, peran, audit log, kerangka menu, dashboard awal | Semua lubang dan posisi nampan punya kode |
-| 2 | Budidaya + sensor | Batch dari semai sampai panen, lot benih, input ponsel, API sensor, grafik, alarm | Operator mencatat batch harian; data sensor masuk stabil |
+| 2A | Budidaya | Batch dari semai sampai panen, lot benih, input ponsel, 3D dari data asli | Operator mencatat batch harian |
+| 2B | Sensor | Daftar perangkat dan kalibrasi, API sensor, grafik, bacaan vs acuan resep, alarm | Data sensor masuk stabil |
 | 3 | Penjualan | Pelanggan, pesanan, alokasi lot panen, pengiriman, traceability | Satu pesanan bisa ditelusuri sampai lot benih |
 | 4 | Inventory | Stok per lot, pemakaian otomatis per batch, pembelian | Stok fisik cocok dengan sistem |
 | 5 | SDM | Data orang, kontrak, jadwal, absensi, izin, jam kerja per batch | Jadwal dan absensi dipakai satu bulan |
@@ -185,8 +186,51 @@ Pimpinan, Admin sistem, Manajer produksi, Staf penjualan, Staf SDM, Teknisi, Ope
 7. SDM mencakup jadwal, tugas, absensi, dan kontrak untuk semua orang. Penggajian di luar lingkup versi ini.
 8. Penjualan dan traceability hasil panen diprioritaskan.
 9. Model 3D tidak dibuka di repo publik, tetapi tetap ditampilkan di ERP. Filenya ada di bucket Supabase privat
-   (lihat `SETUP-ERP-MODEL.md`). Sumber paket mesin 3D untuk build Vercel belum diputuskan, jadi Tahap 0 belum boleh digabung ke `main`.
+   (lihat `SETUP-ERP-MODEL.md`). Kode mesin 3D ada di repo sebagai paket tanpa model.
 10. Sensor mikroklimat juga dipasang di dalam chamber. Interval kirim dibahas bersama pengembangan firmware.
 11. Grade panen memakai A, B, dan Afkir. Batas angkanya menyusul dari data panen tim.
 12. Tagihan memakai invoice dengan pajak opsional. Absensi memakai lokasi dan foto dari ponsel.
+13. ERP tertutup di deployment tanpa pengaturan Supabase, dan hanya untuk akun yang sudah disetujui.
+14. `pf_asset` dan `pf_calibration` dibuat di Tahap 2 bersama API sensor, karena baru terpakai di sana.
+15. Satu klik mengubah status paling banyak satu tingkat (80 posisi). Lokasi tidak dihapus, hanya ditandai tidak dipakai.
+16. Fase batch tidak disimpan, melainkan dihitung dari tempat tanaman dan umur menurut resep. Tidak ada `pf_batch.phase`, supaya operator tidak perlu mengubah 480 lubang dan datanya tidak bisa berselisih.
+17. Layar 3D hanya menampilkan data. Semua pencatatan ada di halaman batch, lewat fungsi database yang memeriksa peran. Tabel budidaya tidak punya izin tulis langsung.
+18. `pf_item`, `pf_stock_lot`, dan `pf_stock_move` dibuat di Tahap 2A khusus untuk benih, dan diperluas di Tahap 4. Lot bersatuan biji berkurang otomatis saat semai, sedangkan lot bersatuan gram meminta berat yang terpakai.
+19. Selesai panen, lubang masuk status `sanitasi` dan tingkatnya menolak batch baru sampai operator menandainya selesai.
+20. `pf_harvest_lot.grade` menyimpan A, B, atau Afkir langsung. `pf_grade`, kriteria, dan QC menyusul setelah batas angkanya ada dari data panen tim. `pf_production_plan`, `pf_task`, dan foto kejadian juga ditunda karena belum termasuk syarat selesai Tahap 2.
+21. Navigasi ERP ada di sidebar kiri (rail ikon pada lebar 1024 sampai 1279 px, menu lembar penuh di bawah 1024 px). Modul yang belum dibangun hanya disebut di kaki menu, tidak tampil sebagai tautan.
+22. Dashboard menjawab "apa yang perlu dikerjakan hari ini" lewat antrean kerja, dengan model 3D langsung di sampingnya pada layar besar. Di ponsel model 3D tidak dimuat di dashboard; ada tautan ke layar penuhnya.
+23. `pf_reading_hourly` ditambah setiap ada bacaan, bukan oleh `pg_cron`, supaya tidak butuh penjadwal dan grafik tidak menunggu.
+24. `pf_asset.token_hash` dipindah ke `pf_asset_token`, tabel tanpa izin baca sama sekali, karena daftar perangkat dibaca semua anggota lab.
+25. `pf_recipe_target` menunjuk resep dan nama fase, bukan id fase, karena menyimpan fase pada draf menulis ulang barisnya.
+26. Batas `pf_alarm_rule` disimpan sebagai empat kolom angka, bukan `numrange`. Perangkat dan aturan alarm dipasang di tingkat ruang atau chamber. Alarm tampil di ERP dan dashboard; email menyusul.
+27. `pf_so_line` menyimpan apa yang diminta pelanggan (tanaman, grade, berat, harga), dan `pf_so_allocation` menyimpan lot panen yang mengisinya, karena pesanan bisa masuk sebelum panen dan satu baris bisa diisi beberapa lot. Kunci telusur pindah dari `pf_so_line` ke `pf_so_allocation`.
+28. Sisa kg lot panen berkurang saat lot dipilih, bukan saat dikirim, supaya dua pesanan tidak memakai panen yang sama. Lot yang dilepas atau pesanan yang dibatalkan mengembalikannya.
+29. Data pelanggan dan harga hanya untuk Staf penjualan, Admin sistem, Pimpinan, dan Manajer produksi. Peneliti, mahasiswa, dan Operator tidak bisa membacanya.
+30. Nomor SO, surat jalan, dan invoice berurutan per tahun tanpa celah (`pf_doc_counter`). Invoice dan surat jalan dicetak lewat dialog cetak browser, yang juga bisa menyimpan PDF, tanpa pustaka baru. Bukti kirim dan bukti bayar berupa berkas menyusul.
+31. Pemakaian otomatis lewat `pf_recipe_material`: bahan per benih, per tanaman, atau per kg panen, dan stok berkurang saat operator mencatat pekerjaannya. Lot yang kedaluwarsa paling dulu terpakai lebih dulu, dan lot yang sudah kedaluwarsa dilewati.
+32. Stok yang kurang tidak menghentikan pekerjaan di lantai produksi. Kekurangannya dicatat di `pf_stock_shortage` sampai ditangani. Pemakaian manual sebaliknya ditolak kalau stok tidak cukup.
+33. Harga dan pesanan pembelian hanya untuk Manajer produksi, Admin sistem, dan Pimpinan. Lot tidak menyimpan harga: lot menunjuk baris pembelian, dan dari situ Tahap 6 menghitung biaya. `pf_stock_lot.location_id` (gudang) ditunda karena belum ada pohon lokasi gudang.
+34. Absen memakai jam server, bukan jam ponsel. Di luar area atau tanpa lokasi tetap tersimpan dan ditandai untuk diperiksa, tidak ditolak. Foto wajib untuk absen dari ponsel, dan yang tidak setuju atau tidak punya ponsel dicatat manual oleh Staf SDM.
+35. Foto ada di bucket privat `pf-attendance`, satu folder per orang. Hanya orangnya, Staf SDM, dan Pimpinan yang bisa membuka. Admin sistem dan Manajer produksi sengaja tidak. Kontrak mengikuti aturan yang sama, kecuali hanya Staf SDM yang bisa mengubah.
+36. Foto dihapus setelah 90 hari. Tanpa penjadwal, penghapusan berjalan saat Staf SDM membuka halaman Kehadiran, dan foto lewat masa simpan tetap ada sampai itu terjadi. `pf_attendance` tidak masuk audit log, supaya koordinat tidak tersalin ke catatan yang lebih lama hidupnya.
+37. `pf_work_area` menyimpan titik dan radius lokasi kerja, terpisah dari `pf_location`. `pf_labor_log.task_id` belum ada karena `pf_task` ditunda; kegiatan dicatat sebagai teks.
+38. Biaya batch terdiri dari bahan, tenaga, tagihan langsung, dan bagian tagihan ruang. Semua dihitung di database dan dikembalikan bersama barisnya, supaya bisa dicek dengan kalkulator. Yang belum punya harga dilaporkan di samping angkanya, tidak dianggap gratis.
+39. Tenaga memakai tarif standar per jenis orang (`pf_labor_rate`) yang bertanggal, bukan upah di kontrak. Pembaca biaya (Manajer produksi, Admin, Pimpinan) sengaja tidak semuanya boleh membaca kontrak, dan batch yang dikerjakan satu orang akan membocorkan upahnya.
+40. Tagihan ruang dibagi menurut nampan-hari (Persemaian) atau lubang-hari (Plant factory) pada periodenya. Seluruh tagihan jatuh ke batch yang ada, jadi ruang yang sepi membuat batch di dalamnya terlihat mahal. Tagihan untuk periode ruang kosong ditandai belum terbagi. Batch yang berjalan bertanda sementara, karena bagiannya bisa berubah.
+41. Harga lot tanpa pesanan pembelian ada di `pf_lot_price`, terpisah dari `pf_stock_lot` yang terbaca semua anggota lab. Selisih opname dan koreksi stok tidak masuk biaya batch atau ringkasan bulanan. Pemakaian listrik belum terbaca dari sensor, jadi tagihan dicatat manual.
+42. Perintah kerja perawatan dibuka manual dari rencana yang jatuh tempo, karena belum ada penjadwal. Biaya yang dicatat saat selesai menjadi tagihan ruang untuk bulan tersebut. Penggantian suku cadang dari stok belum tersambung ke perintah kerja.
+43. Merek ERP ini agrosphere (logo di `public/brand/agrosphere-*.svg`, lewat `A.agrosphere*`). Situs publik tetap smartagri. Urutan menu mengikuti jalannya hari: Budidaya, Monitoring, Persediaan, Penjualan dan biaya, Tim, Data induk, Administrasi. Sumber urutannya `components/erp/erpNav.ts`; bagian 3 dokumen ini mencatat susunan awal.
+44. Lipatan menu, sembunyi-tampil menu, dan lebar kartu 3D hanya bertahan selama ERP terbuka, karena proyek ini tanpa localStorage. Kalau perlu bertahan antarperangkat, simpan di profil pengguna di Supabase.
+45. Ikon pada kartu 3D (lampu, pintu, penutup rak, dan seterusnya) hanya mengubah tampilan model, bukan alat sungguhan, sesuai keputusan monitoring saja. Model plant factory tidak punya animasi pintu, jadi di sana ikon itu berisi penutup rak, plafon, dan dinding rendah.
+46. Selama perangkat belum terdaftar, kartu Kondisi menampilkan nilai dan grafik contoh berlabel Contoh, memakai nilai yang sama dengan layar fasilitas. Begitu perangkat terdaftar di satu tempat, tempat itu hanya menampilkan bacaan perangkatnya.
+47. Grafik dashboard memakai Recharts (3.10.1, versi dikunci). Grafik gabungan mikroklimat dan nutrisi memakai satu sumbu tegak per parameter, dalam satuannya, dengan lima nilai bulat agar garis bantu tetap sama; dua sumbu di kiri dan dua di kanan, atau satu sumbu mengikuti garis yang disorot bila kartu sempit. Mengarahkan kursor ke garis, sumbu, atau legenda menyorot pasangan garis dan sumbunya. Warna mengikuti parameter, sama di semua grafik, dan lolos validator buta warna.
+48. Filter waktu manual membaca ringkasan yang sudah ada, sampai 90 hari ke belakang, jadi tidak perlu SQL baru. Bacaan 5 menit hanya tersedia untuk 48 jam terakhir; rentang yang lebih lama memakai ringkasan per jam.
+49. Data dummy ada di `web/supabase/pf-demo-seed.sql` dan dihapus dengan `pf-demo-clean.sql`. Barisnya dikenali dari id berawalan d0000000. Tidak menyentuh `pf_user_role`, jadi layar Absen tetap perlu akun yang ditautkan ke satu orang di halaman Orang. Hapus data ini sebelum ERP dipakai sungguhan.
+50. Model 3D: gulir mouse memperbesar ke arah kursor (halaman tidak ikut bergulir selama kursor di atas model). Kartu status melayang mengikuti kursor untuk tanaman, nampan, dan peralatan; di dashboard, klik menahan kartu dan memberi tautan ke detail. Penutup rak mati secara bawaan, karena mesin 3D menghentikan pilihan pada penutup sehingga kursor tidak sampai ke tanaman. Tombolnya tetap ada.
+51. Seluruh ERP berbahasa Inggris: teks, URL (`/erp/stock`, `/erp/people`, `/erp/seedlings`, dst.), format tanggal dan angka (en-GB), dan pesan galat di SQL. Nilai yang tersimpan di database (`aktif`, `kosong`, `biji`, `Afkir`) tetap, karena terikat constraint dan data lama; yang berubah hanya labelnya. Isian uang menerima dua kebiasaan menulis (1.500.000 dan 1,500,000).
+52. Satu komponen tabel untuk semua daftar (`DataTable`), diambil dari inventory situs utama: angka yang sekaligus filter, pil status, pencarian, header yang bisa diurutkan, baris yang menumpuk jadi kartu di ponsel. Pohon lokasi dan resep tetap berpola induk-rincian karena isinya bukan daftar datar.
+53. Jadwal tim memakai kalender hari, minggu, dan bulan. Orang dengan jam yang sama digabung dalam satu blok supaya tetap terbaca.
+54. Profil SDM di `/erp/people/$id`: data diri, kehadiran, jadwal, aktivitas (jam kerja per batch dan audit log), kontrak. Foto orang memakai avatar akunnya, jadi tidak ada foto baru yang disimpan ERP. Foto barang disimpan di bucket privat `pf-media` (`pf-profile-media.sql`).
+55. Data lubang dan nampan bisa diubah langsung dari model 3D atau denah 2D, dengan fungsi database yang sama seperti halaman batch. Pindah tanam tetap mengisi satu tingkat, bukan satu lubang, karena satu tingkat hanya menerima satu batch. Perangkat tetap tidak dikendalikan.
 

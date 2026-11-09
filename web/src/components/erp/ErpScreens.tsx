@@ -3,9 +3,10 @@ import { useRouterState, useSearch } from "@tanstack/react-router";
 import PlantFactoryOverview from "./PlantFactoryOverview";
 import SeedChamberPage from "./SeedChamberPage";
 
-// Both facility screens stay alive for as long as the ERP is open, so switching
-// tabs is instant and keeps each camera, filter and selection. The URL only
-// decides which one shows; the routes themselves render nothing.
+// Both facility screens stay alive from the first visit to either one until the
+// ERP is closed, so switching tabs is instant and keeps each camera, filter and
+// selection. The URL only decides which one shows; their routes render nothing.
+// Someone who only opens the data pages never loads a model.
 //
 // The hidden screen keeps its full size instead of display: none, so its 3D
 // engine frames the model for the real canvas, and it stops drawing while
@@ -17,7 +18,7 @@ const PRELOAD_DELAY_MS = 800;
 
 function Screen({ active, children }: { active: boolean; children: ReactNode }) {
   return (
-    <div className={active ? "flex flex-1 flex-col" : "invisible absolute left-0 top-0 h-screen w-full overflow-hidden"}>
+    <div className={active ? "flex flex-1 flex-col" : "invisible absolute left-0 top-0 h-[calc(100vh-76px)] w-full overflow-hidden"}>
       {children}
     </div>
   );
@@ -26,7 +27,11 @@ function Screen({ active, children }: { active: boolean; children: ReactNode }) 
 export default function ErpScreens() {
   const pathname = useRouterState({ select: (s) => s.location.pathname }).replace(/\/$/, "");
   const search = useSearch({ strict: false }) as { hole?: string; slot?: string };
-  const chamber = pathname.endsWith("/persemaian");
+  const chamber = pathname.endsWith("/seedlings");
+  const factory = pathname.endsWith("/plant-factory");
+
+  const [visited, setVisited] = useState(false);
+  if ((chamber || factory) && !visited) setVisited(true);
 
   const [preload, setPreload] = useState(false);
   const scheduled = useRef(false);
@@ -36,13 +41,15 @@ export default function ErpScreens() {
     window.setTimeout(() => setPreload(true), PRELOAD_DELAY_MS);
   }, []);
 
+  if (!visited) return null;
+
   return (
     <>
       <Screen active={chamber}>
         <SeedChamberPage active={chamber} preload={preload} onSceneReady={onSceneReady} focusSlot={search.slot} />
       </Screen>
-      <Screen active={!chamber}>
-        <PlantFactoryOverview active={!chamber} preload={preload} onSceneReady={onSceneReady} focusHole={search.hole} />
+      <Screen active={factory}>
+        <PlantFactoryOverview active={factory} preload={preload} onSceneReady={onSceneReady} focusHole={search.hole} />
       </Screen>
     </>
   );

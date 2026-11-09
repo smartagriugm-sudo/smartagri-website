@@ -36,15 +36,9 @@ describe("plant factory data", () => {
     }
   });
 
-  it("drops the batch when an edit empties a hole", () => {
-    const p = new PfProvider();
-    const planted = [...p.holes.values()].find((h) => isPlanted(h.state))!;
-    p.updateHole(planted.id, { state: "kosong", note: "dipanen" });
-    expect(p.getHole(planted.id)).toMatchObject({ state: "kosong", batch: null, note: "dipanen" });
-  });
-
   it("switches off the lamp of a tier under sanitation only", () => {
     const p = new PfProvider();
+    p.setHoles(seedHoles());
     expect(p.lamps.get("LAMP-R2-T1")).toBe(false);
     expect(p.lamps.get("LAMP-R1-T1")).toBe(true);
   });

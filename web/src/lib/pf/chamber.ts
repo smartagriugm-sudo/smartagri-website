@@ -1,5 +1,5 @@
 import type { ChamberReading, SeedChamberProvider } from "plant-factory-3d";
-import { BATCHES, DUMMY_TODAY, addDays, daysBetween } from "./facility";
+import { BATCHES, addDays } from "./facility";
 
 // Growth chamber CH1 (FAITHFUL FPG450), where every batch spends its germination
 // phase before moving to the plant factory. The model in the plant-factory-3d
@@ -7,17 +7,18 @@ import { BATCHES, DUMMY_TODAY, addDays, daysBetween } from "./facility";
 // the tray position id, CH<chamber>-S<shelf>-P<position>.
 //
 // The tray count per shelf is estimated from photos, so nothing but SHELVES may
-// assume it, and the future tables must not lock it in. The slot data and the
-// climate here are dummy until the pf_* tables and the device are in place.
+// assume it, and the tables do not lock it in. The climate here is simulated
+// until the device reports; seedSlots() is sample data for where the tables are
+// not installed yet.
 
 export const CHAMBER_CODE = "CH1";
 
 /** S1 is the top shelf, S4 the flat floor of the interior. Positions run left to right, then front to back. */
 export const SHELVES = [
-  { shelf: 1, positions: 6, label: "Rak 1 (atas)" },
-  { shelf: 2, positions: 6, label: "Rak 2 (tengah)" },
-  { shelf: 3, positions: 6, label: "Rak 3 (bawah)" },
-  { shelf: 4, positions: 4, label: "Rak 4 (dasar)" },
+  { shelf: 1, positions: 6, label: "Shelf 1 (top)" },
+  { shelf: 2, positions: 6, label: "Shelf 2 (middle)" },
+  { shelf: 3, positions: 6, label: "Shelf 3 (lower)" },
+  { shelf: 4, positions: 4, label: "Shelf 4 (bottom)" },
 ] as const;
 
 export const CHAMBER_LAMPS = SHELVES.map((s) => ({ id: `LAMP-${CHAMBER_CODE}-L${s.shelf}`, shelf: s.shelf as number }));
@@ -30,11 +31,11 @@ export type SlotState = "kosong" | "disemai" | "berkecambah" | "siap_pindah" | "
  * freshly sown tray with an upturned one.
  */
 export const SLOT_STATES: Record<SlotState, { label: string; color: number; plant: number; plugs: boolean; lid: boolean }> = {
-  disemai: { label: "Baru disemai", color: 0xc9a26a, plant: 0, plugs: true, lid: true },
-  berkecambah: { label: "Berkecambah", color: 0xa5d66b, plant: 0.6, plugs: true, lid: false },
-  siap_pindah: { label: "Siap pindah tanam", color: 0x2f9e57, plant: 1.05, plugs: true, lid: false },
-  masalah: { label: "Bermasalah", color: 0xd9433b, plant: 0.5, plugs: true, lid: false },
-  kosong: { label: "Kosong", color: 0x8d9398, plant: 0, plugs: false, lid: false },
+  disemai: { label: "Just sown", color: 0xc9a26a, plant: 0, plugs: true, lid: true },
+  berkecambah: { label: "Germinated", color: 0xa5d66b, plant: 0.6, plugs: true, lid: false },
+  siap_pindah: { label: "Ready to transplant", color: 0x2f9e57, plant: 1.05, plugs: true, lid: false },
+  masalah: { label: "Problem", color: 0xd9433b, plant: 0.5, plugs: true, lid: false },
+  kosong: { label: "Empty", color: 0x8d9398, plant: 0, plugs: false, lid: false },
 };
 
 export const SLOT_STATE_KEYS = Object.keys(SLOT_STATES) as SlotState[];
@@ -59,6 +60,8 @@ export type Slot = {
   moved: number;
   transplantOn: string;
   note: string;
+  /** Under maintenance or retired, so nothing can be sown here. */
+  offline: boolean;
 };
 
 export function slotId(shelf: number, position: number) {
@@ -83,6 +86,11 @@ export function emptySlot(slot: Slot): Slot {
   return { ...slot, state: "kosong", batch: null, crop: "", sownOn: "", seedCount: 0, germinated: 0, moved: 0, transplantOn: "", note: "" };
 }
 
+/** Every tray position, empty, before records are laid over them. */
+export function blankSlots(): Slot[] {
+  return seedSlots().map(emptySlot);
+}
+
 export function seedSlots(): Slot[] {
   const out: Slot[] = [];
   for (const { shelf, positions } of SHELVES) {
@@ -105,6 +113,7 @@ export function seedSlots(): Slot[] {
         moved: 0,
         transplantOn: "",
         note: "",
+        offline: false,
       };
       if (position > plan.trays) {
         out.push(base);
@@ -153,10 +162,14 @@ export const vpdOf = (temp: number, rh: number) => 0.6108 * Math.exp((17.27 * te
  * which will come from the crop recipe.
  */
 export class ChamberProvider implements SeedChamberProvider {
-  slots = new Map<string, Slot>(seedSlots().map((s) => [s.id, s]));
+  slots = new Map<string, Slot>(blankSlots().map((s) => [s.id, s]));
   lamps = new Map<string, boolean>(CHAMBER_LAMPS.map((l) => [l.id, true]));
   reference: Climate = { temp: 24, rh: 72, co2: 800, lux: 12000 };
   climate: Climate = { temp: 23.8, rh: 73, co2: 790, lux: 12000 };
+  /** True once a sensor reports here: its values stand, and nothing is simulated. */
+  liveClimate = false;
+  /** Which of the climate's values come from a sensor; the rest stay samples. */
+  liveKeys = new Set<keyof Climate>();
   private tick = 0;
 
   getSlot(id: string) {
@@ -180,7 +193,16 @@ export class ChamberProvider implements SeedChamberProvider {
     return vpdOf(this.reference.temp, this.reference.rh);
   }
 
+  /** Real readings replace the simulation, metric by metric. */
+  setLiveClimate(readings: { [K in keyof Climate]: number | null }) {
+    const known = Object.entries(readings).filter(([, v]) => v !== null) as [keyof Climate, number][];
+    this.liveClimate = known.length > 0;
+    this.liveKeys = new Set(known.map(([key]) => key));
+    for (const [key, value] of known) this.climate[key] = value;
+  }
+
   stepClimate() {
+    if (this.liveClimate) return;
     this.tick++;
     const wave = (period: number, amp: number) => Math.sin((this.tick / period) * Math.PI * 2) * amp;
     const near = (from: number, to: number) => from + (to - from) * 0.2;
@@ -195,9 +217,9 @@ export class ChamberProvider implements SeedChamberProvider {
   /** Drives the screen on the 3D model; the engine shows the first three. */
   readings(): Record<string, ChamberReading> {
     return {
-      suhu: { label: "Suhu", value: this.climate.temp, unit: "°C", d: 1 },
-      rh: { label: "Kelembapan", value: this.climate.rh, unit: "% RH", d: 0 },
-      lux: { label: "Pencahayaan", value: this.climate.lux, unit: "lux", d: 0 },
+      suhu: { label: "Temperature", value: this.climate.temp, unit: "°C", d: 1 },
+      rh: { label: "Humidity", value: this.climate.rh, unit: "% RH", d: 0 },
+      lux: { label: "Light", value: this.climate.lux, unit: "lux", d: 0 },
     };
   }
 
@@ -210,5 +232,3 @@ export class ChamberProvider implements SeedChamberProvider {
     );
   }
 }
-
-export const seedAge = (sownOn: string) => (sownOn ? daysBetween(sownOn, DUMMY_TODAY) : 0);

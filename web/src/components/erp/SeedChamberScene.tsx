@@ -14,9 +14,11 @@ type Props = {
   onReady: (engine: ChamberEngine) => void;
   onSelect: (selection: ChamberSelection | null) => void;
   onError: (error: unknown) => void;
+  /** Extra states on top of the usual ones, for a picker that marks what is chosen. */
+  states?: Record<string, { label: string; color: number }>;
 };
 
-export default function SeedChamberScene({ provider, onReady, onSelect, onError }: Props) {
+export default function SeedChamberScene({ provider, onReady, onSelect, onError, states }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const handlers = useRef({ onReady, onSelect, onError });
   handlers.current = { onReady, onSelect, onError };
@@ -30,7 +32,8 @@ export default function SeedChamberScene({ provider, onReady, onSelect, onError 
           container: container.current!,
           ...urls,
           provider,
-          slotStates: SLOT_STATES,
+          slotStates: states ? { ...SLOT_STATES, ...states } : SLOT_STATES,
+          tooltip: false,
         }),
       )
       .then((created) => {

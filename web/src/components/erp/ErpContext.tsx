@@ -1,10 +1,13 @@
-import { createContext, useContext, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ErpStore } from "../../lib/pf/store";
 
 const Context = createContext<ErpStore | null>(null);
 
 export function ErpStoreProvider({ children }: { children: ReactNode }) {
   const [store] = useState(() => new ErpStore());
+  useEffect(() => {
+    void store.load();
+  }, [store]);
   return <Context.Provider value={store}>{children}</Context.Provider>;
 }
 
