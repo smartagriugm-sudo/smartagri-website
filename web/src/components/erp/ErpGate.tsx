@@ -23,5 +23,5 @@ export default function ErpGate({ children }: { children: ReactNode }) {
       </main>
     );
   }
-  return <AuthGate checkingText="Checking access..." slowText="Slow connection, still trying...">{children}</AuthGate>;
+  return <AuthGate checkingText="Checking access…" slowText="Slow connection, still trying…">{children}</AuthGate>;
 }

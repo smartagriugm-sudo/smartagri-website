@@ -116,6 +116,9 @@ export const unitLabel = (unit: string) => (unit === "biji" ? "seeds" : unit);
 
 export const formatQty = (qty: number, unit: string) => `${qty.toLocaleString("en-GB", { maximumFractionDigits: 2 })} ${unitLabel(unit)}`;
 
+/** What is missing, in what can be bought: a part of a piece or a seed rounds up to a whole one. */
+export const formatShort = (qty: number, unit: string) => formatQty(unit === "pcs" || unit === "biji" ? Math.ceil(qty) : qty, unit);
+
 export type PoStage = "draf" | "menunggu" | "sebagian" | "diterima" | "batal";
 
 export const PO_STAGE: Record<PoStage, { label: string; className: string }> = {

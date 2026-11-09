@@ -36,7 +36,7 @@ function CropEditor({ id, initial, onDone }: { id: string | null; initial: CropF
         </label>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save"}</PrimaryButton>
           <SecondaryButton onClick={() => onDone(false)}>Cancel</SecondaryButton>
         </div>
       </form>

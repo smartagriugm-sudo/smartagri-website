@@ -124,7 +124,7 @@ function PoEditor({ order, initial, suppliers, items, onCancel, onSaved }: { ord
         <Field label="Notes"><textarea className={inputClass} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : order ? "Save draft" : "Create draft"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : order ? "Save draft" : "Create draft"}</PrimaryButton>
           <SecondaryButton onClick={onCancel}>Cancel</SecondaryButton>
         </div>
       </form>
@@ -173,7 +173,7 @@ export function PurchasePage() {
                   empty="No purchase orders yet."
                   columns={[
                     { key: "no", label: "Order", track: "minmax(0,1.3fr)", phone: "title", sort: (a, b) => a.po_no.localeCompare(b.po_no), cell: (o) => <CellTitle title={o.po_no} sub={o.supplier_name} /> },
-                    { key: "stage", label: "Stage", cell: (o) => { const stage = PO_STAGE[poStage(o)]; return <Chip label={stage.label} className={stage.className} />; } },
+                    { key: "stage", label: "Stage", track: "minmax(160px,1fr)", cell: (o) => { const stage = PO_STAGE[poStage(o)]; return <Chip label={stage.label} className={stage.className} />; } },
                     { key: "date", label: "Expected", sort: (a, b) => (a.expected_on ?? a.ordered_on).localeCompare(b.expected_on ?? b.ordered_on), cell: (o) => {
                       const late = !!o.expected_on && o.expected_on < today && o.status === "dipesan" && o.open_lines > 0;
                       return <span className={`text-[13px] ${late ? "font-medium text-[#B3362C]" : ""}`}>{o.expected_on ? `${late ? "Late, " : ""}${formatLongDate(o.expected_on)}` : `Ordered ${formatLongDate(o.ordered_on)}`}</span>;
@@ -216,7 +216,7 @@ function ReceiveLine({ line, reload }: { line: PoLine; reload: () => Promise<voi
       <Field label={`Quantity (${line.unit})`}><input className={inputClass} inputMode="decimal" value={qty} placeholder={String(left).replace(".", ",")} onChange={(e) => setQty(e.target.value)} /></Field>
       <Field label="Received date"><input type="date" className={inputClass} max={today} value={receivedOn} onChange={(e) => setReceivedOn(e.target.value)} /></Field>
       <Field label={line.track_expiry ? "Expires" : "Expires (optional)"}><input type="date" className={inputClass} value={expiryOn} onChange={(e) => setExpiryOn(e.target.value)} /></Field>
-      <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Receive"}</PrimaryButton>
+      <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Receive"}</PrimaryButton>
       <div className="col-span-full empty:hidden"><ActionNote action={{ error: action.error, saved: false }} /></div>
     </form>
   );
@@ -230,7 +230,7 @@ function CancelPo({ order, reload }: { order: PurchaseOrder; reload: () => Promi
       <div className="space-y-2">
         <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
         <ActionNote action={{ error: action.error, saved: false }} />
-        <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await cancelPurchaseOrder(order.id, why); await reload(); })}>{action.busy ? "Cancelling..." : "Yes, cancel"}</SecondaryButton>
+        <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await cancelPurchaseOrder(order.id, why); await reload(); })}>{action.busy ? "Cancelling…" : "Yes, cancel"}</SecondaryButton>
       </div>
     </Card>
   );
@@ -310,7 +310,7 @@ export function PurchaseDetailPage({ id }: { id: string }) {
                       {isDraft && canManageProduction && (
                         <div className="mt-3 space-y-2">
                           <ActionNote action={{ error: place.error, saved: false }} />
-                          <PrimaryButton disabled={place.busy} onClick={() => void place.run(async () => { await placePurchaseOrder(order.id); await state.reload(); })}>{place.busy ? "Saving..." : "Mark as ordered"}</PrimaryButton>
+                          <PrimaryButton disabled={place.busy} onClick={() => void place.run(async () => { await placePurchaseOrder(order.id); await state.reload(); })}>{place.busy ? "Saving…" : "Mark as ordered"}</PrimaryButton>
                         </div>
                       )}
                     </Card>

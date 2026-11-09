@@ -143,7 +143,7 @@ function MaterialRows({ recipe, initial, items, onSaved }: { recipe: PfRecipe; i
       <ActionNote action={action} />
       <div className="flex flex-wrap gap-2">
         <SecondaryButton disabled={usable.length === 0} onClick={() => setRows((all) => [...all, { itemId: usable[0].id, basis: "per_tanaman", qty: "" }])}><Plus className="h-4 w-4" /> Add material</SecondaryButton>
-        <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Saving..." : "Save materials"}</PrimaryButton>
+        <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Saving…" : "Save materials"}</PrimaryButton>
       </div>
     </div>
   );
@@ -217,7 +217,7 @@ function TargetRows({ recipe, phase, list, editable, onSaved }: { recipe: PfReci
         );
       })}
       <ActionNote action={action} />
-      <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Saving..." : "Save references"}</PrimaryButton>
+      <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Saving…" : "Save references"}</PrimaryButton>
     </div>
   );
 }
@@ -273,7 +273,7 @@ function PhaseEditor({ recipe, phases, onSaved }: { recipe: PfRecipe; phases: Pf
       <div className="mt-2"><ActionNote action={action} /></div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <SecondaryButton onClick={add}><Plus className="h-4 w-4" /> Add phase</SecondaryButton>
-        <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Saving..." : "Save phases"}</PrimaryButton>
+        <PrimaryButton disabled={action.busy} onClick={() => void save()}>{action.busy ? "Saving…" : "Save phases"}</PrimaryButton>
         {saved && <span className="text-[13px] font-medium text-[#0E7A5C]">Saved</span>}
       </div>
     </div>

@@ -10,7 +10,7 @@ import { batchWork } from "../../lib/pf/work";
 import { ago, formatWithUnit, latestAt, metricInfo } from "../../lib/pf/monitoring";
 import { fetchPlans, fetchWorkOrders } from "../../lib/pf/cost";
 import { attendanceFlags, buildRoster, clockText, contractEndingSoon, fetchAllContracts, fetchAttendance, fetchLeaves, fetchPeople, fetchShifts } from "../../lib/pf/people";
-import { fetchItems, fetchOpenShortages, fetchPurchaseOrders, fetchStockLots, formatQty } from "../../lib/pf/inventory";
+import { fetchItems, fetchOpenShortages, fetchPurchaseOrders, fetchStockLots, formatQty, formatShort } from "../../lib/pf/inventory";
 import { fetchAvailableLots, fetchInvoices, fetchOrders, formatKg, formatRupiah, roundKg } from "../../lib/pf/sales";
 import { addDays as addCalendarDays } from "../../lib/pf/facility";
 import { toErpError } from "../../lib/pf/foundation";
@@ -145,7 +145,7 @@ function WorkPanel({ items, known, loading, canAct, stamp, refreshing, onRefresh
           Needs action{known && <span className="ml-1.5 tabular-nums text-[#4F6B73]">{items.length}</span>}
         </h2>
         <div className="flex items-center gap-1.5 text-[12.5px] tabular-nums text-[#4F6B73]">
-          {loading ? <span role="status">{slow ? SLOW_TEXT : "Loading..."}</span> : stamp && <span className="whitespace-nowrap">Data at {stamp}</span>}
+          {loading ? <span role="status">{slow ? SLOW_TEXT : "Loading…"}</span> : stamp && <span className="whitespace-nowrap">Data at {stamp}</span>}
           <button type="button" disabled={refreshing} onClick={onRefresh} aria-label="Reload data" className="grid h-11 w-11 place-items-center rounded-lg text-[#36525A] hover:bg-[#EEF5F5] disabled:opacity-50 sm:h-8 sm:w-8">
             <RefreshCw className={`h-4 w-4 ${refreshing ? "motion-safe:animate-spin" : ""}`} strokeWidth={1.75} />
           </button>
@@ -284,7 +284,7 @@ function FacilityPanel({ store }: { store: ErpStore }) {
           <div className="space-y-2">
             {SHELVES.map((shelf) => (
               <div key={shelf.shelf} className="flex items-center gap-2">
-                <span className="w-[40px] shrink-0 text-[12px] text-[#4F6B73]">Rack {shelf.shelf}</span>
+                <span className="w-[40px] shrink-0 text-[12px] text-[#4F6B73]">Shelf {shelf.shelf}</span>
                 {/* Rak 4 is shorter than the rest, and stays shorter here: two empty cells keep the columns in line. */}
                 <div className="grid flex-1 grid-cols-6 gap-1">
                   {slots.filter((s) => s.shelf === shelf.shelf).map((s) => <span key={s.id} className="flex"><TrayMark slot={s} /></span>)}
@@ -330,7 +330,7 @@ function SchedulePanel({ store }: { store: ErpStore }) {
       </div>
 
       {batches.length === 0 ? (
-        <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">{store.mode === "loading" ? "Loading data..." : store.hasData ? "No running batches yet." : "The schedule cannot be shown yet."}</p>
+        <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">{store.mode === "loading" ? "Loading data…" : store.hasData ? "No running batches yet." : "The schedule cannot be shown yet."}</p>
       ) : (
         <>
           <div className="hidden border-t border-[#EDF2F2] px-4 pt-2 text-[12px] text-[#4F6B73] md:grid md:grid-cols-[230px_minmax(0,1fr)_84px] md:gap-3">
@@ -407,7 +407,7 @@ export default function ErpDashboard() {
         planned: records.data?.planned.map((b) => ({ id: b.id, code: b.code, crop: batchLabel(b) })) ?? null,
         lots: records.data ? [...records.data.lots, ...(stock.data?.lots.map((l) => ({ id: l.id, lot_no: l.lot_no, qty_on_hand: l.qty_on_hand, unit: l.unit as never, expiry_date: l.expiry_date, itemName: l.item_name })) ?? [])] : null,
         lowStock: stock.data?.items.filter((i) => i.active && i.below_reorder).map((i) => ({ id: i.id, name: i.name, left: formatQty(i.usable_qty, i.unit), minimum: formatQty(i.reorder_point ?? 0, i.unit) })),
-        shortages: stock.data?.shortages.map((x) => ({ id: x.id, name: x.item_name, short: formatQty(x.qty_short, x.unit), batch: x.batch_code })),
+        shortages: stock.data?.shortages.map((x) => ({ id: x.id, name: x.item_name, short: formatShort(x.qty_short, x.unit), batch: x.batch_code })),
         purchasesLate: stock.data?.purchases.filter((p) => p.status === "dipesan" && p.open_lines > 0 && p.expected_on && p.expected_on < store.today).map((p) => ({ id: p.id, no: p.po_no, supplier: p.supplier_name, expected: p.expected_on! })),
         setup: records.data?.setup ?? null,
         alarms: store.monitoring?.alarms.map((a) => ({ id: a.id, level: a.level, label: metricInfo(a.metric).label, value: formatWithUnit(a.metric, a.value), place: a.location_code, since: formatDateTime(a.opened_at) })),

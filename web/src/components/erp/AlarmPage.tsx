@@ -35,7 +35,7 @@ function OpenAlarm({ alarm, canAck }: { alarm: Alarm; canAck: boolean }) {
         <span className="block text-[13px] text-[#4F6B73]">{alarm.asset_code} · since {formatDateTime(alarm.opened_at)} ({ago(alarm.opened_at)}){alarm.ack_at ? ` · handled ${ago(alarm.ack_at)}` : ""}</span>
       </span>
       {canAck && !alarm.ack_at && (
-        <SecondaryButton disabled={action.busy} onClick={() => void action.run(async () => { await ackAlarm(alarm.id); await store.loadMonitoring(); })}>{action.busy ? "Saving..." : "I'll handle it"}</SecondaryButton>
+        <SecondaryButton disabled={action.busy} onClick={() => void action.run(async () => { await ackAlarm(alarm.id); await store.loadMonitoring(); })}>{action.busy ? "Saving…" : "I'll handle it"}</SecondaryButton>
       )}
       <div className="basis-full empty:hidden"><ActionNote action={{ error: action.error, saved: false }} /></div>
     </li>
@@ -83,7 +83,7 @@ function RuleEditor({ places, rule, onDone }: { places: AssetLocation[]; rule: A
         <label className="flex min-h-[44px] items-center gap-2 text-[14px] text-[#0F2F36] sm:min-h-0"><input type="checkbox" className="h-4 w-4 accent-[#14919B]" checked={active} onChange={(e) => setActive(e.target.checked)} /> Active rule</label>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save rule"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save rule"}</PrimaryButton>
           <SecondaryButton onClick={() => onDone(false)}>Cancel</SecondaryButton>
         </div>
       </form>

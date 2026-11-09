@@ -368,25 +368,25 @@ select s.id, 'room', 'PF01', 'Plant factory', 480 from public.pf_location s wher
 on conflict (code) do nothing;
 
 insert into public.pf_location (parent_id, level, code, name, capacity)
-select p.id, 'rack', 'R' || r, 'Rak ' || r, 240
+select p.id, 'rack', 'R' || r, 'Rack ' || r, 240
   from public.pf_location p cross join generate_series(1, 2) r
  where p.code = 'PF01'
 on conflict (code) do nothing;
 
 insert into public.pf_location (parent_id, level, code, name, capacity)
-select p.id, 'tier', p.code || '-T' || t, 'Tingkat ' || t, 80
+select p.id, 'tier', p.code || '-T' || t, 'Tier ' || t, 80
   from public.pf_location p cross join generate_series(1, 3) t
  where p.code in ('R1', 'R2')
 on conflict (code) do nothing;
 
 insert into public.pf_location (parent_id, level, code, name, capacity)
-select p.id, 'gully', p.code || '-G' || g, 'Talang ' || g, 20
+select p.id, 'gully', p.code || '-G' || g, 'Gully ' || g, 20
   from public.pf_location p cross join generate_series(1, 4) g
  where p.code ~ '^R[12]-T[123]$'
 on conflict (code) do nothing;
 
 insert into public.pf_location (parent_id, level, code, name, capacity, slot_status)
-select p.id, 'hole', p.code || '-H' || lpad(h::text, 2, '0'), 'Lubang ' || h, 1, 'available'
+select p.id, 'hole', p.code || '-H' || lpad(h::text, 2, '0'), 'Hole ' || h, 1, 'available'
   from public.pf_location p cross join generate_series(1, 20) h
  where p.code ~ '^R[12]-T[123]-G[1234]$'
 on conflict (code) do nothing;
@@ -396,17 +396,49 @@ select s.id, 'chamber', 'CH1', 'Growth chamber FAITHFUL FPG450', 22 from public.
 on conflict (code) do nothing;
 
 insert into public.pf_location (parent_id, level, code, name, capacity)
-select p.id, 'chamber_shelf', 'CH1-S' || v.shelf, 'Rak ' || v.shelf, v.positions
+select p.id, 'chamber_shelf', 'CH1-S' || v.shelf, 'Shelf ' || v.shelf, v.positions
   from public.pf_location p cross join (values (1, 6), (2, 6), (3, 6), (4, 4)) as v (shelf, positions)
  where p.code = 'CH1'
 on conflict (code) do nothing;
 
 insert into public.pf_location (parent_id, level, code, name, capacity, slot_status)
-select p.id, 'tray_position', p.code || '-P' || lpad(n::text, 2, '0'), 'Posisi ' || n, 1, 'available'
+select p.id, 'tray_position', p.code || '-P' || lpad(n::text, 2, '0'), 'Position ' || n, 1, 'available'
   from public.pf_location p
   cross join lateral generate_series(1, case p.code when 'CH1-S4' then 4 else 6 end) n
  where p.code in ('CH1-S1', 'CH1-S2', 'CH1-S3', 'CH1-S4')
 on conflict (code) do nothing;
+
+-- Places seeded before the ERP went English keep their old names; give them
+-- the English ones. Only names that still match the old pattern change, so a
+-- name someone typed stays. The audit trigger is held off while this runs, so
+-- the rename does not fill the audit log with five hundred rows.
+do $$
+declare
+  audited boolean := exists (select 1 from pg_trigger where tgname = 'pf_audit' and tgrelid = 'public.pf_location'::regclass);
+begin
+  if audited then
+    alter table public.pf_location disable trigger pf_audit;
+  end if;
+  update public.pf_location
+     set name = case
+       when level = 'rack' then regexp_replace(name, '^Rak ', 'Rack ')
+       when level = 'tier' then regexp_replace(name, '^Tingkat ', 'Tier ')
+       when level = 'gully' then regexp_replace(name, '^Talang ', 'Gully ')
+       when level = 'hole' then regexp_replace(name, '^Lubang ', 'Hole ')
+       when level = 'chamber_shelf' then regexp_replace(name, '^Rak ', 'Shelf ')
+       when level = 'tray_position' then regexp_replace(name, '^Posisi ', 'Position ')
+     end
+   where (level = 'rack' and name ~ '^Rak [0-9]+$')
+      or (level = 'tier' and name ~ '^Tingkat [0-9]+$')
+      or (level = 'gully' and name ~ '^Talang [0-9]+$')
+      or (level = 'hole' and name ~ '^Lubang [0-9]+$')
+      or (level = 'chamber_shelf' and name ~ '^Rak [0-9]+$')
+      or (level = 'tray_position' and name ~ '^Posisi [0-9]+$');
+  if audited then
+    alter table public.pf_location enable trigger pf_audit;
+  end if;
+end;
+$$;
 
 -- 7. Triggers ------------------------------------------------------------------
 drop trigger if exists pf_location_guard on public.pf_location;

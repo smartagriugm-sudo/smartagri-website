@@ -44,7 +44,7 @@ function DetailsEditor({ person, onDone }: { person: Person; onDone: (saved: boo
         <Field label="Notes"><textarea rows={3} className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
         <ActionNote action={{ error: action.error, saved: false }} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save"}</PrimaryButton>
           <SecondaryButton onClick={() => onDone(false)}>Cancel</SecondaryButton>
         </div>
       </form>

@@ -1,25 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { RefreshCw } from "lucide-react";
-import { LINK_STATES, MONITORED_PLACES, ago, fetchRecipeTargets, fetchSeries, formatBand, formatValue, formatWithUnit, isStale, latestAt, metricInfo, metricsAt, rangeState, stripColumns, type PlaceCode, type RangeState } from "../../lib/pf/monitoring";
+import { LINK_STATES, MONITORED_PLACES, ago, fetchRecipeTargets, formatBand, formatValue, formatWithUnit, isStale, latestAt, metricInfo, metricsAt, rangeState, stripColumns, type PlaceCode, type RangeState } from "../../lib/pf/monitoring";
+import { conditionsAt } from "../../lib/pf/conditions";
 import { useErpStore } from "./ErpContext";
 import { DataState, ErpPage, ErrorNote, useLoad } from "./page";
-import SensorChart from "./SensorChart";
+import { ChartPane } from "./ConditionStage";
 import { Segmented } from "./ui";
 
 // What the sensors say now, one place at a time. The strip's cells choose which
-// metric the chart shows, and the band behind the line is the phase's target from
+// metric the chart shows; the chart is the same one as on the overview, so it can
+// also draw a set of parameters together. The band behind the line is the phase's target from
 // the recipe of a batch growing there. Sensors never store a batch: the link is
 // the place and the time.
 
 const panel = "rounded-xl border border-[#DCE7E8] bg-white";
 const sectionTitle = "text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]";
-const RANGES = [
-  { key: 6, label: "6 h" },
-  { key: 24, label: "24 h" },
-  { key: 168, label: "7 days" },
-  { key: 720, label: "30 days" },
-];
 const REFRESH_MS = 60_000;
 
 const STATE_TEXT: Record<RangeState, { label: string; className: string }> = {
@@ -32,14 +28,14 @@ export default function MonitoringPage() {
   const store = useErpStore();
   const [place, setPlace] = useState<PlaceCode>("PF01");
   const [chosenMetric, setChosenMetric] = useState<string | null>(null);
-  const [hours, setHours] = useState(24);
   const [chosenBatch, setChosenBatch] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  // Bumped by the reload button, so the chart asks the sensors again.
+  const [round, setRound] = useState(0);
 
   const summary = store.monitoring;
   const metrics = summary ? metricsAt(summary.assets, place) : [];
   const metric = chosenMetric && metrics.includes(chosenMetric) ? chosenMetric : metrics[0] ?? null;
-  const placeId = store.locationIds.get(place);
 
   // Which batches grow here now, for the band behind the line.
   const here = [...store.batches.values()].filter((b) => (place === "CH1" ? store.traysOfBatch(b.code).length > 0 : store.holesOfBatch(b.code).length > 0));
@@ -48,20 +44,16 @@ export default function MonitoringPage() {
   const targets = useLoad(async () => (batch?.recipeId ? fetchRecipeTargets(batch.recipeId) : []), [batch?.recipeId]);
   const targetOf = (key: string) => targets.data?.find((t) => t.phase === batch?.phaseKey && t.metric === key) ?? null;
 
-  const series = useLoad(async () => (placeId && metric ? fetchSeries(placeId, metric, hours) : null), [placeId, metric, hours]);
-
-  const reloadSeries = series.reload;
+  // The chart reloads its own series; the readings above it come with the summary.
   useEffect(() => {
-    const t = window.setInterval(() => {
-      void store.loadMonitoring();
-      void reloadSeries();
-    }, REFRESH_MS);
+    const t = window.setInterval(() => void store.loadMonitoring(), REFRESH_MS);
     return () => window.clearInterval(t);
-  }, [store, reloadSeries]);
+  }, [store]);
 
   const refresh = async () => {
     setRefreshing(true);
-    await Promise.all([store.loadMonitoring(), series.reload()]);
+    await store.loadMonitoring();
+    setRound((n) => n + 1);
     setRefreshing(false);
   };
 
@@ -92,6 +84,8 @@ export default function MonitoringPage() {
           : `No open alarms at ${label.toLowerCase()}.`;
 
   const band = metric ? targetOf(metric) : null;
+  const rows = summary ? conditionsAt(place, summary.assets, summary.latest, targetOf).rows : [];
+  const row = rows.find((r) => r.metric === metric) ?? null;
 
   return (
     <ErpPage
@@ -153,10 +147,7 @@ export default function MonitoringPage() {
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
               <section className={`${panel} min-w-0 p-4`} aria-labelledby="chart-title">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                  <h2 id="chart-title" className={sectionTitle}>{metric ? metricInfo(metric).label : "Chart"}</h2>
-                  <Segmented value={hours} options={RANGES} onChange={setHours} />
-                </div>
+                <h2 id="chart-title" className={`${sectionTitle} mb-2`}>Chart</h2>
                 {here.length > 0 && (
                   <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-[#4F6B73]">
                     <label className="flex items-center gap-2">
@@ -168,11 +159,11 @@ export default function MonitoringPage() {
                     <span>{band ? formatBand(band.metric, band) : "This batch's recipe has no reference for this reading yet."}</span>
                   </div>
                 )}
-                {series.error && !series.error.notInstalled ? (
-                  <ErrorNote message={series.error.message} onRetry={series.reload} />
-                ) : metric ? (
-                  <SensorChart metric={metric} points={series.data?.points ?? []} stepMinutes={series.data?.stepMinutes ?? 5} hours={hours} band={band} />
-                ) : null}
+                {row && (
+                  <div className="-mx-4 -mb-2 flex h-[420px] flex-col sm:h-[460px]">
+                    <ChartPane key={`${place}:${round}`} store={store} place={place} row={row} rows={rows} sample={false} />
+                  </div>
+                )}
               </section>
 
               <div className="min-w-0 space-y-4">

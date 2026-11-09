@@ -98,7 +98,7 @@ function NotInstalled() {
 }
 
 /** The client retries a failed read for up to about 18 seconds, so a long wait gets a word of its own. */
-export const SLOW_TEXT = "Slow connection, still trying...";
+export const SLOW_TEXT = "Slow connection, still trying…";
 
 export function useSlow(waiting: boolean, afterMs = 6000) {
   const [slow, setSlow] = useState(false);
@@ -128,7 +128,7 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry: () =
     <div role="alert" className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-[#FFF6E5] px-3 py-2 text-[13px] text-[#8A5A07]">
       <span className="min-w-0">{message}</span>
       <button type="button" disabled={busy} onClick={() => void retry()} className="whitespace-nowrap font-medium text-[#0F2F36] underline disabled:cursor-not-allowed disabled:opacity-50">
-        {busy ? "Connecting..." : "Try again"}
+        {busy ? "Connecting…" : "Try again"}
       </button>
     </div>
   );
@@ -138,7 +138,7 @@ function LoadingNote() {
   const slow = useSlow(true);
   return (
     <div className="flex items-center gap-2 py-10 text-[14px] text-[#4F6B73]">
-      <Loader2 className="h-4 w-4 animate-spin text-[#0B6477]" /> {slow ? SLOW_TEXT : "Loading data..."}
+      <Loader2 className="h-4 w-4 animate-spin text-[#0B6477]" /> {slow ? SLOW_TEXT : "Loading data…"}
     </div>
   );
 }

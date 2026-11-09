@@ -17,9 +17,11 @@ type Props = {
   onReady: (engine: SceneEngine) => void;
   onSelect: (selection: Selection | null) => void;
   onError: (error: unknown) => void;
+  /** Extra states on top of the usual ones, for a picker that marks what is chosen. */
+  states?: Record<string, { label: string; color: number }>;
 };
 
-export default function PlantFactoryScene({ provider, onReady, onSelect, onError }: Props) {
+export default function PlantFactoryScene({ provider, onReady, onSelect, onError, states }: Props) {
   const container = useRef<HTMLDivElement>(null);
   // The engine outlives re-renders, so it calls through a ref to the latest props.
   const handlers = useRef({ onReady, onSelect, onError });
@@ -34,7 +36,7 @@ export default function PlantFactoryScene({ provider, onReady, onSelect, onError
           container: container.current!,
           ...urls,
           provider,
-          holeStates: HOLE_STATES,
+          holeStates: states ? { ...HOLE_STATES, ...states } : HOLE_STATES,
           tooltip: false,
         }),
       )

@@ -50,7 +50,7 @@ function NewBatch({ recipes, lots, onDone }: { recipes: ActiveRecipe[]; lots: Se
         <Field label="Notes"><textarea className={inputClass} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy || !chosenLot}>{action.busy ? "Saving..." : "Create batch"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy || !chosenLot}>{action.busy ? "Saving…" : "Create batch"}</PrimaryButton>
           <SecondaryButton onClick={onDone}>Cancel</SecondaryButton>
         </div>
       </form>
@@ -78,7 +78,7 @@ function SanitationRow({ rack, tier, code, canOperate }: { rack: number; tier: n
                 await store.load();
               })}
             >
-              {action.busy ? "Saving..." : "Yes, it is"}
+              {action.busy ? "Saving…" : "Yes, it is"}
             </SecondaryButton>
             <SecondaryButton disabled={action.busy} onClick={() => setAsking(false)}>Cancel</SecondaryButton>
           </span>

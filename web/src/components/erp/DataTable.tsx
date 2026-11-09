@@ -34,9 +34,9 @@ const cardLink = "group flex h-full w-full flex-col overflow-hidden rounded-2xl 
 /** The status mark in a row: a small pill with a dot in the text's colour. */
 export function Chip({ label, className = "bg-[#EEF3F4] text-[#4F6B73]" }: { label: string; className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${className}`}>
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-      {label}
+    <span title={label} className={`inline-flex max-w-full items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${className}`}>
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+      <span className="truncate">{label}</span>
     </span>
   );
 }

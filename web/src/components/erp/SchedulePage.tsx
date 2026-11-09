@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock, MapPin, Plus, Trash2, X } from "lucide-react";
 import { jakartaToday } from "../../lib/pf/batch";
-import { daysOf, endMinutes, hourRange, minutesOfDay, personColor, placeEvents, step, type CalendarMode } from "../../lib/pf/calendar";
+import { daysOf, endMinutes, hourRange, initials, minutesOfDay, personColor, placeEvents, step, type CalendarMode } from "../../lib/pf/calendar";
 import { addDays } from "../../lib/pf/facility";
 import { LEAVE_TYPES, addShifts, clockText, fetchLeaves, fetchPeople, fetchShifts, fetchWorkAreas, parseShiftForm, removeShift, weekStart, type Leave, type Person, type Shift, type WorkArea } from "../../lib/pf/people";
 import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
@@ -102,7 +102,7 @@ function ShiftForm({ people, areas, start, person: presetPerson, onClose, onDone
         </Field>
         <ActionNote action={{ error: action.error, saved: false }} />
         {result && <p role="status" className="text-[13px] font-medium text-[#0E7A5C]">{result}</p>}
-        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Add"}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Add"}</PrimaryButton>
       </form>
     </Card>
   );
@@ -132,7 +132,7 @@ function ShiftDetail({ shift, canEdit, onClose, reload }: { shift: Shift; canEdi
       <div className="mt-3 empty:hidden"><ActionNote action={{ error: action.error, saved: false }} /></div>
       {canEdit && (
         <SecondaryButton className="mt-3" disabled={action.busy} onClick={() => void action.run(async () => { await removeShift(shift.id); await reload(); onClose(); })}>
-          <Trash2 className="h-4 w-4" /> {action.busy ? "Removing..." : "Remove shift"}
+          <Trash2 className="h-4 w-4" /> {action.busy ? "Removing…" : "Remove shift"}
         </SecondaryButton>
       )}
     </Card>
@@ -140,6 +140,9 @@ function ShiftDetail({ shift, canEdit, onClose, reload }: { shift: Shift; canEdi
 }
 
 /* ---------------------------------------------------------- day and week grids */
+
+/** "07.00" reads as "07" where a block is too narrow for the full time. */
+const shortClock = (iso: string) => clockText(iso).replace(/[.:]00$/, "");
 
 function sameHours(shifts: Shift[]) {
   const groups = new Map<string, Shift[]>();
@@ -209,20 +212,39 @@ function HourGrid({ days, today, shifts, leaves, canEdit, selected, onShift, onE
                   const color = group.length === 1 ? personColor(first.person_id) : "#14919B";
                   const fits = Math.max(1, Math.floor((height - 22) / 22));
                   const hidden = group.length - fits;
+                  // Side by side on a day of the week, a lane is too narrow for names: initials, named on hover.
+                  const narrow = days.length > 1 && lanes > 1;
                   return (
                     <div
                       key={`${first.start_at}${first.end_at}`}
                       className="absolute z-10 flex flex-col overflow-hidden rounded-md border-l-[3px] px-1 py-1 text-[12px] leading-tight"
                       style={{ top: ((a - from * 60) / 60) * HOUR_PX + 1, height, left: `calc(${(lane / lanes) * 100}% + 2px)`, width: `calc(${100 / lanes}% - 4px)`, background: `${color}1A`, borderColor: color }}
                     >
-                      <p className="truncate px-1 pb-0.5 tabular-nums text-[#36525A]">{clockText(first.start_at)}–{clockText(first.end_at)}</p>
-                      {group.slice(0, hidden > 0 ? fits - 1 : fits).map((s) => (
+                      <p className="truncate px-1 pb-0.5 tabular-nums text-[#36525A]">{narrow ? `${shortClock(first.start_at)}–${shortClock(first.end_at)}` : `${clockText(first.start_at)}–${clockText(first.end_at)}`}</p>
+                      {narrow ? (
+                        <div className="flex flex-wrap gap-1 px-0.5">
+                          {group.map((s) => (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => onShift(s)}
+                              aria-pressed={selected === s.id}
+                              aria-label={`${s.full_name}, ${clockText(s.start_at)}–${clockText(s.end_at)}`}
+                              title={`${s.full_name}, ${clockText(s.start_at)}–${clockText(s.end_at)}`}
+                              className={`grid h-6 min-w-6 place-items-center rounded-full px-1 text-[11px] font-semibold text-white ${selected === s.id ? "ring-2 ring-[#0F2F36]/40" : ""}`}
+                              style={{ background: personColor(s.person_id) }}
+                            >
+                              {initials(s.full_name)}
+                            </button>
+                          ))}
+                        </div>
+                      ) : group.slice(0, hidden > 0 ? fits - 1 : fits).map((s) => (
                         <button key={s.id} type="button" onClick={() => onShift(s)} aria-pressed={selected === s.id} title={`${s.full_name}, ${clockText(s.start_at)}–${clockText(s.end_at)}`} className={`flex min-h-[22px] w-full min-w-0 shrink-0 items-center gap-1.5 rounded px-1 text-left hover:bg-white/70 ${selected === s.id ? "bg-white ring-1 ring-[#0F2F36]/30" : ""}`}>
                           <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: personColor(s.person_id) }} />
                           <span className="truncate font-medium text-[#0F2F36]">{s.full_name}</span>
                         </button>
                       ))}
-                      {hidden > 0 && <p className="truncate px-1 text-[12px] font-medium text-[#0B6477]">{hidden + 1} more</p>}
+                      {!narrow && hidden > 0 && <p className="truncate px-1 text-[12px] font-medium text-[#0B6477]">{hidden + 1} more</p>}
                     </div>
                   );
                 })}
@@ -289,6 +311,10 @@ export default function SchedulePage() {
     return { people, shifts, areas, leaves };
   });
   const [mode, setMode] = useState<CalendarMode>("week");
+  // Seven columns do not fit a phone: it opens on one day, and can still switch.
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 639px)").matches) setMode("day");
+  }, []);
   const [date, setDate] = useState(today);
   const [person, setPerson] = useState("");
   const [adding, setAdding] = useState<string | null>(null);

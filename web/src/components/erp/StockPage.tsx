@@ -3,7 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Boxes, FlaskConical, Layers, Package, Plus, Sprout, Wrench, type LucideIcon } from "lucide-react";
 import { jakartaToday } from "../../lib/pf/batch";
 import { formatLongDate } from "../../lib/pf/dashboard";
-import { ITEM_CATEGORIES, ITEM_UNITS, MOVE_LABELS, adjustStock, categoryLabel, fetchItemMoves, fetchItems, fetchOpenShortages, formatQty, itemPhotoLinks, unitLabel, parseItemForm, parseQtyInput, parseReceive, receiveStock, resolveShortage, saveItem, useStock, type Item, type ItemCategory, type ItemForm, type Shortage, type StockLotRow } from "../../lib/pf/inventory";
+import { ITEM_CATEGORIES, ITEM_UNITS, MOVE_LABELS, adjustStock, categoryLabel, fetchItemMoves, fetchItems, fetchOpenShortages, formatQty, formatShort, itemPhotoLinks, unitLabel, parseItemForm, parseQtyInput, parseReceive, receiveStock, resolveShortage, saveItem, useStock, type Item, type ItemCategory, type ItemForm, type Shortage, type StockLotRow } from "../../lib/pf/inventory";
 import { useErpStore } from "./ErpContext";
 import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, formatDateTime, inputClass, useAction, useErpAccess, useLoad } from "./page";
 import { Card } from "./ui";
@@ -51,7 +51,7 @@ export function ItemEditor({ item, onDone }: { item: Item | null; onDone: (saved
         {item && <label className="flex min-h-[44px] items-center gap-2 text-[14px] text-[#0F2F36] sm:min-h-0"><input type="checkbox" className="h-4 w-4 accent-[#14919B]" checked={form.active} onChange={(e) => set({ active: e.target.checked })} /> Active</label>}
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save"}</PrimaryButton>
           <SecondaryButton onClick={() => onDone(null)}>Cancel</SecondaryButton>
         </div>
       </form>
@@ -219,7 +219,7 @@ function ShortageRow({ shortage, canManage, reload }: { shortage: Shortage; canM
     <li className="border-t border-[#EDF2F2] px-4 py-2.5 first:border-0">
       <div className="flex flex-wrap items-center justify-between gap-x-3 text-[14px]">
         <span>
-          <span className="font-medium text-[#0F2F36]">{shortage.item_name} short by {formatQty(shortage.qty_short, shortage.unit)}</span>
+          <span className="font-medium text-[#0F2F36]">{shortage.item_name} short by {formatShort(shortage.qty_short, shortage.unit)}</span>
           <span className="block text-[13px] text-[#4F6B73]">For {shortage.batch_code} · {formatDateTime(shortage.at)}</span>
         </span>
         {canManage && !asking && <button type="button" onClick={() => setAsking(true)} className={textButton}>Handle</button>}

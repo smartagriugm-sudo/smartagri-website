@@ -360,7 +360,56 @@ export function auditSubject(e: Pick<AuditEntry, "old_data" | "new_data" | "row_
   if (pick("code")) return typeof d.version === "number" ? `${pick("code")} v${d.version}` : pick("code");
   if (pick("name")) return cropLabel({ name: pick("name"), variety: pick("variety") });
   if (pick("phase")) return phaseLabel(pick("phase"));
-  return e.row_id;
+  for (const k of ["wo_no", "po_no", "lot_code", "lot_no", "full_name", "title", "description", "sku"]) if (pick(k)) return pick(k);
+  const day = pick("work_date") || pick("start_date") || pick("valid_from");
+  if (day) return `for ${day}`;
+  // An id means nothing to a reader; what changed is under Details.
+  return "";
+}
+
+/** "1 work order", "33 work orders": the kind of data counted in plain words. */
+const AUDIT_NOUNS: Record<string, [string, string]> = {
+  pf_location: ["location", "locations"],
+  pf_crop: ["crop", "crops"],
+  pf_recipe: ["recipe", "recipes"],
+  pf_recipe_phase: ["recipe phase", "recipe phases"],
+  pf_user_role: ["role", "roles"],
+  pf_batch: ["batch", "batches"],
+  pf_harvest_lot: ["harvest lot", "harvest lots"],
+  pf_stock_lot: ["stock lot", "stock lots"],
+  pf_item: ["item", "items"],
+  pf_cost_entry: ["bill", "bills"],
+  pf_labor_rate: ["labour rate", "labour rates"],
+  pf_lot_price: ["lot price", "lot prices"],
+  pf_maintenance_plan: ["maintenance plan", "maintenance plans"],
+  pf_work_order: ["work order", "work orders"],
+  pf_person: ["person", "people"],
+  pf_shift: ["shift", "shifts"],
+  pf_leave: ["leave request", "leave requests"],
+  pf_work_area: ["work area", "work areas"],
+  pf_labor_log: ["work hours entry", "work hours entries"],
+  pf_purchase_order: ["purchase order", "purchase orders"],
+  pf_po_line: ["purchase line", "purchase lines"],
+  pf_recipe_material: ["recipe material", "recipe materials"],
+  pf_stock_count: ["stock count", "stock counts"],
+  pf_stock_shortage: ["stock shortage", "stock shortages"],
+  pf_partner: ["customer", "customers"],
+  pf_sales_order: ["order", "orders"],
+  pf_so_allocation: ["lot allocation", "lot allocations"],
+  pf_delivery: ["delivery", "deliveries"],
+  pf_invoice: ["invoice", "invoices"],
+  pf_payment: ["payment", "payments"],
+  pf_tax_rate: ["tax rate", "tax rates"],
+  pf_asset: ["device", "devices"],
+  pf_calibration: ["calibration", "calibrations"],
+  pf_alarm_rule: ["alarm rule", "alarm rules"],
+  pf_recipe_target: ["recipe reference", "recipe references"],
+};
+
+export function auditNoun(table: string, count: number): string {
+  const n = AUDIT_NOUNS[table];
+  if (!n) return table.replace(/^pf_/, "").replace(/_/g, " ");
+  return count === 1 ? n[0] : n[1];
 }
 
 /* ------------------------------------------------------------- data access */

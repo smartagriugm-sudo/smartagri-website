@@ -55,7 +55,7 @@ function PlanForm({ assets, onDone }: { assets: Asset[]; onDone: () => Promise<v
           <Field label="Last done"><input type="date" className={inputClass} max={jakartaToday()} value={last} onChange={(e) => setLast(e.target.value)} /></Field>
         </div>
         <ActionNote action={action} />
-        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save plan"}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save plan"}</PrimaryButton>
       </form>
     </Card>
   );

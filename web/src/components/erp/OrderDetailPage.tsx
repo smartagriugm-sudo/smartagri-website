@@ -65,7 +65,7 @@ function AllocationRow({ a, canSell, reload }: { a: Allocation; canSell: boolean
       </span>
       {canSell && !a.delivery_id && (
         <button type="button" disabled={action.busy} onClick={() => void action.run(async () => { await releaseAllocation(a.id); await reload(); })} className="min-h-[44px] text-[14px] font-medium text-[#4F6B73] hover:text-[#B3362C] sm:min-h-[24px]">
-          {action.busy ? "Releasing..." : "Release"}
+          {action.busy ? "Releasing…" : "Release"}
         </button>
       )}
       <div className="basis-full empty:hidden"><ActionNote action={{ error: action.error, saved: false }} /></div>
@@ -111,7 +111,7 @@ function LineCard({ line, allocations, lots, canSell, open, reload }: { line: Or
               </select>
             </Field>
             <Field label="Weight (kg)"><input className={inputClass} inputMode="decimal" value={kg} placeholder={String(suggested).replace(".", ",")} onChange={(e) => setKg(e.target.value)} /></Field>
-            <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Choose lots"}</PrimaryButton>
+            <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Choose lots"}</PrimaryButton>
           </form>
         )
       )}
@@ -165,7 +165,7 @@ function DeliveryCard({ order, allocations, deliveries, canSell, reload }: { ord
             <Field label="Recipient"><input className={inputClass} value={recipient} onChange={(e) => setRecipient(e.target.value)} /></Field>
           </div>
           <ActionNote action={action} />
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Create delivery note"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Create delivery note"}</PrimaryButton>
         </form>
       )}
     </Card>
@@ -253,7 +253,7 @@ function InvoiceCard({ order, rates, invoices, canSell, reload }: { order: Order
           </Field>
           <Field label="Notes on the invoice" hint="For example, the bank account for payment."><textarea className={inputClass} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
           <ActionNote action={action} />
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Issuing..." : "Issue invoice"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Issuing…" : "Issue invoice"}</PrimaryButton>
         </form>
       )}
     </Card>
@@ -269,7 +269,7 @@ function CancelCard({ order, reload }: { order: OrderOverview; reload: Reload })
       <div className="space-y-2">
         <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
         <ActionNote action={{ error: action.error, saved: false }} />
-        <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await cancelOrder(order.id, why); await reload(); })}>{action.busy ? "Cancelling..." : "Yes, cancel order"}</SecondaryButton>
+        <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await cancelOrder(order.id, why); await reload(); })}>{action.busy ? "Cancelling…" : "Yes, cancel order"}</SecondaryButton>
       </div>
     </Card>
   );
@@ -341,7 +341,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
                     {isDraft && canSell && (
                       <div className="mt-3 space-y-2">
                         <ActionNote action={{ error: confirm.error, saved: false }} />
-                        <PrimaryButton disabled={confirm.busy} onClick={() => void confirm.run(async () => { await confirmOrder(order.id); await reload(); })}>{confirm.busy ? "Saving..." : "Order confirmation"}</PrimaryButton>
+                        <PrimaryButton disabled={confirm.busy} onClick={() => void confirm.run(async () => { await confirmOrder(order.id); await reload(); })}>{confirm.busy ? "Saving…" : "Order confirmation"}</PrimaryButton>
                       </div>
                     )}
                   </Card>

@@ -140,14 +140,16 @@ export function StateBreakdown({ counts, total }: { counts: Record<HoleState, nu
 }
 
 /** Work that is not the next step: one quiet line, opened when wanted. */
+/** Its content mounts on first open, so what is folded away (a 3D model, a fetch) costs nothing until wanted. */
 export function Disclosure({ title, children }: { title: string; children: React.ReactNode }) {
+  const [opened, setOpened] = useState(false);
   return (
-    <details className="group">
+    <details className="group" onToggle={(e) => { if (e.currentTarget.open) setOpened(true); }}>
       <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 rounded-xl border border-[#DCE7E8] bg-white px-4 py-2.5 text-[14px] font-medium text-[#0F2F36] hover:border-[#14919B] [&::-webkit-details-marker]:hidden">
         <ChevronRight className="h-4 w-4 text-[#4F6B73] transition-transform group-open:rotate-90" />
         {title}
       </summary>
-      <div className="mt-2">{children}</div>
+      <div className="mt-2">{opened && children}</div>
     </details>
   );
 }
@@ -194,6 +196,9 @@ export function PanelHeader({ eyebrow, title, sub }: { eyebrow: string; title: s
   );
 }
 
+/** Soft hyphens where the long step names may break; the browser shows one only when it breaks there. */
+const breakable = (label: string) => label.replace(/^Germination$/, "Germi­nation").replace(/^Vegetative$/, "Vege­tative");
+
 /** One batch's way from sowing in the chamber to harvest in the plant factory. */
 export function Lifecycle({ batch, phase, compact = false }: { batch: Batch; phase: number; compact?: boolean }) {
   return (
@@ -207,7 +212,7 @@ export function Lifecycle({ batch, phase, compact = false }: { batch: Batch; pha
           const done = i < phase;
           const now = i === phase;
           return (
-            <li key={p.label} className="relative flex flex-col items-center text-center">
+            <li key={p.label} className="relative flex min-w-0 flex-col items-center px-0.5 text-center">
               {i > 0 && <span className={`absolute right-1/2 top-4 h-0.5 w-full ${i <= phase ? "bg-[#14919B]" : "bg-[#DCE7E8]"}`} />}
               <span
                 className={`relative z-10 grid h-8 w-8 place-items-center rounded-full border-2 text-[12px] font-semibold ${
@@ -216,7 +221,8 @@ export function Lifecycle({ batch, phase, compact = false }: { batch: Batch; pha
               >
                 {i + 1}
               </span>
-              <span className={`mt-1.5 text-[12.5px] font-medium ${now ? "text-[#0F2F36]" : "text-[#4F6B73]"}`}>{p.label}</span>
+              {/* A fifth of a phone is narrower than "Germination": it breaks at a soft hyphen instead of running into the next step. */}
+              <span className={`mt-1.5 w-full text-[11.5px] font-medium leading-tight sm:text-[12.5px] ${now ? "text-[#0F2F36]" : "text-[#4F6B73]"}`}>{breakable(p.label)}</span>
               <span className="text-[12px] text-[#4F6B73]">{compact ? "" : `${p.place} · `}day {lifecycleDay(i, batch)}</span>
             </li>
           );
@@ -234,7 +240,7 @@ export function SceneStatus({ failed }: { failed: boolean }) {
       ) : (
         <>
           <Loader2 className="mr-2 h-5 w-5 animate-spin text-[#0B6477]" />
-          <span className="text-[13px]" style={body}>Loading 3D model...</span>
+          <span className="text-[13px]" style={body}>Loading 3D model…</span>
         </>
       )}
     </div>

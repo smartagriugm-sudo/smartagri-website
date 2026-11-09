@@ -52,7 +52,7 @@ export function slotFacts(store: ErpStore, id: string): SceneFacts | null {
   if (!slot) return null;
   const batch = store.batch(slot.batch);
   const state = { label: SLOT_STATES[slot.state].label, color: slotColor(slot.state) };
-  const sub = `Rack ${slot.shelf} · Position ${slot.position}`;
+  const sub = `Shelf ${slot.shelf} · Position ${slot.position}`;
   if (!batch) {
     return { title: id, sub, state, rows: [], progress: null, note: slot.offline ? "This position is out of use." : "No seedling tray in this position yet." };
   }

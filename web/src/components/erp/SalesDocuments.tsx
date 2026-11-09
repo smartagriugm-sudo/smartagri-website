@@ -132,7 +132,7 @@ function PaymentsCard({ invoice, payments, canSell, reload }: { invoice: Invoice
             <Field label="Reference"><input className={inputClass} value={reference} onChange={(e) => setReference(e.target.value)} /></Field>
           </div>
           <ActionNote action={action} />
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Record payment"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Record payment"}</PrimaryButton>
         </form>
       )}
     </Card>
@@ -148,7 +148,7 @@ function VoidInvoice({ invoice, reload }: { invoice: InvoiceOverview; reload: ()
       <div className="space-y-2">
         <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
         <ActionNote action={{ error: action.error, saved: false }} />
-        <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await voidInvoice(invoice.id, why); await reload(); })}>{action.busy ? "Cancelling..." : "Yes, cancel invoice"}</SecondaryButton>
+        <SecondaryButton disabled={action.busy || !why.trim()} onClick={() => void action.run(async () => { await voidInvoice(invoice.id, why); await reload(); })}>{action.busy ? "Cancelling…" : "Yes, cancel invoice"}</SecondaryButton>
       </div>
     </Card>
   );

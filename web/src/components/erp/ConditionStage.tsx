@@ -192,7 +192,8 @@ function GroupChart({ group, rows, data, window, height, hidden, focus }: { grou
   );
 }
 
-function ChartPane({ store, place, row, rows, sample }: { store: ErpStore; place: PlaceCode; row: ConditionRow; rows: readonly ConditionRow[]; sample: boolean }) {
+/** The chart with its controls: one parameter, or a set of them on axes of their own. Also used by the Conditions page. */
+export function ChartPane({ store, place, row, rows, sample }: { store: ErpStore; place: PlaceCode; row: ConditionRow; rows: readonly ConditionRow[]; sample: boolean }) {
   const [hours, setHours] = useState(24);
   const [mode, setMode] = useState("single");
   const [custom, setCustom] = useState<ChartWindow | null>(null);
@@ -202,6 +203,11 @@ function ChartPane({ store, place, row, rows, sample }: { store: ErpStore; place
 
   const groups = groupsAt(rows.map((r) => r.metric));
   const group = groups.find((g) => g.key === mode) ?? null;
+
+  // Picking a parameter outside the drawn set shows that parameter on its own.
+  useEffect(() => {
+    setMode((m) => (groups.find((g) => g.key === m)?.metrics.includes(row.metric) ? m : "single"));
+  }, [row.metric]);
   const members = group ? rows.filter((r) => group.metrics.includes(r.metric)).sort((a, b) => group.metrics.indexOf(a.metric) - group.metrics.indexOf(b.metric)) : [row];
   const window: ChartWindow = hours === CUSTOM_RANGE && custom ? custom : { from: anchor - (hours === CUSTOM_RANGE ? 72 : hours) * 3_600_000, to: anchor };
 
@@ -265,7 +271,7 @@ function ChartPane({ store, place, row, rows, sample }: { store: ErpStore; place
         {series.error ? (
           <p className="grid h-full place-items-center text-[14px] text-[#4F6B73]">The chart cannot be loaded yet.</p>
         ) : empty && series.loading ? (
-          <p className="grid h-full place-items-center text-[14px] text-[#4F6B73]">Loading chart...</p>
+          <p className="grid h-full place-items-center text-[14px] text-[#4F6B73]">Loading chart…</p>
         ) : empty ? (
           <p className="grid h-full place-items-center text-[14px] text-[#4F6B73]">No readings in this range.</p>
         ) : height > 0 ? (

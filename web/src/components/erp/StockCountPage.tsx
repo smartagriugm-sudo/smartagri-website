@@ -94,7 +94,7 @@ export default function StockCountPage() {
                       <div className="space-y-2 rounded-lg bg-[#FFF6E5] p-2.5">
                         <p className="text-[13.5px] text-[#4F6B73]">Stock {differing.length} lots will change to match the count. The change is recorded and can only be reversed with a new correction.</p>
                         <div className="flex flex-wrap gap-2">
-                          <PrimaryButton disabled={action.busy} onClick={() => void apply()}>{action.busy ? "Saving..." : "Yes, save"}</PrimaryButton>
+                          <PrimaryButton disabled={action.busy} onClick={() => void apply()}>{action.busy ? "Saving…" : "Yes, save"}</PrimaryButton>
                           <SecondaryButton onClick={() => setAsking(false)}>Cancel</SecondaryButton>
                         </div>
                       </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { formatLongDate } from "../../lib/pf/dashboard";
@@ -43,7 +43,9 @@ import {
   type SeedLot,
   type TransplantResult,
 } from "../../lib/pf/batch";
-import { SHELVES, SLOT_STATES, SLOT_STATE_KEYS, slotId, type SlotState } from "../../lib/pf/chamber";
+import { SHELVES, SLOT_STATES, SLOT_STATE_KEYS, slotColor, slotId, type SlotState } from "../../lib/pf/chamber";
+import { HOLE_STATES, isPlanted, stateColor } from "../../lib/pf/facility";
+import BatchPicker3D, { MARK_LEGEND } from "./BatchPicker3D";
 import { fetchMembers, memberName } from "../../lib/pf/foundation";
 import { useErpStore } from "./ErpContext";
 import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, formatDateTime, inputClass, useAction, useErpAccess, useLoad } from "./page";
@@ -70,6 +72,10 @@ function SowCard({ batch, lot, reload }: { batch: BatchOverview; lot: SeedLot; r
   const action = useAction();
 
   const toggle = (code: string) => setPicked((p) => (p.includes(code) ? p.filter((c) => c !== code) : [...p, code]));
+  const free = (code: string) => {
+    const slot = store.chamber.getSlot(code);
+    return !!slot && !slot.batch && !slot.offline;
+  };
 
   const submit = async () => {
     const parsed = parseSowForm(picked, seeds, sownOn, today, lot.unit, used);
@@ -90,6 +96,18 @@ function SowCard({ batch, lot, reload }: { batch: BatchOverview; lot: SeedLot; r
       <h2 className={sectionTitle}>Sow</h2>
       <p className="mb-3 text-[13px] text-[#4F6B73]">Choose tray positions in the chamber. Lot {lot.lot_no} has {formatQty(lot.qty_on_hand, lot.unit)}.</p>
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
+        <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <BatchPicker3D
+          kind="chamber"
+          mark={(code) => {
+            if (picked.includes(code)) return "chosen";
+            const owner = store.chamber.getSlot(code)?.batch;
+            return owner && owner !== batch.code ? "other" : null;
+          }}
+          onPick={(code) => { if (free(code) || picked.includes(code)) toggle(code); }}
+          hint="Click an empty tray to choose it, again to drop it"
+          legend={[MARK_LEGEND.chosen, { label: "Empty", color: slotColor("kosong") }, MARK_LEGEND.other]}
+        />
         <div className="space-y-2">
           {SHELVES.map((s) => (
             <div key={s.shelf}>
@@ -120,13 +138,14 @@ function SowCard({ batch, lot, reload }: { batch: BatchOverview; lot: SeedLot; r
             </div>
           ))}
         </div>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Seeds per tray"><input className={inputClass} inputMode="numeric" value={seeds} onChange={(e) => setSeeds(e.target.value)} /></Field>
           <Field label="Sowing date"><input type="date" className={inputClass} max={today} value={sownOn} onChange={(e) => setSownOn(e.target.value)} /></Field>
           {lot.unit !== "biji" && <Field label="Seed used (gram)"><input className={inputClass} inputMode="decimal" value={used} onChange={(e) => setUsed(e.target.value)} /></Field>}
         </div>
         <ActionNote action={action} />
-        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : picked.length ? `Sow in ${picked.length} trays` : "Sow"}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : picked.length ? `Sow in ${picked.length} trays` : "Sow"}</PrimaryButton>
       </form>
     </Card>
   );
@@ -134,7 +153,7 @@ function SowCard({ batch, lot, reload }: { batch: BatchOverview; lot: SeedLot; r
 
 /* -------------------------------------------------------------------- trays */
 
-function TrayRow({ tray, reload, canOperate, startOpen }: { tray: OpenSlot; reload: Reload; canOperate: boolean; startOpen: boolean }) {
+function TrayRow({ tray, reload, canOperate, startOpen, focused }: { tray: OpenSlot; reload: Reload; canOperate: boolean; startOpen: boolean; focused: boolean }) {
   const [state, setState] = useState<SlotState>(tray.state === "tumbuh" ? "berkecambah" : tray.state);
   const [germinated, setGerminated] = useState(String(tray.germinated));
   const [note, setNote] = useState(tray.note);
@@ -142,6 +161,14 @@ function TrayRow({ tray, reload, canOperate, startOpen }: { tray: OpenSlot; relo
   const [why, setWhy] = useState("");
   const [open, setOpen] = useState(startOpen);
   const action = useAction();
+  const row = useRef<HTMLDivElement>(null);
+
+  // A tray picked in the model opens here, in view.
+  useEffect(() => {
+    if (!focused) return;
+    setOpen(true);
+    row.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [focused]);
 
   const save = async () => {
     const parsed = parseGerminated(germinated, tray);
@@ -153,7 +180,7 @@ function TrayRow({ tray, reload, canOperate, startOpen }: { tray: OpenSlot; relo
   };
 
   return (
-    <div className="rounded-lg border border-[#E3ECED] p-3">
+    <div ref={row} className={`rounded-lg border p-3 ${focused ? "border-[#14919B]" : "border-[#E3ECED]"}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
         <Link to="/erp/seedlings" search={{ slot: tray.location_code }} className="inline-flex min-h-[44px] items-center sm:min-h-[24px] text-[14px] font-medium text-[#0F2F36] hover:text-[#0B6477]">{tray.location_code}</Link>
         <span className="text-[13px] text-[#4F6B73]">{tray.qty} seeds{tray.moved > 0 ? ` · ${tray.moved} already moved` : ""}</span>
@@ -186,7 +213,7 @@ function TrayRow({ tray, reload, canOperate, startOpen }: { tray: OpenSlot; relo
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+              <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save"}</PrimaryButton>
               <button type="button" onClick={() => setClosing(true)} className="px-2 py-2 text-[14px] font-medium text-[#4F6B73] hover:text-[#B3362C]">Close tray</button>
             </div>
           )}
@@ -197,14 +224,31 @@ function TrayRow({ tray, reload, canOperate, startOpen }: { tray: OpenSlot; relo
   );
 }
 
-function TrayCard({ trays, reload, canOperate }: { trays: OpenSlot[]; reload: Reload; canOperate: boolean }) {
+function TrayCard({ code, trays, reload, canOperate }: { code: string; trays: OpenSlot[]; reload: Reload; canOperate: boolean }) {
+  const store = useErpStore();
+  const [focused, setFocused] = useState<string | null>(null);
+  const shown = SLOT_STATE_KEYS.filter((s) => s !== "kosong");
   return (
     <Card className="p-4">
       <h2 className={`${sectionTitle} mb-1`}>Seedlings</h2>
       <p className="mb-3 text-[13px] text-[#4F6B73]">Record how many germinated. Trays marked Ready to transplant go on to the transplant step.</p>
-      <div className="space-y-2">
-        {/* Keyed by what the server holds, so a form never keeps a stale count after a move. */}
-        {trays.map((t) => <TrayRow key={`${t.id}:${t.germinated}:${t.moved}:${t.state}`} tray={t} reload={reload} canOperate={canOperate} startOpen={trays.length === 1 && t.state !== "siap_pindah"} />)}
+      <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <BatchPicker3D
+          kind="chamber"
+          single
+          focus={focused}
+          mark={(id) => {
+            const owner = store.chamber.getSlot(id)?.batch;
+            return owner && owner !== code ? "other" : null;
+          }}
+          onPick={(id) => { if (trays.some((t) => t.location_code === id)) setFocused(id); }}
+          hint="Click a tray of this batch to record it"
+          legend={[...shown.map((s) => ({ label: SLOT_STATES[s].label, color: slotColor(s) })), MARK_LEGEND.other]}
+        />
+        <div className="space-y-2">
+          {/* Keyed by what the server holds, so a form never keeps a stale count after a move. */}
+          {trays.map((t) => <TrayRow key={`${t.id}:${t.germinated}:${t.moved}:${t.state}`} tray={t} reload={reload} canOperate={canOperate} startOpen={trays.length === 1 && t.state !== "siap_pindah"} focused={focused === t.location_code} />)}
+        </div>
       </div>
     </Card>
   );
@@ -224,6 +268,26 @@ function TransplantCard({ batch, ready, reload, onMoved }: { batch: BatchOvervie
     <Card className="p-4">
       <h2 className={sectionTitle}>Transplant</h2>
       <p className="mb-3 text-[13px] text-[#4F6B73]">{ready} seedlings ready to transplant. A tier takes only one batch.</p>
+      <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+      <BatchPicker3D
+        kind="factory"
+        mark={(id) => {
+          const h = store.pf.getHole(id);
+          if (!h) return null;
+          if (chosen && `R${h.rack}-T${h.tier}` === chosen.code && h.state === "kosong" && !h.offline) return "chosen";
+          return isPlanted(h.state) && h.batch !== batch.code ? "other" : null;
+        }}
+        onPick={(id) => {
+          const h = store.pf.getHole(id);
+          const tier = h && tiers.find((t) => t.code === `R${h.rack}-T${h.tier}`);
+          if (!tier) return;
+          if (tier.blocked) return action.setError(`Rack ${tier.rack} · Tier ${tier.tier} cannot take this batch (${tier.blocked}).`);
+          action.setError(null);
+          setTarget(tier.code);
+        }}
+        hint="Click a hole to send the seedlings to its tier"
+        legend={[{ ...MARK_LEGEND.chosen, label: "Target tier" }, { label: "Empty", color: stateColor("kosong") }, { label: HOLE_STATES.sanitasi.label, color: stateColor("sanitasi") }, MARK_LEGEND.other]}
+      />
       <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2" role="radiogroup" aria-label="Target tier">
         {tiers.map((t) => (
           <label key={t.code} className={`flex min-h-[44px] items-center gap-2 rounded-lg border px-3 py-2 text-[13.5px] ${t.blocked ? "border-[#E3ECED] bg-[#F3F7F7] text-[#4F6B73]" : chosen?.code === t.code ? "border-[#14919B] bg-[#14919B]/5" : "cursor-pointer border-[#E3ECED] hover:border-[#14919B]"}`}>
@@ -234,6 +298,7 @@ function TransplantCard({ batch, ready, reload, onMoved }: { batch: BatchOvervie
             </span>
           </label>
         ))}
+      </div>
       </div>
       <div className="mt-3 space-y-2">
         {!chosen && <Note tone="warn">No tier can take this batch yet.</Note>}
@@ -247,7 +312,7 @@ function TransplantCard({ batch, ready, reload, onMoved }: { batch: BatchOvervie
             await reload();
           })}
         >
-          {action.busy ? "Moving..." : `Move ${count} seedlings`}
+          {action.busy ? "Moving…" : `Move ${count} seedlings`}
         </PrimaryButton>
       </div>
     </Card>
@@ -295,7 +360,8 @@ function HoleMap({ holes, selected, onPick }: { holes: OpenSlot[]; selected: str
   );
 }
 
-function HoleCard({ holes, reload, canOperate, focus }: { holes: OpenSlot[]; reload: Reload; canOperate: boolean; focus?: string }) {
+function HoleCard({ code: batchCode, holes, reload, canOperate, focus }: { code: string; holes: OpenSlot[]; reload: Reload; canOperate: boolean; focus?: string }) {
+  const store = useErpStore();
   const tiers = new Map<string, OpenSlot[]>();
   for (const h of holes) tiers.set(tierOfHole(h.location_code), [...(tiers.get(tierOfHole(h.location_code)) ?? []), h]);
   const problems = holes.filter((h) => h.state === "masalah");
@@ -314,6 +380,26 @@ function HoleCard({ holes, reload, canOperate, focus }: { holes: OpenSlot[]; rel
   return (
     <Card className="p-4">
       <h2 className={`${sectionTitle} mb-3`}>Plant factory</h2>
+      <div className="mb-3">
+        <BatchPicker3D
+          kind="factory"
+          single
+          focus={code || holes[0]?.location_code}
+          mark={(id) => {
+            const h = store.pf.getHole(id);
+            return h && isPlanted(h.state) && h.batch !== batchCode ? "other" : null;
+          }}
+          onPick={(id) => {
+            const h = holes.find((x) => x.location_code === id);
+            if (!h) return;
+            setCode(h.location_code);
+            setNote(h.note);
+            setDiscarding(false);
+          }}
+          hint={canOperate ? "Click a plant of this batch to record it" : "Point at a plant to see how it stands"}
+          legend={[...(["semai", "vegetatif", "siap_panen", "masalah"] as const).map((s) => ({ label: HOLE_STATES[s].label, color: stateColor(s) })), MARK_LEGEND.other]}
+        />
+      </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {[...tiers.entries()].map(([tier, list]) => (
           <Link key={tier} to="/erp/plant-factory" search={{ hole: list[0].location_code }} className="flex items-center justify-between rounded-lg border border-[#E3ECED] px-3 py-2 text-[14px] hover:border-[#14919B]">
@@ -366,7 +452,7 @@ function HoleCard({ holes, reload, canOperate, focus }: { holes: OpenSlot[]; rel
                     setDiscarding(false);
                   })}
                 >
-                  {action.busy ? "Discarding..." : "Yes, discard plant"}
+                  {action.busy ? "Discarding…" : "Yes, discard plant"}
                 </button>
                 <SecondaryButton disabled={action.busy} onClick={() => setDiscarding(false)}>Cancel</SecondaryButton>
               </div>
@@ -497,7 +583,7 @@ function HarvestCard({ batch, lots, open, canOperate, canCorrect, canTrace, relo
           </div>
           <Field label="Notes"><input className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
           <ActionNote action={action} />
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Record harvest lot"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Record harvest lot"}</PrimaryButton>
         </form>
       )}
       {!open && lots.length === 0 && <p className="text-[14px] text-[#4F6B73]">No harvest lots.</p>}
@@ -605,7 +691,7 @@ function LaborCard({ batch, open }: { batch: BatchOverview; open: boolean }) {
                 </div>
                 <Field label="Activity"><input className={inputClass} value={activity} onChange={(e) => setActivity(e.target.value)} placeholder="Transplant" /></Field>
                 <ActionNote action={action} />
-                <SecondaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Log my work hours"}</SecondaryButton>
+                <SecondaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Log my work hours"}</SecondaryButton>
               </form>
             )}
           </>
@@ -669,7 +755,7 @@ function MaterialsCard({ batch, open, canOperate }: { batch: BatchOverview; open
                     </select>
                   </Field>
                   <Field label={`Quantity${chosen ? ` (${chosen.unit})` : ""}`}><input className={inputClass} inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} /></Field>
-                  <SecondaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Record"}</SecondaryButton>
+                  <SecondaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Record"}</SecondaryButton>
                   <div className="col-span-full empty:hidden"><ActionNote action={action} /></div>
                 </form>
               )}
@@ -784,9 +870,9 @@ export default function BatchDetailPage({ id, focusHole }: { id: string; focusHo
                     </Note>
                   )}
                   {open && canOperate && ready > 0 && <TransplantCard batch={batch} ready={ready} reload={reload} onMoved={setMoved} />}
-                  {trays.length > 0 && <TrayCard trays={trays} reload={reload} canOperate={canOperate && open} />}
+                  {trays.length > 0 && <TrayCard code={batch.code} trays={trays} reload={reload} canOperate={canOperate && open} />}
                   {open && canOperate && batch.status === "direncanakan" && <SowCard batch={batch} lot={seedLot} reload={reload} />}
-                  {holes.length > 0 && <HoleCard key={holes.length} holes={holes} reload={reload} canOperate={canOperate && open} focus={focusHole} />}
+                  {holes.length > 0 && <HoleCard key={holes.length} code={batch.code} holes={holes} reload={reload} canOperate={canOperate && open} focus={focusHole} />}
                   {(batch.plants_now > 0 || lots.length > 0) && <HarvestCard batch={batch} lots={lots} open={open} canOperate={canOperate} canCorrect={canManageProduction} canTrace={canReadSales} reload={reload} />}
                   {batch.status !== "direncanakan" && canReadCost && <Link to="/erp/costs/$id" params={{ id: batch.id }} className="flex min-h-[44px] items-center rounded-xl border border-[#DCE7E8] bg-white px-4 text-[14px] font-medium text-[#0B6477] hover:border-[#14919B]">View this batch's costs</Link>}
                   {batch.status !== "direncanakan" && <Disclosure title="Work hours"><LaborCard batch={batch} open={open} /></Disclosure>}

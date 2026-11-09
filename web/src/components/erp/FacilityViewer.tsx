@@ -372,7 +372,7 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
                   <FilterRow label="Tier" value={filter.tier ?? 0} options={TIER_NUMBERS} onChange={(tier) => applyFilter({ tier })} />
                 </div>
               ) : (
-                <div className="px-1 pb-1"><FilterRow label="Rack" value={filter.shelf ?? 0} options={SHELVES.map((s) => s.shelf as number)} onChange={(shelf) => applyFilter({ shelf })} /></div>
+                <div className="px-1 pb-1"><FilterRow label="Shelf" value={filter.shelf ?? 0} options={SHELVES.map((s) => s.shelf as number)} onChange={(shelf) => applyFilter({ shelf })} /></div>
               )}
             </Flyout>
           )}

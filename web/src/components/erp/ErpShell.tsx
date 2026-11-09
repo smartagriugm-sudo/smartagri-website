@@ -118,7 +118,7 @@ function RetryLoad() {
     <div className="flex items-center justify-between gap-2 border-t border-[#DCE7E8] px-4 py-1.5 text-[13px] text-[#B3362C]">
       Could not load data
       <button type="button" disabled={busy} onClick={() => void retry()} className="min-h-[36px] whitespace-nowrap font-medium text-[#0F2F36] underline disabled:cursor-not-allowed disabled:opacity-50">
-        {busy ? "Connecting..." : "Try again"}
+        {busy ? "Connecting…" : "Try again"}
       </button>
     </div>
   );
@@ -217,6 +217,7 @@ export default function ErpShell({ children }: { children: ReactNode }) {
       className="flex min-h-screen bg-[#F4F7F7] print:block print:bg-white [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-offset-2 [&_:is(a,button,summary,select,input,textarea):focus-visible]:outline-[#0B6477]"
       style={body}
     >
+      <a href="#erp-content" className="sr-only z-50 rounded-lg bg-white px-3 py-2 text-[14px] font-medium text-[#0B6477] focus:not-sr-only focus:fixed focus:left-3 focus:top-3">Skip to content</a>
       <aside className={`sticky top-0 hidden h-screen shrink-0 overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none print:hidden lg:block ${sidebarClass}`}>
         <div className="flex h-full flex-col border-r border-[#DCE7E8]" style={{ width: SIDEBAR_WIDTH }}>
           <div className="flex h-[76px] shrink-0 items-center pl-[18px] pr-2 pt-3"><Brand /></div>
@@ -235,7 +236,7 @@ export default function ErpShell({ children }: { children: ReactNode }) {
           menuButton={menuButton}
         />
         {menuOpen && <MenuSheet pathname={pathname} access={access} onClose={closeMenu} />}
-        <div className="relative flex min-w-0 flex-1 flex-col">{children}</div>
+        <div id="erp-content" tabIndex={-1} className="relative flex min-w-0 flex-1 flex-col outline-none">{children}</div>
       </div>
     </div>
   );

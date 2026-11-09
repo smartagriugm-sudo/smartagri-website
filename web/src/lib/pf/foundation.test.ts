@@ -4,6 +4,7 @@ import { HOLES_TOTAL, seedHoles } from "./facility";
 import {
   accessOf,
   auditChanges,
+  auditNoun,
   auditSubject,
   buildLocationTree,
   expectedSlotCodes,
@@ -182,7 +183,16 @@ describe("audit entries", () => {
     expect(auditSubject({ row_id: "x", old_data: null, new_data: { code: "R1-T1-G1-H01" } })).toBe("R1-T1-G1-H01");
     expect(auditSubject({ row_id: "x", old_data: { role: "operator" }, new_data: null })).toBe("Operator");
     expect(auditSubject({ row_id: "x", old_data: null, new_data: { name: "Lettuce", variety: "Romaine" } })).toBe("Lettuce Romaine");
-    expect(auditSubject({ row_id: "x", old_data: null, new_data: {} })).toBe("x");
+    expect(auditSubject({ row_id: "x", old_data: null, new_data: { wo_no: "WO-0004", title: "Pump" } })).toBe("WO-0004");
+    expect(auditSubject({ row_id: "x", old_data: null, new_data: { person_id: "p", work_date: "2026-11-09" } })).toBe("for 2026-11-09");
+    expect(auditSubject({ row_id: "x", old_data: null, new_data: {} })).toBe("");
+  });
+
+  it("counts audited data in plain words", () => {
+    expect(auditNoun("pf_work_order", 1)).toBe("work order");
+    expect(auditNoun("pf_work_order", 2)).toBe("work orders");
+    expect(auditNoun("pf_person", 3)).toBe("people");
+    expect(auditNoun("pf_new_thing", 2)).toBe("new thing");
   });
 });
 

@@ -112,7 +112,7 @@ export function OrderEditor({ order, initialLines, partners, crops, onCancel, on
         <Field label="Notes"><textarea className={inputClass} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : order ? "Save draft" : "Create draft"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : order ? "Save draft" : "Create draft"}</PrimaryButton>
           <SecondaryButton onClick={onCancel}>Cancel</SecondaryButton>
         </div>
       </form>
@@ -168,7 +168,7 @@ export default function OrdersPage() {
                   empty="No orders yet."
                   columns={[
                     { key: "no", label: "Order", track: "minmax(0,1.3fr)", phone: "title", sort: (a, b) => a.so_no.localeCompare(b.so_no), cell: (o) => <CellTitle title={o.so_no} sub={o.partner_name} /> },
-                    { key: "stage", label: "Stage", cell: (o) => <Chip label={orderStageLabel(o)} className={orderStep(o) === null ? undefined : orderStep(o) === 5 ? "bg-[#E3F7F0] text-[#0E7A5C]" : "bg-[#E3F4F4] text-[#0B6477]"} /> },
+                    { key: "stage", label: "Stage", track: "minmax(170px,1fr)", cell: (o) => <Chip label={orderStageLabel(o)} className={orderStep(o) === null ? undefined : orderStep(o) === 5 ? "bg-[#E3F7F0] text-[#0E7A5C]" : "bg-[#E3F4F4] text-[#0B6477]"} /> },
                     { key: "due", label: "Requested", sort: (a, b) => due(a).localeCompare(due(b)), cell: (o) => {
                       const late = !!o.requested_on && o.requested_on < today && o.delivered_kg < o.ordered_kg && o.status !== "batal";
                       return <span className={`text-[13px] ${late ? "font-medium text-[#B3362C]" : ""}`}>{o.requested_on ? `${late ? "Late, " : ""}${formatLongDate(o.requested_on)}` : `Ordered ${formatLongDate(o.ordered_on)}`}</span>;

@@ -85,7 +85,7 @@ export function hourRange(events: readonly { from: number; to: number }[], open 
   return { from, to };
 }
 
-const HUES = ["#14919B", "#0E7A5C", "#6D5BD0", "#B26205", "#C2417C", "#2F6DB5", "#5B7F1E", "#8A5A07"];
+const HUES = ["#0B6477", "#0E7A5C", "#6D5BD0", "#B26205", "#C2417C", "#2F6DB5", "#5B7F1E", "#8A5A07"];
 
 /** A person keeps one colour on every view, whichever people the filter leaves. */
 export function personColor(id: string) {

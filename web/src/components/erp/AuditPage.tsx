@@ -4,6 +4,7 @@ import {
   AUDIT_PAGE,
   AUDIT_TABLES,
   auditChanges,
+  auditNoun,
   auditSubject,
   fetchAudit,
   fetchMembers,
@@ -17,8 +18,6 @@ import { Card, Note } from "./ui";
 // Read-only record of who changed what. Database triggers write it, so nothing on
 // this page or any other can add to it or remove from it.
 
-const tableLabel = (t: string) => AUDIT_TABLES.find((x) => x.key === t)?.label ?? t;
-
 const show = (v: unknown) => (v === null || v === undefined ? "kosong" : typeof v === "object" ? JSON.stringify(v) : String(v));
 
 /** Many rows from one operation: the count first, each one's change on opening it. */
@@ -30,7 +29,7 @@ function GroupRow({ entries, actor }: { entries: AuditEntry[]; actor: string }) 
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="grid min-h-[44px] w-full gap-x-3 gap-y-0.5 text-left text-[14px] sm:min-h-[24px] sm:grid-cols-[170px_140px_1fr_auto]">
         <span className="text-[#4F6B73]">{formatDateTime(first.at)}</span>
         <span className="text-[#0F2F36]">{actor}</span>
-        <span className="min-w-0 text-[#0F2F36]"><span className="font-medium">{AUDIT_ACTIONS[first.action]}</span> {entries.length} {tableLabel(first.table_name).toLowerCase()}</span>
+        <span className="min-w-0 text-[#0F2F36]"><span className="font-medium">{AUDIT_ACTIONS[first.action]}</span> {entries.length} {auditNoun(first.table_name, entries.length)}</span>
         <span className="text-[13px] font-medium text-[#0B6477]">{open ? "Close" : "Details"}</span>
       </button>
       {open && <div className="mt-2 rounded-lg border border-[#E3ECED] px-3">{entries.map((e) => <Row key={e.id} entry={e} actor={actor} />)}</div>}
@@ -47,9 +46,9 @@ function Row({ entry, actor }: { entry: AuditEntry; actor: string }) {
         <span className="text-[#4F6B73]">{formatDateTime(entry.at)}</span>
         <span className="text-[#0F2F36]">{actor}</span>
         <span className="min-w-0 text-[#0F2F36]">
-          <span className="font-medium">{AUDIT_ACTIONS[entry.action]}</span> {tableLabel(entry.table_name).toLowerCase()} <span className="break-all">{auditSubject(entry)}</span>
+          <span className="font-medium">{AUDIT_ACTIONS[entry.action]}</span> {auditNoun(entry.table_name, 1)} <span className="break-all">{auditSubject(entry)}</span>
         </span>
-        <span className="text-[13px] font-medium text-[#0B6477]">{open ? "Close" : `${changes.length} columns`}</span>
+        <span className="text-[13px] font-medium text-[#0B6477]">{open ? "Close" : `${changes.length} ${changes.length === 1 ? "field" : "fields"}`}</span>
       </button>
       {open && (
         <dl className="mt-2 space-y-1 rounded-lg bg-[#F3F7F7] p-3 text-[13px]">

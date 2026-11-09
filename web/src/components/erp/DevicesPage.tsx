@@ -74,7 +74,7 @@ function AssetEditor({ asset, places, onDone }: { asset: Asset | null; places: A
         </div>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save"}</PrimaryButton>
           <SecondaryButton onClick={() => onDone(null)}>Cancel</SecondaryButton>
         </div>
       </form>
@@ -103,7 +103,7 @@ function TokenBlock({ asset, canEdit }: { asset: Asset; canEdit: boolean }) {
         <div className="space-y-2 rounded-lg bg-[#FFF6E5] p-2.5">
           <p className="text-[13.5px] text-[#4F6B73]">A new token stops the old one at once. The device stops sending until its firmware uses the new token.</p>
           <div className="flex flex-wrap gap-2">
-            <SecondaryButton disabled={action.busy} onClick={() => void action.run(async () => { setToken(await issueToken(asset.id)); setAsking(false); })}>{action.busy ? "Creating..." : "Yes, create a new token"}</SecondaryButton>
+            <SecondaryButton disabled={action.busy} onClick={() => void action.run(async () => { setToken(await issueToken(asset.id)); setAsking(false); })}>{action.busy ? "Creating…" : "Yes, create a new token"}</SecondaryButton>
             <SecondaryButton disabled={action.busy} onClick={() => setAsking(false)}>Cancel</SecondaryButton>
           </div>
         </div>
@@ -165,7 +165,7 @@ function CalibrationBlock({ asset, canEdit, onSaved }: { asset: Asset; canEdit: 
           <Field label="Notes"><input className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
           <ActionNote action={action} />
           <div className="flex gap-2">
-            <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+            <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save"}</PrimaryButton>
             <SecondaryButton onClick={() => setAdding(false)}>Cancel</SecondaryButton>
           </div>
         </form>

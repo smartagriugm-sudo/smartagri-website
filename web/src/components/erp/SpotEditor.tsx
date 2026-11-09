@@ -42,7 +42,7 @@ function RemoveConfirm({ what, why, setWhy, busy, onConfirm, onCancel }: { what:
       <p className="text-[13px] text-[#4F6B73]">This cannot be undone. The spot becomes empty again.</p>
       <Field label="Reason"><input className={inputClass} value={why} autoFocus onChange={(e) => setWhy(e.target.value)} /></Field>
       <div className="flex flex-wrap gap-2">
-        <button type="button" disabled={busy || !why.trim()} className={dangerClass} onClick={onConfirm}><Trash2 className="h-4 w-4" /> {busy ? "Removing..." : "Yes, remove"}</button>
+        <button type="button" disabled={busy || !why.trim()} className={dangerClass} onClick={onConfirm}><Trash2 className="h-4 w-4" /> {busy ? "Removing…" : "Yes, remove"}</button>
         <SecondaryButton disabled={busy} onClick={onCancel}>Cancel</SecondaryButton>
       </div>
     </div>
@@ -123,7 +123,7 @@ function EmptyHole({ id, store }: { id: string; store: ErpStore }) {
           await store.load();
         })}
       >
-        <MoveRight className="h-4 w-4" /> {action.busy ? "Transplanting..." : `Transplant ${count} seedlings`}
+        <MoveRight className="h-4 w-4" /> {action.busy ? "Transplanting…" : `Transplant ${count} seedlings`}
       </PrimaryButton>
     </div>
   );
@@ -136,7 +136,7 @@ function CleaningHole({ id, store }: { id: string; store: ErpStore }) {
     <div className="space-y-2">
       <p className="text-[13px] text-[#4F6B73]">Tier {tierCode} is being cleaned after its last harvest. Once it is clean, its holes can take plants again.</p>
       <ActionNote action={action} />
-      <PrimaryButton disabled={action.busy} onClick={() => void action.run(async () => { await tierSanitized(store.locationIds.get(tierCode) ?? ""); await store.load(); })}>{action.busy ? "Saving..." : `Tier ${tierCode} is clean`}</PrimaryButton>
+      <PrimaryButton disabled={action.busy} onClick={() => void action.run(async () => { await tierSanitized(store.locationIds.get(tierCode) ?? ""); await store.load(); })}>{action.busy ? "Saving…" : `Tier ${tierCode} is clean`}</PrimaryButton>
     </div>
   );
 }
@@ -199,7 +199,7 @@ function TrayForm({ id, slot, store }: { id: string; slot: OpenSlot; store: ErpS
         <RemoveConfirm what={`Remove the tray in ${id}?`} why={why} setWhy={setWhy} busy={action.busy} onCancel={() => setRemoving(false)} onConfirm={() => void action.run(async () => { await closeTray(slot.id, why); await store.load(); })} />
       ) : (
         <div className="flex flex-wrap items-center gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save"}</PrimaryButton>
           <button type="button" disabled={action.busy} className={`${dangerLink} ml-auto`} onClick={() => setRemoving(true)}><Trash2 className="h-4 w-4" /> Remove tray</button>
         </div>
       )}
@@ -247,7 +247,7 @@ function SowHere({ id, store, batches, lots }: { id: string; store: ErpStore; ba
       </div>
       {lot && <p className="text-[13px] text-[#4F6B73]">Lot {lot.lot_no} has {formatQty(lot.qty_on_hand, lot.unit)} left.</p>}
       <ActionNote action={action} />
-      <PrimaryButton type="submit" disabled={action.busy}><Sprout className="h-4 w-4" /> {action.busy ? "Sowing..." : "Sow in this tray"}</PrimaryButton>
+      <PrimaryButton type="submit" disabled={action.busy}><Sprout className="h-4 w-4" /> {action.busy ? "Sowing…" : "Sow in this tray"}</PrimaryButton>
     </form>
   );
 }

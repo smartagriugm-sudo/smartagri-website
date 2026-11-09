@@ -26,7 +26,7 @@ function ConsentCard({ onAccepted }: { onAccepted: () => Promise<void> }) {
         <li><b className="font-medium text-[#0F2F36]">You can withdraw consent</b> at any time. After that your attendance is recorded by hand by HR staff.</li>
       </ul>
       <ActionNote action={{ error: action.error, saved: false }} />
-      <PrimaryButton disabled={action.busy} onClick={() => void action.run(async () => { await acceptConsent(); await onAccepted(); })}>{action.busy ? "Saving..." : "I agree"}</PrimaryButton>
+      <PrimaryButton disabled={action.busy} onClick={() => void action.run(async () => { await acceptConsent(); await onAccepted(); })}>{action.busy ? "Saving…" : "I agree"}</PrimaryButton>
     </Card>
   );
 }
@@ -41,17 +41,17 @@ function ClockCard({ person, open, finished, onDone }: { person: string; open: A
   const handle = async (file: File) => {
     setResult(null);
     await action.run(async () => {
-      setStep("Processing photo...");
+      setStep("Processing photo…");
       const photo = await compressPhoto(file);
-      setStep("Getting location...");
+      setStep("Getting location…");
       const fix = await currentFix();
-      setStep("Uploading...");
+      setStep("Uploading…");
       const path = await uploadPhoto(person, photo);
-      setStep("Saving...");
+      setStep("Saving…");
       if (going) await clockOut(fix, path, "");
       else await clockIn(fix, path, "");
       await onDone();
-      setResult(fix ? `Clock ${going ? "pulang" : "masuk"} recorded.` : `Clock ${going ? "pulang" : "masuk"} recorded without a location, because the phone did not give one. A coordinator will check it.`);
+      setResult(fix ? `${going ? "Clock out" : "Clock in"} recorded.` : `${going ? "Clock out" : "Clock in"} recorded without a location, because the phone did not give one. A coordinator will check it.`);
     });
     setStep(null);
     if (input.current) input.current.value = "";
@@ -117,7 +117,7 @@ function LeaveForm({ onSaved }: { onSaved: () => Promise<void> }) {
         </div>
         <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
         <ActionNote action={action} />
-        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Sending..." : "Submit"}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Sending…" : "Submit"}</PrimaryButton>
       </form>
     </Card>
   );

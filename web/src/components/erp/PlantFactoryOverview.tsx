@@ -280,6 +280,7 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
 
   return (
       <main className="relative flex-1 bg-[#E7EAE7] lg:h-[calc(100vh-76px)] lg:min-h-[640px]">
+        <h1 className="sr-only">Plant factory</h1>
         {/* Scene */}
         <div ref={sceneBox} className="relative h-[62vh] min-h-[420px] lg:absolute lg:bottom-[172px] lg:left-0 lg:right-[392px] lg:top-0 lg:h-auto">
           <div className={`absolute inset-y-0 left-0 ${layout === "both" ? "w-1/2" : "w-full"} ${layout === "2d" ? "invisible" : ""}`}>

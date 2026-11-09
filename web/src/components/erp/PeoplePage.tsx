@@ -73,7 +73,7 @@ export function PersonEditor({ person, people, members, onDone }: { person: Pers
         )}
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save"}</PrimaryButton>
           <SecondaryButton onClick={() => onDone(null)}>Cancel</SecondaryButton>
         </div>
       </form>
@@ -203,7 +203,7 @@ function AreasCard({ canEdit }: { canEdit: boolean }) {
           <Field label="Radius (metres)"><input className={inputClass} inputMode="numeric" value={radius} onChange={(e) => setRadius(e.target.value)} /></Field>
           <ActionNote action={action} />
           <div className="flex flex-wrap gap-2">
-            <SecondaryButton disabled={locating} onClick={() => void locate()}><LocateFixed className="h-4 w-4" /> {locating ? "Searching..." : "Use my location"}</SecondaryButton>
+            <SecondaryButton disabled={locating} onClick={() => void locate()}><LocateFixed className="h-4 w-4" /> {locating ? "Searching…" : "Use my location"}</SecondaryButton>
             <PrimaryButton type="submit" disabled={action.busy}>Save</PrimaryButton>
           </div>
         </form>

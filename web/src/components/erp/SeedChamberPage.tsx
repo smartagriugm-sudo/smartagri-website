@@ -133,7 +133,7 @@ function SlotPanel({ id, store }: { id: string; store: ErpStore }) {
 
   return (
     <div className="space-y-4">
-      <PanelHeader eyebrow="Tray position" title={id} sub={`Rack ${slot.shelf} · Position ${slot.position} · Row ${slot.row}, column ${slot.column}`} />
+      <PanelHeader eyebrow="Tray position" title={id} sub={`Shelf ${slot.shelf} · Position ${slot.position} · Row ${slot.row}, column ${slot.column}`} />
       {record && stats ? (
         <div className="space-y-2">
           <Rows
@@ -319,6 +319,7 @@ export default function SeedChamberPage({ active, preload, onSceneReady, focusSl
 
   return (
     <main className="relative flex-1 bg-[#E7EAE7] lg:h-[calc(100vh-76px)] lg:min-h-[640px]">
+      <h1 className="sr-only">Seedling chamber</h1>
       {/* Scene */}
       <div ref={sceneBox} className="relative h-[62vh] min-h-[420px] lg:absolute lg:bottom-[204px] lg:left-0 lg:right-[392px] lg:top-0 lg:h-auto">
         <div className={`absolute inset-y-0 left-0 ${layout === "both" ? "w-1/2" : "w-full"} ${layout === "2d" ? "invisible" : ""}`}>
@@ -365,7 +366,7 @@ export default function SeedChamberPage({ active, preload, onSceneReady, focusSl
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <LayoutSwitch value={layout} onChange={setLayout} />
             <Segmented label="View" value={view} options={VIEWS} onChange={(v) => { engine?.setFilter({ shelf: 0 }); engine?.setView(v); }} />
-            <Segmented label="Rack" value={shelf} options={[{ key: 0, label: "All" }, ...SHELVES.map((s) => ({ key: s.shelf as number, label: `${s.shelf}` }))]} onChange={(s) => engine?.setFilter({ shelf: s })} />
+            <Segmented label="Shelf" value={shelf} options={[{ key: 0, label: "All" }, ...SHELVES.map((s) => ({ key: s.shelf as number, label: `${s.shelf}` }))]} onChange={(s) => engine?.setFilter({ shelf: s })} />
             <button type="button" className={toggle} aria-pressed={!!options?.outerDoorOpen} onClick={() => engine?.setOptions({ outerDoorOpen: !options?.outerDoorOpen })}><Check on={!!options?.outerDoorOpen} />Steel door</button>
             <button type="button" className={toggle} aria-pressed={!!options?.glassDoorOpen} onClick={() => engine?.setOptions({ glassDoorOpen: !options?.glassDoorOpen })}><Check on={!!options?.glassDoorOpen} />Glass door</button>
             <button type="button" className={toggle} aria-pressed={!!options?.statusColors} onClick={() => engine?.setOptions({ statusColors: !options?.statusColors })}><Check on={!!options?.statusColors} />Status colours</button>

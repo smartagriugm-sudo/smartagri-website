@@ -175,7 +175,7 @@ function EntryForm({ batches, onSaved, fixedBatch }: { batches: Pick<BatchCost, 
         )}
         <Field label="Description"><input className={inputClass} value={description} onChange={(e) => setDescription(e.target.value)} /></Field>
         <ActionNote action={action} />
-        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Record cost"}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Record cost"}</PrimaryButton>
       </form>
     </Card>
   );

@@ -12,7 +12,7 @@ import DataTable, { CellTitle, Chip, type Column } from "./DataTable";
 // Seed lots, so every harvest can be traced to the seed it came from. Stock moves
 // only through recorded movements: receiving, sowing, or a correction with a reason.
 
-const formatQty = (n: number, unit: string) => `${n.toLocaleString("en-GB")} ${unit}`;
+const formatQty = (n: number, unit: string) => `${n.toLocaleString("en-GB")} ${unitLabel(unit)}`;
 
 function LotEditor({ crops, onDone }: { crops: PfCrop[]; onDone: (saved: boolean) => void }) {
   const today = jakartaToday();
@@ -40,7 +40,7 @@ function LotEditor({ crops, onDone }: { crops: PfCrop[]; onDone: (saved: boolean
           <Field label="Quantity"><input className={inputClass} inputMode="decimal" value={form.qty} onChange={(e) => set("qty", e.target.value)} /></Field>
           <Field label="Unit">
             <select className={inputClass} value={form.unit} onChange={(e) => set("unit", e.target.value as SeedUnit)}>
-              <option value="biji">biji</option>
+              <option value="biji">seeds</option>
               <option value="gram">gram</option>
             </select>
           </Field>
@@ -51,7 +51,7 @@ function LotEditor({ crops, onDone }: { crops: PfCrop[]; onDone: (saved: boolean
         <Field label="Notes"><textarea className={inputClass} rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Field>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save"}</PrimaryButton>
           <SecondaryButton onClick={() => onDone(false)}>Cancel</SecondaryButton>
         </div>
       </form>
@@ -80,7 +80,7 @@ function AdjustEditor({ lot, onDone }: { lot: SeedLot; onDone: (saved: boolean) 
         <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Recounted, damaged seed" /></Field>
         <ActionNote action={action} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving..." : "Save"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save"}</PrimaryButton>
           <SecondaryButton onClick={() => onDone(false)}>Cancel</SecondaryButton>
         </div>
       </form>

@@ -68,15 +68,18 @@ export default function RolesPage() {
                     {ERP_ROLES.map((r) => {
                       const on = held.has(`${m.id}:${r.key}`);
                       return (
-                        <td key={r.key} className="px-2 py-2 text-center">
+                        <td key={r.key} className="p-0 text-center">
+                          {/* The whole cell is the target, not only the box. */}
+                          <label className={`flex min-h-[44px] items-center justify-center px-2 ${canAdmin ? "cursor-pointer hover:bg-[#F3F7F7]" : ""}`}>
                           <input
                             type="checkbox"
                             checked={on}
                             disabled={!canAdmin || action.busy}
                             onChange={() => void toggle(m.id, r.key, !on)}
                             aria-label={`${r.label} for ${memberName(m)}`}
-                            className="h-4 w-4 accent-[#14919B] disabled:opacity-50"
+                            className="h-[18px] w-[18px] accent-[#14919B] disabled:opacity-50"
                           />
+                          </label>
                         </td>
                       );
                     })}

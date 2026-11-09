@@ -27,7 +27,7 @@ function PhotoButton({ path, label }: { path: string; label: string }) {
   if (url) return <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={label} className="h-24 w-24 rounded-lg border border-[#DCE7E8] object-cover" /></a>;
   return (
     <button type="button" disabled={action.busy} onClick={() => void action.run(async () => setUrl(await photoLink(path)))} className={textButton}>
-      {action.busy ? "Opening..." : label}
+      {action.busy ? "Opening…" : label}
       {action.error && <span className="block text-[13px] font-normal text-[#8A5A07]">{action.error}</span>}
     </button>
   );
@@ -46,7 +46,7 @@ function CorrectForm({ record, onDone }: { record: Attendance; onDone: () => Pro
       </div>
       <Field label="Reason for correction"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
       <ActionNote action={{ error: action.error, saved: false }} />
-      <SecondaryButton type="submit" disabled={action.busy || !why.trim()}>{action.busy ? "Saving..." : "Save correction"}</SecondaryButton>
+      <SecondaryButton type="submit" disabled={action.busy || !why.trim()}>{action.busy ? "Saving…" : "Save correction"}</SecondaryButton>
     </form>
   );
 }
@@ -112,7 +112,7 @@ function ManualForm({ people, date, onDone }: { people: { id: string; full_name:
         </div>
         <Field label="Reason"><input className={inputClass} value={why} onChange={(e) => setWhy(e.target.value)} /></Field>
         <ActionNote action={action} />
-        <PrimaryButton type="submit" disabled={action.busy || !why.trim()}>{action.busy ? "Saving..." : "Record attendance"}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={action.busy || !why.trim()}>{action.busy ? "Saving…" : "Record attendance"}</PrimaryButton>
       </form>
     </Card>
   );

@@ -54,7 +54,7 @@ export default function StockItemPage({ id }: { id: string }) {
                   <>
                     <input ref={input} type="file" accept="image/*" className="sr-only" aria-label="Product photo" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); }} />
                     <div className="flex flex-wrap gap-2">
-                      <SecondaryButton disabled={photoAction.busy} onClick={() => input.current?.click()}><ImagePlus className="h-4 w-4" /> {photoAction.busy ? "Saving..." : item.photo_path ? "Change photo" : "Add photo"}</SecondaryButton>
+                      <SecondaryButton disabled={photoAction.busy} onClick={() => input.current?.click()}><ImagePlus className="h-4 w-4" /> {photoAction.busy ? "Saving…" : item.photo_path ? "Change photo" : "Add photo"}</SecondaryButton>
                       {item.photo_path && <SecondaryButton disabled={photoAction.busy} onClick={() => void remove()}><Trash2 className="h-4 w-4" /> Remove</SecondaryButton>}
                     </div>
                     <ActionNote action={photoAction} />
