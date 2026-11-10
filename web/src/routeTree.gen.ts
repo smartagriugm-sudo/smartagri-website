@@ -72,6 +72,9 @@ import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
 import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
 import { Route as ErpBatchIndexRouteImport } from './routes/erp.batch.index'
 import { Route as ErpBatchIdRouteImport } from './routes/erp.batch.$id'
+import { Route as ErpBookingsIndexRouteImport } from './routes/erp.bookings.index'
+import { Route as ErpBookingsIdRouteImport } from './routes/erp.bookings.$id'
+import { Route as ErpBookingsNewRouteImport } from './routes/erp.bookings.new'
 import { Route as ErpCostsIndexRouteImport } from './routes/erp.costs.index'
 import { Route as ErpCostsIdRouteImport } from './routes/erp.costs.$id'
 import { Route as ErpDeliveriesIdRouteImport } from './routes/erp.deliveries.$id'
@@ -414,6 +417,21 @@ const ErpBatchIdRoute = ErpBatchIdRouteImport.update({
   path: '/batch/$id',
   getParentRoute: () => ErpRoute,
 } as any)
+const ErpBookingsIndexRoute = ErpBookingsIndexRouteImport.update({
+  id: '/bookings/',
+  path: '/bookings/',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpBookingsIdRoute = ErpBookingsIdRouteImport.update({
+  id: '/bookings/$id',
+  path: '/bookings/$id',
+  getParentRoute: () => ErpRoute,
+} as any)
+const ErpBookingsNewRoute = ErpBookingsNewRouteImport.update({
+  id: '/bookings/new',
+  path: '/bookings/new',
+  getParentRoute: () => ErpRoute,
+} as any)
 const ErpCostsIndexRoute = ErpCostsIndexRouteImport.update({
   id: '/costs/',
   path: '/costs/',
@@ -611,6 +629,8 @@ export interface FileRoutesByFullPath {
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
+  '/erp/bookings/$id': typeof ErpBookingsIdRoute
+  '/erp/bookings/new': typeof ErpBookingsNewRoute
   '/erp/costs/$id': typeof ErpCostsIdRoute
   '/erp/deliveries/$id': typeof ErpDeliveriesIdRoute
   '/erp/invoice/$id': typeof ErpInvoiceIdRoute
@@ -629,6 +649,7 @@ export interface FileRoutesByFullPath {
   '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
   '/erp/batch/': typeof ErpBatchIndexRoute
+  '/erp/bookings/': typeof ErpBookingsIndexRoute
   '/erp/costs/': typeof ErpCostsIndexRoute
   '/erp/invoice/': typeof ErpInvoiceIndexRoute
   '/erp/orders/': typeof ErpOrdersIndexRoute
@@ -698,6 +719,8 @@ export interface FileRoutesByTo {
   '/ai': typeof AiIndexRoute
   '/erp': typeof ErpIndexRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
+  '/erp/bookings/$id': typeof ErpBookingsIdRoute
+  '/erp/bookings/new': typeof ErpBookingsNewRoute
   '/erp/costs/$id': typeof ErpCostsIdRoute
   '/erp/deliveries/$id': typeof ErpDeliveriesIdRoute
   '/erp/invoice/$id': typeof ErpInvoiceIdRoute
@@ -716,6 +739,7 @@ export interface FileRoutesByTo {
   '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
   '/erp/batch': typeof ErpBatchIndexRoute
+  '/erp/bookings': typeof ErpBookingsIndexRoute
   '/erp/costs': typeof ErpCostsIndexRoute
   '/erp/invoice': typeof ErpInvoiceIndexRoute
   '/erp/orders': typeof ErpOrdersIndexRoute
@@ -789,6 +813,8 @@ export interface FileRoutesById {
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
+  '/erp/bookings/$id': typeof ErpBookingsIdRoute
+  '/erp/bookings/new': typeof ErpBookingsNewRoute
   '/erp/costs/$id': typeof ErpCostsIdRoute
   '/erp/deliveries/$id': typeof ErpDeliveriesIdRoute
   '/erp/invoice/$id': typeof ErpInvoiceIdRoute
@@ -807,6 +833,7 @@ export interface FileRoutesById {
   '/indoor-farming_/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming_/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
   '/erp/batch/': typeof ErpBatchIndexRoute
+  '/erp/bookings/': typeof ErpBookingsIndexRoute
   '/erp/costs/': typeof ErpCostsIndexRoute
   '/erp/invoice/': typeof ErpInvoiceIndexRoute
   '/erp/orders/': typeof ErpOrdersIndexRoute
@@ -881,6 +908,8 @@ export interface FileRouteTypes {
     | '/ai/'
     | '/erp/'
     | '/erp/batch/$id'
+    | '/erp/bookings/$id'
+    | '/erp/bookings/new'
     | '/erp/costs/$id'
     | '/erp/deliveries/$id'
     | '/erp/invoice/$id'
@@ -899,6 +928,7 @@ export interface FileRouteTypes {
     | '/indoor-farming/dashboard/rooms'
     | '/indoor-farming/dashboard/sensors'
     | '/erp/batch/'
+    | '/erp/bookings/'
     | '/erp/costs/'
     | '/erp/invoice/'
     | '/erp/orders/'
@@ -968,6 +998,8 @@ export interface FileRouteTypes {
     | '/ai'
     | '/erp'
     | '/erp/batch/$id'
+    | '/erp/bookings/$id'
+    | '/erp/bookings/new'
     | '/erp/costs/$id'
     | '/erp/deliveries/$id'
     | '/erp/invoice/$id'
@@ -986,6 +1018,7 @@ export interface FileRouteTypes {
     | '/indoor-farming/dashboard/rooms'
     | '/indoor-farming/dashboard/sensors'
     | '/erp/batch'
+    | '/erp/bookings'
     | '/erp/costs'
     | '/erp/invoice'
     | '/erp/orders'
@@ -1058,6 +1091,8 @@ export interface FileRouteTypes {
     | '/ai/'
     | '/erp/'
     | '/erp/batch/$id'
+    | '/erp/bookings/$id'
+    | '/erp/bookings/new'
     | '/erp/costs/$id'
     | '/erp/deliveries/$id'
     | '/erp/invoice/$id'
@@ -1076,6 +1111,7 @@ export interface FileRouteTypes {
     | '/indoor-farming_/dashboard/rooms'
     | '/indoor-farming_/dashboard/sensors'
     | '/erp/batch/'
+    | '/erp/bookings/'
     | '/erp/costs/'
     | '/erp/invoice/'
     | '/erp/orders/'
@@ -1573,6 +1609,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErpBatchIdRouteImport
       parentRoute: typeof ErpRoute
     }
+    '/erp/bookings/': {
+      id: '/erp/bookings/'
+      path: '/bookings'
+      fullPath: '/erp/bookings/'
+      preLoaderRoute: typeof ErpBookingsIndexRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/bookings/$id': {
+      id: '/erp/bookings/$id'
+      path: '/bookings/$id'
+      fullPath: '/erp/bookings/$id'
+      preLoaderRoute: typeof ErpBookingsIdRouteImport
+      parentRoute: typeof ErpRoute
+    }
+    '/erp/bookings/new': {
+      id: '/erp/bookings/new'
+      path: '/bookings/new'
+      fullPath: '/erp/bookings/new'
+      preLoaderRoute: typeof ErpBookingsNewRouteImport
+      parentRoute: typeof ErpRoute
+    }
     '/erp/costs/': {
       id: '/erp/costs/'
       path: '/costs'
@@ -1788,6 +1845,8 @@ interface ErpRouteChildren {
   ErpTraceRoute: typeof ErpTraceRoute
   ErpIndexRoute: typeof ErpIndexRoute
   ErpBatchIdRoute: typeof ErpBatchIdRoute
+  ErpBookingsIdRoute: typeof ErpBookingsIdRoute
+  ErpBookingsNewRoute: typeof ErpBookingsNewRoute
   ErpCostsIdRoute: typeof ErpCostsIdRoute
   ErpDeliveriesIdRoute: typeof ErpDeliveriesIdRoute
   ErpInvoiceIdRoute: typeof ErpInvoiceIdRoute
@@ -1799,6 +1858,7 @@ interface ErpRouteChildren {
   ErpSettingsRolesRoute: typeof ErpSettingsRolesRoute
   ErpStockIdRoute: typeof ErpStockIdRoute
   ErpBatchIndexRoute: typeof ErpBatchIndexRoute
+  ErpBookingsIndexRoute: typeof ErpBookingsIndexRoute
   ErpCostsIndexRoute: typeof ErpCostsIndexRoute
   ErpInvoiceIndexRoute: typeof ErpInvoiceIndexRoute
   ErpOrdersIndexRoute: typeof ErpOrdersIndexRoute
@@ -1825,6 +1885,8 @@ const ErpRouteChildren: ErpRouteChildren = {
   ErpTraceRoute: ErpTraceRoute,
   ErpIndexRoute: ErpIndexRoute,
   ErpBatchIdRoute: ErpBatchIdRoute,
+  ErpBookingsIdRoute: ErpBookingsIdRoute,
+  ErpBookingsNewRoute: ErpBookingsNewRoute,
   ErpCostsIdRoute: ErpCostsIdRoute,
   ErpDeliveriesIdRoute: ErpDeliveriesIdRoute,
   ErpInvoiceIdRoute: ErpInvoiceIdRoute,
@@ -1836,6 +1898,7 @@ const ErpRouteChildren: ErpRouteChildren = {
   ErpSettingsRolesRoute: ErpSettingsRolesRoute,
   ErpStockIdRoute: ErpStockIdRoute,
   ErpBatchIndexRoute: ErpBatchIndexRoute,
+  ErpBookingsIndexRoute: ErpBookingsIndexRoute,
   ErpCostsIndexRoute: ErpCostsIndexRoute,
   ErpInvoiceIndexRoute: ErpInvoiceIndexRoute,
   ErpOrdersIndexRoute: ErpOrdersIndexRoute,

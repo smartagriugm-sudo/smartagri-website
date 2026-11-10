@@ -13,6 +13,15 @@ $$;
 alter table public.pf_recipe disable trigger pf_recipe_guard;
 alter table public.pf_recipe_phase disable trigger pf_recipe_phase_guard;
 
+/* Bookings, with their times, invitations and answers. Only when pf-booking.sql has run. */
+do $$
+begin
+  if to_regclass('public.pf_booking') is not null then
+    delete from public.pf_booking where id::text like 'd0000000-%';
+  end if;
+end;
+$$;
+
 /* Maintenance and running costs. */
 delete from public.pf_work_order where pg_temp.demo(id);
 delete from public.pf_maintenance_plan where pg_temp.demo(id);
