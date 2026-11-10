@@ -28,11 +28,11 @@ CTA banner khusus landing. Sistem brand Inter + palet teal sesuai `CLAUDE.md`.
 ### 2. CMS konten (`/admin`, Sveltia)
 Field Notes, Publications, dan Gallery disimpan sebagai file JSON per-entri di
 `web/src/content/{notes,publications,gallery}/`, di-load lewat `import.meta.glob`.
-Dikelola non-teknis lewat CMS di `/admin`. Setup: `SETUP-ADMIN-CMS.md`.
+Dikelola non-teknis lewat CMS di `/admin`. Setup: `docs/setup/SETUP-ADMIN-CMS.md`.
 
 ### 3. Login research assistant (Supabase Auth)
 Halaman `sign-in` dan `sign-up`. Auth memagari seluruh `/ai/*`. Setup:
-`SETUP-AUTH.md`.
+`docs/setup/SETUP-AUTH.md`.
 
 ### 4. AI Assistant (`/ai`) — fitur terbesar
 Gaya antarmuka mirip Gemini (composer di tengah lalu nempel bawah, sidebar bisa
@@ -45,7 +45,7 @@ ini di-hide), `ai/knowledge`, `ai/profile`.
   retry, edit, copy), tanpa helper text/saran kosong.
 - **Riwayat chat**: disimpan di Supabase (lazy-load: judul dulu, isi saat
   diklik). `lib/ai/chat-store.ts`, `supabase/conversations.sql`,
-  `SETUP-CHAT-HISTORY.md`.
+  `docs/setup/SETUP-CHAT-HISTORY.md`.
 - **Profil & personalisasi**: identitas, nama panggilan, fokus kerja, custom
   instructions, preferensi bahasa/gaya; AI benar-benar menyesuaikan jawaban.
   `routes/ai/profile.tsx`, `lib/profile.ts`, `supabase/profiles.sql`.
@@ -57,7 +57,7 @@ ini di-hide), `ai/knowledge`, `ai/profile`.
   Dukungan unggah **PDF, DOCX, XLSX** (ekstraksi di sisi klien) di chat maupun
   knowledge base. `lib/ai/extract-text.ts`.
 - **Server AI**: panduan setup Ollama + Caddy (gateway auth) + Cloudflare Tunnel
-  di `SETUP-AI-SERVER.md`.
+  di `docs/setup/SETUP-AI-SERVER.md`.
 
 ### 5. Indoor Farming + dashboard kendali
 - Seksi publik: `indoor-farming` (+ `$section`, `$group`).
@@ -72,7 +72,7 @@ ini di-hide), `ai/knowledge`, `ai/profile`.
 `guestbook` + `guestbook.admin`. `supabase/guestbook.sql`.
 
 ### 7. Inventaris PUAPT
-`inventory` (+ detail, + `stats`). `supabase/inventory*.sql`, `SETUP-INVENTORY.md`.
+`inventory` (+ detail, + `stats`). `supabase/inventory*.sql`, `docs/setup/SETUP-INVENTORY.md`.
 
 ### 8. Links & insights
 Pemendek/trek tautan (`links`, `links.insights`). `supabase/link_events.sql`.
@@ -82,12 +82,12 @@ Pemendek/trek tautan (`links`, `links.insights`). `supabase/link_events.sql`.
   (`.github/workflows/import-wp-news.yml`). Gambar ke WebP, HTML ke Markdown,
   anti-duplikat via `wpId`. **Terjemahan otomatis ke Inggris** lewat Ollama
   on-prem (gratis) atau Anthropic (cadangan); versi Indonesia disimpan di field
-  `original`. `SETUP-NEWS-SYNC.md`.
-- **Galeri**: `scripts/import-gallery.mjs`, `SETUP-GALLERY-SYNC.md`.
+  `original`. `docs/setup/SETUP-NEWS-SYNC.md`.
+- **Galeri**: `scripts/import-gallery.mjs`, `docs/setup/SETUP-GALLERY-SYNC.md`.
 - Ingest konten existing untuk RAG: `scripts/ingest.mjs`.
 
 ### 10. Formulir kontak & inventaris pertanyaan
-Form kontak membuka draf email via `mailto:` (tanpa backend). `SETUP-INQUIRIES.md`,
+Form kontak membuka draf email via `mailto:` (tanpa backend). `docs/setup/SETUP-INQUIRIES.md`,
 `smartagri-inquiries-template.xlsx`, `FORM-KONTEN-SMARTAGRI.md`.
 
 ## Tabel Supabase (dijalankan manual sekali di SQL editor)

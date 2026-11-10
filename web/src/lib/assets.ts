@@ -31,7 +31,7 @@ export const indoorFarmingPhoto = (file: string) =>
 export const indoorDashboardImage = (file: string) =>
   `${BASE}/indoor-farming/dashboard/${file}`;
 
-// Local development copy of the ERP's 3D model, git-ignored (SETUP-ERP-MODEL.md).
+// Local development copy of the ERP's 3D model, git-ignored (docs/setup/SETUP-ERP-MODEL.md).
 // The deployed site reads a private bucket instead: see lib/pf/model-assets.ts.
 export const plantFactoryAssets = `${BASE}/plant-factory/`;
 

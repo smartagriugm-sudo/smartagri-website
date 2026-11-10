@@ -43,7 +43,7 @@ export const Route = createFileRoute("/contact-us")({
 const CONTACT_EMAIL = "hello@smart-agri.id";
 
 // Google Apps Script Web App that appends submissions to the team's
-// "smartagri Inquiries" Google Sheet (see SETUP-INQUIRIES.md).
+// "smartagri Inquiries" Google Sheet (see docs/setup/SETUP-INQUIRIES.md).
 const INQUIRY_ENDPOINT =
   "https://script.google.com/macros/s/AKfycbxj-2d-hmXocr7OEag-oNrTy0yo3vUV40-DcmWx7K90ci9Lzol9iby6hcSyrT66k_M/exec";
 
@@ -386,7 +386,7 @@ function InquiryForm() {
     const rows = reviewRows(data);
     if (INQUIRY_ENDPOINT) {
       // Fire-and-forget POST to the Google Apps Script inbox (see
-      // SETUP-INQUIRIES.md); no-cors because Apps Script doesn't set CORS.
+      // docs/setup/SETUP-INQUIRIES.md); no-cors because Apps Script doesn't set CORS.
       fetch(INQUIRY_ENDPOINT, {
         method: "POST",
         mode: "no-cors",

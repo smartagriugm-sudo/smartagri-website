@@ -4,7 +4,7 @@ name: Import WordPress news
 # images to WebP and HTML to Markdown) and commits them, which triggers a
 # Vercel deploy. Near-real-time runs come from the WordPress publish webhook
 # (repository_dispatch); the schedule is a safety-net poll in case a webhook
-# is missed. See SETUP-NEWS-SYNC.md for the webhook setup.
+# is missed. See docs/setup/SETUP-NEWS-SYNC.md for the webhook setup.
 on:
   schedule:
     - cron: "*/15 * * * *"

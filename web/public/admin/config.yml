@@ -2,7 +2,7 @@
 # Admin membuka /admin → login GitHub → mengisi form → Publish →
 # tersimpan sebagai commit → hosting otomatis rebuild & tayang.
 #
-# TODO sebelum bisa dipakai (lihat SETUP-ADMIN-CMS.md di root proyek):
+# TODO sebelum bisa dipakai (lihat docs/setup/SETUP-ADMIN-CMS.md):
 #   1. Ganti `repo` dengan nama repo GitHub yang sebenarnya (owner/nama-repo).
 #   2. Deploy sveltia-cms-auth (Cloudflare Worker gratis) lalu isi `base_url`.
 

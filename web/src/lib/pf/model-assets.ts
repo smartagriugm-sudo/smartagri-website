@@ -5,7 +5,7 @@ import { isAuthConfigured, supabase } from "../auth/supabase";
 // repo, so the deployed site reads it from a private Storage bucket through
 // short-lived links, which only a signed-in lab member can get (RLS in
 // supabase/pf-model-storage.sql). Local development reads the git-ignored copy
-// in public/brand/plant-factory. See SETUP-ERP-MODEL.md.
+// in public/brand/plant-factory. See docs/setup/SETUP-ERP-MODEL.md.
 
 export const MODEL_BUCKET = "pf-model";
 const LINK_SECONDS = 60 * 60;
