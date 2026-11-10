@@ -1,11 +1,11 @@
-import { Activity, BellRing, BookOpen, Boxes, CalendarDays, ClipboardCheck, ClipboardList, Contact, Cpu, Factory, FileText, Fingerprint, History, LayoutDashboard, Leaf, MapPin, Package, ScanSearch, ShieldCheck, ShoppingBag, ShoppingCart, Sprout, UserCheck, Users, Wallet, Wrench, type LucideIcon } from "lucide-react";
+import { Activity, BellRing, BookOpen, Boxes, CalendarCheck, CalendarDays, ClipboardCheck, ClipboardList, Contact, Cpu, Factory, FileText, Fingerprint, History, LayoutDashboard, Leaf, MapPin, Package, ScanSearch, ShieldCheck, ShoppingBag, ShoppingCart, Sprout, UserCheck, Users, Wallet, Wrench, type LucideIcon } from "lucide-react";
 import type { ErpAccess } from "../../lib/pf/foundation";
 
 // The ERP's menu, in the order a day runs: what is growing, what the sensors say,
 // what is on the shelf, who buys it, who does the work, then the records everything
 // else leans on. Only the first two sections start open, so the menu fits a screen.
 
-export type NavPath = "/erp" | "/erp/costs" | "/erp/maintenance" | "/erp/clock-in" | "/erp/attendance" | "/erp/schedule" | "/erp/people" | "/erp/stock" | "/erp/purchasing" | "/erp/stock-count" | "/erp/orders" | "/erp/invoice" | "/erp/customers" | "/erp/trace" | "/erp/monitoring" | "/erp/alarms" | "/erp/devices" | "/erp/batch" | "/erp/seedlings" | "/erp/plant-factory" | "/erp/seed-lots" | "/erp/crops" | "/erp/recipes" | "/erp/settings/locations" | "/erp/settings/roles" | "/erp/settings/audit";
+export type NavPath = "/erp" | "/erp/costs" | "/erp/maintenance" | "/erp/clock-in" | "/erp/attendance" | "/erp/schedule" | "/erp/bookings" | "/erp/people" | "/erp/stock" | "/erp/purchasing" | "/erp/stock-count" | "/erp/orders" | "/erp/invoice" | "/erp/customers" | "/erp/trace" | "/erp/monitoring" | "/erp/alarms" | "/erp/devices" | "/erp/batch" | "/erp/seedlings" | "/erp/plant-factory" | "/erp/seed-lots" | "/erp/crops" | "/erp/recipes" | "/erp/settings/locations" | "/erp/settings/roles" | "/erp/settings/audit";
 
 export type NavItem = { to: NavPath; label: string; icon: LucideIcon; exact?: boolean; gate?: keyof ErpAccess };
 export type NavGroup = { key: string; label: string; items: NavItem[]; startsOpen?: boolean };
@@ -62,6 +62,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: "/erp/clock-in", label: "Clock in", icon: Fingerprint },
       { to: "/erp/attendance", label: "Attendance", icon: UserCheck, gate: "canReadPeople" },
       { to: "/erp/schedule", label: "Schedule", icon: CalendarDays, gate: "canReadPeople" },
+      { to: "/erp/bookings", label: "Bookings", icon: CalendarCheck },
       { to: "/erp/people", label: "People", icon: Users, gate: "canReadPeople" },
     ],
   },

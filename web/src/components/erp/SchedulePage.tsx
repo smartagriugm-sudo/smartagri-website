@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock, MapPin, Plus, Trash2, X } from "lucide-react";
 import { jakartaToday } from "../../lib/pf/batch";
-import { daysOf, endMinutes, hourRange, initials, minutesOfDay, personColor, placeEvents, step, type CalendarMode } from "../../lib/pf/calendar";
+import { daysOf, endMinutes, hourRange, initials, minutesOfDay, monthGrid, personColor, placeEvents, step, type CalendarMode } from "../../lib/pf/calendar";
 import { addDays } from "../../lib/pf/facility";
 import { LEAVE_TYPES, addShifts, clockText, fetchLeaves, fetchPeople, fetchShifts, fetchWorkAreas, parseShiftForm, removeShift, weekStart, type Leave, type Person, type Shift, type WorkArea } from "../../lib/pf/people";
 import { ActionNote, DataState, ErpPage, Field, PrimaryButton, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
+import { MultiDateCalendar } from "./TimeOptionsPicker";
 import { Card, Note, Segmented } from "./ui";
 
 // The team's calendar, laid out like a diary: a day or a week has an hour grid with each
@@ -13,7 +14,6 @@ import { Card, Note, Segmented } from "./ui";
 // across the top of the day, so a gap is seen before it hurts.
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const WEEKDAY_VALUES = [1, 2, 3, 4, 5, 6, 0];
 const MODES: { key: CalendarMode; label: string }[] = [
   { key: "day", label: "Day" },
   { key: "week", label: "Week" },
@@ -41,24 +41,32 @@ const leaveLabel = (l: Leave) => LEAVE_TYPES.find((t) => t.key === l.type)?.labe
 
 /* ------------------------------------------------------------------ the form */
 
-function ShiftForm({ people, areas, start, person: presetPerson, onClose, onDone }: { people: Person[]; areas: WorkArea[]; start: string; person: string; onClose: () => void; onDone: () => Promise<void> }) {
+function ShiftForm({ people, areas, shifts, start, today, person: presetPerson, onClose, onDone }: { people: Person[]; areas: WorkArea[]; shifts: Shift[]; start: string; today: string; person: string; onClose: () => void; onDone: () => Promise<void> }) {
   const active = people.filter((p) => p.status === "aktif");
   const [person, setPerson] = useState(presetPerson || (active[0]?.id ?? ""));
-  const [from, setFrom] = useState(start);
-  const [to, setTo] = useState(start);
-  const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5, 6, 0]);
+  // The days are picked on a calendar, as a booking's are, so a run need not be every day between two dates.
+  const [dates, setDates] = useState<string[]>([start]);
+  const [month, setMonth] = useState(`${start.slice(0, 7)}-01`);
   const [startAt, setStartAt] = useState("08:00");
   const [endAt, setEndAt] = useState("16:00");
   const [area, setArea] = useState(areas.find((a) => a.active)?.id ?? "");
   const [result, setResult] = useState<string | null>(null);
   const action = useAction();
+  const taken = new Set(shifts.filter((s) => s.person_id === person).map((s) => s.work_date));
+  const toggle = (d: string) => setDates(dates.includes(d) ? dates.filter((x) => x !== d) : [...dates, d].sort());
+  // Monday to Saturday of the month on view, from today on: the usual run of shifts in one click.
+  const fillWorkdays = () => {
+    const days = monthGrid(month).filter((d) => d.slice(0, 7) === month.slice(0, 7) && d >= today && new Date(`${d}T00:00:00Z`).getUTCDay() !== 0);
+    setDates([...new Set([...dates, ...days])].sort());
+  };
   const submit = async () => {
     setResult(null);
-    const parsed = parseShiftForm(person, from, to, days, startAt, endAt);
+    if (dates.length === 0) return action.setError("Pick at least one day on the calendar.");
+    const parsed = parseShiftForm(person, dates[0], dates[0], [new Date(`${dates[0]}T00:00:00Z`).getUTCDay()], startAt, endAt);
     if (parsed.error !== null) return action.setError(parsed.error);
     await action.run(async () => {
-      const added = await addShifts(person, parsed.dates, startAt, endAt, area);
-      const skipped = parsed.dates.length - added;
+      const added = await addShifts(person, dates, startAt, endAt, area);
+      const skipped = dates.length - added;
       setResult(`${added} ${added === 1 ? "shift" : "shifts"} added${skipped ? `, ${skipped} already there` : ""}.`);
       await onDone();
     });
@@ -75,21 +83,17 @@ function ShiftForm({ people, areas, start, person: presetPerson, onClose, onDone
             {active.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
           </select>
         </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="From"><input type="date" className={inputClass} value={from} onChange={(e) => { setFrom(e.target.value); if (to < e.target.value) setTo(e.target.value); }} /></Field>
-          <Field label="To"><input type="date" className={inputClass} min={from} value={to} onChange={(e) => setTo(e.target.value)} /></Field>
-        </div>
-        {from !== to && (
-          <fieldset>
-            <legend className="mb-1 text-[13px] font-medium text-[#36525A]">Repeat on</legend>
-            <div className="flex flex-wrap gap-1">
-              {WEEKDAY_VALUES.map((v, i) => {
-                const on = days.includes(v);
-                return <button key={v} type="button" aria-pressed={on} onClick={() => setDays(on ? days.filter((d) => d !== v) : [...days, v])} className={`min-h-[44px] min-w-[44px] rounded-lg border text-[13px] font-medium sm:min-h-[32px] ${on ? "border-[#14919B] bg-[#E3F4F4] text-[#0B6477]" : "border-[#DCE7E8] bg-white text-[#4F6B73]"}`}>{WEEKDAY_LABELS[i]}</button>;
-              })}
-            </div>
-          </fieldset>
-        )}
+        <fieldset>
+          <legend className="mb-1 text-[13px] font-medium text-[#36525A]">Days</legend>
+          <MultiDateCalendar selected={new Set(dates)} onToggle={toggle} today={today} month={month} onMonth={setMonth} marked={taken} allowPast />
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[12.5px] text-[#4F6B73]">
+            <span aria-live="polite">{dates.length} {dates.length === 1 ? "day" : "days"} picked{taken.size > 0 ? " · dot: already has a shift" : ""}</span>
+            <span className="flex gap-1">
+              <button type="button" onClick={fillWorkdays} className="rounded-md px-2 py-1 font-medium text-[#0B6477] hover:bg-[#E3F4F4]">Mon–Sat this month</button>
+              {dates.length > 0 && <button type="button" onClick={() => setDates([])} className="rounded-md px-2 py-1 font-medium text-[#4F6B73] hover:bg-[#EEF5F5]">Clear</button>}
+            </span>
+          </div>
+        </fieldset>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Starts"><input type="time" className={inputClass} value={startAt} onChange={(e) => setStartAt(e.target.value)} /></Field>
           <Field label="Ends"><input type="time" className={inputClass} value={endAt} onChange={(e) => setEndAt(e.target.value)} /></Field>
@@ -373,7 +377,7 @@ export default function SchedulePage() {
                 {side && (
                   <div className="min-w-0 xl:sticky xl:top-20">
                     {adding !== null ? (
-                      <ShiftForm key={adding} people={people} areas={areas} start={adding} person={person} onClose={() => setAdding(null)} onDone={state.reload} />
+                      <ShiftForm key={adding} people={people} areas={areas} shifts={state.data?.shifts ?? []} start={adding} today={today} person={person} onClose={() => setAdding(null)} onDone={state.reload} />
                     ) : opened ? (
                       <ShiftDetail key={opened.id} shift={opened} canEdit={canSchedule} onClose={() => setOpenId(null)} reload={state.reload} />
                     ) : null}
