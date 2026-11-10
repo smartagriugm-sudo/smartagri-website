@@ -105,7 +105,7 @@ Plant factory ada di `/erp/plant-factory`, sedangkan `/erp` kini dashboard. Kedu
   tetapi tetap memakai memori GPU. Di layar lebar model kedua dimuat setelah yang pertama; di ponsel saat pertama dibuka.
 - **Pintu** pada model hanya tampilan, bukan status pintu asli. **Nilai program germinasi** masih contoh, nantinya dari resep.
 
-Pembaruan model dan mesin: lihat `SETUP-ERP-MODEL.md`.
+Pembaruan model dan mesin: lihat `../setup/SETUP-ERP-MODEL.md`.
 
 ---
 
@@ -186,7 +186,7 @@ Pimpinan, Admin sistem, Manajer produksi, Staf penjualan, Staf SDM, Teknisi, Ope
 7. SDM mencakup jadwal, tugas, absensi, dan kontrak untuk semua orang. Penggajian di luar lingkup versi ini.
 8. Penjualan dan traceability hasil panen diprioritaskan.
 9. Model 3D tidak dibuka di repo publik, tetapi tetap ditampilkan di ERP. Filenya ada di bucket Supabase privat
-   (lihat `SETUP-ERP-MODEL.md`). Kode mesin 3D ada di repo sebagai paket tanpa model.
+   (lihat `../setup/SETUP-ERP-MODEL.md`). Kode mesin 3D ada di repo sebagai paket tanpa model.
 10. Sensor mikroklimat juga dipasang di dalam chamber. Interval kirim dibahas bersama pengembangan firmware.
 11. Grade panen memakai A, B, dan Afkir. Batas angkanya menyusul dari data panen tim.
 12. Tagihan memakai invoice dengan pajak opsional. Absensi memakai lokasi dan foto dari ponsel.

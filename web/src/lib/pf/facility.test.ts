@@ -4,7 +4,7 @@ import { HOLES_TOTAL, batchOf, isPlanted, seedHoles } from "./facility";
 import { PfProvider } from "./provider";
 
 // The manifest is private, so these two checks run only where the local model
-// copy exists (see SETUP-ERP-MODEL.md).
+// copy exists (see docs/setup/SETUP-ERP-MODEL.md).
 const manifestPath = "public/brand/plant-factory/manifest.json";
 
 describe.runIf(existsSync(manifestPath))("plant factory data against the 3D model", () => {

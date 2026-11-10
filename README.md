@@ -1,28 +1,46 @@
 # smartagri
 
-Situs Smart Agriculture Research Center, Universitas Gadjah Mada.
+Situs resmi **Smart Agriculture Research Center (SARC), Universitas Gadjah Mada**.
 Live di **[smart-agri.id](https://www.smart-agri.id)**.
+
+Repo ini berisi situs publik (riset, teknologi, publikasi, berita, galeri, tim)
+dan aplikasi internal yang berjalan di domain yang sama: AI Assistant, indoor
+farming, inventaris, buku tamu, dan ERP plant factory **agrosphere**.
+
+## Struktur repo
+
+```
+.
+├── web/                 aplikasi situs (TanStack Start)
+│   ├── src/routes/      halaman, routing berbasis file
+│   ├── src/components/  komponen bersama
+│   ├── src/lib/         data, helper, dan logika (termasuk ERP di src/lib/pf/)
+│   ├── src/content/     berita, publikasi, galeri (JSON per entri, dikelola lewat CMS /admin)
+│   ├── server/api/      route server Nitro (mis. AI chat)
+│   ├── public/brand/    semua aset media, dirujuk lewat src/lib/assets.ts
+│   └── supabase/        migrasi SQL, dijalankan manual di SQL editor Supabase
+├── docs/                dokumentasi (lihat docs/README.md)
+├── .github/workflows/   impor berita otomatis dari situs lama
+└── CLAUDE.md            aturan brand dan konvensi kode
+```
 
 ## Stack
 
-TanStack Start v1 · React 19 · TypeScript · Tailwind v4 · framer-motion
-Di-deploy otomatis oleh Vercel dari branch `main`.
-
-Aplikasinya ada di folder `web/`.
+TanStack Start v1 · React 19 · TypeScript · Tailwind v4 · framer-motion ·
+Supabase (Auth, Postgres, pgvector). Di-deploy otomatis oleh Vercel dari branch `main`.
 
 ## Menjalankan secara lokal
 
 Butuh **Node 20 atau lebih baru** (versi yang dipakai ada di `.nvmrc`).
-Node 18 akan gagal saat build dengan `ReferenceError: CustomEvent is not defined`.
 
 ```bash
-nvm use            # membaca .nvmrc (22)
+nvm use
 cd web
 npm install
 npm run dev        # http://localhost:3000
 ```
 
-Perintah lain:
+Perintah lain (dari `web/`):
 
 ```bash
 npm run build      # build produksi
@@ -33,61 +51,33 @@ npm test           # vitest
 ## Variabel lingkungan
 
 Salin `web/.env.example` menjadi `web/.env` lalu isi seperlunya. Semuanya
-opsional untuk sekadar menjalankan situs:
+opsional untuk sekadar menjalankan situs publik:
 
 | Variabel | Untuk apa | Kalau dikosongkan |
 |---|---|---|
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Login, buku tamu, inventaris PUAPT, insights | Fitur ber-login mati, sisa situs tetap jalan |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Login, ERP, buku tamu, inventaris | Fitur ber-login mati, situs publik tetap jalan |
 | `AI_API_BASE_URL`, `AI_MODEL`, `AI_API_KEY` | AI Assistant | Halaman `/ai` tidak berfungsi |
 
-Keduanya adalah kunci publik yang aman dipakai di browser. **Jangan** memasukkan
-`service_role` key Supabase ke repo ini (repo bersifat publik).
+Kunci Supabase di atas adalah kunci publik (anon) yang aman dipakai di browser.
+**Jangan** memasukkan `service_role` key atau secret lain ke repo ini, karena repo
+bersifat publik. Di produksi, nilai-nilai ini diatur di dashboard Vercel.
 
-Di produksi, nilai-nilai ini diatur di dashboard Vercel, bukan di repo.
+## Alur kerja
 
-## Isi repo
-
-| Lokasi | Isi |
-|---|---|
-| `web/src/routes/` | Halaman (routing berbasis file) |
-| `web/src/components/` | Komponen bersama |
-| `web/src/lib/` | Data & helper (riset, teknologi, tim, publikasi, indoor farming) |
-| `web/src/content/notes/`, `.../publications/`, `.../gallery/` | Konten per-entri (JSON), dikelola lewat CMS `/admin` |
-| `web/public/brand/` | Semua aset media, dirujuk lewat `src/lib/assets.ts` |
-| `web/supabase/*.sql` | Migrasi Supabase, dijalankan manual sekali di SQL editor |
-
-## Alur deploy
-
-`main` adalah sumber kebenaran dan yang di-deploy. Konten berita juga bisa masuk
-ke `main` lewat importer otomatis, jadi **selalu mulai dari `main` yang terbaru**
-sebelum bekerja:
+`main` adalah sumber kebenaran dan yang di-deploy. Berita dari situs lama juga
+masuk ke `main` lewat importer otomatis, jadi selalu mulai dari `main` terbaru:
 
 ```bash
-git checkout design-sync/ui-kit
-git merge --ff-only origin/main      # samakan dulu dengan main
+git switch main
+git pull
+git switch -c nama-branch
 ```
 
-Lalu seperti biasa:
+Setelah selesai, push branch, buat pull request ke `main`, lalu merge. Merge ke
+`main` memicu deploy Vercel, biasanya tayang dalam 1 sampai 2 menit.
 
-```bash
-git add <file>
-git commit -m "pesan"
-git push origin design-sync/ui-kit
-gh pr create --base main --head design-sync/ui-kit --title "..." --body "..."
-gh pr merge <nomor> --merge
-```
+## Dokumentasi
 
-Merge ke `main` memicu deploy Vercel. Butuh sekitar 1 sampai 2 menit sampai
-perubahannya tayang.
-
-> Kalau branch kerja tertinggal dari `main` lalu dipakai membuat PR, perubahan
-> yang sudah ada di `main` bisa ikut terbalik. Karena itu langkah `merge
-> --ff-only origin/main` di atas penting, terutama saat berpindah komputer.
-
-## Dokumentasi lain
-
-- **`CLAUDE.md`** — aturan brand dan konvensi kode. **Baca ini sebelum mengubah
-  kode apa pun.**
-- `SETUP-*.md` — panduan sekali-jalan per fitur (CMS admin, auth, inventaris
-  PUAPT, sinkronisasi galeri, server AI, dan lainnya).
-- `INDOOR-FARMING-PHOTOS.md` — daftar dan brief foto untuk seksi Indoor Farming.
+- [`CLAUDE.md`](CLAUDE.md): aturan brand dan konvensi kode. Baca sebelum mengubah kode.
+- [`docs/`](docs/README.md): status pengembangan, panduan setup per fitur,
+  brief konten, dan rancangan fitur.

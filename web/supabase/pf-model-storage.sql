@@ -1,6 +1,6 @@
 -- Private bucket for the ERP's 3D model. Run manually in the Supabase SQL editor,
 -- after accounts.sql (it uses public.is_lab_member()). Then upload the files as
--- described in SETUP-ERP-MODEL.md.
+-- described in docs/setup/SETUP-ERP-MODEL.md.
 --
 -- Only approved lab members can read, through short-lived signed links. There is
 -- deliberately no write policy: files are uploaded from the Supabase dashboard.

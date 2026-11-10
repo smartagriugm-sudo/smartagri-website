@@ -11,7 +11,7 @@ const sample = () => {
 };
 
 // The manifest is private, so these checks run only where the local model copy
-// exists (see SETUP-ERP-MODEL.md).
+// exists (see docs/setup/SETUP-ERP-MODEL.md).
 const manifestPath = "public/brand/plant-factory/seed_chamber_manifest.json";
 
 describe.runIf(existsSync(manifestPath))("growth chamber data against the 3D model", () => {

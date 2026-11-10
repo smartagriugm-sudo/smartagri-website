@@ -27,6 +27,21 @@ gitclone/
 video/node_modules/
 video/out/
 
-# ERP 3D model and its package stay out of this public repo (SETUP-ERP-MODEL.md)
+# ERP 3D model and its package stay out of this public repo (docs/setup/SETUP-ERP-MODEL.md)
 web/vendor/private/
 web/public/brand/plant-factory/
+
+# Local-only files (AI prompts, raw design sources, editor and machine setup)
+.claude/
+AGENTS.md
+PROMPT-*.md
+Prompt_*.txt
+design assets/
+Panduan-*
+web/dev.cmd
+web/.vscode/
+
+# Separate projects that live next to the site but are not part of it
+smartagri-hyperframes/
+smartagri-video-editor/
+video/

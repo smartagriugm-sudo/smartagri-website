@@ -2,11 +2,12 @@
 
 Situs Smart Agriculture Research Center UGM, live di smart-agri.id.
 Baca file ini sebelum membuat atau mengubah kode apa pun, dan ikuti aturan brand di bawah secara ketat.
-Ringkasan naratif semua fitur yang sudah dibangun ada di `STATUS-PENGEMBANGAN.md`.
+Ringkasan naratif semua fitur yang sudah dibangun ada di `docs/STATUS-PENGEMBANGAN.md`.
 
 ## Stack
 - Aplikasi ada di subfolder **`web/`**; semua path di bawah relatif terhadap `web/`.
-  Folder induk hanya berisi dokumentasi (`README.md`, `STATUS-PENGEMBANGAN.md`, `SETUP-*.md`).
+  Folder induk hanya berisi `README.md`, `CLAUDE.md`, dan `docs/` (status pengembangan, panduan
+  setup `docs/setup/SETUP-*.md`, brief konten `docs/konten/`, rancangan fitur).
 - TanStack Start v1, React 19, TypeScript, Tailwind v4, framer-motion, lucide-react.
   Versi `@tanstack/*` dan `nitro` dikunci exact di `package.json`; naikkan dengan sengaja, bukan `latest`.
 - Server: route Nitro berbasis file di `server/api/` (mis. `server/api/ai/chat.post.ts` = `POST /api/ai/chat`).
@@ -26,7 +27,7 @@ Ringkasan naratif semua fitur yang sudah dibangun ada di `STATUS-PENGEMBANGAN.md
 - Konten Field Notes, Publications, dan Gallery: file JSON per-entri di `src/content/{notes,publications,gallery}/`,
   di-load via `import.meta.glob` di `lib/notes.ts`/`lib/publications.ts`/`lib/gallery.ts`,
   dikelola admin lewat CMS `/admin` (Sveltia, config di `public/admin/config.yml`;
-  setup eksternal: lihat `SETUP-ADMIN-CMS.md`). Jangan tulis data artikel/publikasi
+  setup eksternal: lihat `docs/setup/SETUP-ADMIN-CMS.md`). Jangan tulis data artikel/publikasi
   hardcoded di komponen.
 - Berita juga masuk otomatis dari WordPress lama lewat `scripts/import-wp.mjs`
   (GitHub Actions, commit langsung ke `main`). Selalu mulai kerja dari `main` terbaru.
