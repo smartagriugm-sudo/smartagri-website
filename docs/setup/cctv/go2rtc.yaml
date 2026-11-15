@@ -1,0 +1,8 @@
+# go2rtc for the plant factory camera (Bardi IDR-IPC-PTZ).
+# The camera password lives only in secret.yaml next to this file.
+api:
+  listen: "127.0.0.1:1984"   # local only; the tunnel reaches it from this PC
+rtsp:
+  listen: "127.0.0.1:8556"   # re-stream for local tools only
+log:
+  level: info

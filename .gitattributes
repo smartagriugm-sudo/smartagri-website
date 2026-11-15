@@ -13,3 +13,8 @@
 *.pdf  binary
 *.xlsx binary
 *.ico  binary
+
+# Windows scripts must keep CRLF, or cmd.exe misreads them.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.vbs text eol=crlf

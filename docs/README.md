@@ -13,6 +13,7 @@ Panduan sekali jalan untuk menyiapkan layanan luar yang dipakai situs.
 | [SETUP-ADMIN-CMS.md](setup/SETUP-ADMIN-CMS.md) | CMS `/admin` untuk berita, publikasi, galeri |
 | [SETUP-AUTH.md](setup/SETUP-AUTH.md) | Login dan daftar akun (Supabase Auth) |
 | [SETUP-AI-SERVER.md](setup/SETUP-AI-SERVER.md) | Server AI on-prem (Ollama) untuk AI Assistant |
+| [SETUP-CCTV.md](setup/SETUP-CCTV.md) | Live CCTV plant factory di dashboard ERP (go2rtc, gerbang, Cloudflare Tunnel) |
 | [SETUP-CHAT-HISTORY.md](setup/SETUP-CHAT-HISTORY.md) | Riwayat percakapan AI Assistant |
 | [SETUP-ERP-MODEL.md](setup/SETUP-ERP-MODEL.md) | Model 3D plant factory untuk ERP |
 | [SETUP-GALLERY-SYNC.md](setup/SETUP-GALLERY-SYNC.md) | Sinkronisasi galeri dari Google Drive |
