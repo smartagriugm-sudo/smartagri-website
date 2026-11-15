@@ -184,8 +184,8 @@ Vercel → project situs → **Settings → Environment Variables**, tambahkan u
 | `CCTV_BASE_URL` | `https://cctv.smartagri.id` (tanpa garis miring di akhir) |
 | `CCTV_SECRET` | isi `cctv-secret.txt` (64 karakter), tandai **Sensitive** |
 
-Lalu **Redeploy** deployment terbaru. Buka `/erp`, login, dan panel
-**Plant factory camera** akan menampilkan video dengan label **Live**.
+Lalu **Redeploy** deployment terbaru. Buka `/erp`, login, lalu klik ikon
+**kamera** di strip kanan model 3D. Video tampil dengan label **Live**.
 
 Pratinjau Vercel (`*.vercel.app`) sudah diizinkan gerbang. Kalau situs dibuka
 dari domain lain, tambahkan domainnya di `CCTV_ORIGINS` pada
@@ -195,6 +195,19 @@ dari domain lain, tambahkan domainnya di `CCTV_ORIGINS` pada
 
 ## Cara pakai di ERP
 
+Kamera ada di model 3D plant factory, di tiga tempat:
+- **Arahkan kursor ke kamera di langit-langit** (grow room) di model 3D
+  dashboard: kartu melayang menampilkan video langsung. **Klik** kameranya agar
+  kartu tetap terbuka beserta tombol kendalinya.
+- **Ikon kamera di strip kanan** model 3D dashboard: membuka panel kamera.
+  "Show where it hangs in the model" memutar model ke grow room dan menandai
+  kameranya.
+- **Halaman Plant factory** (`/erp/plant-factory`, juga lewat "Open 3D" di
+  HP): tombol kamera di kotak alat model memilih kamera, dan videonya tampil di
+  panel detail.
+
+Kamera ruang kontrol (`CCTV-CONTROL`) belum terpasang; kartunya menyebut itu.
+
 - **SD 640×360** (bawaan) hemat data, cocok untuk HP. **HD 1080p** untuk
   melihat detail tanaman.
 - Ikon speaker menyalakan suara (bawaannya mati). Ikon panah keluar membuka
@@ -203,7 +216,9 @@ dari domain lain, tambahkan domainnya di `CCTV_ORIGINS` pada
   Kamera juga berhenti sendiri setelah 1,5 detik bila perintah berhenti tidak
   sampai. Tombol ini tampil untuk peran yang boleh mengoperasikan produksi.
 - Video berhenti otomatis saat tab browser disembunyikan, dan lanjut saat
-  dibuka lagi, jadi dashboard yang terbuka tidak menghabiskan kuota.
+  dibuka lagi, jadi dashboard yang terbuka tidak menghabiskan kuota. Bila 12
+  detik tidak ada gambar, statusnya menjadi **Offline** dan dicoba lagi
+  sendiri (mis. saat PC penjembatan pindah ke WiFi lain).
 
 ## Keamanan
 

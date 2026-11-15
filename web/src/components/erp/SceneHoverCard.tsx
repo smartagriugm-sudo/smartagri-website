@@ -4,6 +4,7 @@ import { chamberObjectFacts, factoryObjectFacts, holeFacts, slotFacts, type Scen
 import type { ErpStore } from "../../lib/pf/store";
 import type { ChamberEngine } from "./SeedChamberScene";
 import type { SceneEngine } from "./PlantFactoryScene";
+import { CctvLive, CctvViewer } from "./Cctv";
 import { Bar } from "./ui";
 
 // The card that floats beside the cursor in a 3D model and says what the plant, the tray
@@ -141,14 +142,16 @@ export function useScenePin(engine: AnyEngine | null) {
   return { pinned, pin };
 }
 
-export default function SceneHoverCard({ facts, cardRef, place, onClose, children }: { facts: SceneFacts; cardRef: RefObject<HTMLDivElement | null>; place: () => void; onClose?: () => void; children?: ReactNode }) {
+export default function SceneHoverCard({ facts, cardRef, place, onClose, showCamera = true, children }: { facts: SceneFacts; cardRef: RefObject<HTMLDivElement | null>; place: () => void; onClose?: () => void; showCamera?: boolean; children?: ReactNode }) {
   // The size changes with what the card says, so its place is worked out after each change.
   useLayoutEffect(place);
+  const camera = showCamera ? facts.cctv : undefined;
+  const width = camera?.live ? (onClose ? "w-[344px]" : "w-[320px]") : "w-[256px]";
   return (
     <div
       ref={cardRef}
-      role="status"
-      className={`absolute left-0 top-0 z-20 w-[256px] rounded-xl border border-[#DCE7E8] bg-white px-3 py-2.5 shadow-[0_8px_24px_rgba(8,49,58,0.14)] ${onClose ? "" : "pointer-events-none"}`}
+      role={camera ? undefined : "status"}
+      className={`absolute left-0 top-0 z-20 max-w-[calc(100%-16px)] ${width} rounded-xl border border-[#DCE7E8] bg-white px-3 py-2.5 shadow-[0_8px_24px_rgba(8,49,58,0.14)] ${onClose ? "" : "pointer-events-none"}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -182,6 +185,18 @@ export default function SceneHoverCard({ facts, cardRef, place, onClose, childre
             </div>
           ))}
         </dl>
+      )}
+      {camera?.live && (
+        <div className="mt-2">
+          {onClose ? (
+            <CctvViewer feed={camera} />
+          ) : (
+            <>
+              <CctvLive feed={camera} compact />
+              <p className="mt-1.5 text-[12px] text-[#4F6B73]">Click the camera to keep this open and turn it.</p>
+            </>
+          )}
+        </div>
       )}
       {facts.note && <p className="mt-2 text-[12.5px] leading-[1.4] text-[#4F6B73]">{facts.note}</p>}
       {children}

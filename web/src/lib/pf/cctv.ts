@@ -8,7 +8,26 @@ export type CctvQuality = "sd" | "hd";
 export type PtzDir = "left" | "right" | "up" | "down" | "stop";
 
 export const CCTV_STREAMS: Record<CctvQuality, string> = { sd: "plant_factory_sd", hd: "plant_factory" };
-export const CCTV_QUALITY_LABEL: Record<CctvQuality, string> = { sd: "SD 640×360", hd: "HD 1080p" };
+export const CCTV_QUALITY_LABEL: Record<CctvQuality, string> = { sd: "SD", hd: "HD" };
+
+/** Cameras in the 3D model of PF01, by the model's object id. Only one streams so far. */
+export interface CctvFeed {
+  id: string;
+  label: string;
+  device: string;
+  live: boolean;
+}
+
+export const CCTV_FEEDS: Record<string, CctvFeed> = {
+  "CCTV-GROW": { id: "CCTV-GROW", label: "Grow room camera", device: "Bardi IDR-IPC-PTZ", live: true },
+  "CCTV-CONTROL": { id: "CCTV-CONTROL", label: "Control room camera", device: "Not installed yet", live: false },
+};
+
+export const LIVE_FEED = CCTV_FEEDS["CCTV-GROW"];
+
+export function cctvFeed(objectId: string | undefined | null): CctvFeed | null {
+  return objectId ? CCTV_FEEDS[objectId] ?? null : null;
+}
 
 export interface CctvTicket {
   base: string;

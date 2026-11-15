@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { ObjectRecord, Selection, ViewName } from "plant-factory-3d";
-import { ArrowRight, CircleAlert, Home, Lightbulb, LightbulbOff, Minus, MoveRight, Plus } from "lucide-react";
+import { ArrowRight, Cctv, CircleAlert, Home, Lightbulb, LightbulbOff, Minus, MoveRight, Plus } from "lucide-react";
+import { LIVE_FEED, cctvFeed } from "../../lib/pf/cctv";
 import { CHAMBER_CODE } from "../../lib/pf/chamber";
+import { CctvViewer } from "./Cctv";
 import {
   FACILITY_CODE,
   GROW_ROOM_READINGS,
@@ -93,7 +95,7 @@ function objectTitle(o: ObjectRecord) {
     case "sensor_climate": return `Climate sensor, Rack ${o.rack}`;
     case "sensor_nutrient": return "Nutrient sensor";
     case "tank": return "Nutrient tank";
-    case "cctv": return o.id === "CCTV-GROW" ? "Grow room CCTV" : "Control room CCTV";
+    case "cctv": return cctvFeed(o.id)?.label ?? "Camera";
     default: return o.id;
   }
 }
@@ -126,7 +128,7 @@ function ObjectPanel({ object: o, provider }: { object: ObjectRecord; provider: 
           </div>
         </>
       )}
-      {o.type === "cctv" && <Note>No camera feed connected yet.</Note>}
+      {o.type === "cctv" && (cctvFeed(o.id) ? <CctvViewer feed={cctvFeed(o.id)!} /> : <Note>No camera feed connected yet.</Note>)}
     </div>
   );
 }
@@ -309,6 +311,25 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
             >
               <Home className="h-4 w-4" />
             </button>
+            <button
+              type="button"
+              className={tool}
+              aria-label="Camera"
+              aria-pressed={selection?.kind === "object" && selection.id === LIVE_FEED.id}
+              onClick={() => {
+                const camera = { kind: "object", id: LIVE_FEED.id } as Selection;
+                engine?.setView("grow");
+                engine?.select(camera);
+                setSelection(camera);
+                // Below lg the detail panel sits under the model, out of sight.
+                if (!window.matchMedia("(min-width: 1024px)").matches) {
+                  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                  requestAnimationFrame(() => document.getElementById("pf-detail")?.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "start" }));
+                }
+              }}
+            >
+              <Cctv className="h-4 w-4" />
+            </button>
           </Card>
         </div>
 
@@ -376,7 +397,7 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
         </div>
 
         {/* Detail panel */}
-        <div className="px-3 pb-3 lg:absolute lg:bottom-4 lg:right-4 lg:top-4 lg:w-[360px] lg:p-0">
+        <div id="pf-detail" className="scroll-mt-[88px] px-3 pb-3 lg:absolute lg:bottom-4 lg:right-4 lg:top-4 lg:w-[360px] lg:p-0">
           <Card className="h-full overflow-y-auto p-4">
             {selection?.kind === "hole" ? (
               <HolePanel id={selection.id} store={store} />

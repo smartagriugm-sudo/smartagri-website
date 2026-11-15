@@ -150,9 +150,9 @@ export default function MonitoringPage() {
                 <h2 id="chart-title" className={`${sectionTitle} mb-2`}>Chart</h2>
                 {here.length > 0 && (
                   <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-[#4F6B73]">
-                    <label className="flex items-center gap-2">
+                    <label className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
                       Reference from
-                      <select value={batch?.code ?? ""} onChange={(e) => setChosenBatch(e.target.value)} className="min-h-[44px] rounded-lg border border-[#C9D8DA] bg-white px-2 text-[16px] text-[#0F2F36] sm:min-h-[28px] sm:text-[13px]">
+                      <select value={batch?.code ?? ""} onChange={(e) => setChosenBatch(e.target.value)} className="min-h-[44px] min-w-0 flex-1 rounded-lg border border-[#C9D8DA] bg-white px-2 text-[16px] text-[#0F2F36] sm:min-h-[28px] sm:flex-none sm:text-[13px]">
                         {here.map((b) => <option key={b.code} value={b.code}>{b.code} · {b.crop}</option>)}
                       </select>
                     </label>

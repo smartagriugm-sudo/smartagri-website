@@ -36,7 +36,7 @@ export function FactoryPlan({ store, selected, rack, tier, onPick }: { store: Er
                 <div className="space-y-[3px]">
                   {GULLIES.map((g) => (
                     <div key={g} className="flex items-center gap-1.5">
-                      <span className="w-5 shrink-0 text-right text-[11px] tabular-nums text-[#6B8187]">G{g}</span>
+                      <span className="w-5 shrink-0 text-right text-[12px] tabular-nums text-[#6B8187]">G{g}</span>
                       <div className="grid flex-1 gap-[3px]" style={{ gridTemplateColumns: `repeat(${RACK_SPEC.holes}, minmax(0, 1fr))` }}>
                         {HOLES.map((h) => {
                           const id = holeId(r, t, g, h);

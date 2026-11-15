@@ -29,7 +29,7 @@ export const NAV_GROUPS: NavGroup[] = [
     startsOpen: true,
     items: [
       { to: "/erp/monitoring", label: "Conditions", icon: Activity },
-      { to: "/erp/alarms", label: "Alarm", icon: BellRing },
+      { to: "/erp/alarms", label: "Alarms", icon: BellRing },
       { to: "/erp/devices", label: "Devices", icon: Cpu },
       { to: "/erp/maintenance", label: "Maintenance", icon: Wrench, gate: "canReadMaintenance" },
     ],
@@ -49,7 +49,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Sales and costs",
     items: [
       { to: "/erp/orders", label: "Orders", icon: ShoppingCart, gate: "canReadSales" },
-      { to: "/erp/invoice", label: "Invoice", icon: FileText, gate: "canReadSales" },
+      { to: "/erp/invoice", label: "Invoices", icon: FileText, gate: "canReadSales" },
       { to: "/erp/customers", label: "Customers", icon: Contact, gate: "canReadSales" },
       { to: "/erp/trace", label: "Trace", icon: ScanSearch, gate: "canReadSales" },
       { to: "/erp/costs", label: "Costs", icon: Wallet, gate: "canReadCost" },
@@ -72,7 +72,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/erp/crops", label: "Crops", icon: Leaf },
       { to: "/erp/recipes", label: "Recipes", icon: BookOpen },
-      { to: "/erp/settings/locations", label: "Location", icon: MapPin },
+      { to: "/erp/settings/locations", label: "Locations", icon: MapPin },
     ],
   },
   {

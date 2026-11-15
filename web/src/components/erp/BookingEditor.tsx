@@ -138,7 +138,7 @@ function Summary({ form, hostName, inviteeCount, busy, today, clashes }: { form:
             ))}
           </ul>
         )}
-        {soon.length > 0 && <p className="mt-2 text-[11.5px] text-[#6B8187]">{countdownLabel(soon[0].day, today)} is the next one. Week view shows them striped.</p>}
+        {soon.length > 0 && <p className="mt-2 text-[12px] text-[#6B8187]">{countdownLabel(soon[0].day, today)} is the next one. Week view shows them striped.</p>}
       </Card>
     </aside>
   );

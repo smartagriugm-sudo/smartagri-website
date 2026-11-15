@@ -180,7 +180,7 @@ function HourGrid({ days, today, shifts, leaves, canEdit, selected, onShift, onE
         </div>
         {anyLeave && (
           <div className="grid border-b border-[#EDF2F2]" style={{ gridTemplateColumns: columns }}>
-            <span className="px-1.5 py-1 text-right text-[11px] text-[#4F6B73]">Leave</span>
+            <span className="px-1.5 py-1 text-right text-[12px] text-[#4F6B73]">Leave</span>
             {days.map((d) => (
               <div key={d} className="min-w-0 space-y-0.5 border-l border-[#EDF2F2] p-1">
                 {leavesOn(leaves, d).map((l) => <p key={l.id} className={`truncate rounded px-1.5 py-0.5 text-[12px] font-medium ${LEAVE_TONE}`} title={`${l.full_name} · ${leaveLabel(l)}`}>{l.full_name}</p>)}
@@ -190,7 +190,7 @@ function HourGrid({ days, today, shifts, leaves, canEdit, selected, onShift, onE
         )}
         <div className="grid" style={{ gridTemplateColumns: columns }}>
           <div>
-            {hours.map((h) => <div key={h} className="pr-1.5 text-right text-[11px] tabular-nums text-[#6B8187]" style={{ height: HOUR_PX }}><span className="relative -top-1.5">{h === from ? "" : `${String(h).padStart(2, "0")}.00`}</span></div>)}
+            {hours.map((h) => <div key={h} className="pr-1.5 text-right text-[12px] tabular-nums text-[#6B8187]" style={{ height: HOUR_PX }}><span className="relative -top-1.5">{h === from ? "" : `${String(h).padStart(2, "0")}.00`}</span></div>)}
           </div>
           {days.map((d) => {
             // People on the same hours share one block, so a whole team's shift stays readable.

@@ -1,8 +1,10 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Building2, ChevronLeft, Eye, DoorOpen, Layers, Lightbulb, LightbulbOff, Maximize2, Minus, Plus, RotateCcw, SlidersHorizontal, type LucideIcon } from "lucide-react";
+import { ArrowRight, Building2, Cctv, ChevronLeft, Eye, DoorOpen, Layers, Lightbulb, LightbulbOff, Maximize2, Minus, Plus, RotateCcw, SlidersHorizontal, type LucideIcon } from "lucide-react";
 import type { ChamberOptionsState, ChamberViewName, SceneOptionsState, ViewName } from "plant-factory-3d";
+import { LIVE_FEED } from "../../lib/pf/cctv";
 import { SHELVES } from "../../lib/pf/chamber";
+import { CctvViewer } from "./Cctv";
 import { rowState, rowValue, STATE_WORD, type Conditions } from "../../lib/pf/conditions";
 import { HOLES_TOTAL, isPlanted } from "../../lib/pf/facility";
 import { RACK_NUMBERS, TIER_NUMBERS } from "../../lib/pf/provider";
@@ -72,9 +74,9 @@ function StripButton({ icon: Icon, label, active, pressed, disabled, onClick }: 
   );
 }
 
-function Flyout({ title, note, top, onClose, children }: { title: string; note?: string; top: number; onClose: () => void; children: ReactNode }) {
+function Flyout({ title, note, top, wide, onClose, children }: { title: string; note?: string; top: number; wide?: boolean; onClose: () => void; children: ReactNode }) {
   return (
-    <div className="absolute right-[calc(100%+8px)] z-10 w-[216px] rounded-xl border border-[#DCE7E8] bg-white p-1.5 shadow-[0_8px_24px_rgba(8,49,58,0.14)]" style={{ top }}>
+    <div className={`absolute right-[calc(100%+8px)] z-10 ${wide ? "w-[min(340px,calc(100vw-96px))]" : "w-[216px]"} rounded-xl border border-[#DCE7E8] bg-white p-1.5 shadow-[0_8px_24px_rgba(8,49,58,0.14)]`} style={{ top }}>
       <div className="flex items-center gap-1 px-1.5 pb-1 pt-0.5">
         <button type="button" onClick={onClose} aria-label="Close panel" className="-ml-1 grid h-6 w-6 place-items-center rounded text-[#4F6B73] hover:bg-[#EEF5F5]"><ChevronLeft className="h-3.5 w-3.5 rotate-180" /></button>
         <p className="text-[13px] font-medium text-[#0F2F36]">{title}</p>
@@ -121,7 +123,7 @@ function KeyCard({ label, value, unit, sub, warn }: { label: string; value: stri
 
 /* ------------------------------------------------------------------ the card */
 
-type Panel = "facility" | "view" | "light" | "door" | "layers" | "filter";
+type Panel = "facility" | "view" | "light" | "door" | "layers" | "filter" | "camera";
 
 export default function FacilityViewer({ store, facility, onFacility, conditions }: { store: ErpStore; facility: Facility; onFacility: (f: Facility) => void; conditions: Conditions }) {
   const [engine, setEngine] = useState<AnyEngine | null>(null);
@@ -308,6 +310,7 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
           <StripButton icon={options.realLight ? Lightbulb : LightbulbOff} label="Lamp" active={panel === "light"} pressed={!!options.realLight} disabled={!engine} onClick={() => togglePanel("light")} />
           <StripButton icon={isFactory ? Layers : DoorOpen} label={doorLabel} active={panel === "door"} disabled={!engine} onClick={() => togglePanel("door")} />
           <StripButton icon={SlidersHorizontal} label="Filter by rack" active={panel === "filter"} pressed={!!(filter.rack || filter.tier || filter.shelf)} disabled={!engine} onClick={() => togglePanel("filter")} />
+          {isFactory && <StripButton icon={Cctv} label="Camera" active={panel === "camera"} onClick={() => togglePanel("camera")} />}
           <div className="mx-1.5 my-1 h-px bg-[#EDF2F2]" />
           <StripButton icon={Plus} label="Zoom in" disabled={!engine} onClick={() => engine && dolly(engine, 0.8)} />
           <StripButton icon={Minus} label="Zoom out" disabled={!engine} onClick={() => engine && dolly(engine, 1.25)} />
@@ -362,6 +365,30 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
                   <Toggle on={!!options.statusColors} label="Tray status colours" onClick={() => setOption({ statusColors: !options.statusColors })} />
                 </>
               )}
+            </Flyout>
+          )}
+          {panel === "camera" && (
+            <Flyout title={LIVE_FEED.label} top={topOf(5)} wide onClose={() => setPanel(null)}>
+              <div className="px-1.5 pb-1.5 pt-0.5">
+                <CctvViewer
+                  feed={LIVE_FEED}
+                  footer={
+                    <button
+                      type="button"
+                      disabled={!pf}
+                      onClick={() => {
+                        // The card that opens on the camera takes over from this panel.
+                        setPanel(null);
+                        pf?.setView("grow");
+                        pf?.select({ kind: "object", id: LIVE_FEED.id });
+                      }}
+                      className="inline-flex min-h-[40px] items-center gap-1 text-[13px] font-medium text-[#0B6477] hover:underline disabled:opacity-40 lg:min-h-[28px]"
+                    >
+                      Show where it hangs in the model <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  }
+                />
+              </div>
             </Flyout>
           )}
           {panel === "filter" && (

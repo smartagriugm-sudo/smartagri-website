@@ -165,7 +165,7 @@ export default function BatchPicker3D({ kind, mark, onPick, single = false, focu
           <PlantFactoryScene provider={provider as PfProvider} states={holeStates} onReady={onReady} onSelect={onSelect} onError={onError} />
         )}
         {!engine && <SceneStatus failed={failed} />}
-        {facts && <SceneHoverCard facts={facts} cardRef={card} place={place} />}
+        {facts && <SceneHoverCard facts={facts} cardRef={card} place={place} showCamera={false} />}
         <Card className="absolute right-3 top-3 flex flex-col p-1">
           <button type="button" className={tool} onClick={() => engine && dolly(engine, 0.8)} aria-label="Zoom in"><Plus className="h-4 w-4" /></button>
           <button type="button" className={tool} onClick={() => engine && dolly(engine, 1.25)} aria-label="Zoom out"><Minus className="h-4 w-4" /></button>
