@@ -15,9 +15,9 @@ Markdown, lalu di-commit, sehingga Vercel otomatis rebuild dan tayang.
 1. **Webhook (near-real-time):** saat Anda klik Publish di WordPress, WordPress
    mengirim sinyal ke GitHub → workflow jalan → berita baru di-commit →
    Vercel deploy. Jeda total ±1-3 menit.
-2. **Jadwal (cadangan):** workflow juga jalan tiap 15 menit sebagai jaring
+2. **Jadwal (cadangan):** workflow juga jalan tiap jam (menit ke-17) sebagai jaring
    pengaman kalau webhook terlewat. Jadi tanpa webhook pun berita tetap masuk,
-   hanya lebih lambat (maks ~15 menit).
+   hanya lebih lambat (maks ~1 jam).
 3. **Manual:** bisa dijalankan kapan saja dari tab Actions GitHub (tombol
    "Run workflow") atau lokal: `cd web && node scripts/import-wp.mjs`.
 

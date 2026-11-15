@@ -7,7 +7,7 @@ name: Import WordPress news
 # is missed. See docs/setup/SETUP-NEWS-SYNC.md for the webhook setup.
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       retranslate:
