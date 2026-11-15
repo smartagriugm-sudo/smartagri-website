@@ -91,7 +91,7 @@ export function DayTimeline({ days, bookings, focusId, focusSpace, today, offere
             <span />
             <div className="relative h-7">
               {hours.map((h, i) => (
-                <span key={h} className="absolute top-1.5 -translate-x-1/2 text-[11px] tabular-nums text-[#6B8187]" style={{ left: at(h * 60) }}>
+                <span key={h} className="absolute top-1.5 -translate-x-1/2 text-[12px] tabular-nums text-[#6B8187]" style={{ left: at(h * 60) }}>
                   {i === 0 || i === hours.length - 1 ? "" : `${String(h).padStart(2, "0")}.00`}
                 </span>
               ))}
@@ -109,7 +109,7 @@ export function DayTimeline({ days, bookings, focusId, focusSpace, today, offere
                 <div className="relative" style={{ height: rows * LANE_PX + (allDay.length ? 22 : 0) }}>
                   {hours.map((h) => <span key={h} aria-hidden="true" className="absolute inset-y-0 border-l border-[#F0F4F4]" style={{ left: at(h * 60) }} />)}
                   {allDay.map((i, n) => (
-                    <p key={i.id} className={`absolute inset-x-1 truncate rounded px-2 py-0.5 text-[11.5px] font-medium ${i.id === focusId ? "bg-[#0B6477] text-white" : "bg-[#EEF3F4] text-[#36525A]"}`} style={{ top: 2 + n * 20 }}>All day · {i.title}</p>
+                    <p key={i.id} className={`absolute inset-x-1 truncate rounded px-2 py-0.5 text-[12px] font-medium ${i.id === focusId ? "bg-[#0B6477] text-white" : "bg-[#EEF3F4] text-[#36525A]"}`} style={{ top: 2 + n * 20 }}>All day · {i.title}</p>
                   ))}
                   {placed.map(({ item, from: a, to: b, lane: row, lanes: of }) => {
                     const h = (rows * LANE_PX) / of;
@@ -124,7 +124,7 @@ export function DayTimeline({ days, bookings, focusId, focusSpace, today, offere
                           onClick={() => onOffered?.(item.id)}
                           aria-label={`Offered time ${optionLabel(item)}, ${item.score ?? 0} yes${clash ? ", clashes with a booking" : ""}`}
                           title={`${optionLabel(item)} · ${item.score ?? 0} yes${clash ? " · the room is taken" : ""}${onOffered ? " · click to confirm" : ""}`}
-                          className={`absolute z-10 flex min-w-0 items-center gap-1 overflow-hidden rounded-md border-2 border-dashed px-1.5 text-left text-[11.5px] font-medium leading-tight transition-colors ${onOffered ? "" : "cursor-default"} ${clash ? "border-[#D98B1F] bg-[#FFF6E5]/90 text-[#8A5A07] hover:bg-[#FFEBC7]" : "border-[#14919B] bg-[#E3F4F4]/90 text-[#0B6477] hover:bg-[#CDEDED]"}`}
+                          className={`absolute z-10 flex min-w-0 items-center gap-1 overflow-hidden rounded-md border-2 border-dashed px-1.5 text-left text-[12px] font-medium leading-tight transition-colors ${onOffered ? "" : "cursor-default"} ${clash ? "border-[#D98B1F] bg-[#FFF6E5]/90 text-[#8A5A07] hover:bg-[#FFEBC7]" : "border-[#14919B] bg-[#E3F4F4]/90 text-[#0B6477] hover:bg-[#CDEDED]"}`}
                           style={style}
                         >
                           <span className="truncate tabular-nums">{item.start ? clock(toMinutes(item.start)) : "All day"}</span>
@@ -134,14 +134,14 @@ export function DayTimeline({ days, bookings, focusId, focusSpace, today, offere
                     }
                     if (item.id === focusId) {
                       return (
-                        <div key={item.id} className="absolute z-10 overflow-hidden rounded-md bg-[#0B6477] px-2 py-1 text-[11.5px] leading-tight text-white shadow-sm ring-2 ring-[#45DFB1]/60" style={style} title={label}>
+                        <div key={item.id} className="absolute z-10 overflow-hidden rounded-md bg-[#0B6477] px-2 py-1 text-[12px] leading-tight text-white shadow-sm ring-2 ring-[#45DFB1]/60" style={style} title={label}>
                           <p className="truncate font-semibold">{item.title}</p>
                           <p className="truncate tabular-nums text-white/80">{optionLabel(item)}</p>
                         </div>
                       );
                     }
                     return (
-                      <Link key={item.id} to="/erp/bookings/$id" params={{ id: item.id }} title={label} className="absolute z-10 overflow-hidden rounded-md border border-[#DCE7E8] bg-white px-2 py-1 text-[11.5px] leading-tight text-[#36525A] transition-colors hover:border-[#14919B] hover:bg-[#F3FAFA]" style={{ ...style, borderLeft: `3px solid ${kindOf(item.kind).color}` }}>
+                      <Link key={item.id} to="/erp/bookings/$id" params={{ id: item.id }} title={label} className="absolute z-10 overflow-hidden rounded-md border border-[#DCE7E8] bg-white px-2 py-1 text-[12px] leading-tight text-[#36525A] transition-colors hover:border-[#14919B] hover:bg-[#F3FAFA]" style={{ ...style, borderLeft: `3px solid ${kindOf(item.kind).color}` }}>
                         <p className="truncate font-medium text-[#0F2F36]">{item.title}</p>
                         <p className="truncate tabular-nums">{optionLabel(item)}</p>
                       </Link>
@@ -192,7 +192,7 @@ export function WhoIsComing({ people, guests, title = "Who is coming", empty = "
                 <p className="truncate text-[13.5px] font-medium text-[#0F2F36]">{p.name}</p>
                 <p className="text-[12px] text-[#4F6B73]">{p.role}</p>
               </div>
-              {p.answer && <span className={`shrink-0 rounded-md px-2 py-0.5 text-[11.5px] font-medium ${ANSWERS[p.answer].className}`}>{ANSWERS[p.answer].label}</span>}
+              {p.answer && <span className={`shrink-0 rounded-md px-2 py-0.5 text-[12px] font-medium ${ANSWERS[p.answer].className}`}>{ANSWERS[p.answer].label}</span>}
             </li>
           ))}
         </ul>

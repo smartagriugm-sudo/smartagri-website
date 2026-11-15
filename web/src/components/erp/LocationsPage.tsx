@@ -228,7 +228,7 @@ export default function LocationsPage() {
   }, [tree, selected]);
 
   return (
-    <ErpPage eyebrow="Master data" title="Location" sub="Every place in one tree. The codes match the 3D model and cannot be changed.">
+    <ErpPage eyebrow="Master data" title="Locations" sub="Every place in one tree. The codes match the 3D model and cannot be changed.">
       <DataState state={state}>
         {() => (
           <div className="space-y-4">

@@ -82,7 +82,7 @@ export default function InvoicesPage() {
   const today = jakartaToday();
 
   return (
-    <ErpPage eyebrow="Sales" title="Invoice" sub="Invoices are issued from the order page, after the goods are delivered.">
+    <ErpPage eyebrow="Sales" title="Invoices" sub="Invoices are issued from the order page, after the goods are delivered.">
       <DataState state={state}>
         {(invoices) => {
           const groups: Record<Show, typeof invoices> = {

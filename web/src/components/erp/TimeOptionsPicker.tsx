@@ -72,7 +72,7 @@ function DayTimes({ day, options, all, duration, clashes, onChange }: { day: str
   return (
     <div className="flex gap-3 border-b border-[#EDF2F2] px-4 py-3 last:border-b-0">
       <div className="w-12 shrink-0 overflow-hidden rounded-lg border border-[#DCE7E8] text-center">
-        <p className="bg-[#F3F7F7] py-0.5 text-[11px] font-medium text-[#4F6B73]">{fmtDay(day, { month: "short" })}</p>
+        <p className="bg-[#F3F7F7] py-0.5 text-[12px] font-medium text-[#4F6B73]">{fmtDay(day, { month: "short" })}</p>
         <p className="py-0.5 text-[18px] font-semibold tabular-nums text-[#0F2F36]">{Number(day.slice(8))}</p>
       </div>
       <div className="min-w-0 flex-1 space-y-2">
@@ -158,7 +158,7 @@ function WeekGrid({ week, today, options, busy, duration, onChange }: { week: st
         </div>
         {anyAllDay && (
           <div className="grid border-b border-[#EDF2F2]" style={{ gridTemplateColumns: columns }}>
-            <span className="px-1.5 py-1 text-right text-[11px] text-[#4F6B73]">All day</span>
+            <span className="px-1.5 py-1 text-right text-[12px] text-[#4F6B73]">All day</span>
             {days.map((d) => (
               <div key={d} className="min-w-0 space-y-0.5 border-l border-[#EDF2F2] p-1">
                 {busy.filter((b) => b.day === d && !b.start).map((b) => <p key={b.bookingId} className="truncate rounded bg-[#EEF3F4] px-1.5 py-0.5 text-[11.5px] text-[#4F6B73]" title={b.title}>{b.title}</p>)}
@@ -171,7 +171,7 @@ function WeekGrid({ week, today, options, busy, duration, onChange }: { week: st
         )}
         <div className="grid" style={{ gridTemplateColumns: columns }}>
           <div>
-            {hours.map((h) => <div key={h} className="pr-1.5 text-right text-[11px] tabular-nums text-[#6B8187]" style={{ height: HOUR_PX }}><span className="relative -top-1.5">{h === from ? "" : `${String(h).padStart(2, "0")}.00`}</span></div>)}
+            {hours.map((h) => <div key={h} className="pr-1.5 text-right text-[12px] tabular-nums text-[#6B8187]" style={{ height: HOUR_PX }}><span className="relative -top-1.5">{h === from ? "" : `${String(h).padStart(2, "0")}.00`}</span></div>)}
           </div>
           {days.map((d) => {
             const past = d < today;

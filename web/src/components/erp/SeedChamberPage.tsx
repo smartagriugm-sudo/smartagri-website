@@ -98,7 +98,7 @@ function TransplantQueue({ store }: { store: ErpStore }) {
     <Card className="h-full overflow-y-auto px-5 py-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F2F36]" style={display}>Transplant queue</p>
-        <Link to="/erp/plant-factory" className="text-[12.5px] font-medium text-[#0B6477] hover:underline">{FACILITY_CODE}: {free} holes ready to receive</Link>
+        <Link to="/erp/plant-factory" className="inline-flex min-h-[44px] items-center text-[12.5px] font-medium text-[#0B6477] hover:underline sm:min-h-0">{FACILITY_CODE}: {free} holes ready to receive</Link>
       </div>
       {queue.length === 0 ? (
         <p className="text-[13px] text-[#4F6B73]">No trays are marked ready to transplant yet.</p>

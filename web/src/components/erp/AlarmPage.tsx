@@ -111,7 +111,7 @@ export default function AlarmPage() {
   return (
     <ErpPage
       eyebrow="Monitoring"
-      title="Alarm"
+      title="Alarms"
       sub={open.length ? `${open.length} open alarms, ${open.filter((a) => !a.ack_at).length} not handled yet.` : "No open alarms."}
       actions={canSetRules && editing === null && state.data ? <PrimaryButton onClick={() => setEditing("new")}><Plus className="h-4 w-4" /> New rule</PrimaryButton> : undefined}
     >

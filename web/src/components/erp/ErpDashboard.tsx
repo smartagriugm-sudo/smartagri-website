@@ -18,7 +18,6 @@ import { cropLabel } from "../../lib/pf/foundation";
 import type { ErpStore } from "../../lib/pf/store";
 import { RACK_NUMBERS, TIER_NUMBERS } from "../../lib/pf/provider";
 import { useErpStore } from "./ErpContext";
-import CctvPanel from "./CctvPanel";
 import ConditionStage from "./ConditionStage";
 import { WorkLinkTo } from "./WorkLinkTo";
 import { ErrorNote, SLOW_TEXT, formatDateTime, useErpAccess, useLoad, useSlow } from "./page";
@@ -439,7 +438,6 @@ export default function ErpDashboard() {
         <FacilityPanel store={store} />
         <WorkPanel items={items} known={known} loading={loading && !known} canAct={canOperate} stamp={stamp} refreshing={refreshing} onRefresh={() => void refresh()} />
       </div>
-      <CctvPanel canControl={canOperate} />
       <SchedulePanel store={store} />
     </main>
   );

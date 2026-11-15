@@ -63,7 +63,7 @@ function Poll({ booking, options, votes, invitees, me, canEdit, clashes, reload,
                 if (!t || t.score === 0) return <span className="text-[12.5px] text-[#6B8187]">No clear favourite yet.</span>;
                 return (
                   <span className="hidden min-w-0 sm:block">
-                    <span className="block text-[11.5px] font-medium text-[#0E7A5C]">Best so far</span>
+                    <span className="block text-[12px] font-medium text-[#0E7A5C]">Best so far</span>
                     <span className="block truncate text-[14px] font-semibold tracking-[-0.01em] text-[#0F2F36]">{fmtDay(top[0].day, { weekday: "short", day: "numeric", month: "short" })}, {optionLabel(optionOf(top[0]))}</span>
                     <span className="block text-[12px] text-[#4F6B73]">{t.ya} yes{t.mungkin ? `, ${t.mungkin} if need be` : ""}{clashes(top[0]).length ? " · has a clash" : ""}</span>
                   </span>
@@ -74,9 +74,9 @@ function Poll({ booking, options, votes, invitees, me, canEdit, clashes, reload,
               const notes = clashes(o);
               return (
                 <div key={o.id} role="columnheader" className={`border-l border-[#E3ECED] px-1 py-2 text-center ${best.has(o.id) ? "bg-[#E9F8F2]" : ""}`}>
-                  <p className="text-[11px] font-medium uppercase text-[#4F6B73]">{fmtDay(o.day, { weekday: "short" })}</p>
+                  <p className="text-[12px] font-medium text-[#4F6B73]">{fmtDay(o.day, { weekday: "short" })}</p>
                   <p className="text-[18px] font-semibold leading-tight tabular-nums text-[#0F2F36]">{Number(o.day.slice(8))}</p>
-                  <p className="text-[11px] text-[#4F6B73]">{fmtDay(o.day, { month: "short" })}</p>
+                  <p className="text-[12px] text-[#4F6B73]">{fmtDay(o.day, { month: "short" })}</p>
                   <p className="mt-0.5 text-[12px] font-medium tabular-nums text-[#36525A]">{optionLabel(optionOf(o))}</p>
                   {notes.length > 0 && (
                     <p className="mt-0.5 flex justify-center text-[#B26205]" title={notes.join("\n")}>
@@ -128,7 +128,7 @@ function Poll({ booking, options, votes, invitees, me, canEdit, clashes, reload,
               return (
                 <div key={o.id} role="cell" className={`border-l border-[#E3ECED] px-1 py-2 text-center ${best.has(o.id) ? "bg-[#E9F8F2]" : ""}`}>
                   <p className="text-[13px] font-semibold tabular-nums text-[#0E7A5C]"><Check className="mr-0.5 inline h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" /><span className="sr-only">Yes: </span>{t?.ya ?? 0}{t?.mungkin ? <span className="font-medium text-[#B26205]"> +{t.mungkin}<span className="sr-only"> if need be</span></span> : null}</p>
-                  {best.has(o.id) && <p className="text-[11px] font-medium text-[#0E7A5C]">Best</p>}
+                  {best.has(o.id) && <p className="text-[12px] font-medium text-[#0E7A5C]">Best</p>}
                   {canEdit && (
                     <button type="button" onClick={() => setConfirming(o.id)} aria-label={`Confirm ${fmtDay(o.day, { weekday: "short", day: "numeric", month: "short" })}, ${optionLabel(optionOf(o))}`} className={`mt-1 rounded-md px-2 py-1 text-[12px] font-medium ${confirming === o.id ? "bg-[#0B6477] text-white hover:bg-[#08313A]" : "text-[#0B6477] hover:bg-[#E3F4F4]"}`}>Confirm</button>
                   )}

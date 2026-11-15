@@ -1,3 +1,4 @@
+import { cctvFeed, type CctvFeed } from "./cctv";
 import { SLOT_STATES, slotColor } from "./chamber";
 import { HOLE_STATES, addDays, stateColor } from "./facility";
 import type { ErpStore } from "./store";
@@ -14,6 +15,8 @@ export type SceneFacts = {
   progress: { value: number; max: number; label: string } | null;
   /** What is unusual about it, or why there is nothing else to say. */
   note: string;
+  /** A camera in the model: the card shows its picture. */
+  cctv?: CctvFeed;
 };
 
 type ObjectLike = { id: string; type: string; rack?: number; tier?: number; lights_shelf?: number | null; assumed?: boolean };
@@ -72,13 +75,24 @@ export function slotFacts(store: ErpStore, id: string): SceneFacts | null {
 const ASSUMED = "Its place is still assumed, not confirmed.";
 
 export function factoryObjectFacts(store: ErpStore, o: ObjectLike): SceneFacts {
+  const feed = o.type === "cctv" ? cctvFeed(o.id) : null;
+  if (feed) {
+    return {
+      title: feed.label,
+      sub: `${o.id} · ${feed.device}`,
+      state: null,
+      rows: [],
+      progress: null,
+      note: feed.live ? "" : "No camera installed here yet.",
+      cctv: feed,
+    };
+  }
   const titles: Record<string, string> = {
     lamp: `Lamp, Rack ${o.rack} · Tier ${o.tier}`,
     pump: o.rack ? `Pump, Rack ${o.rack}` : "Main pump",
     sensor_climate: `Climate sensor, Rack ${o.rack}`,
     sensor_nutrient: "Nutrient sensor",
     tank: "Nutrient tank",
-    cctv: o.id === "CCTV-GROW" ? "Grow room CCTV" : "Control room CCTV",
   };
   const on = o.type === "lamp" ? store.pf.lamps.get(o.id) : o.type === "pump" ? store.pf.pumps.get(o.id) : undefined;
   const sample = o.type === "lamp" || o.type === "pump";

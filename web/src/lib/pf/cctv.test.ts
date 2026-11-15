@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { frameUrl, mseCodecs, streamUrl, ticketFresh, type CctvTicket } from "./cctv";
+import { cctvFeed, frameUrl, mseCodecs, streamUrl, ticketFresh, type CctvTicket } from "./cctv";
 
 const t: CctvTicket = { base: "https://cctv.example.id", ticket: "1700000000.abc", expiresAt: 1_000_000 };
 
@@ -13,6 +13,13 @@ describe("the plant factory camera", () => {
     expect(ticketFresh(t, 1_000_000 - 31_000)).toBe(true);
     expect(ticketFresh(t, 1_000_000 - 29_000)).toBe(false);
     expect(ticketFresh(null)).toBe(false);
+  });
+
+  it("knows which camera in the model streams", () => {
+    expect(cctvFeed("CCTV-GROW")?.live).toBe(true);
+    expect(cctvFeed("CCTV-CONTROL")?.live).toBe(false);
+    expect(cctvFeed("LAMP-1")).toBeNull();
+    expect(cctvFeed(null)).toBeNull();
   });
 
   it("builds the video and still addresses on the gateway", () => {

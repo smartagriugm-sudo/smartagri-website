@@ -222,7 +222,7 @@ export function Lifecycle({ batch, phase, compact = false }: { batch: Batch; pha
                 {i + 1}
               </span>
               {/* A fifth of a phone is narrower than "Germination": it breaks at a soft hyphen instead of running into the next step. */}
-              <span className={`mt-1.5 w-full text-[11.5px] font-medium leading-tight sm:text-[12.5px] ${now ? "text-[#0F2F36]" : "text-[#4F6B73]"}`}>{breakable(p.label)}</span>
+              <span className={`mt-1.5 w-full text-[12px] font-medium leading-tight sm:text-[12.5px] ${now ? "text-[#0F2F36]" : "text-[#4F6B73]"}`}>{breakable(p.label)}</span>
               <span className="text-[12px] text-[#4F6B73]">{compact ? "" : `${p.place} · `}day {lifecycleDay(i, batch)}</span>
             </li>
           );

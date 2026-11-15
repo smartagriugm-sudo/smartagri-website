@@ -18,7 +18,7 @@ const PRELOAD_DELAY_MS = 800;
 
 function Screen({ active, children }: { active: boolean; children: ReactNode }) {
   return (
-    <div className={active ? "flex flex-1 flex-col" : "invisible absolute left-0 top-0 h-[calc(100vh-76px)] w-full overflow-hidden"}>
+    <div inert={!active} className={active ? "flex flex-1 flex-col" : "invisible absolute left-0 top-0 h-[calc(100vh-76px)] w-full overflow-hidden"}>
       {children}
     </div>
   );
