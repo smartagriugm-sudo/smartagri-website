@@ -67,6 +67,13 @@ ini di-hide), `ai/knowledge`, `ai/profile`.
   (AppShell, DashboardOverview, FacilityMap, parts): peta fasilitas, tampilan
   per ruang tanam, sidebar collapsible, palet chart tervalidasi.
 - Brief foto: `INDOOR-FARMING-PHOTOS.md`, `INDOOR-DASHBOARD-IMAGES.md`.
+- **Field sites** (`dashboard/field`): satu-satunya layar dashboard berisi data terukur
+  (layar lain simulasi). PC edge di lokasi (dashboard SGH Grabag) mendorong data ke
+  `POST /api/edge/ingest` dengan token lokasi; disimpan di tabel `edge_*`
+  (`supabase/edge-sync.sql`). Anggota lab melihat semua lokasi, akun **Mitra**
+  (lab_role `mitra`) hanya lokasi yang dibagikan admin. Panel admin di layar yang
+  sama: tambah lokasi, buat token, atur akses mitra. Kontrak & setup:
+  `docs/indoor-farming/API-EDGE-SYNC.md`.
 
 ### 6. Buku tamu (guestbook)
 `guestbook` + `guestbook.admin`. `supabase/guestbook.sql`.
@@ -92,7 +99,7 @@ Form kontak membuka draf email via `mailto:` (tanpa backend). `docs/setup/SETUP-
 
 ## Tabel Supabase (dijalankan manual sekali di SQL editor)
 `conversations`, `profiles`, `rag` (doc_chunks + match_chunks), `guestbook`,
-`inventory` (+ batch2/3/4 + updates), `link_events`, `usage-logs-seed`.
+`inventory` (+ batch2/3/4 + updates), `link_events`, `usage-logs-seed`, `edge-sync` (setelah `accounts`).
 Hanya **anon key** yang dipakai (publik, aman di browser). **`service_role` key
 tidak boleh** masuk repo (repo publik).
 
