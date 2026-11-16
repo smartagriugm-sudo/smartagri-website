@@ -38,7 +38,7 @@
     "mammoth": "^1.12.0",
     "nitro": "npm:nitro-nightly@3.0.260610-beta",
     "pdfjs-dist": "^5.6.205",
-    "plant-factory-3d": "file:vendor/plant-factory-3d-1.4.1-engine.tgz",
+    "plant-factory-3d": "file:vendor/plant-factory-3d-1.4.2-engine.tgz",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",
@@ -49,6 +49,9 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/devtools-vite": "0.8.5",
     "@tanstack/router-cli": "1.167.45",
@@ -61,6 +64,7 @@
     "@types/three": "0.170.0",
     "@vitejs/plugin-react": "^6.0.1",
     "jsdom": "^28.1.0",
+    "meshoptimizer": "^0.22.0",
     "sharp": "^0.35.1",
     "turndown": "^7.2.4",
     "typescript": "^6.0.2",

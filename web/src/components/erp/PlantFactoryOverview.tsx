@@ -288,7 +288,7 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
           <div className={`absolute inset-y-0 left-0 ${layout === "both" ? "w-1/2" : "w-full"} ${layout === "2d" ? "invisible" : ""}`}>
             {sceneOn && <PlantFactoryScene provider={provider} onReady={onReady} onSelect={setSelection} onError={onError} />}
           </div>
-          {!engine && layout !== "2d" && <SceneStatus failed={failed} />}
+          {!engine && layout !== "2d" && <SceneStatus failed={failed} facility="plantFactory" />}
           {layout !== "3d" && (
             <div className={`absolute inset-y-0 right-0 overflow-y-auto border-l border-[#DCE7E8] bg-white px-4 pb-4 pt-4 lg:pb-[104px] lg:pt-[112px] ${layout === "both" ? "w-1/2" : "w-full"}`}>
               <FactoryPlan store={store} selected={selection?.kind === "hole" ? selection.id : null} rack={filter.rack} tier={filter.tier} onPick={pickHole} />

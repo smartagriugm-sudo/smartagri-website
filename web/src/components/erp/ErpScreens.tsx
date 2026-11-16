@@ -2,6 +2,7 @@ import { useCallback, useRef, useState, type ReactNode } from "react";
 import { useRouterState, useSearch } from "@tanstack/react-router";
 import PlantFactoryOverview from "./PlantFactoryOverview";
 import SeedChamberPage from "./SeedChamberPage";
+import { slowConnection } from "../../lib/pf/model-load";
 
 // Both facility screens stay alive from the first visit to either one until the
 // ERP is closed, so switching tabs is instant and keeps each camera, filter and
@@ -11,8 +12,8 @@ import SeedChamberPage from "./SeedChamberPage";
 // The hidden screen keeps its full size instead of display: none, so its 3D
 // engine frames the model for the real canvas, and it stops drawing while
 // hidden (useEngineActivity). On a large screen the second model loads shortly
-// after the first. On a phone, where holding two is costly, it loads on first
-// visit and stays from then on.
+// after the first. On a phone, where holding two is costly, or on a slow or
+// metered connection, it loads on first visit and stays from then on.
 
 const PRELOAD_DELAY_MS = 800;
 
@@ -36,7 +37,7 @@ export default function ErpScreens() {
   const [preload, setPreload] = useState(false);
   const scheduled = useRef(false);
   const onSceneReady = useCallback(() => {
-    if (scheduled.current || !window.matchMedia("(min-width: 1024px)").matches) return;
+    if (scheduled.current || !window.matchMedia("(min-width: 1024px)").matches || slowConnection()) return;
     scheduled.current = true;
     window.setTimeout(() => setPreload(true), PRELOAD_DELAY_MS);
   }, []);

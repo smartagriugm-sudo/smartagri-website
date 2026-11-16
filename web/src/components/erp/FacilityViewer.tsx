@@ -259,7 +259,7 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
 
   return (
     <section ref={stage} className="relative h-full min-h-0 min-w-0 overflow-hidden rounded-xl border border-[#DCE7E8] bg-[#E7EAE7]" aria-label={`3D model ${isFactory ? "plant factory" : "persemaian"}`}>
-      <Suspense fallback={<SceneStatus failed={false} />}>
+      <Suspense fallback={<SceneStatus failed={false} facility={isFactory ? "plantFactory" : "chamber"} />}>
         {isFactory ? (
           <PlantFactoryScene
             key="pf"
@@ -278,7 +278,7 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
           />
         )}
       </Suspense>
-      {!engine && <SceneStatus failed={failed} />}
+      {!engine && <SceneStatus failed={failed} facility={isFactory ? "plantFactory" : "chamber"} />}
 
       {cards.length > 0 && (
         <div className="pointer-events-none absolute left-3 top-3 flex divide-x divide-[#EDF2F2] rounded-xl border border-[#DCE7E8] bg-white">

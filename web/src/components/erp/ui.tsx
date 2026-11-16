@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import type { PerspectiveCamera } from "three";
 import { body, display } from "../../lib/fonts";
 import { HOLE_STATES, HOLE_STATE_KEYS, stateColor, type Batch, type HoleState, type Reading } from "../../lib/pf/facility";
 import { LIFECYCLE_PHASES, lifecycleDay } from "../../lib/pf/store";
+import { modelProgress, onModelProgress, type Facility as ModelFacility, type ModelProgress } from "../../lib/pf/model-load";
 
 // Pieces shared by the two ERP screens, the plant factory and the growth chamber.
 
@@ -232,16 +233,37 @@ export function Lifecycle({ batch, phase, compact = false }: { batch: Batch; pha
   );
 }
 
-export function SceneStatus({ failed }: { failed: boolean }) {
+const MB = 1024 * 1024;
+
+/** What the model is doing, in words: how much is downloaded, or that it is being built. */
+export function progressText(p: ModelProgress | null) {
+  if (!p) return "Loading 3D model…";
+  if (p.phase === "prepare") return "Preparing 3D model…";
+  const got = (p.loaded / MB).toFixed(1);
+  if (!p.total) return `Downloading 3D model · ${got} MB`;
+  const pct = Math.min(99, Math.floor((p.loaded / p.total) * 100));
+  return `Downloading 3D model · ${pct}% of ${(p.total / MB).toFixed(1)} MB`;
+}
+
+export function SceneStatus({ failed, facility }: { failed: boolean; facility?: ModelFacility }) {
+  const progress = useSyncExternalStore(onModelProgress, () => (facility ? modelProgress(facility) : null), () => null);
+  const pct = progress?.phase === "download" && progress.total ? Math.min(100, (progress.loaded / progress.total) * 100) : null;
   return (
     <div className="absolute inset-0 flex items-center justify-center text-[#4F6B73]">
       {failed ? (
         <span className="text-[13px]">The 3D model could not be loaded. Reload the page to try again.</span>
       ) : (
-        <>
-          <Loader2 className="mr-2 h-5 w-5 animate-spin text-[#0B6477]" />
-          <span className="text-[13px]" style={body}>Loading 3D model…</span>
-        </>
+        <div className="flex flex-col items-center gap-2" role="status" aria-live="polite">
+          <span className="flex items-center">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin text-[#0B6477]" />
+            <span className="text-[13px] tabular-nums" style={body}>{progressText(progress)}</span>
+          </span>
+          {pct !== null && (
+            <span className="block h-1 w-40 overflow-hidden rounded-full bg-[#DCE7E8]" aria-hidden>
+              <span className="block h-full rounded-full bg-[#14919B] transition-[width] duration-200" style={{ width: `${pct}%` }} />
+            </span>
+          )}
+        </div>
       )}
     </div>
   );
