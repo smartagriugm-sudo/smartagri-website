@@ -10,6 +10,7 @@ import {
   Gauge,
   Leaf,
   Lightbulb,
+  MapPin,
   Radio,
   Ruler,
   Sprout,
@@ -1060,6 +1061,12 @@ export const DASHBOARD_NAV: {
     icon: Gauge,
     to: "/indoor-farming/dashboard",
     blurb: "The facility at a glance: every room, the current day, and anything asking for attention.",
+  },
+  {
+    label: "Field sites",
+    icon: MapPin,
+    to: "/indoor-farming/dashboard/field",
+    blurb: "Measured data pushed from each site's edge computer. Partners see only the sites shared with them.",
   },
   {
     label: "Rooms",
