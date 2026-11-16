@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { PlantFactoryScene as Engine, Selection } from "plant-factory-3d";
-import { modelUrls } from "../../lib/pf/model-assets";
+import { loadModel, modelShown, weakDevice } from "../../lib/pf/model-load";
 import { HOLE_STATES } from "../../lib/pf/facility";
 import type { PfProvider } from "../../lib/pf/provider";
 
@@ -30,23 +30,29 @@ export default function PlantFactoryScene({ provider, onReady, onSelect, onError
   useEffect(() => {
     let engine: SceneEngine | undefined;
     let cancelled = false;
-    Promise.all([import("plant-factory-3d"), modelUrls("plantFactory")])
-      .then(([{ createPlantFactoryScene }, urls]) =>
-        createPlantFactoryScene<PfProvider>({
+    let release = () => {};
+    Promise.all([import("plant-factory-3d"), loadModel("plantFactory")])
+      .then(([{ createPlantFactoryScene }, { release: free, ...urls }]) => {
+        release = free;
+        return createPlantFactoryScene<PfProvider>({
           container: container.current!,
           ...urls,
           provider,
           holeStates: states ? { ...HOLE_STATES, ...states } : HOLE_STATES,
           tooltip: false,
-        }),
-      )
+          lite: weakDevice(),
+        });
+      })
       .then((created) => {
         if (cancelled) return created.dispose();
         engine = created;
+        modelShown("plantFactory");
         created.on("select", (s) => handlers.current.onSelect(s));
         handlers.current.onReady(created);
       })
+      .finally(() => release())
       .catch((e) => {
+        modelShown("plantFactory");
         if (!cancelled) handlers.current.onError(e);
       });
     return () => {

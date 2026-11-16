@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { ChamberSelection, SeedChamberScene as Engine } from "plant-factory-3d";
-import { modelUrls } from "../../lib/pf/model-assets";
+import { loadModel, modelShown, weakDevice } from "../../lib/pf/model-load";
 import { SLOT_STATES, type ChamberProvider } from "../../lib/pf/chamber";
 
 // Mounts the growth chamber engine; the same arrangement as PlantFactoryScene.
@@ -26,23 +26,29 @@ export default function SeedChamberScene({ provider, onReady, onSelect, onError,
   useEffect(() => {
     let engine: ChamberEngine | undefined;
     let cancelled = false;
-    Promise.all([import("plant-factory-3d"), modelUrls("chamber")])
-      .then(([{ createSeedChamberScene }, urls]) =>
-        createSeedChamberScene<ChamberProvider>({
+    let release = () => {};
+    Promise.all([import("plant-factory-3d"), loadModel("chamber")])
+      .then(([{ createSeedChamberScene }, { release: free, ...urls }]) => {
+        release = free;
+        return createSeedChamberScene<ChamberProvider>({
           container: container.current!,
           ...urls,
           provider,
           slotStates: states ? { ...SLOT_STATES, ...states } : SLOT_STATES,
           tooltip: false,
-        }),
-      )
+          lite: weakDevice(),
+        });
+      })
       .then((created) => {
         if (cancelled) return created.dispose();
         engine = created;
+        modelShown("chamber");
         created.on("select", (s) => handlers.current.onSelect(s));
         handlers.current.onReady(created);
       })
+      .finally(() => release())
       .catch((e) => {
+        modelShown("chamber");
         if (!cancelled) handlers.current.onError(e);
       });
     return () => {
