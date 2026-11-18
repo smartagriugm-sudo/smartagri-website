@@ -10,7 +10,8 @@ Ringkasan naratif semua fitur yang sudah dibangun ada di `docs/STATUS-PENGEMBANG
   setup `docs/setup/SETUP-*.md`, brief konten `docs/konten/`, rancangan fitur).
 - TanStack Start v1, React 19, TypeScript, Tailwind v4, framer-motion, lucide-react.
   Versi `@tanstack/*` dan `nitro` dikunci exact di `package.json`; naikkan dengan sengaja, bukan `latest`.
-- Server: route Nitro berbasis file di `server/api/` (mis. `server/api/ai/chat.post.ts` = `POST /api/ai/chat`).
+- Server: route Nitro berbasis file di `server/api/` (mis. `server/api/ai/chat.post.ts` = `POST /api/ai/chat`);
+  middleware Nitro di `server/middleware/` (mis. pengalihan host agrosphere).
 - Data: Supabase (Auth, Postgres, pgvector) via **anon key** saja; migrasi SQL di `supabase/`,
   dijalankan manual. JANGAN pernah memasukkan `service_role` key atau secret apa pun ke repo (repo publik).
 - AI Assistant (`/ai/*`, dipagari login): Ollama on-prem lewat `lib/ai/`, RAG pgvector + bge-m3.
@@ -19,8 +20,11 @@ Ringkasan naratif semua fitur yang sudah dibangun ada di `docs/STATUS-PENGEMBANG
     `gallery`, `team`, `exhibition`, `demo`, `about-us`, `contact-us` (peta + form yang membuka
     draf email via `mailto:`), `privacy-policy`, `terms-of-use`.
   - Aplikasi: `ai/*`, `sign-in`, `sign-up`, `indoor-farming*` (termasuk dashboard operator),
-    `inventory*`, `guestbook*`, `links*`.
-- Header sticky `SiteHeader` dipakai semua halaman (mode `overlay` khusus landing);
+    `inventory*`, `guestbook*`, `links*`, `kanban*`, `erp*` (ERP Plant Factory).
+  - agrosphere: `agrosphere` (launcher), `agrosphere.settings.access`, `agrosphere_.sign-in`,
+    `agrosphere_.sign-up` (lihat bagian agrosphere di bawah).
+- Header sticky `SiteHeader` dipakai semua halaman smartagri (mode `overlay` khusus landing;
+  halaman agrosphere memakai `AgroHeader` atau shell dashboard masing-masing);
   halaman non-landing: `SiteHeader` + `PageHero` + konten + `Footer` (CTA banner hanya di landing).
 - Data bersama di `src/lib/` (mis. `notes.ts`, `publications.ts`, `research.ts`, `partners.ts`,
   `team.ts`, `technology.ts`, `indoor-farming.ts`, `indoor-dashboard.ts`).
@@ -32,6 +36,24 @@ Ringkasan naratif semua fitur yang sudah dibangun ada di `docs/STATUS-PENGEMBANG
 - Berita juga masuk otomatis dari WordPress lama lewat `scripts/import-wp.mjs`
   (GitHub Actions, commit langsung ke `main`). Selalu mulai kerja dari `main` terbaru.
 - Komponen di `src/components/`, aset di `src/lib/assets.ts`
+
+## agrosphere (merek dashboard)
+- Semua dashboard operasional (ERP Plant Factory, dashboard indoor, lokasi greenhouse) bermerek
+  **agrosphere** dan dibuka di `agrosphere.smart-agri.id`; situs publik tetap smartagri.
+  Rencana: `docs/agrosphere/RENCANA-AGROSPHERE.md`, setup: `docs/setup/SETUP-AGROSPHERE.md`.
+- Wordmark selalu huruf kecil `agrosphere`; logo lewat `A.agrosphereLogo`/`agrosphereIcon`/
+  `agrosphereWordmark`. Palet, font, dan aturan tipografi sama dengan smartagri di bawah.
+- Satu app untuk dua host: `lib/agrosphere-host.ts` memetakan alamat pendek (`/plant-factory`,
+  `/greenhouse`, `/indoor`, `/sign-in`, `/settings/access`) ke route yang ada, lewat `rewrite`
+  router (`router.tsx`) dan `server/middleware/agrosphere-host.ts`. Tautan ditulis dengan route
+  internal (`/erp`, `/agrosphere`); router yang mengubahnya menjadi alamat host yang benar.
+  Untuk `<a href>` biasa, pakai `router.buildLocation(...).publicHref`.
+- Izin per dashboard dijaga RLS (`supabase/agrosphere.sql`): hanya admin lab yang otomatis
+  melihat semua; peneliti hanya yang diberikan; mitra (`lab_role` `mitra`) tidak pernah
+  mendapat Plant Factory atau Indoor. Halaman memakai `AgroGate app="..."`; dashboard baru
+  didaftarkan di `AGRO_APPS` (`lib/agrosphere.ts`), `agro_my_apps()`, dan peta host.
+- Sesi Supabase disimpan di cookie `.smart-agri.id` (`lib/auth/cookie-storage.ts`), satu login
+  untuk semua subdomain. Jangan arahkan subdomain smart-agri.id ke layanan pihak ketiga.
 
 ## Brand (WAJIB diikuti)
 - Tipografi: sistem satu-suara ala Linear: **Inter** (Google Fonts) untuk semua peran,
