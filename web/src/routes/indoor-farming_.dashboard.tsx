@@ -2,6 +2,7 @@ import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router"
 import { DashboardProvider } from "../lib/dashboard-state";
 import { DashboardShell } from "../components/dashboard/AppShell";
 import AgroGate from "../components/agrosphere/AgroGate";
+import { isGreenhousePath } from "../components/greenhouse/nav";
 
 // Layout for the dashboard application. Everything under
 // /indoor-farming/dashboard renders inside this shell.
@@ -26,14 +27,15 @@ function DashboardLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const activeTo = pathname.replace(/\/$/, "") || "/indoor-farming/dashboard";
 
-  // Part of agrosphere: Field sites is the Greenhouse dashboard, every other screen
-  // is Indoor (still simulated, so never shown to partners). Each is checked on its own.
-  const app = activeTo.startsWith("/indoor-farming/dashboard/field") ? "greenhouse" : "indoor";
+  // Part of agrosphere: everything under /field is the Greenhouse dashboard (measured
+  // data, components/greenhouse), every other screen is Indoor (still simulated, so
+  // never shown to partners). Each is checked on its own and has its own menu.
+  const app = isGreenhousePath(activeTo) ? "greenhouse" : "indoor";
 
   return (
     <AgroGate app={app}>
       <DashboardProvider>
-        <DashboardShell activeTo={activeTo}>
+        <DashboardShell app={app} activeTo={activeTo}>
           <Outlet />
         </DashboardShell>
       </DashboardProvider>

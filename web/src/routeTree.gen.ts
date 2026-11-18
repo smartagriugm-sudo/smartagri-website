@@ -105,6 +105,11 @@ import { Route as IndoorFarmingDashboardFieldRouteImport } from './routes/indoor
 import { Route as IndoorFarmingDashboardNutritionRouteImport } from './routes/indoor-farming_.dashboard.nutrition'
 import { Route as IndoorFarmingDashboardRoomsRouteImport } from './routes/indoor-farming_.dashboard.rooms'
 import { Route as IndoorFarmingDashboardSensorsRouteImport } from './routes/indoor-farming_.dashboard.sensors'
+import { Route as IndoorFarmingDashboardFieldIndexRouteImport } from './routes/indoor-farming_.dashboard.field.index'
+import { Route as IndoorFarmingDashboardFieldActuatorsRouteImport } from './routes/indoor-farming_.dashboard.field.actuators'
+import { Route as IndoorFarmingDashboardFieldManageRouteImport } from './routes/indoor-farming_.dashboard.field.manage'
+import { Route as IndoorFarmingDashboardFieldSensorsRouteImport } from './routes/indoor-farming_.dashboard.field.sensors'
+import { Route as IndoorFarmingDashboardFieldTrendsRouteImport } from './routes/indoor-farming_.dashboard.field.trends'
 import { Route as KanbanBoardCCardRouteImport } from './routes/kanban_.$board.c.$card'
 
 const IndexRoute = IndexRouteImport.update({
@@ -598,6 +603,36 @@ const IndoorFarmingDashboardSensorsRoute =
     path: '/sensors',
     getParentRoute: () => IndoorFarmingDashboardRoute,
   } as any)
+const IndoorFarmingDashboardFieldIndexRoute =
+  IndoorFarmingDashboardFieldIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => IndoorFarmingDashboardFieldRoute,
+  } as any)
+const IndoorFarmingDashboardFieldActuatorsRoute =
+  IndoorFarmingDashboardFieldActuatorsRouteImport.update({
+    id: '/actuators',
+    path: '/actuators',
+    getParentRoute: () => IndoorFarmingDashboardFieldRoute,
+  } as any)
+const IndoorFarmingDashboardFieldManageRoute =
+  IndoorFarmingDashboardFieldManageRouteImport.update({
+    id: '/manage',
+    path: '/manage',
+    getParentRoute: () => IndoorFarmingDashboardFieldRoute,
+  } as any)
+const IndoorFarmingDashboardFieldSensorsRoute =
+  IndoorFarmingDashboardFieldSensorsRouteImport.update({
+    id: '/sensors',
+    path: '/sensors',
+    getParentRoute: () => IndoorFarmingDashboardFieldRoute,
+  } as any)
+const IndoorFarmingDashboardFieldTrendsRoute =
+  IndoorFarmingDashboardFieldTrendsRouteImport.update({
+    id: '/trends',
+    path: '/trends',
+    getParentRoute: () => IndoorFarmingDashboardFieldRoute,
+  } as any)
 const KanbanBoardCCardRoute = KanbanBoardCCardRouteImport.update({
   id: '/c/$card',
   path: '/c/$card',
@@ -688,7 +723,7 @@ export interface FileRoutesByFullPath {
   '/indoor-farming/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
   '/indoor-farming/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
   '/indoor-farming/dashboard/climate': typeof IndoorFarmingDashboardClimateRoute
-  '/indoor-farming/dashboard/field': typeof IndoorFarmingDashboardFieldRoute
+  '/indoor-farming/dashboard/field': typeof IndoorFarmingDashboardFieldRouteWithChildren
   '/indoor-farming/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
   '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
@@ -701,7 +736,12 @@ export interface FileRoutesByFullPath {
   '/erp/purchasing/': typeof ErpPurchasingIndexRoute
   '/erp/stock/': typeof ErpStockIndexRoute
   '/indoor-farming/dashboard/': typeof IndoorFarmingDashboardIndexRoute
+  '/indoor-farming/dashboard/field/actuators': typeof IndoorFarmingDashboardFieldActuatorsRoute
+  '/indoor-farming/dashboard/field/manage': typeof IndoorFarmingDashboardFieldManageRoute
+  '/indoor-farming/dashboard/field/sensors': typeof IndoorFarmingDashboardFieldSensorsRoute
+  '/indoor-farming/dashboard/field/trends': typeof IndoorFarmingDashboardFieldTrendsRoute
   '/kanban/$board/c/$card': typeof KanbanBoardCCardRoute
+  '/indoor-farming/dashboard/field/': typeof IndoorFarmingDashboardFieldIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -783,7 +823,6 @@ export interface FileRoutesByTo {
   '/indoor-farming/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
   '/indoor-farming/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
   '/indoor-farming/dashboard/climate': typeof IndoorFarmingDashboardClimateRoute
-  '/indoor-farming/dashboard/field': typeof IndoorFarmingDashboardFieldRoute
   '/indoor-farming/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
   '/indoor-farming/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
@@ -796,7 +835,12 @@ export interface FileRoutesByTo {
   '/erp/purchasing': typeof ErpPurchasingIndexRoute
   '/erp/stock': typeof ErpStockIndexRoute
   '/indoor-farming/dashboard': typeof IndoorFarmingDashboardIndexRoute
+  '/indoor-farming/dashboard/field/actuators': typeof IndoorFarmingDashboardFieldActuatorsRoute
+  '/indoor-farming/dashboard/field/manage': typeof IndoorFarmingDashboardFieldManageRoute
+  '/indoor-farming/dashboard/field/sensors': typeof IndoorFarmingDashboardFieldSensorsRoute
+  '/indoor-farming/dashboard/field/trends': typeof IndoorFarmingDashboardFieldTrendsRoute
   '/kanban/$board/c/$card': typeof KanbanBoardCCardRoute
+  '/indoor-farming/dashboard/field': typeof IndoorFarmingDashboardFieldIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -883,7 +927,7 @@ export interface FileRoutesById {
   '/indoor-farming_/dashboard/analytics': typeof IndoorFarmingDashboardAnalyticsRoute
   '/indoor-farming_/dashboard/calibration': typeof IndoorFarmingDashboardCalibrationRoute
   '/indoor-farming_/dashboard/climate': typeof IndoorFarmingDashboardClimateRoute
-  '/indoor-farming_/dashboard/field': typeof IndoorFarmingDashboardFieldRoute
+  '/indoor-farming_/dashboard/field': typeof IndoorFarmingDashboardFieldRouteWithChildren
   '/indoor-farming_/dashboard/nutrition': typeof IndoorFarmingDashboardNutritionRoute
   '/indoor-farming_/dashboard/rooms': typeof IndoorFarmingDashboardRoomsRoute
   '/indoor-farming_/dashboard/sensors': typeof IndoorFarmingDashboardSensorsRoute
@@ -896,7 +940,12 @@ export interface FileRoutesById {
   '/erp/purchasing/': typeof ErpPurchasingIndexRoute
   '/erp/stock/': typeof ErpStockIndexRoute
   '/indoor-farming_/dashboard/': typeof IndoorFarmingDashboardIndexRoute
+  '/indoor-farming_/dashboard/field/actuators': typeof IndoorFarmingDashboardFieldActuatorsRoute
+  '/indoor-farming_/dashboard/field/manage': typeof IndoorFarmingDashboardFieldManageRoute
+  '/indoor-farming_/dashboard/field/sensors': typeof IndoorFarmingDashboardFieldSensorsRoute
+  '/indoor-farming_/dashboard/field/trends': typeof IndoorFarmingDashboardFieldTrendsRoute
   '/kanban_/$board/c/$card': typeof KanbanBoardCCardRoute
+  '/indoor-farming_/dashboard/field/': typeof IndoorFarmingDashboardFieldIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -997,7 +1046,12 @@ export interface FileRouteTypes {
     | '/erp/purchasing/'
     | '/erp/stock/'
     | '/indoor-farming/dashboard/'
+    | '/indoor-farming/dashboard/field/actuators'
+    | '/indoor-farming/dashboard/field/manage'
+    | '/indoor-farming/dashboard/field/sensors'
+    | '/indoor-farming/dashboard/field/trends'
     | '/kanban/$board/c/$card'
+    | '/indoor-farming/dashboard/field/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1079,7 +1133,6 @@ export interface FileRouteTypes {
     | '/indoor-farming/dashboard/analytics'
     | '/indoor-farming/dashboard/calibration'
     | '/indoor-farming/dashboard/climate'
-    | '/indoor-farming/dashboard/field'
     | '/indoor-farming/dashboard/nutrition'
     | '/indoor-farming/dashboard/rooms'
     | '/indoor-farming/dashboard/sensors'
@@ -1092,7 +1145,12 @@ export interface FileRouteTypes {
     | '/erp/purchasing'
     | '/erp/stock'
     | '/indoor-farming/dashboard'
+    | '/indoor-farming/dashboard/field/actuators'
+    | '/indoor-farming/dashboard/field/manage'
+    | '/indoor-farming/dashboard/field/sensors'
+    | '/indoor-farming/dashboard/field/trends'
     | '/kanban/$board/c/$card'
+    | '/indoor-farming/dashboard/field'
   id:
     | '__root__'
     | '/'
@@ -1191,7 +1249,12 @@ export interface FileRouteTypes {
     | '/erp/purchasing/'
     | '/erp/stock/'
     | '/indoor-farming_/dashboard/'
+    | '/indoor-farming_/dashboard/field/actuators'
+    | '/indoor-farming_/dashboard/field/manage'
+    | '/indoor-farming_/dashboard/field/sensors'
+    | '/indoor-farming_/dashboard/field/trends'
     | '/kanban_/$board/c/$card'
+    | '/indoor-farming_/dashboard/field/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1915,6 +1978,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndoorFarmingDashboardSensorsRouteImport
       parentRoute: typeof IndoorFarmingDashboardRoute
     }
+    '/indoor-farming_/dashboard/field/': {
+      id: '/indoor-farming_/dashboard/field/'
+      path: '/'
+      fullPath: '/indoor-farming/dashboard/field/'
+      preLoaderRoute: typeof IndoorFarmingDashboardFieldIndexRouteImport
+      parentRoute: typeof IndoorFarmingDashboardFieldRoute
+    }
+    '/indoor-farming_/dashboard/field/actuators': {
+      id: '/indoor-farming_/dashboard/field/actuators'
+      path: '/actuators'
+      fullPath: '/indoor-farming/dashboard/field/actuators'
+      preLoaderRoute: typeof IndoorFarmingDashboardFieldActuatorsRouteImport
+      parentRoute: typeof IndoorFarmingDashboardFieldRoute
+    }
+    '/indoor-farming_/dashboard/field/manage': {
+      id: '/indoor-farming_/dashboard/field/manage'
+      path: '/manage'
+      fullPath: '/indoor-farming/dashboard/field/manage'
+      preLoaderRoute: typeof IndoorFarmingDashboardFieldManageRouteImport
+      parentRoute: typeof IndoorFarmingDashboardFieldRoute
+    }
+    '/indoor-farming_/dashboard/field/sensors': {
+      id: '/indoor-farming_/dashboard/field/sensors'
+      path: '/sensors'
+      fullPath: '/indoor-farming/dashboard/field/sensors'
+      preLoaderRoute: typeof IndoorFarmingDashboardFieldSensorsRouteImport
+      parentRoute: typeof IndoorFarmingDashboardFieldRoute
+    }
+    '/indoor-farming_/dashboard/field/trends': {
+      id: '/indoor-farming_/dashboard/field/trends'
+      path: '/trends'
+      fullPath: '/indoor-farming/dashboard/field/trends'
+      preLoaderRoute: typeof IndoorFarmingDashboardFieldTrendsRouteImport
+      parentRoute: typeof IndoorFarmingDashboardFieldRoute
+    }
     '/kanban_/$board/c/$card': {
       id: '/kanban_/$board/c/$card'
       path: '/c/$card'
@@ -2040,11 +2138,38 @@ const ErpRouteChildren: ErpRouteChildren = {
 
 const ErpRouteWithChildren = ErpRoute._addFileChildren(ErpRouteChildren)
 
+interface IndoorFarmingDashboardFieldRouteChildren {
+  IndoorFarmingDashboardFieldActuatorsRoute: typeof IndoorFarmingDashboardFieldActuatorsRoute
+  IndoorFarmingDashboardFieldManageRoute: typeof IndoorFarmingDashboardFieldManageRoute
+  IndoorFarmingDashboardFieldSensorsRoute: typeof IndoorFarmingDashboardFieldSensorsRoute
+  IndoorFarmingDashboardFieldTrendsRoute: typeof IndoorFarmingDashboardFieldTrendsRoute
+  IndoorFarmingDashboardFieldIndexRoute: typeof IndoorFarmingDashboardFieldIndexRoute
+}
+
+const IndoorFarmingDashboardFieldRouteChildren: IndoorFarmingDashboardFieldRouteChildren =
+  {
+    IndoorFarmingDashboardFieldActuatorsRoute:
+      IndoorFarmingDashboardFieldActuatorsRoute,
+    IndoorFarmingDashboardFieldManageRoute:
+      IndoorFarmingDashboardFieldManageRoute,
+    IndoorFarmingDashboardFieldSensorsRoute:
+      IndoorFarmingDashboardFieldSensorsRoute,
+    IndoorFarmingDashboardFieldTrendsRoute:
+      IndoorFarmingDashboardFieldTrendsRoute,
+    IndoorFarmingDashboardFieldIndexRoute:
+      IndoorFarmingDashboardFieldIndexRoute,
+  }
+
+const IndoorFarmingDashboardFieldRouteWithChildren =
+  IndoorFarmingDashboardFieldRoute._addFileChildren(
+    IndoorFarmingDashboardFieldRouteChildren,
+  )
+
 interface IndoorFarmingDashboardRouteChildren {
   IndoorFarmingDashboardAnalyticsRoute: typeof IndoorFarmingDashboardAnalyticsRoute
   IndoorFarmingDashboardCalibrationRoute: typeof IndoorFarmingDashboardCalibrationRoute
   IndoorFarmingDashboardClimateRoute: typeof IndoorFarmingDashboardClimateRoute
-  IndoorFarmingDashboardFieldRoute: typeof IndoorFarmingDashboardFieldRoute
+  IndoorFarmingDashboardFieldRoute: typeof IndoorFarmingDashboardFieldRouteWithChildren
   IndoorFarmingDashboardNutritionRoute: typeof IndoorFarmingDashboardNutritionRoute
   IndoorFarmingDashboardRoomsRoute: typeof IndoorFarmingDashboardRoomsRoute
   IndoorFarmingDashboardSensorsRoute: typeof IndoorFarmingDashboardSensorsRoute
@@ -2057,7 +2182,8 @@ const IndoorFarmingDashboardRouteChildren: IndoorFarmingDashboardRouteChildren =
     IndoorFarmingDashboardCalibrationRoute:
       IndoorFarmingDashboardCalibrationRoute,
     IndoorFarmingDashboardClimateRoute: IndoorFarmingDashboardClimateRoute,
-    IndoorFarmingDashboardFieldRoute: IndoorFarmingDashboardFieldRoute,
+    IndoorFarmingDashboardFieldRoute:
+      IndoorFarmingDashboardFieldRouteWithChildren,
     IndoorFarmingDashboardNutritionRoute: IndoorFarmingDashboardNutritionRoute,
     IndoorFarmingDashboardRoomsRoute: IndoorFarmingDashboardRoomsRoute,
     IndoorFarmingDashboardSensorsRoute: IndoorFarmingDashboardSensorsRoute,
