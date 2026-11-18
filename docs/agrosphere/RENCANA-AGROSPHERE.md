@@ -1,6 +1,6 @@
 # Rencana agrosphere: satu pintu untuk semua dashboard
 
-Status: disetujui 18 November 2026. Tahap 1 selesai di kode (`supabase/agrosphere.sql`), menunggu dijalankan di Supabase.
+Status: disetujui 18 November 2026. Tahap 1 berjalan di Supabase; tahap 2 dan 3 selesai di kode (branch `agrosphere/login`).
 
 agrosphere menjadi merek untuk semua dashboard operasional smartagri. Orang membuka
 `agrosphere.smart-agri.id`, login, lalu memilih dashboard yang boleh ia buka. Situs publik
@@ -171,11 +171,11 @@ memetakan URL rapi di agrosphere ke route yang sudah ada:
 
 ## 7. Tahapan (satu PR per tahap)
 
-1. **Keamanan dan izin** (selesai di kode). `agrosphere.sql` (tabel, `agro_can`, `agro_my_apps`, RPC admin),
+1. **Keamanan dan izin** (selesai, sudah dijalankan di Supabase). `agrosphere.sql` (tabel, `agro_can`, `agro_my_apps`, RPC admin),
    policy baca `pf_*` diganti, uji RLS dengan akun mitra uji. Tidak ada perubahan tampilan.
-2. **Login agrosphere.** `AgrosphereAuthShell`, `AgrosphereMark`, route `/agrosphere/sign-in` dan
+2. **Login agrosphere** (selesai di kode, tampilan disetujui; logo menyatu dua tahap: bingkai lalu daun). `AgrosphereAuthShell`, `AgrosphereMark`, route `/agrosphere/sign-in` dan
    `/agrosphere/sign-up`. Ditunjukkan untuk disetujui.
-3. **Launcher.** `/agrosphere`: kartu per aplikasi dari `agro_my_apps()`, status pending, dan
+3. **Launcher** (selesai di kode). `/agrosphere`: kartu per aplikasi dari `agro_my_apps()`, status pending, dan
    gerbang per aplikasi di ERP, field, dan indoor (`AgroGate app="..."`) yang menggantikan
    `RequireAuth`/`ErpGate` untuk pengecekan izin.
 4. **Pengaturan akses.** Halaman Akses pengguna dan alur persetujuan mitra.

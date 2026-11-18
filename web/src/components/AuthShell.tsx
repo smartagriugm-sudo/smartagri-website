@@ -4,11 +4,37 @@ import { motion } from "framer-motion";
 import { ChevronLeft, type LucideIcon } from "lucide-react";
 import { A } from "../lib/assets";
 import GrowthPrism from "./GrowthPrism";
+import AgrosphereMark from "./AgrosphereMark";
 import { accent, body, display } from "../lib/fonts";
 
-// Split layout for sign in and sign up: a calm brand panel on the left with
-// a stem turning into circuits through the smartagri mark, the form on the right. Below lg
-// the brand panel is hidden and the logo sits above the form.
+// Split layout for sign in and sign up: a calm brand panel on the left, the form
+// on the right. Below lg the brand panel is hidden and the logo sits above the
+// form. Two brands share it: smartagri (a stem turning into circuits through the
+// smartagri mark) and agrosphere (the agrosphere mark locking together, with
+// rounded frames rippling out), see docs/agrosphere/RENCANA-AGROSPHERE.md.
+
+export type AuthBrand = "smartagri" | "agrosphere";
+
+const BRANDS = {
+  smartagri: {
+    logo: A.logoColor,
+    name: "smartagri",
+    home: { label: "Home" },
+    eyebrow: "Smart Agriculture Research Center UGM",
+    tagline: ["Sense.", "Analyze.", "Grow."],
+    statement:
+      "We sense the field with IoT and imaging, analyze it with AI and data, and turn readings into decisions for healthier, more sustainable harvests.",
+  },
+  agrosphere: {
+    logo: A.agrosphereLogo,
+    name: "agrosphere",
+    home: { label: "smartagri" },
+    eyebrow: "by smartagri",
+    tagline: ["Monitor.", "Manage.", "Grow."],
+    statement:
+      "One place for the plant factory and the greenhouse sites: live readings, daily operations and the people who run them, each opened to the accounts given access.",
+  },
+} as const;
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -18,7 +44,9 @@ export default function AuthShell({
   subtitle,
   children,
   footer,
+  brand = "smartagri",
 }: {
+  brand?: AuthBrand;
   title: string;
   accentWord?: string;
   subtitle: string;
@@ -28,7 +56,7 @@ export default function AuthShell({
   return (
     <main className="min-h-[100dvh] bg-[#E9F0EE] lg:p-3" style={body}>
       <div className="grid min-h-[100dvh] bg-white lg:min-h-[calc(100dvh-1.5rem)] lg:grid-cols-2 lg:overflow-hidden lg:rounded-[28px] lg:shadow-[0_1px_2px_rgba(8,49,58,0.06),0_24px_60px_-30px_rgba(8,49,58,0.25)]">
-        <BrandPanel />
+        <BrandPanel brand={brand} />
         <section className="relative flex flex-col px-5 pb-10 pt-5 sm:px-10 lg:px-14 lg:pt-10">
           <div
             aria-hidden="true"
@@ -40,9 +68,9 @@ export default function AuthShell({
               className="inline-flex items-center gap-1 rounded-lg py-1.5 pr-2 text-sm font-medium text-neutral-800 transition-colors hover:text-[#0B6477]"
             >
               <ChevronLeft className="h-4 w-4" />
-              Home
+              {BRANDS[brand].home.label}
             </Link>
-            <img src={A.logoColor} alt="smartagri" className="h-6 w-auto lg:hidden" />
+            <img src={BRANDS[brand].logo} alt={BRANDS[brand].name} className="h-6 w-auto lg:hidden" />
           </div>
 
           <motion.div
@@ -64,18 +92,19 @@ export default function AuthShell({
   );
 }
 
-function BrandPanel() {
+function BrandPanel({ brand }: { brand: AuthBrand }) {
+  const b = BRANDS[brand];
   return (
     <aside className="relative hidden overflow-hidden border-r border-[#0B6477]/8 bg-[#F7FAF9] lg:flex lg:flex-col lg:justify-between lg:p-12">
-      {/* A plant stem passes through the 3D smartagri mark and leaves as
-          circuit traces; faded towards the text so the logo and statement stay quiet. */}
-      <GrowthPrism />
+      {/* The brand's illustration, faded towards the text so the logo and
+          statement stay quiet. */}
+      {brand === "agrosphere" ? <AgrosphereMark /> : <GrowthPrism />}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,#F7FAF9_0%,rgba(247,250,249,0)_14%,rgba(247,250,249,0)_62%,#F7FAF9_90%)]"
       />
-      <Link to="/" aria-label="smartagri home" className="relative z-10 w-fit">
-        <img src={A.logoColor} alt="smartagri" className="h-7 w-auto" />
+      <Link to="/" aria-label={`${b.name} home`} className="relative z-10 w-fit">
+        <img src={b.logo} alt={b.name} className="h-7 w-auto" />
       </Link>
       <div className="relative z-10 max-w-[480px]">
         <motion.p
@@ -84,10 +113,10 @@ function BrandPanel() {
           transition={{ delay: 0.3, duration: 0.5 }}
           className="text-[13px] font-medium tracking-[0.03em] text-[#14919B]"
         >
-          Smart Agriculture Research Center UGM
+          {b.eyebrow}
         </motion.p>
         <h2 className="mt-3 text-[44px] font-semibold leading-[1.02] tracking-[-0.04em] text-neutral-900" style={display}>
-          {["Sense.", "Analyze.", "Grow."].map((w, i) => (
+          {b.tagline.map((w, i) => (
             <motion.span
               key={w}
               initial={{ opacity: 0, y: 12 }}
@@ -106,8 +135,7 @@ function BrandPanel() {
           transition={{ delay: 0.9, duration: 0.55, ease: EASE }}
           className="mt-4 text-[17px] leading-relaxed text-neutral-600"
         >
-          We sense the field with IoT and imaging, analyze it with AI and data, and turn readings into decisions for healthier,
-          more sustainable harvests.
+          {b.statement}
         </motion.p>
       </div>
     </aside>

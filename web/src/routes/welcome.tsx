@@ -14,6 +14,7 @@ import {
 } from '../lib/account'
 import type { AccountProfile, LabRole, OnboardingFields } from '../lib/account'
 import { DEFAULT_SIGNED_IN_PATH } from '../lib/features'
+import { AGROSPHERE_SIGNUP } from '../lib/agrosphere'
 import { accent, body, display } from '../lib/fonts'
 import SiteHeader from '../components/SiteHeader'
 import AuthGate from '../components/AuthGate'
@@ -119,6 +120,7 @@ function WelcomeContent() {
       <OnboardingForm
         userId={user.id}
         initial={profile}
+        suggestPartner={user.user_metadata?.signup_via === AGROSPHERE_SIGNUP}
         canCancel={account.onboarded}
         onCancel={() => setEditing(false)}
         onSaved={async (saved) => {
@@ -199,12 +201,15 @@ function SecondaryButton({ children, onClick, icon }: { children: ReactNode; onC
 function OnboardingForm({
   userId,
   initial,
+  suggestPartner = false,
   canCancel,
   onCancel,
   onSaved,
 }: {
   userId: string
   initial: AccountProfile | null
+  /** Signed up on agrosphere: start with the Partner role picked. */
+  suggestPartner?: boolean
   canCancel: boolean
   onCancel: () => void
   onSaved: (saved: OnboardingFields) => Promise<void>
@@ -213,7 +218,7 @@ function OnboardingForm({
     ...EMPTY,
     full_name: initial?.full_name ?? '',
     preferred_name: initial?.preferred_name ?? '',
-    lab_role: (initial?.lab_role ?? '') as LabRole,
+    lab_role: (initial?.lab_role || (suggestPartner ? 'mitra' : '')) as LabRole,
     cohort: initial?.cohort ?? null,
     staff_id: initial?.staff_id ?? '',
     research_topic: initial?.research_topic ?? '',

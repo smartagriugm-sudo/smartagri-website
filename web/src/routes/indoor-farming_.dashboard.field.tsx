@@ -30,6 +30,10 @@ import {
 } from "../lib/edge/field";
 
 export const Route = createFileRoute("/indoor-farming_/dashboard/field")({
+  // ?site=<code> opens that site first (the agrosphere launcher links each site this way).
+  validateSearch: (search: Record<string, unknown>) => ({
+    site: typeof search.site === "string" && /^[a-z0-9-]{2,40}$/.test(search.site) ? search.site : undefined,
+  }),
   component: FieldScreen,
   head: () => ({ meta: [{ title: "Field sites · Dashboard | smartagri" }] }),
 });
@@ -46,6 +50,7 @@ const QUIET = "#8A9A9E";
 // screen only reacts to what comes back: no site at all means none is shared yet.
 function FieldScreen() {
   const { account, isConfigured } = useAuth();
+  const { site: wantedSite } = Route.useSearch();
   const [sites, setSites] = useState<EdgeSite[] | null>(null);
   const [siteId, setSiteId] = useState<string | null>(null);
   const [snap, setSnap] = useState<SiteSnapshot | null>(null);
@@ -59,8 +64,12 @@ function FieldScreen() {
     const r = await loadSites();
     setSites(r.data);
     setError(r.error);
-    setSiteId((cur) => (cur && r.data.some((s) => s.id === cur) ? cur : r.data[0]?.id ?? null));
-  }, []);
+    setSiteId((cur) =>
+      cur && r.data.some((s) => s.id === cur)
+        ? cur
+        : (r.data.find((s) => s.code === wantedSite) ?? r.data[0])?.id ?? null,
+    );
+  }, [wantedSite]);
 
   useEffect(() => {
     if (!isConfigured || !active) return;

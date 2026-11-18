@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useBlocker, useRouter } from "@tanstack/react-router";
+import { useBlocker, useRouter, useRouterState } from "@tanstack/react-router";
 import { A } from "../lib/assets";
 
 // Page-load and page-transition curtain (after the Blitz template): a deep
-// panel with mint edges and the smartagri logo.
+// panel with mint edges and the smartagri logo, or the agrosphere logo on the
+// agrosphere pages and the ERP (judged by the page being left for, so the
+// curtain already shows the brand it opens onto).
 //   - First load: the server renders it already covering the page, and it
 //     lifts once the app has hydrated, so content never flashes in unstyled.
 //   - Every navigation to another page: it slides up over the screen (0.42s),
@@ -25,9 +27,14 @@ function samePage(from: string, to: string) {
 
 type Phase = "load" | "idle" | "cover" | "reveal";
 
+const isAgrosphere = (path: string) => /^\/(agrosphere|erp)(?=[/_]|$)/.test(path);
+
 export default function PageCurtain() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("load");
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [heading, setHeading] = useState<string | null>(null);
+  const agro = isAgrosphere(heading ?? pathname);
   const covering = useRef(false);
   const reduced = useRef(false);
 
@@ -54,6 +61,7 @@ export default function PageCurtain() {
     shouldBlockFn: async ({ current, next }) => {
       if (reduced.current || samePage(current.pathname, next.pathname)) return false;
       covering.current = true;
+      setHeading(next.pathname);
       setPhase("cover");
       await new Promise((r) => setTimeout(r, COVER_MS));
       return false; // never block, only delay
@@ -68,7 +76,10 @@ export default function PageCurtain() {
       covering.current = false;
       lift = window.setTimeout(() => {
         setPhase("reveal");
-        done = window.setTimeout(() => setPhase("idle"), LIFT_MS);
+        done = window.setTimeout(() => {
+          setPhase("idle");
+          setHeading(null);
+        }, LIFT_MS);
       }, 120);
     });
     return () => {
@@ -87,7 +98,7 @@ export default function PageCurtain() {
     >
       <span className="h-1 w-full bg-[#45DFB1]" />
       <div className="sa-curtain-content flex flex-1 flex-col items-center justify-center gap-6">
-        <img src={A.logoWhite} alt="" className="h-10 w-auto md:h-12" />
+        <img src={agro ? A.agrosphereLogo : A.logoWhite} alt="" className="h-10 w-auto md:h-12" />
         <span className="relative h-[2px] w-28 overflow-hidden rounded-full bg-white/15">
           <span className="sa-curtain-bar absolute inset-y-0 left-0 w-1/2 rounded-full bg-[#45DFB1]" />
         </span>
