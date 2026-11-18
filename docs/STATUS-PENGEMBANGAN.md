@@ -1,7 +1,8 @@
 # Status Pengembangan smartagri
 
 Ringkasan semua yang sudah dibangun untuk situs Smart Agriculture Research
-Center UGM (**[smart-agri.id](https://www.smart-agri.id)**), per 20 Oktober 2026.
+Center UGM (**[smart-agri.id](https://www.smart-agri.id)**), per 20 Oktober 2026;
+bagian agrosphere (11) diperbarui 18 November 2026.
 Dokumen ini bersifat naratif (menjelaskan "apa saja yang sudah ada"); untuk cara
 menjalankan dan men-deploy lihat `README.md`, dan untuk aturan brand/kode lihat
 `CLAUDE.md`.
@@ -32,9 +33,10 @@ Dikelola non-teknis lewat CMS di `/admin`. Setup: `docs/setup/SETUP-ADMIN-CMS.md
 
 ### 3. Login research assistant (Supabase Auth)
 Halaman `sign-in` dan `sign-up`. Auth memagari seluruh `/ai/*`. Setup:
-`docs/setup/SETUP-AUTH.md`.
+`docs/setup/SETUP-AUTH.md`. Sesi disimpan di cookie untuk `.smart-agri.id`
+(`lib/auth/cookie-storage.ts`), jadi satu login berlaku di smartagri dan agrosphere (bagian 11).
 
-### 4. AI Assistant (`/ai`) — fitur terbesar
+### 4. AI Assistant (`/ai`), fitur terbesar
 Gaya antarmuka mirip Gemini (composer di tengah lalu nempel bawah, sidebar bisa
 ditutup, incognito). Route: `ai/chat`, `ai/generate` (document generator, saat
 ini di-hide), `ai/knowledge`, `ai/profile`.
@@ -70,10 +72,12 @@ ini di-hide), `ai/knowledge`, `ai/profile`.
 - **Field sites** (`dashboard/field`): satu-satunya layar dashboard berisi data terukur
   (layar lain simulasi). PC edge di lokasi (dashboard SGH Grabag) mendorong data ke
   `POST /api/edge/ingest` dengan token lokasi; disimpan di tabel `edge_*`
-  (`supabase/edge-sync.sql`). Anggota lab melihat semua lokasi, akun **Mitra**
-  (lab_role `mitra`) hanya lokasi yang dibagikan admin. Panel admin di layar yang
-  sama: tambah lokasi, buat token, atur akses mitra. Kontrak & setup:
+  (`supabase/edge-sync.sql`). Hanya admin lab yang melihat semua lokasi; peneliti dan
+  akun **Mitra** (lab_role `mitra`) hanya lokasi yang dibagikan admin. Panel admin di
+  layar yang sama: tambah lokasi, buat token, atur akses. Kontrak & setup:
   `docs/indoor-farming/API-EDGE-SYNC.md`.
+- Sejak November 2026 dashboard ini bagian dari **agrosphere** (bagian 11): dibuka di
+  `agrosphere.smart-agri.id/indoor` dan `/greenhouse`, dengan izin per akun.
 
 ### 6. Buku tamu (guestbook)
 `guestbook` + `guestbook.admin`. `supabase/guestbook.sql`.
@@ -97,9 +101,30 @@ Pemendek/trek tautan (`links`, `links.insights`). `supabase/link_events.sql`.
 Form kontak membuka draf email via `mailto:` (tanpa backend). `docs/setup/SETUP-INQUIRIES.md`,
 `smartagri-inquiries-template.xlsx`, `FORM-KONTEN-SMARTAGRI.md`.
 
+### 11. agrosphere: satu pintu untuk semua dashboard
+Merek dan host sendiri untuk dashboard operasional, `agrosphere.smart-agri.id`; situs
+publik tetap smartagri. Rencana dan keputusan: `docs/agrosphere/RENCANA-AGROSPHERE.md`,
+setup: `docs/setup/SETUP-AGROSPHERE.md`.
+- **Login sendiri**: `/sign-in`, `/sign-up` (pendaftaran mitra) dengan animasi logo
+  agrosphere (`AgrosphereMark`). Login sekali berlaku di semua subdomain smart-agri.id.
+- **Launcher** (`/`): kartu per dashboard yang diberikan, berisi data live (status dan
+  bacaan terbaru tiap lokasi greenhouse, batch dan alarm plant factory, Indoor ditandai simulasi).
+- **Dashboard**: Plant Factory (ERP, `/plant-factory` = `/erp`, rencana di
+  `docs/erp-plant-factory/`), Greenhouse (`/greenhouse`), Indoor (`/indoor`).
+- **Izin** (`supabase/agrosphere.sql`, dijaga RLS): hanya admin lab yang otomatis melihat
+  semua. Peneliti hanya yang diberikan admin (Plant Factory lewat peran ERP, greenhouse per
+  lokasi, Indoor). Mitra tidak pernah mendapat Plant Factory maupun Indoor.
+- **Akses pengguna** (`/settings/access`, admin): persetujuan akun baru dan izin per akun.
+- **Host**: `lib/agrosphere-host.ts` memetakan alamat pendek ke route yang ada (rewrite
+  router + `server/middleware/agrosphere-host.ts`). Dengan `VITE_AGROSPHERE_SUBDOMAIN=on`
+  (aktif sejak 18 November 2026) `/erp`, `/indoor-farming/dashboard`, dan `/agrosphere` di
+  situs utama dialihkan ke agrosphere.
+
 ## Tabel Supabase (dijalankan manual sekali di SQL editor)
 `conversations`, `profiles`, `rag` (doc_chunks + match_chunks), `guestbook`,
-`inventory` (+ batch2/3/4 + updates), `link_events`, `usage-logs-seed`, `edge-sync` (setelah `accounts`).
+`inventory` (+ batch2/3/4 + updates), `link_events`, `usage-logs-seed`, `accounts`,
+`edge-sync` (setelah `accounts`), `pf-*` (ERP, urutan di tiap file), lalu `agrosphere`
+(setelah `pf-*` dan `edge-sync`).
 Hanya **anon key** yang dipakai (publik, aman di browser). **`service_role` key
 tidak boleh** masuk repo (repo publik).
 
@@ -107,6 +132,8 @@ tidak boleh** masuk repo (repo publik).
 - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` - login, buku tamu, inventaris, insights, RAG.
 - `AI_API_BASE_URL`, `AI_MODEL`, `AI_API_KEY`, `AI_TIMEOUT_MS` - AI Assistant.
 - `AI_EMBED_MODEL` - model embedding RAG (bge-m3).
+- `VITE_AGROSPHERE_SUBDOMAIN` - `on` agar situs utama mengalihkan dashboard ke
+  `agrosphere.smart-agri.id` (dibaca saat build; ubah lalu redeploy).
 - (Importer berita, sebagai repo secret/var GitHub) `TRANSLATE_OLLAMA_URL`,
   `TRANSLATE_OLLAMA_KEY`, `TRANSLATE_OLLAMA_MODEL`; atau `ANTHROPIC_API_KEY`.
 
