@@ -40,14 +40,28 @@ langkah 2.
   shared with this account yet".
 - Login sebagai admin: semua tetap terlihat seperti sebelumnya.
 
-### Memberi akses Indoor
+## Tahap 4: mengatur akses (halaman Access)
 
-Halaman pengaturan akses dibuat di tahap 4. Sampai saat itu, admin bisa memberi akses Indoor lewat
-SQL editor:
+Login sebagai admin lab, buka `/agrosphere/settings/access` (menu **Access** di header agrosphere):
 
-```sql
-insert into public.agro_app_member (app, user_id)
-select 'indoor', id from auth.users where lower(email) = lower('nama@ugm.ac.id');
-```
+- **Waiting for approval**: setujui atau tolak akun baru. Untuk akun mitra, centang lokasi greenhouse
+  yang dibagikan sebelum menekan Approve.
+- **Accounts**: per akun, sakelar Plant Factory (akses baca lewat peran ERP "Researchers and
+  students"), chip lokasi greenhouse, dan sakelar Indoor. Peran ERP lain tetap diatur di
+  `/erp/settings/roles`.
+- Database menolak Plant Factory dan Indoor untuk akun mitra; halaman menampilkan alasannya bila
+  terjadi.
 
-Akun mitra ditolak otomatis.
+## Tahap 5: login sekali (tanpa langkah manual)
+
+Sesi login kini disimpan di cookie untuk `.smart-agri.id`, jadi satu login berlaku di
+`smart-agri.id`, `www.smart-agri.id`, dan nanti `agrosphere.smart-agri.id`. Logout di salah satunya
+juga berlaku untuk semuanya.
+
+- Tidak ada yang perlu diatur di Supabase atau Vercel untuk tahap ini.
+- Pengguna yang sudah login tidak perlu login ulang: sesi lamanya dipindah otomatis saat pertama
+  membuka situs setelah deploy.
+- Di localhost dan preview Vercel (`*.vercel.app`) cookie hanya berlaku untuk host itu, sehingga
+  preview tidak membaca sesi produksi.
+- Jangan arahkan subdomain `smart-agri.id` mana pun ke layanan pihak ketiga yang bisa menjalankan
+  skrip milik orang lain, karena skrip di subdomain itu bisa membaca cookie sesi.

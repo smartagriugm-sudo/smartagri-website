@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createCookieStorage, moveLocalSessions } from './cookie-storage'
 
 // Public, client-safe Supabase config. Both values are meant to be exposed to
 // the browser (the anon key is not a secret). When they are absent, auth is
@@ -23,8 +24,26 @@ if (isBrowser && window.location.pathname !== '/auth/confirm') {
   }
 }
 
+// The session lives in cookies shared by every smart-agri.id subdomain, so signing
+// in on smartagri also signs in on agrosphere and back (lib/auth/cookie-storage.ts).
+// Sessions saved in localStorage before that are moved over once.
+function sessionStorageForBrowser() {
+  const cookies = createCookieStorage(document, {
+    hostname: window.location.hostname,
+    secure: window.location.protocol === 'https:',
+  })
+  try {
+    moveLocalSessions(window.localStorage, cookies)
+  } catch {
+    // localStorage can be blocked (private mode, strict settings); nothing to move then.
+  }
+  return cookies
+}
+
 export const supabase: SupabaseClient | null =
-  isBrowser && url && anonKey ? createClient(url, anonKey) : null
+  isBrowser && url && anonKey
+    ? createClient(url, anonKey, { auth: { storage: sessionStorageForBrowser() } })
+    : null
 
 /** Current session access token (JWT), or null if signed out / not configured. */
 export async function getAccessToken(): Promise<string | null> {
