@@ -16,6 +16,16 @@ import { indoorDashboardImage } from "../../lib/assets";
 import { body, display } from "../../lib/fonts";
 import { DASHBOARD_NAV, clockLabel } from "../../lib/indoor-dashboard";
 import { useDashboard } from "../../lib/dashboard-state";
+import { canOpen, useAgroAccess } from "../../lib/agrosphere";
+
+// Only the screens this account may open: Field sites is the Greenhouse dashboard,
+// the rest are Indoor (agro_my_apps, supabase/agrosphere.sql).
+function useAllowedNav() {
+  const access = useAgroAccess();
+  return DASHBOARD_NAV.filter((item) =>
+    canOpen(access, item.to.startsWith("/indoor-farming/dashboard/field") ? "greenhouse" : "indoor"),
+  );
+}
 
 // Chrome for the dashboard application: the sidebar and top bar that persist
 // across every screen, with the active screen rendered between them.
@@ -33,6 +43,7 @@ export function DashboardSidebar({
   collapsed?: boolean;
   onToggle?: () => void;
 }) {
+  const nav = useAllowedNav();
   return (
     <aside
       className={`hidden lg:flex shrink-0 flex-col gap-1 border-r border-[#0B6477]/8 bg-[#FAFCFB] p-4 transition-[width] duration-200 ${
@@ -76,17 +87,17 @@ export function DashboardSidebar({
       </div>
       {!collapsed && (
         <Link
-          to="/indoor-farming"
+          to="/agrosphere"
           className="flex items-center gap-1.5 px-2 pb-3 text-[11px] font-medium text-neutral-400 hover:text-[#0B6477] transition-colors"
           style={body}
         >
           <ArrowLeft className="w-3 h-3" />
-          Back to Indoor Farming
+          All dashboards
         </Link>
       )}
 
       <nav className="flex w-full flex-col gap-1">
-        {DASHBOARD_NAV.map((item) => {
+        {nav.map((item) => {
           const active = item.to === activeTo;
           return (
             <Link
@@ -199,9 +210,10 @@ export function DashboardTopBar() {
 // Mobile navigation. The sidebar is hidden below lg, so without this the other
 // screens would be unreachable on a phone.
 export function DashboardMobileNav({ activeTo }: { activeTo: string }) {
+  const nav = useAllowedNav();
   return (
     <nav className="lg:hidden flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {DASHBOARD_NAV.map((item) => {
+      {nav.map((item) => {
         const active = item.to === activeTo;
         return (
           <Link

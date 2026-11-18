@@ -91,7 +91,7 @@ on conflict (id) do update set public = false;
 drop policy if exists "pf_media_read_lab_members" on storage.objects;
 create policy "pf_media_read_lab_members"
   on storage.objects for select to authenticated
-  using (bucket_id = 'pf-media' and public.is_lab_member());
+  using (bucket_id = 'pf-media' and public.pf_is_member());
 
 drop policy if exists "pf_media_write_production" on storage.objects;
 create policy "pf_media_write_production"

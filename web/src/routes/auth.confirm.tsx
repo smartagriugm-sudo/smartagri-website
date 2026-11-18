@@ -5,6 +5,7 @@ import { AlertCircle, ArrowRight, Check, Loader2 } from 'lucide-react'
 import { isAuthConfigured, supabase } from '../lib/auth/supabase'
 import { DEFAULT_SIGNED_IN_PATH } from '../lib/features'
 import AuthShell, { AUTH_BUTTON } from '../components/AuthShell'
+import { AGROSPHERE_HOME } from '../lib/agrosphere'
 import ResendConfirmation from '../components/ResendConfirmation'
 
 export const Route = createFileRoute('/auth/confirm')({
@@ -53,6 +54,8 @@ function ConfirmPage() {
   const { redirect } = Route.useSearch()
   const target = redirect ?? DEFAULT_SIGNED_IN_PATH
   const next = `/welcome?redirect=${encodeURIComponent(target)}`
+  // An agrosphere sign-up comes back here on its way to the agrosphere launcher.
+  const brand = target.startsWith(AGROSPHERE_HOME) ? 'agrosphere' : 'smartagri'
   const [state, setState] = useState<State>({ kind: 'checking' })
 
   useEffect(() => {
@@ -110,7 +113,7 @@ function ConfirmPage() {
 
   if (state.kind === 'confirmed') {
     return (
-      <AuthShell title="Email" accentWord="confirmed" subtitle="Your smartagri account is ready. One more step: tell us about yourself.">
+      <AuthShell brand={brand} title="Email" accentWord="confirmed" subtitle={`Your ${brand} account is ready. One more step: tell us about yourself.`}>
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-4 rounded-2xl border border-[#14919B]/20 bg-[#45DFB1]/10 p-4">
             <motion.span
@@ -169,7 +172,7 @@ function ConfirmPage() {
 
   if (state.kind === 'failed') {
     return (
-      <AuthShell title="Link" accentWord="not valid" subtitle="The confirmation could not be completed.">
+      <AuthShell brand={brand} title="Link" accentWord="not valid" subtitle="The confirmation could not be completed.">
         <div className="flex flex-col gap-6">
           <p className="flex items-start gap-3 rounded-2xl border border-[#F59E0B]/25 bg-[#F59E0B]/[0.07] p-4 text-sm leading-relaxed text-[#8A5300]" role="alert">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -188,7 +191,7 @@ function ConfirmPage() {
   }
 
   return (
-    <AuthShell title="Confirming your" accentWord="email" subtitle="This takes a moment.">
+    <AuthShell brand={brand} title="Confirming your" accentWord="email" subtitle="This takes a moment.">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

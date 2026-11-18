@@ -14,8 +14,8 @@ import {
 } from "../../lib/edge/field";
 
 // Lab admins only (the RPCs refuse anyone else): register a site, hand its edge PC a
-// token, and choose which partner accounts may read it. Lab members who are not
-// partners already see every site, so the access list is for partners.
+// token, and choose which accounts may read it. Only lab admins see every site;
+// researchers and partners alike see the sites listed for them here.
 
 const INPUT =
   "h-9 w-full rounded-lg border border-[#0B6477]/15 bg-white px-3 text-[13px] text-neutral-900 outline-none focus:border-[#14919B] focus:ring-2 focus:ring-[#14919B]/20";
@@ -212,10 +212,10 @@ function AccessBox({ site }: { site: EdgeSite }) {
 
   return (
     <div style={body}>
-      <h4 className="mb-1 text-[13px] font-medium text-neutral-900">Partner access</h4>
+      <h4 className="mb-1 text-[13px] font-medium text-neutral-900">Access</h4>
       <p className="mb-3 text-[12px] leading-relaxed text-neutral-500">
-        A partner signs up on /sign-up, chooses the Partner role, and is approved in Account &gt; Lab members.
-        Then add their email here. Partners only see the sites listed for them.
+        Researchers and partners only see the sites listed for them, lab admins see every site. A new account
+        signs up on /sign-up and is approved in Account &gt; Lab members first. Then add its email here.
       </p>
       <form onSubmit={add} className="mb-3 flex gap-2">
         <input
@@ -223,8 +223,8 @@ function AccessBox({ site }: { site: EdgeSite }) {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="partner@company.com"
-          aria-label="Partner email"
+          placeholder="name@company.com"
+          aria-label="Account email"
         />
         <button type="submit" className={PRIMARY} disabled={busy || !email.trim()}>
           <UserPlus className="h-4 w-4" /> Add
@@ -234,7 +234,7 @@ function AccessBox({ site }: { site: EdgeSite }) {
       {members === null ? (
         <p className="text-[12px] text-neutral-400">Loading...</p>
       ) : members.length === 0 ? (
-        <p className="text-[12px] text-neutral-400">No partner has access yet.</p>
+        <p className="text-[12px] text-neutral-400">No account has access yet.</p>
       ) : (
         <ul className="flex flex-col divide-y divide-[#0B6477]/8">
           {members.map((m) => (

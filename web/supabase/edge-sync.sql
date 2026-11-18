@@ -6,8 +6,8 @@
 --
 -- Who reads what (enforced here, not only in the page):
 --   - lab admins: every site
---   - active lab members whose lab_role is not 'mitra': every site
---   - active partners (lab_role 'mitra'): only the sites they were added to
+--   - every other active account, researcher or partner ('mitra'): only the sites
+--     a lab admin added them to (docs/agrosphere/RENCANA-AGROSPHERE.md)
 --   - pending, suspended or rejected accounts and visitors: nothing
 -- The edge PC writes with its own site token through edge_ingest(). Only a hash
 -- of the token is stored, in a table no user can read.
@@ -109,8 +109,7 @@ as $$
     from public.edge_site s
    where exists (
            select 1 from public.profiles p
-            where p.id = auth.uid() and p.status = 'active'
-              and (p.is_admin or coalesce(p.lab_role, '') <> 'mitra')
+            where p.id = auth.uid() and p.status = 'active' and p.is_admin
          )
       or exists (
            select 1 from public.edge_site_member m
@@ -120,8 +119,9 @@ as $$
 $$;
 
 -- lab_role is otherwise the user's own to edit (onboarding). An approved partner must
--- not lift themself out of 'mitra' and so read every site: only an admin (or the SQL
--- editor) may change that role once the account is active.
+-- not lift themself out of 'mitra', which would make them eligible for researcher
+-- access (the Plant Factory): only an admin (or the SQL editor) may change that
+-- role once the account is active.
 create or replace function public.edge_partner_role_guard()
 returns trigger
 language plpgsql
@@ -417,8 +417,8 @@ begin
 end;
 $$;
 
--- Gives an account access to a site by its email. The account must exist (the
--- partner signs up first); approving it stays in /account > Lab members.
+-- Gives an account access to a site by its email, researcher or partner alike. The
+-- account must exist (they sign up first); approving it stays in /account > Lab members.
 create or replace function public.edge_admin_add_member(site uuid, member_email text)
 returns uuid
 language plpgsql
@@ -433,7 +433,7 @@ begin
   end if;
   select u.id into member from auth.users u where lower(u.email) = lower(trim(member_email));
   if member is null then
-    raise exception 'No account uses that email yet. Ask the partner to sign up first.';
+    raise exception 'No account uses that email yet. Ask them to sign up first.';
   end if;
   insert into public.edge_site_member (site_id, user_id, added_by)
   values (site, member, auth.uid())

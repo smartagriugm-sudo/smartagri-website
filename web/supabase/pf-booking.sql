@@ -79,7 +79,7 @@ begin
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists %I on public.%I', t || '_read', t);
     execute format('revoke insert, update, delete, truncate on public.%I from public, anon, authenticated', t);
-    execute format('create policy %I on public.%I for select to authenticated using (public.is_lab_member())', t || '_read', t);
+    execute format('create policy %I on public.%I for select to authenticated using (public.pf_is_member())', t || '_read', t);
   end loop;
 end;
 $$;
@@ -103,20 +103,20 @@ select
 from public.pf_booking b
 left join public.pf_person h on h.id = b.host_id
 left join public.pf_booking_option o on o.id = b.chosen_option
-where public.is_lab_member();
+where public.pf_is_member();
 
 create or replace view public.pf_booking_vote_overview with (security_invoker = false) as
 select v.option_id, v.person_id, v.answer, v.updated_at, o.booking_id, p.full_name
 from public.pf_booking_vote v
 join public.pf_booking_option o on o.id = v.option_id
 join public.pf_person p on p.id = v.person_id
-where public.is_lab_member();
+where public.pf_is_member();
 
 create or replace view public.pf_booking_invitee_overview with (security_invoker = false) as
 select i.booking_id, i.person_id, p.full_name
 from public.pf_booking_invitee i
 join public.pf_person p on p.id = i.person_id
-where public.is_lab_member();
+where public.pf_is_member();
 
 revoke all on public.pf_booking_overview, public.pf_booking_vote_overview, public.pf_booking_invitee_overview from anon;
 grant select on public.pf_booking_overview, public.pf_booking_vote_overview, public.pf_booking_invitee_overview to authenticated;
@@ -146,7 +146,7 @@ declare
   wanted  integer := coalesce(jsonb_array_length(options), 0);
   only_one uuid;
 begin
-  perform public.pf_require(public.is_lab_member());
+  perform public.pf_require(public.pf_is_member());
   if wanted = 0 then
     raise exception 'Choose at least one time';
   end if;
@@ -219,7 +219,7 @@ as $$
 declare
   me uuid := public.pf_my_person_id();
 begin
-  perform public.pf_require(public.is_lab_member());
+  perform public.pf_require(public.pf_is_member());
   if me is null then
     raise exception 'Your account is not linked to a person on the People page yet';
   end if;

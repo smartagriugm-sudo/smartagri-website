@@ -753,7 +753,7 @@ begin
   foreach t in array array['pf_item', 'pf_stock_lot', 'pf_stock_move', 'pf_batch', 'pf_batch_slot', 'pf_batch_event', 'pf_harvest_lot'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists %I on public.%I', t || '_read', t);
-    execute format('create policy %I on public.%I for select to authenticated using (public.is_lab_member())', t || '_read', t);
+    execute format('create policy %I on public.%I for select to authenticated using (public.pf_is_member())', t || '_read', t);
   end loop;
 end;
 $$;

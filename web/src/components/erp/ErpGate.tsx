@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { useAuth } from "../../lib/auth/auth";
 import { body, display } from "../../lib/fonts";
-import AuthGate from "../AuthGate";
+import AgroGate from "../agrosphere/AgroGate";
 import SiteHeader from "../SiteHeader";
 
-// The ERP's door: signed in, onboarded and approved, or no entry. Unlike the rest
+// The ERP's door: signed in, onboarded and approved, and given the Plant Factory
+// (an ERP role, see supabase/agrosphere.sql), or no entry. Unlike the rest
 // of the site it stays shut on a deployment with no Supabase settings, since an
 // open gate there would show the ERP to anyone. Only `npm run dev` may run
 // without them. RLS still protects the data behind this.
@@ -23,5 +24,5 @@ export default function ErpGate({ children }: { children: ReactNode }) {
       </main>
     );
   }
-  return <AuthGate checkingText="Checking access…" slowText="Slow connection, still trying…">{children}</AuthGate>;
+  return <AgroGate app="plant-factory">{children}</AgroGate>;
 }

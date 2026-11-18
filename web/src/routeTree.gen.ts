@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutUsRouteImport } from './routes/about-us'
 import { Route as AccountRouteImport } from './routes/account'
+import { Route as AgrosphereRouteImport } from './routes/agrosphere'
 import { Route as AiRouteRouteImport } from './routes/ai/route'
 import { Route as ContactUsRouteImport } from './routes/contact-us'
 import { Route as DemoRouteImport } from './routes/demo'
@@ -34,6 +35,9 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as TechnologyRouteImport } from './routes/technology'
 import { Route as TermsOfUseRouteImport } from './routes/terms-of-use'
 import { Route as WelcomeRouteImport } from './routes/welcome'
+import { Route as AgrosphereIndexRouteImport } from './routes/agrosphere.index'
+import { Route as AgrosphereSignInRouteImport } from './routes/agrosphere_.sign-in'
+import { Route as AgrosphereSignUpRouteImport } from './routes/agrosphere_.sign-up'
 import { Route as AiIndexRouteImport } from './routes/ai/index'
 import { Route as AiChatRouteImport } from './routes/ai/chat'
 import { Route as AiGenerateRouteImport } from './routes/ai/generate'
@@ -115,6 +119,11 @@ const AboutUsRoute = AboutUsRouteImport.update({
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgrosphereRoute = AgrosphereRouteImport.update({
+  id: '/agrosphere',
+  path: '/agrosphere',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiRouteRoute = AiRouteRouteImport.update({
@@ -225,6 +234,21 @@ const TermsOfUseRoute = TermsOfUseRouteImport.update({
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgrosphereIndexRoute = AgrosphereIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AgrosphereRoute,
+} as any)
+const AgrosphereSignInRoute = AgrosphereSignInRouteImport.update({
+  id: '/agrosphere_/sign-in',
+  path: '/agrosphere/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgrosphereSignUpRoute = AgrosphereSignUpRouteImport.update({
+  id: '/agrosphere_/sign-up',
+  path: '/agrosphere/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiIndexRoute = AiIndexRouteImport.update({
@@ -578,6 +602,7 @@ export interface FileRoutesByFullPath {
   '/ai': typeof AiRouteRouteWithChildren
   '/about-us': typeof AboutUsRoute
   '/account': typeof AccountRoute
+  '/agrosphere': typeof AgrosphereRouteWithChildren
   '/contact-us': typeof ContactUsRoute
   '/demo': typeof DemoRoute
   '/erp': typeof ErpRouteWithChildren
@@ -599,6 +624,8 @@ export interface FileRoutesByFullPath {
   '/technology': typeof TechnologyRoute
   '/terms-of-use': typeof TermsOfUseRoute
   '/welcome': typeof WelcomeRoute
+  '/agrosphere/sign-in': typeof AgrosphereSignInRoute
+  '/agrosphere/sign-up': typeof AgrosphereSignUpRoute
   '/ai/chat': typeof AiChatRoute
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
@@ -633,6 +660,7 @@ export interface FileRoutesByFullPath {
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
+  '/agrosphere/': typeof AgrosphereIndexRoute
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
@@ -691,6 +719,8 @@ export interface FileRoutesByTo {
   '/technology': typeof TechnologyRoute
   '/terms-of-use': typeof TermsOfUseRoute
   '/welcome': typeof WelcomeRoute
+  '/agrosphere/sign-in': typeof AgrosphereSignInRoute
+  '/agrosphere/sign-up': typeof AgrosphereSignUpRoute
   '/ai/chat': typeof AiChatRoute
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
@@ -724,6 +754,7 @@ export interface FileRoutesByTo {
   '/publications/$slug': typeof PublicationsSlugRoute
   '/research/$slug': typeof ResearchSlugRoute
   '/team/$slug': typeof TeamSlugRoute
+  '/agrosphere': typeof AgrosphereIndexRoute
   '/ai': typeof AiIndexRoute
   '/erp': typeof ErpIndexRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
@@ -764,6 +795,7 @@ export interface FileRoutesById {
   '/ai': typeof AiRouteRouteWithChildren
   '/about-us': typeof AboutUsRoute
   '/account': typeof AccountRoute
+  '/agrosphere': typeof AgrosphereRouteWithChildren
   '/contact-us': typeof ContactUsRoute
   '/demo': typeof DemoRoute
   '/erp': typeof ErpRouteWithChildren
@@ -785,6 +817,8 @@ export interface FileRoutesById {
   '/technology': typeof TechnologyRoute
   '/terms-of-use': typeof TermsOfUseRoute
   '/welcome': typeof WelcomeRoute
+  '/agrosphere_/sign-in': typeof AgrosphereSignInRoute
+  '/agrosphere_/sign-up': typeof AgrosphereSignUpRoute
   '/ai/chat': typeof AiChatRoute
   '/ai/generate': typeof AiGenerateRoute
   '/ai/knowledge': typeof AiKnowledgeRoute
@@ -819,6 +853,7 @@ export interface FileRoutesById {
   '/publications_/$slug': typeof PublicationsSlugRoute
   '/research_/$slug': typeof ResearchSlugRoute
   '/team_/$slug': typeof TeamSlugRoute
+  '/agrosphere/': typeof AgrosphereIndexRoute
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
@@ -860,6 +895,7 @@ export interface FileRouteTypes {
     | '/ai'
     | '/about-us'
     | '/account'
+    | '/agrosphere'
     | '/contact-us'
     | '/demo'
     | '/erp'
@@ -881,6 +917,8 @@ export interface FileRouteTypes {
     | '/technology'
     | '/terms-of-use'
     | '/welcome'
+    | '/agrosphere/sign-in'
+    | '/agrosphere/sign-up'
     | '/ai/chat'
     | '/ai/generate'
     | '/ai/knowledge'
@@ -915,6 +953,7 @@ export interface FileRouteTypes {
     | '/publications/$slug'
     | '/research/$slug'
     | '/team/$slug'
+    | '/agrosphere/'
     | '/ai/'
     | '/erp/'
     | '/erp/batch/$id'
@@ -973,6 +1012,8 @@ export interface FileRouteTypes {
     | '/technology'
     | '/terms-of-use'
     | '/welcome'
+    | '/agrosphere/sign-in'
+    | '/agrosphere/sign-up'
     | '/ai/chat'
     | '/ai/generate'
     | '/ai/knowledge'
@@ -1006,6 +1047,7 @@ export interface FileRouteTypes {
     | '/publications/$slug'
     | '/research/$slug'
     | '/team/$slug'
+    | '/agrosphere'
     | '/ai'
     | '/erp'
     | '/erp/batch/$id'
@@ -1045,6 +1087,7 @@ export interface FileRouteTypes {
     | '/ai'
     | '/about-us'
     | '/account'
+    | '/agrosphere'
     | '/contact-us'
     | '/demo'
     | '/erp'
@@ -1066,6 +1109,8 @@ export interface FileRouteTypes {
     | '/technology'
     | '/terms-of-use'
     | '/welcome'
+    | '/agrosphere_/sign-in'
+    | '/agrosphere_/sign-up'
     | '/ai/chat'
     | '/ai/generate'
     | '/ai/knowledge'
@@ -1100,6 +1145,7 @@ export interface FileRouteTypes {
     | '/publications_/$slug'
     | '/research_/$slug'
     | '/team_/$slug'
+    | '/agrosphere/'
     | '/ai/'
     | '/erp/'
     | '/erp/batch/$id'
@@ -1140,6 +1186,7 @@ export interface RootRouteChildren {
   AiRouteRoute: typeof AiRouteRouteWithChildren
   AboutUsRoute: typeof AboutUsRoute
   AccountRoute: typeof AccountRoute
+  AgrosphereRoute: typeof AgrosphereRouteWithChildren
   ContactUsRoute: typeof ContactUsRoute
   DemoRoute: typeof DemoRoute
   ErpRoute: typeof ErpRouteWithChildren
@@ -1161,6 +1208,8 @@ export interface RootRouteChildren {
   TechnologyRoute: typeof TechnologyRoute
   TermsOfUseRoute: typeof TermsOfUseRoute
   WelcomeRoute: typeof WelcomeRoute
+  AgrosphereSignInRoute: typeof AgrosphereSignInRoute
+  AgrosphereSignUpRoute: typeof AgrosphereSignUpRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
   FieldNotesSlugRoute: typeof FieldNotesSlugRoute
   GallerySlugRoute: typeof GallerySlugRoute
@@ -1200,6 +1249,13 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/account'
       preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agrosphere': {
+      id: '/agrosphere'
+      path: '/agrosphere'
+      fullPath: '/agrosphere'
+      preLoaderRoute: typeof AgrosphereRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ai': {
@@ -1354,6 +1410,27 @@ declare module '@tanstack/react-router' {
       path: '/welcome'
       fullPath: '/welcome'
       preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agrosphere/': {
+      id: '/agrosphere/'
+      path: '/'
+      fullPath: '/agrosphere/'
+      preLoaderRoute: typeof AgrosphereIndexRouteImport
+      parentRoute: typeof AgrosphereRoute
+    }
+    '/agrosphere_/sign-in': {
+      id: '/agrosphere_/sign-in'
+      path: '/agrosphere/sign-in'
+      fullPath: '/agrosphere/sign-in'
+      preLoaderRoute: typeof AgrosphereSignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agrosphere_/sign-up': {
+      id: '/agrosphere_/sign-up'
+      path: '/agrosphere/sign-up'
+      fullPath: '/agrosphere/sign-up'
+      preLoaderRoute: typeof AgrosphereSignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ai/': {
@@ -1847,6 +1924,18 @@ const AiRouteRouteChildren: AiRouteRouteChildren = {
 const AiRouteRouteWithChildren =
   AiRouteRoute._addFileChildren(AiRouteRouteChildren)
 
+interface AgrosphereRouteChildren {
+  AgrosphereIndexRoute: typeof AgrosphereIndexRoute
+}
+
+const AgrosphereRouteChildren: AgrosphereRouteChildren = {
+  AgrosphereIndexRoute: AgrosphereIndexRoute,
+}
+
+const AgrosphereRouteWithChildren = AgrosphereRoute._addFileChildren(
+  AgrosphereRouteChildren,
+)
+
 interface ErpRouteChildren {
   ErpAlarmsRoute: typeof ErpAlarmsRoute
   ErpAttendanceRoute: typeof ErpAttendanceRoute
@@ -1975,6 +2064,7 @@ const rootRouteChildren: RootRouteChildren = {
   AiRouteRoute: AiRouteRouteWithChildren,
   AboutUsRoute: AboutUsRoute,
   AccountRoute: AccountRoute,
+  AgrosphereRoute: AgrosphereRouteWithChildren,
   ContactUsRoute: ContactUsRoute,
   DemoRoute: DemoRoute,
   ErpRoute: ErpRouteWithChildren,
@@ -1996,6 +2086,8 @@ const rootRouteChildren: RootRouteChildren = {
   TechnologyRoute: TechnologyRoute,
   TermsOfUseRoute: TermsOfUseRoute,
   WelcomeRoute: WelcomeRoute,
+  AgrosphereSignInRoute: AgrosphereSignInRoute,
+  AgrosphereSignUpRoute: AgrosphereSignUpRoute,
   AuthConfirmRoute: AuthConfirmRoute,
   FieldNotesSlugRoute: FieldNotesSlugRoute,
   GallerySlugRoute: GallerySlugRoute,

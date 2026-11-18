@@ -1066,7 +1066,7 @@ export const DASHBOARD_NAV: {
     label: "Field sites",
     icon: MapPin,
     to: "/indoor-farming/dashboard/field",
-    blurb: "Measured data pushed from each site's edge computer. Partners see only the sites shared with them.",
+    blurb: "Measured data pushed from each site's edge computer. Each account sees only the sites shared with it.",
   },
   {
     label: "Rooms",

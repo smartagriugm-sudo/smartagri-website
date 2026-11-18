@@ -1,5 +1,5 @@
 -- Private bucket for the ERP's 3D model. Run manually in the Supabase SQL editor,
--- after accounts.sql (it uses public.is_lab_member()). Then upload the files as
+-- after pf-foundation.sql (it uses public.pf_is_member()). Then upload the files as
 -- described in docs/setup/SETUP-ERP-MODEL.md.
 --
 -- Only approved lab members can read, through short-lived signed links. There is
@@ -12,4 +12,4 @@ on conflict (id) do update set public = false;
 drop policy if exists "pf_model_read_lab_members" on storage.objects;
 create policy "pf_model_read_lab_members"
   on storage.objects for select to authenticated
-  using (bucket_id = 'pf-model' and public.is_lab_member());
+  using (bucket_id = 'pf-model' and public.pf_is_member());

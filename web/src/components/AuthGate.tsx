@@ -11,7 +11,23 @@ import SiteHeader from "./SiteHeader";
 // to /welcome. Both bring the visitor back here afterwards. `allowPending`
 // lets a signed-in account through whatever its status (used by /account).
 // `checkingText` and `slowText` replace the wording while access is checked.
-export default function AuthGate({ children, allowPending = false, checkingText = "Checking access...", slowText }: { children: ReactNode; allowPending?: boolean; checkingText?: string; slowText?: string }) {
+// agrosphere pages pass their own `signInPath` and a `frame` for the waiting
+// screen, since the smartagri header does not belong there.
+export default function AuthGate({
+  children,
+  allowPending = false,
+  checkingText = "Checking access...",
+  slowText,
+  signInPath = "/sign-in",
+  frame,
+}: {
+  children: ReactNode;
+  allowPending?: boolean;
+  checkingText?: string;
+  slowText?: string;
+  signInPath?: string;
+  frame?: (content: ReactNode) => ReactNode;
+}) {
   const { user, loading, isConfigured, account, accountLoading } = useAuth();
   const router = useRouter();
   const signedOut = isConfigured && !loading && !user;
@@ -20,9 +36,9 @@ export default function AuthGate({ children, allowPending = false, checkingText 
 
   useEffect(() => {
     const here = router.state.location.pathname;
-    if (signedOut) window.location.assign(`/sign-in?redirect=${encodeURIComponent(here)}`);
+    if (signedOut) window.location.assign(`${signInPath}?redirect=${encodeURIComponent(here)}`);
     else if (needsWelcome) window.location.assign(`/welcome?redirect=${encodeURIComponent(here)}`);
-  }, [signedOut, needsWelcome, router]);
+  }, [signedOut, needsWelcome, router, signInPath]);
 
   const waiting = isConfigured && (loading || !user || (!allowPending && (accountLoading || needsWelcome)));
   const checking = loading || accountLoading;
@@ -37,17 +53,19 @@ export default function AuthGate({ children, allowPending = false, checkingText 
   }, [waiting, checking, slowText]);
 
   if (waiting) {
+    const content = (
+      <div className="flex flex-col items-center gap-3 text-neutral-500">
+        <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
+        <p className="text-sm" style={body}>
+          {checking ? (slow ? slowText : checkingText) : signedOut ? "Redirecting to sign in..." : "Redirecting..."}
+        </p>
+      </div>
+    );
+    if (frame) return <>{frame(content)}</>;
     return (
       <main>
         <SiteHeader />
-        <section className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-white">
-          <div className="flex flex-col items-center gap-3 text-neutral-500">
-            <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
-            <p className="text-sm" style={body}>
-              {checking ? (slow ? slowText : checkingText) : signedOut ? "Redirecting to sign in..." : "Redirecting..."}
-            </p>
-          </div>
-        </section>
+        <section className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-white">{content}</section>
       </main>
     );
   }

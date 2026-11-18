@@ -1,8 +1,8 @@
 // Field sites: readings an on-site edge PC pushes to /api/edge/ingest, read back for
 // /indoor-farming/dashboard/field. Tables and access rules: supabase/edge-sync.sql.
 // Unlike the rest of the indoor dashboard (a simulated demo), every number here was
-// measured. Row Level Security decides which sites an account sees: lab members see
-// all of them, partners only the ones shared with them.
+// measured. Row Level Security decides which sites an account sees: lab admins see
+// all of them, researchers and partners only the ones a lab admin shared with them.
 import { supabase } from "../auth/supabase";
 
 export type EdgeSite = {

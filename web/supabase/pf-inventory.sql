@@ -196,7 +196,7 @@ begin
   foreach t in array array['pf_recipe_material', 'pf_stock_shortage', 'pf_stock_count', 'pf_stock_count_line'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists %I on public.%I', t || '_read', t);
-    execute format('create policy %I on public.%I for select to authenticated using (public.is_lab_member())', t || '_read', t);
+    execute format('create policy %I on public.%I for select to authenticated using (public.pf_is_member())', t || '_read', t);
     execute format('revoke insert, update, delete, truncate on public.%I from public, anon, authenticated', t);
   end loop;
   foreach t in array array['pf_purchase_order', 'pf_po_line'] loop
