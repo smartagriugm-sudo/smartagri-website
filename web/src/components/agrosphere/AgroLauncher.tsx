@@ -5,26 +5,23 @@ import {
   ArrowRight,
   Factory,
   Layers,
-  Loader2,
-  LogOut,
   MapPin,
   RefreshCw,
   ShieldCheck,
   Sprout,
   type LucideIcon,
 } from "lucide-react";
-import { A } from "../../lib/assets";
 import { accent, body, display } from "../../lib/fonts";
 import { useAuth } from "../../lib/auth/auth";
 import { ago } from "../../lib/edge/field";
 import {
   AGRO_APPS,
-  AGROSPHERE_SIGN_IN,
   useAgroAccess,
   type AgroAccess,
   type AgroApp,
 } from "../../lib/agrosphere";
 import AgrosphereMark from "../AgrosphereMark";
+import AgroHeader from "./AgroHeader";
 import {
   useLauncherData,
   type LauncherData,
@@ -151,67 +148,17 @@ function finding(cards: Card[], data: LauncherData | null): string {
 }
 
 export default function AgroLauncher() {
-  const { account, user, signOut } = useAuth();
+  const { account, user } = useAuth();
   const access = useAgroAccess();
   const { data, refreshing, refresh } = useLauncherData(access);
   const cards = cardsFor(access, data);
   const cardSpans = spans(cards);
-  const [leaving, setLeaving] = useState(false);
   const name = account?.name || user?.email?.split("@")[0] || "";
   const firstName = name.split(" ")[0];
 
-  const leave = async () => {
-    setLeaving(true);
-    await signOut();
-    window.location.assign(AGROSPHERE_SIGN_IN);
-  };
-
   return (
     <main className="flex min-h-[100dvh] flex-col bg-[#EEF3F1]" style={body}>
-      <header className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <img
-          src={A.agrosphereLogo}
-          alt="agrosphere"
-          className="h-6 w-auto sm:h-7"
-        />
-        {user && (
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <Link
-              to="/account"
-              className="flex min-h-[44px] items-center gap-2 rounded-full py-1 pl-1 pr-1 text-sm font-medium text-neutral-700 transition-colors hover:bg-white sm:pr-3"
-            >
-              {account?.avatarUrl ? (
-                <img
-                  src={account.avatarUrl}
-                  alt=""
-                  className="h-9 w-9 rounded-full object-cover"
-                />
-              ) : (
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#08313A] text-[13px] font-medium text-[#45DFB1]">
-                  {(firstName[0] ?? "?").toUpperCase()}
-                </span>
-              )}
-              <span className="hidden max-w-[180px] truncate sm:inline">
-                {name}
-              </span>
-            </Link>
-            <button
-              type="button"
-              onClick={() => void leave()}
-              disabled={leaving}
-              aria-label="Sign out"
-              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3 text-sm font-medium text-neutral-600 transition-colors hover:bg-white hover:text-[#0B6477] active:scale-[0.97] disabled:opacity-60"
-            >
-              {leaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <LogOut className="h-4 w-4" />
-              )}
-              <span className="hidden sm:inline">Sign out</span>
-            </button>
-          </div>
-        )}
-      </header>
+      <AgroHeader />
 
       <div className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-14 sm:px-6">
         {/* Title panel: the greeting, the screen's question answered in one line, and

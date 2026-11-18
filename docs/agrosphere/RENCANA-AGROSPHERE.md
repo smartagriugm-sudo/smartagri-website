@@ -178,7 +178,7 @@ memetakan URL rapi di agrosphere ke route yang sudah ada:
 3. **Launcher** (selesai di kode). `/agrosphere`: kartu per aplikasi dari `agro_my_apps()`, status pending, dan
    gerbang per aplikasi di ERP, field, dan indoor (`AgroGate app="..."`) yang menggantikan
    `RequireAuth`/`ErpGate` untuk pengecekan izin.
-4. **Pengaturan akses.** Halaman Akses pengguna dan alur persetujuan mitra.
+4. **Pengaturan akses** (selesai di kode). Halaman `/agrosphere/settings/access`: persetujuan akun baru (mitra langsung diberi lokasi greenhouse), lalu per akun: baca Plant Factory (peran ERP `peneliti`), lokasi greenhouse, dan Indoor.
 5. **SSO.** Sesi pindah ke cookie `.smart-agri.id` lewat `@supabase/ssr`, migrasi sesi lama, dan
    uji login/logout di kedua host.
 6. **Subdomain.** `rewrite` router per host, redirect 301, tautan header, serta dokumen

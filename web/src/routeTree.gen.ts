@@ -74,6 +74,7 @@ import { Route as LinksInsightsRouteImport } from './routes/links_.insights'
 import { Route as PublicationsSlugRouteImport } from './routes/publications_.$slug'
 import { Route as ResearchSlugRouteImport } from './routes/research_.$slug'
 import { Route as TeamSlugRouteImport } from './routes/team_.$slug'
+import { Route as AgrosphereSettingsAccessRouteImport } from './routes/agrosphere.settings.access'
 import { Route as ErpBatchIndexRouteImport } from './routes/erp.batch.index'
 import { Route as ErpBatchIdRouteImport } from './routes/erp.batch.$id'
 import { Route as ErpBookingsIndexRouteImport } from './routes/erp.bookings.index'
@@ -432,6 +433,12 @@ const TeamSlugRoute = TeamSlugRouteImport.update({
   path: '/team/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgrosphereSettingsAccessRoute =
+  AgrosphereSettingsAccessRouteImport.update({
+    id: '/settings/access',
+    path: '/settings/access',
+    getParentRoute: () => AgrosphereRoute,
+  } as any)
 const ErpBatchIndexRoute = ErpBatchIndexRouteImport.update({
   id: '/batch/',
   path: '/batch/',
@@ -663,6 +670,7 @@ export interface FileRoutesByFullPath {
   '/agrosphere/': typeof AgrosphereIndexRoute
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
+  '/agrosphere/settings/access': typeof AgrosphereSettingsAccessRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
   '/erp/bookings/$id': typeof ErpBookingsIdRoute
   '/erp/bookings/new': typeof ErpBookingsNewRoute
@@ -757,6 +765,7 @@ export interface FileRoutesByTo {
   '/agrosphere': typeof AgrosphereIndexRoute
   '/ai': typeof AiIndexRoute
   '/erp': typeof ErpIndexRoute
+  '/agrosphere/settings/access': typeof AgrosphereSettingsAccessRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
   '/erp/bookings/$id': typeof ErpBookingsIdRoute
   '/erp/bookings/new': typeof ErpBookingsNewRoute
@@ -856,6 +865,7 @@ export interface FileRoutesById {
   '/agrosphere/': typeof AgrosphereIndexRoute
   '/ai/': typeof AiIndexRoute
   '/erp/': typeof ErpIndexRoute
+  '/agrosphere/settings/access': typeof AgrosphereSettingsAccessRoute
   '/erp/batch/$id': typeof ErpBatchIdRoute
   '/erp/bookings/$id': typeof ErpBookingsIdRoute
   '/erp/bookings/new': typeof ErpBookingsNewRoute
@@ -956,6 +966,7 @@ export interface FileRouteTypes {
     | '/agrosphere/'
     | '/ai/'
     | '/erp/'
+    | '/agrosphere/settings/access'
     | '/erp/batch/$id'
     | '/erp/bookings/$id'
     | '/erp/bookings/new'
@@ -1050,6 +1061,7 @@ export interface FileRouteTypes {
     | '/agrosphere'
     | '/ai'
     | '/erp'
+    | '/agrosphere/settings/access'
     | '/erp/batch/$id'
     | '/erp/bookings/$id'
     | '/erp/bookings/new'
@@ -1148,6 +1160,7 @@ export interface FileRouteTypes {
     | '/agrosphere/'
     | '/ai/'
     | '/erp/'
+    | '/agrosphere/settings/access'
     | '/erp/batch/$id'
     | '/erp/bookings/$id'
     | '/erp/bookings/new'
@@ -1685,6 +1698,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agrosphere/settings/access': {
+      id: '/agrosphere/settings/access'
+      path: '/settings/access'
+      fullPath: '/agrosphere/settings/access'
+      preLoaderRoute: typeof AgrosphereSettingsAccessRouteImport
+      parentRoute: typeof AgrosphereRoute
+    }
     '/erp/batch/': {
       id: '/erp/batch/'
       path: '/batch'
@@ -1926,10 +1946,12 @@ const AiRouteRouteWithChildren =
 
 interface AgrosphereRouteChildren {
   AgrosphereIndexRoute: typeof AgrosphereIndexRoute
+  AgrosphereSettingsAccessRoute: typeof AgrosphereSettingsAccessRoute
 }
 
 const AgrosphereRouteChildren: AgrosphereRouteChildren = {
   AgrosphereIndexRoute: AgrosphereIndexRoute,
+  AgrosphereSettingsAccessRoute: AgrosphereSettingsAccessRoute,
 }
 
 const AgrosphereRouteWithChildren = AgrosphereRoute._addFileChildren(
