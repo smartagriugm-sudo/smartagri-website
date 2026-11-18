@@ -1,5 +1,11 @@
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
+import { rewriteInput, rewriteOutput } from './lib/agrosphere-host'
+
+// agrosphere's own host (lib/agrosphere-host.ts). Off until DNS and Vercel are set
+// up for agrosphere.smart-agri.id (docs/setup/SETUP-AGROSPHERE.md): until then the
+// main site keeps its /erp and /agrosphere links as they are.
+const AGROSPHERE_SUBDOMAIN_LIVE = import.meta.env.VITE_AGROSPHERE_SUBDOMAIN === 'on'
 
 // Self-heal stale clients: when a lazy route chunk fails to load (typically a
 // tab opened before the latest deployment, or a request caught mid-deploy),
@@ -23,6 +29,12 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
+    // The router's origin is the request's host on the server and the page's in the
+    // browser, so both sides map agrosphere's short addresses the same way.
+    rewrite: {
+      input: ({ url }) => rewriteInput(url),
+      output: ({ url }) => rewriteOutput(url, AGROSPHERE_SUBDOMAIN_LIVE),
+    },
   })
 
   return router

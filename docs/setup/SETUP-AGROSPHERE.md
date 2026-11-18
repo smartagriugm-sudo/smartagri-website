@@ -65,3 +65,49 @@ juga berlaku untuk semuanya.
   preview tidak membaca sesi produksi.
 - Jangan arahkan subdomain `smart-agri.id` mana pun ke layanan pihak ketiga yang bisa menjalankan
   skrip milik orang lain, karena skrip di subdomain itu bisa membaca cookie sesi.
+
+## Tahap 6: agrosphere.smart-agri.id
+
+Satu deployment Vercel melayani dua host. Di `agrosphere.smart-agri.id` alamatnya pendek:
+
+| Alamat agrosphere | Halaman |
+|-------------------|---------|
+| `/` | Launcher dashboard |
+| `/sign-in`, `/sign-up` | Login dan pendaftaran mitra |
+| `/plant-factory/...` | ERP (`/erp/...`) |
+| `/greenhouse` | Lokasi greenhouse (`/indoor-farming/dashboard/field`) |
+| `/indoor/...` | Dashboard indoor (`/indoor-farming/dashboard/...`) |
+| `/settings/access` | Akses pengguna (admin) |
+| `/account`, `/welcome`, `/auth/confirm` | Sama dengan situs utama |
+
+Halaman lain yang dibuka di host agrosphere (misalnya `/research`) diarahkan ke `www.smart-agri.id`.
+
+### Urutan menyalakan (harus berurutan)
+
+1. **DNS.** Di pengelola DNS `smart-agri.id`, tambahkan record:
+   `CNAME  agrosphere  cname.vercel-dns.com`
+   (Vercel menampilkan nilai persisnya di langkah 2). Kalau DNS dikelola Cloudflare, set record ini
+   ke **DNS only** (awan abu-abu) agar sertifikat Vercel bisa terbit.
+2. **Vercel.** Project situs ini > Settings > Domains > Add > `agrosphere.smart-agri.id`. Tunggu
+   sampai statusnya *Valid Configuration* dan sertifikat aktif.
+3. **Supabase.** Authentication > URL Configuration > Redirect URLs, tambahkan
+   `https://agrosphere.smart-agri.id/**`, supaya email konfirmasi dari pendaftaran mitra kembali ke
+   agrosphere.
+4. **Uji dulu sebelum flag dinyalakan.** Buka `https://agrosphere.smart-agri.id`: launcher dan
+   login agrosphere sudah jalan di sini walau flag masih mati. Login sekali, lalu buka
+   `https://www.smart-agri.id/account`: seharusnya sudah login juga (tahap 5).
+5. **Flag.** Vercel > Settings > Environment Variables, tambahkan `VITE_AGROSPHERE_SUBDOMAIN` =
+   `on` untuk Production, lalu **Redeploy** (variabel `VITE_` dibaca saat build). Setelah itu:
+   - `www.smart-agri.id/erp`, `/indoor-farming/dashboard/...`, dan `/agrosphere/...` diarahkan ke
+     alamat agrosphere yang sesuai, jadi bookmark lama tetap berfungsi;
+   - tautan "agrosphere dashboards" di menu akun smartagri membuka agrosphere.
+
+Redirect memakai status 302 (sementara), jadi bisa diubah atau dibatalkan kapan saja tanpa
+tertinggal di cache browser. Untuk membatalkan, hapus variabel `VITE_AGROSPHERE_SUBDOMAIN` lalu
+redeploy; situs utama kembali menyajikan `/erp` dan `/agrosphere` seperti biasa.
+
+### Mencoba di laptop
+
+`npm run dev`, lalu buka `http://agrosphere.localhost:3000` (browser meresolusi `*.localhost` ke
+komputer sendiri). Untuk mencoba pengalihan dari situs utama, jalankan dengan
+`VITE_AGROSPHERE_SUBDOMAIN=on`.

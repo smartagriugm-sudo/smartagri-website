@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
@@ -314,9 +314,17 @@ function CardShell({
   tone?: "light" | "mint";
   row?: boolean;
 }) {
+  // The address as the router writes it, so on agrosphere's own host a card links
+  // straight to /plant-factory or /greenhouse instead of the internal route.
+  const router = useRouter();
+  const target = new URL(href, "http://local");
+  const publicHref = router.buildLocation({
+    to: target.pathname as never,
+    search: Object.fromEntries(target.searchParams) as never,
+  }).publicHref;
   return (
     <a
-      href={href}
+      href={publicHref}
       aria-label={label}
       className={`group relative flex h-full flex-col rounded-[22px] border p-6 ${
         row
