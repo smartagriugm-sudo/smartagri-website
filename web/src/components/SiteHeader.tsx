@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BookOpen,
   Boxes,
+  LayoutGrid,
   ChevronDown,
   LogOut,
   Menu,
@@ -313,6 +314,11 @@ function AccountMenu({
             </div>
           </div>
           <div className={`my-1 h-px ${t.divider}`} />
+          {/* The dashboards live in agrosphere; on its own host once that is live. */}
+          <Link to="/agrosphere" className={row} style={body}>
+            <LayoutGrid className="h-4 w-4" />
+            agrosphere dashboards
+          </Link>
           <Link to="/inventory" className={row} style={body}>
             <Boxes className="h-4 w-4" />
             Instrument inventory

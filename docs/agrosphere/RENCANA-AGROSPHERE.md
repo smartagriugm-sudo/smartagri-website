@@ -178,11 +178,16 @@ memetakan URL rapi di agrosphere ke route yang sudah ada:
 3. **Launcher** (selesai di kode). `/agrosphere`: kartu per aplikasi dari `agro_my_apps()`, status pending, dan
    gerbang per aplikasi di ERP, field, dan indoor (`AgroGate app="..."`) yang menggantikan
    `RequireAuth`/`ErpGate` untuk pengecekan izin.
-4. **Pengaturan akses.** Halaman Akses pengguna dan alur persetujuan mitra.
-5. **SSO.** Sesi pindah ke cookie `.smart-agri.id` lewat `@supabase/ssr`, migrasi sesi lama, dan
-   uji login/logout di kedua host.
-6. **Subdomain.** `rewrite` router per host, redirect 301, tautan header, serta dokumen
-   `docs/setup/SETUP-AGROSPHERE.md`.
+4. **Pengaturan akses** (selesai di kode). Halaman `/agrosphere/settings/access`: persetujuan akun baru (mitra langsung diberi lokasi greenhouse), lalu per akun: baca Plant Factory (peran ERP `peneliti`), lokasi greenhouse, dan Indoor.
+5. **SSO** (selesai di kode). Sesi Supabase disimpan di cookie `Domain=.smart-agri.id`
+   (`lib/auth/cookie-storage.ts`, dipecah per 3.180 karakter), bukan localStorage, tanpa paket baru.
+   Sesi lama di localStorage dipindah sekali saat halaman dibuka. Di localhost dan preview Vercel cookie
+   hanya untuk host itu. Alur konfirmasi email tidak berubah.
+6. **Subdomain** (selesai di kode). `lib/agrosphere-host.ts` memetakan alamat per host dan dipakai
+   oleh `rewrite` router (server dan browser) serta `server/middleware/agrosphere-host.ts` (redirect
+   302). Pengalihan dari situs utama menunggu flag `VITE_AGROSPHERE_SUBDOMAIN=on`, dinyalakan
+   setelah DNS, Vercel, dan Supabase siap (`docs/setup/SETUP-AGROSPHERE.md`). Menu akun smartagri
+   mendapat tautan "agrosphere dashboards".
 7. **Rapikan.** CLAUDE.md (merek agrosphere, route baru), `STATUS-PENGEMBANGAN.md`.
 
 Tahap 1 sampai 5 bisa diuji penuh di `smart-agri.id/agrosphere` dan `agrosphere.localhost`
