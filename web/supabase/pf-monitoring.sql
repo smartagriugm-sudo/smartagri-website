@@ -248,7 +248,7 @@ begin
                            'pf_recipe_target', 'pf_ingest_log', 'pf_alarm_rule', 'pf_alarm'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists %I on public.%I', t || '_read', t);
-    execute format('create policy %I on public.%I for select to authenticated using (public.is_lab_member())', t || '_read', t);
+    execute format('create policy %I on public.%I for select to authenticated using (public.pf_is_member())', t || '_read', t);
     execute format('revoke insert, update, delete, truncate on public.%I from public, anon, authenticated', t);
   end loop;
   foreach t in array array['pf_asset_token', 'pf_alarm_watch'] loop
@@ -459,7 +459,7 @@ declare
   span interval := make_interval(hours => least(greatest(coalesce(hours, 24), 1), 2160));
   points jsonb;
 begin
-  if not public.is_lab_member() then
+  if not public.pf_is_member() then
     raise exception 'Your account does not have permission for this.' using errcode = '42501';
   end if;
   if hours <= 48 then

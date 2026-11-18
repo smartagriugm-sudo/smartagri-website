@@ -182,7 +182,7 @@ create policy "pf_person_read" on public.pf_person for select to authenticated
 create policy "pf_contract_read" on public.pf_contract for select to authenticated
   using (person_id = public.pf_my_person_id() or public.pf_can_read_private());
 create policy "pf_work_area_read" on public.pf_work_area for select to authenticated
-  using (public.is_lab_member());
+  using (public.pf_is_member());
 create policy "pf_shift_read" on public.pf_shift for select to authenticated
   using (person_id = public.pf_my_person_id() or public.pf_can_read_people());
 create policy "pf_leave_read" on public.pf_leave for select to authenticated

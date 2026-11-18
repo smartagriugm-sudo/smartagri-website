@@ -127,8 +127,8 @@ function FieldScreen() {
         <Loading />
       ) : sites.length === 0 ? (
         <Notice>
-          No field site is shared with this account yet. Partners: ask the smartagri team to give your account
-          access to your site.
+          No field site is shared with this account yet. Ask a smartagri lab admin to give your account access
+          to your site.
         </Notice>
       ) : (
         <>

@@ -91,6 +91,26 @@ create index if not exists pf_audit_log_at_idx on public.pf_audit_log (at desc);
 create index if not exists pf_audit_log_row_idx on public.pf_audit_log (table_name, row_id);
 
 -- 2. Who may do what -----------------------------------------------------------
+-- The Plant Factory is opened by an ERP role, not by being a lab member: an active
+-- account that is not a partner ('mitra') and holds at least one role in
+-- pf_user_role, or a lab admin. A partner never gets in, not even read only
+-- (docs/agrosphere/RENCANA-AGROSPHERE.md). Every read policy below goes through this.
+create or replace function public.pf_is_member()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles p
+     where p.id = auth.uid() and p.status = 'active'
+       and (p.is_admin
+            or (coalesce(p.lab_role, '') <> 'mitra'
+                and exists (select 1 from public.pf_user_role r where r.profile_id = p.id)))
+  );
+$$;
+
 create or replace function public.pf_has_role(wanted text[])
 returns boolean
 language sql
@@ -98,7 +118,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select public.is_lab_member()
+  select public.pf_is_member()
      and exists (select 1 from public.pf_user_role where profile_id = auth.uid() and role = any (wanted));
 $$;
 
@@ -234,6 +254,23 @@ begin
 end;
 $$;
 
+-- A partner account never holds an ERP role, so it can never open the Plant
+-- Factory (pf_is_member also checks lab_role, for a role given before the account
+-- became a partner).
+create or replace function public.pf_user_role_partner_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if exists (select 1 from public.profiles where id = new.profile_id and lab_role = 'mitra') then
+    raise exception 'A partner account cannot get a Plant Factory role.' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
 -- 4. Moves that touch more than one row. Both run with the caller's rights, so
 -- RLS still decides who may make them.
 create or replace function public.pf_recipe_activate(recipe uuid)
@@ -296,10 +333,10 @@ alter table public.pf_recipe_phase enable row level security;
 alter table public.pf_user_role    enable row level security;
 alter table public.pf_audit_log    enable row level security;
 
--- pf_location: any member reads, ERP admins add and edit. No delete policy.
+-- pf_location: any ERP member reads, ERP admins add and edit. No delete policy.
 drop policy if exists "pf_location_read" on public.pf_location;
 create policy "pf_location_read" on public.pf_location for select to authenticated
-  using (public.is_lab_member());
+  using (public.pf_is_member());
 drop policy if exists "pf_location_insert" on public.pf_location;
 create policy "pf_location_insert" on public.pf_location for insert to authenticated
   with check (public.pf_is_admin());
@@ -310,7 +347,7 @@ create policy "pf_location_update" on public.pf_location for update to authentic
 -- pf_crop: a crop is deactivated, not deleted, since recipes point at it.
 drop policy if exists "pf_crop_read" on public.pf_crop;
 create policy "pf_crop_read" on public.pf_crop for select to authenticated
-  using (public.is_lab_member());
+  using (public.pf_is_member());
 drop policy if exists "pf_crop_insert" on public.pf_crop;
 create policy "pf_crop_insert" on public.pf_crop for insert to authenticated
   with check (public.pf_can_manage_production());
@@ -320,7 +357,7 @@ create policy "pf_crop_update" on public.pf_crop for update to authenticated
 
 drop policy if exists "pf_recipe_read" on public.pf_recipe;
 create policy "pf_recipe_read" on public.pf_recipe for select to authenticated
-  using (public.is_lab_member());
+  using (public.pf_is_member());
 drop policy if exists "pf_recipe_insert" on public.pf_recipe;
 create policy "pf_recipe_insert" on public.pf_recipe for insert to authenticated
   with check (public.pf_can_manage_production());
@@ -333,7 +370,7 @@ create policy "pf_recipe_delete" on public.pf_recipe for delete to authenticated
 
 drop policy if exists "pf_recipe_phase_read" on public.pf_recipe_phase;
 create policy "pf_recipe_phase_read" on public.pf_recipe_phase for select to authenticated
-  using (public.is_lab_member());
+  using (public.pf_is_member());
 drop policy if exists "pf_recipe_phase_write" on public.pf_recipe_phase;
 create policy "pf_recipe_phase_write" on public.pf_recipe_phase for all to authenticated
   using (public.pf_can_manage_production()) with check (public.pf_can_manage_production());
@@ -342,7 +379,7 @@ create policy "pf_recipe_phase_write" on public.pf_recipe_phase for all to authe
 -- and only ERP admins change them.
 drop policy if exists "pf_user_role_read" on public.pf_user_role;
 create policy "pf_user_role_read" on public.pf_user_role for select to authenticated
-  using ((profile_id = auth.uid() and public.is_lab_member()) or public.pf_can_read_audit());
+  using (profile_id = auth.uid() or public.pf_can_read_audit());
 drop policy if exists "pf_user_role_insert" on public.pf_user_role;
 create policy "pf_user_role_insert" on public.pf_user_role for insert to authenticated
   with check (public.pf_is_admin());
@@ -452,6 +489,10 @@ create trigger pf_recipe_guard before insert or update or delete on public.pf_re
 drop trigger if exists pf_recipe_phase_guard on public.pf_recipe_phase;
 create trigger pf_recipe_phase_guard before insert or update or delete on public.pf_recipe_phase
   for each row execute function public.pf_recipe_phase_guard();
+
+drop trigger if exists pf_user_role_partner_guard on public.pf_user_role;
+create trigger pf_user_role_partner_guard before insert or update on public.pf_user_role
+  for each row execute function public.pf_user_role_partner_guard();
 
 do $$
 declare
