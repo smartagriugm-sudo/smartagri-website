@@ -12,19 +12,27 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { indoorDashboardImage } from "../../lib/assets";
+import type { LucideIcon } from "lucide-react";
+import { A, indoorDashboardImage } from "../../lib/assets";
 import { body, display } from "../../lib/fonts";
 import { DASHBOARD_NAV, clockLabel } from "../../lib/indoor-dashboard";
 import { useDashboard } from "../../lib/dashboard-state";
-import { canOpen, useAgroAccess } from "../../lib/agrosphere";
+import { useAuth } from "../../lib/auth/auth";
+import { GREENHOUSE_NAV } from "../greenhouse/nav";
 
-// Only the screens this account may open: Field sites is the Greenhouse dashboard,
-// the rest are Indoor (agro_my_apps, supabase/agrosphere.sql).
-function useAllowedNav() {
-  const access = useAgroAccess();
-  return DASHBOARD_NAV.filter((item) =>
-    canOpen(access, item.to.startsWith("/indoor-farming/dashboard/field") ? "greenhouse" : "indoor"),
-  );
+/** Which agrosphere dashboard this shell frames: the Indoor demo or the measured Greenhouse sites. */
+export type DashboardApp = "indoor" | "greenhouse";
+
+const APP_LABEL: Record<DashboardApp, string> = { indoor: "Indoor", greenhouse: "Greenhouse" };
+
+type NavItem = { label: string; icon: LucideIcon; to: string };
+
+// Each dashboard has its own screens: the Indoor demo's simulated ones, or the
+// Greenhouse sections built on measured data (Manage sites for lab admins only).
+function useNav(app: DashboardApp): NavItem[] {
+  const { account } = useAuth();
+  if (app === "greenhouse") return GREENHOUSE_NAV.filter((n) => !n.adminOnly || account?.isAdmin);
+  return DASHBOARD_NAV;
 }
 
 // Chrome for the dashboard application: the sidebar and top bar that persist
@@ -35,15 +43,17 @@ function useAllowedNav() {
 // out to the site is the explicit link at the top of the sidebar.
 
 export function DashboardSidebar({
+  app,
   activeTo,
   collapsed = false,
   onToggle,
 }: {
+  app: DashboardApp;
   activeTo: string;
   collapsed?: boolean;
   onToggle?: () => void;
 }) {
-  const nav = useAllowedNav();
+  const nav = useNav(app);
   return (
     <aside
       className={`hidden lg:flex shrink-0 flex-col gap-1 border-r border-[#0B6477]/8 bg-[#FAFCFB] p-4 transition-[width] duration-200 ${
@@ -51,23 +61,19 @@ export function DashboardSidebar({
       }`}
     >
       <div className={`flex items-center mb-1 ${collapsed ? "flex-col gap-2" : "gap-2 px-2 py-2"}`}>
-        <Link to="/indoor-farming" className="flex min-w-0 items-center gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#0B6477]">
-            <img
-              src="/brand/icon-white.svg"
-              alt=""
-              className="h-4 w-4"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          </span>
+        <Link to="/agrosphere" className="flex min-w-0 items-center gap-2" title="agrosphere dashboards">
+          <img src={A.agrosphereIcon} alt="" className="h-7 w-7 shrink-0" />
           {!collapsed && (
-            <span
-              className="truncate text-[15px] font-semibold tracking-[-0.02em] text-neutral-900"
-              style={display}
-            >
-              smartagri
+            <span className="min-w-0 leading-tight">
+              <span
+                className="block truncate text-[15px] font-semibold tracking-[-0.02em] text-neutral-900"
+                style={display}
+              >
+                agrosphere
+              </span>
+              <span className="block truncate text-[11px] font-medium text-[#14919B]" style={body}>
+                {APP_LABEL[app]}
+              </span>
             </span>
           )}
         </Link>
@@ -121,6 +127,10 @@ export function DashboardSidebar({
       </nav>
 
       <div className="mt-auto w-full pt-4">
+        {app === "greenhouse" ? (
+          <SidebarAccount collapsed={collapsed} />
+        ) : (
+        <>
         {!collapsed && (
         <div className="overflow-hidden rounded-2xl bg-[#08313A]">
           <img
@@ -165,8 +175,52 @@ export function DashboardSidebar({
             </>
           )}
         </div>
+        </>
+        )}
       </div>
     </aside>
+  );
+}
+
+// The signed-in account at the foot of the Greenhouse sidebar (the Indoor demo
+// keeps its demo operator). Opens the account page.
+function SidebarAccount({ collapsed }: { collapsed: boolean }) {
+  const { user, account } = useAuth();
+  const name = account?.name || user?.email?.split("@")[0] || "Signed in";
+  const role = account?.isAdmin ? "Lab admin" : "Shared sites";
+  const initials = name
+    .split(/[\s._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+  return (
+    <Link
+      to="/account"
+      className={`flex items-center rounded-xl py-2 hover:bg-[#0B6477]/5 transition-colors ${collapsed ? "justify-center" : "gap-2.5 px-2"}`}
+      title={collapsed ? name : "Your account"}
+    >
+      {account?.avatarUrl ? (
+        <img src={account.avatarUrl} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
+      ) : (
+        <span
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#45DFB1] text-[12px] font-semibold text-[#0B2A22]"
+          style={display}
+        >
+          {initials || "A"}
+        </span>
+      )}
+      {!collapsed && (
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[12px] font-medium text-neutral-800" style={body}>
+            {name}
+          </div>
+          <div className="truncate text-[10px] text-neutral-400" style={body}>
+            {role}
+          </div>
+        </div>
+      )}
+    </Link>
   );
 }
 
@@ -209,9 +263,26 @@ export function DashboardTopBar() {
 
 // Mobile navigation. The sidebar is hidden below lg, so without this the other
 // screens would be unreachable on a phone.
-export function DashboardMobileNav({ activeTo }: { activeTo: string }) {
-  const nav = useAllowedNav();
+export function DashboardMobileNav({ app, activeTo }: { app: DashboardApp; activeTo: string }) {
+  const nav = useNav(app);
   return (
+    <>
+    <div className="lg:hidden flex items-center justify-between gap-3">
+      <Link to="/agrosphere" className="flex min-w-0 items-center gap-2">
+        <img src={A.agrosphereIcon} alt="" className="h-6 w-6 shrink-0" />
+        <span className="truncate text-[14px] font-semibold tracking-[-0.02em] text-neutral-900" style={display}>
+          agrosphere <span className="font-medium text-[#14919B]">{APP_LABEL[app]}</span>
+        </span>
+      </Link>
+      <Link
+        to="/agrosphere"
+        className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-neutral-500 hover:text-[#0B6477]"
+        style={body}
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        All dashboards
+      </Link>
+    </div>
     <nav className="lg:hidden flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {nav.map((item) => {
         const active = item.to === activeTo;
@@ -232,6 +303,7 @@ export function DashboardMobileNav({ activeTo }: { activeTo: string }) {
         );
       })}
     </nav>
+    </>
   );
 }
 
@@ -254,9 +326,11 @@ export function ScreenHeading({ title, blurb }: { title: string; blurb: string }
 }
 
 export function DashboardShell({
+  app,
   activeTo,
   children,
 }: {
+  app: DashboardApp;
   activeTo: string;
   children: ReactNode;
 }) {
@@ -268,13 +342,15 @@ export function DashboardShell({
   return (
     <div className="flex min-h-screen bg-white">
       <DashboardSidebar
+        app={app}
         activeTo={activeTo}
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
       />
       <div className="min-w-0 flex-1 bg-[#F3F7F6] p-3 sm:p-4 flex flex-col gap-3">
-        <DashboardTopBar />
-        <DashboardMobileNav activeTo={activeTo} />
+        {/* The clock and play control drive the Indoor simulation; measured data has neither. */}
+        {app === "indoor" && <DashboardTopBar />}
+        <DashboardMobileNav app={app} activeTo={activeTo} />
         {children}
       </div>
     </div>

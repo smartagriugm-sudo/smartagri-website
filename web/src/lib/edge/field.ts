@@ -226,3 +226,79 @@ export async function removeMember(siteId: string, userId: string): Promise<Resu
 export function validSiteCode(code: string): boolean {
   return /^[a-z0-9][a-z0-9-]{1,39}$/.test(code.trim().toLowerCase());
 }
+
+/* ------------------------------------------------------------------ summaries */
+
+/** Latest value per device and metric, keyed `${device_id}:${metric}`. */
+export function latestByKey(latest: EdgeLatest[]): Map<string, { value: number; ts: string }> {
+  const m = new Map<string, { value: number; ts: string }>();
+  for (const l of latest) m.set(`${l.device_id}:${l.metric}`, { value: l.value, ts: l.ts });
+  return m;
+}
+
+/** Order in which the greenhouse overview shows its headline readings. */
+export const HEADLINE_METRICS = ["temperature", "humidity", "vpd", "co2", "water_temp", "ph", "ec", "do", "wind_speed", "pressure"];
+
+export type Headline = { device: EdgeDevice; metric: string; value: number; ts: string };
+
+/**
+ * One reading per headline metric, from the first reporting device that measures it,
+ * so a site with two climate sensors shows one air temperature, not two.
+ */
+export function headlineReadings(snap: SiteSnapshot, limit = 8): Headline[] {
+  const latest = latestByKey(snap.latest);
+  const out: Headline[] = [];
+  for (const metric of HEADLINE_METRICS) {
+    for (const device of snap.devices) {
+      if (!device.metrics.includes(metric)) continue;
+      const v = latest.get(`${device.id}:${metric}`);
+      if (!v) continue;
+      out.push({ device, metric, value: v.value, ts: v.ts });
+      break;
+    }
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+export type SiteSummary = {
+  devices: number;
+  reporting: number;
+  silent: EdgeDevice[];
+  actuators: number;
+  on: number;
+  relaysOffline: EdgeActuator[];
+  notAutomatic: EdgeActuator[];
+  newest: string | null;
+};
+
+/** Counts for the overview tiles and the "needs attention" list. */
+export function summarize(snap: SiteSnapshot, now = Date.now()): SiteSummary {
+  const silent = snap.devices.filter((d) => !deviceFresh(d.last_seen_at, now));
+  let newest: string | null = null;
+  for (const l of snap.latest) if (!newest || l.ts > newest) newest = l.ts;
+  return {
+    devices: snap.devices.length,
+    reporting: snap.devices.length - silent.length,
+    silent,
+    actuators: snap.actuators.length,
+    on: snap.actuators.filter((a) => a.is_on).length,
+    relaysOffline: snap.actuators.filter((a) => a.online === false),
+    notAutomatic: snap.actuators.filter((a) => a.mode !== "auto"),
+    newest,
+  };
+}
+
+/** Latest, lowest, highest and mean of a series' averages, or null when it is empty. */
+export function seriesStats(points: EdgePoint[]): { last: number; min: number; max: number; mean: number } | null {
+  if (points.length === 0) return null;
+  let min = Infinity;
+  let max = -Infinity;
+  let sum = 0;
+  for (const p of points) {
+    min = Math.min(min, p.v);
+    max = Math.max(max, p.v);
+    sum += p.v;
+  }
+  return { last: points[points.length - 1].v, min, max, mean: sum / points.length };
+}

@@ -18,7 +18,7 @@ export default function IndoorDashboard() {
     <DashboardProvider>
       <div className="rounded-[26px] border border-white/15 bg-[#F3F7F6] p-2 shadow-[0_30px_80px_rgba(3,26,31,0.45)]">
         <div className="flex rounded-[20px] bg-white overflow-hidden">
-          <DashboardSidebar activeTo="/indoor-farming/dashboard" />
+          <DashboardSidebar app="indoor" activeTo="/indoor-farming/dashboard" />
           <div className="min-w-0 flex-1 bg-[#F3F7F6] p-3 sm:p-4 flex flex-col gap-3">
             <DashboardTopBar />
             <DashboardOverview />
