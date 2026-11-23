@@ -2,10 +2,11 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNod
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Building2, Cctv, ChevronLeft, Eye, DoorOpen, Layers, Lightbulb, LightbulbOff, Maximize2, Minus, Plus, RotateCcw, SlidersHorizontal, type LucideIcon } from "lucide-react";
 import type { ChamberOptionsState, ChamberViewName, SceneOptionsState, ViewName } from "plant-factory-3d";
-import { LIVE_FEED } from "../../lib/pf/cctv";
+import { LIVE_FEED, feedLabel } from "../../lib/pf/cctv";
 import { SHELVES } from "../../lib/pf/chamber";
+import { useLang, useT, type Bi } from "../../lib/i18n";
 import { CctvViewer } from "./Cctv";
-import { rowState, rowValue, STATE_WORD, type Conditions } from "../../lib/pf/conditions";
+import { rowState, rowValue, stateWord, type Conditions } from "../../lib/pf/conditions";
 import { HOLES_TOTAL, isPlanted } from "../../lib/pf/facility";
 import { RACK_NUMBERS, TIER_NUMBERS } from "../../lib/pf/provider";
 import type { ErpStore } from "../../lib/pf/store";
@@ -27,21 +28,21 @@ const SeedChamberScene = lazy(() => import("./SeedChamberScene"));
 export type Facility = "plant-factory" | "persemaian";
 type AnyEngine = SceneEngine | ChamberEngine;
 
-const FACILITIES: { key: Facility; label: string }[] = [
-  { key: "plant-factory", label: "Plant factory" },
-  { key: "persemaian", label: "Seedlings" },
+const FACILITIES: { key: Facility; label: Bi }[] = [
+  { key: "plant-factory", label: { en: "Plant factory", id: "Plant factory" } },
+  { key: "persemaian", label: { en: "Seedlings", id: "Persemaian" } },
 ];
 
-const PF_VIEWS: { key: ViewName; label: string }[] = [
-  { key: "iso", label: "Isometric" },
-  { key: "top", label: "From above" },
-  { key: "grow", label: "Grow room" },
-  { key: "control", label: "Control room" },
+const PF_VIEWS: { key: ViewName; label: Bi }[] = [
+  { key: "iso", label: { en: "Isometric", id: "Isometrik" } },
+  { key: "top", label: { en: "From above", id: "Dari atas" } },
+  { key: "grow", label: { en: "Grow room", id: "Ruang tanam" } },
+  { key: "control", label: { en: "Control room", id: "Ruang kontrol" } },
 ];
 
-const CHAMBER_VIEWS: { key: ChamberViewName; label: string }[] = [
-  { key: "overview", label: "Overview" },
-  { key: "inside", label: "Inside" },
+const CHAMBER_VIEWS: { key: ChamberViewName; label: Bi }[] = [
+  { key: "overview", label: { en: "Overview", id: "Ringkasan" } },
+  { key: "inside", label: { en: "Inside", id: "Dalam" } },
 ];
 
 const KEY_CARD_WIDTH = 136;
@@ -75,10 +76,11 @@ function StripButton({ icon: Icon, label, active, pressed, disabled, onClick }: 
 }
 
 function Flyout({ title, note, top, wide, onClose, children }: { title: string; note?: string; top: number; wide?: boolean; onClose: () => void; children: ReactNode }) {
+  const t = useT();
   return (
     <div className={`absolute right-[calc(100%+8px)] z-10 ${wide ? "w-[min(340px,calc(100vw-96px))]" : "w-[216px]"} rounded-xl border border-[#DCE7E8] bg-white p-1.5 shadow-[0_8px_24px_rgba(8,49,58,0.14)]`} style={{ top }}>
       <div className="flex items-center gap-1 px-1.5 pb-1 pt-0.5">
-        <button type="button" onClick={onClose} aria-label="Close panel" className="-ml-1 grid h-6 w-6 place-items-center rounded text-[#4F6B73] hover:bg-[#EEF5F5]"><ChevronLeft className="h-3.5 w-3.5 rotate-180" /></button>
+        <button type="button" onClick={onClose} aria-label={t({ en: "Close panel", id: "Tutup panel" })} className="-ml-1 grid h-6 w-6 place-items-center rounded text-[#4F6B73] hover:bg-[#EEF5F5]"><ChevronLeft className="h-3.5 w-3.5 rotate-180" /></button>
         <p className="text-[13px] font-medium text-[#0F2F36]">{title}</p>
       </div>
       {children}
@@ -107,7 +109,7 @@ function Toggle({ on, label, onClick }: { on: boolean; label: string; onClick: (
   );
 }
 
-const MODEL_ONLY = "This only changes how the model looks, not the real equipment.";
+const MODEL_ONLY: Bi = { en: "This only changes how the model looks, not the real equipment.", id: "Ini hanya mengubah tampilan model, bukan peralatan sebenarnya." };
 
 /* ------------------------------------------------------------- the key cards */
 
@@ -138,6 +140,8 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
   const strip = useRef<HTMLDivElement>(null);
   const { pinned, pin } = useScenePin(engine);
   const { target: hovered, card, place } = useSceneHover(engine, stage, !!pinned);
+  const t = useT();
+  const lang = useLang();
 
   useEngineActivity(engine, visible);
 
@@ -245,20 +249,22 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
   const cards = [
     ...air.map((r) => {
       const state = rowState(r);
-      return { key: r.metric, label: r.label, value: rowValue(r), unit: r.unit.replace(" RH", ""), sub: conditions.sample ? "Sample" : state ? STATE_WORD[state] : "No reference", warn: state === "rendah" || state === "tinggi" };
+      return { key: r.metric, label: r.label, value: rowValue(r, lang), unit: r.unit.replace(" RH", ""), sub: conditions.sample ? t({ en: "Sample", id: "Contoh" }) : state ? stateWord(state, lang) : t({ en: "No reference", id: "Tanpa acuan" }), warn: state === "rendah" || state === "tinggi" };
     }),
-    { key: "isi", label: isFactory ? "Holes filled" : "Trays filled", value: store.hasData ? `${filled}` : "-", unit: `/${capacity}`, sub: isFactory ? "Plant factory" : "Seedlings", warn: false },
+    { key: "isi", label: isFactory ? t({ en: "Holes filled", id: "Lubang terisi" }) : t({ en: "Trays filled", id: "Tray terisi" }), value: store.hasData ? `${filled}` : "-", unit: `/${capacity}`, sub: isFactory ? "Plant factory" : t({ en: "Seedlings", id: "Persemaian" }), warn: false },
   ].slice(0, shownCards);
 
   // While a card is kept open, it stands in for the one that follows the cursor.
-  const shownFacts = sceneFacts(store, engine, pinned ?? hovered);
+  const shownFacts = sceneFacts(store, engine, pinned ?? hovered, lang);
 
   // Each flyout lines up with its icon: 32px icons on a 32px pitch, inside 4px of padding.
   const topOf = (i: number) => i * 32;
-  const doorLabel = isFactory ? "Building" : "Door";
+  const doorLabel = isFactory ? t({ en: "Building", id: "Bangunan" }) : t({ en: "Door", id: "Pintu" });
+  const modelOnly = t(MODEL_ONLY);
+  const openEdit = t({ en: "Open and edit", id: "Buka dan ubah" });
 
   return (
-    <section ref={stage} className="relative h-full min-h-0 min-w-0 overflow-hidden rounded-xl border border-[#DCE7E8] bg-[#E7EAE7]" aria-label={`3D model ${isFactory ? "plant factory" : "persemaian"}`}>
+    <section ref={stage} className="relative h-full min-h-0 min-w-0 overflow-hidden rounded-xl border border-[#DCE7E8] bg-[#E7EAE7]" aria-label={t({ en: `3D model ${isFactory ? "plant factory" : "persemaian"}`, id: `Model 3D ${isFactory ? "plant factory" : "persemaian"}` })}>
       <Suspense fallback={<SceneStatus failed={false} facility={isFactory ? "plantFactory" : "chamber"} />}>
         {isFactory ? (
           <PlantFactoryScene
@@ -288,35 +294,35 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
 
       {width >= 360 && (
         <p className="pointer-events-none absolute bottom-3 left-3 rounded-md border border-[#DCE7E8] bg-white px-2 py-1 text-[12.5px] text-[#4F6B73]">
-          <span className="font-medium text-[#0F2F36]">{isFactory ? "Plant factory · PF01" : "Seedlings · CH1"}</span> · drag to turn, scroll to zoom
+          <span className="font-medium text-[#0F2F36]">{isFactory ? "Plant factory · PF01" : t({ en: "Seedlings · CH1", id: "Persemaian · CH1" })}</span> · {t({ en: "drag to turn, scroll to zoom", id: "seret untuk memutar, gulir untuk zoom" })}
         </p>
       )}
 
       {shownFacts && (
         <SceneHoverCard facts={shownFacts} cardRef={card} place={place} onClose={pinned ? () => { pin(null); (engine as SceneEngine | null)?.select(null); } : undefined}>
           {pinned && pinned.kind === "hole" && (
-            <Link to="/erp/plant-factory" search={{ hole: pinned.id }} className="mt-2 inline-flex min-h-[28px] items-center gap-1 text-[13px] font-medium text-[#0B6477] hover:underline">Open and edit <ArrowRight className="h-3.5 w-3.5" /></Link>
+            <Link to="/erp/plant-factory" search={{ hole: pinned.id }} className="mt-2 inline-flex min-h-[28px] items-center gap-1 text-[13px] font-medium text-[#0B6477] hover:underline">{openEdit} <ArrowRight className="h-3.5 w-3.5" /></Link>
           )}
           {pinned && pinned.kind === "slot" && (
-            <Link to="/erp/seedlings" search={{ slot: pinned.id }} className="mt-2 inline-flex min-h-[28px] items-center gap-1 text-[13px] font-medium text-[#0B6477] hover:underline">Open and edit <ArrowRight className="h-3.5 w-3.5" /></Link>
+            <Link to="/erp/seedlings" search={{ slot: pinned.id }} className="mt-2 inline-flex min-h-[28px] items-center gap-1 text-[13px] font-medium text-[#0B6477] hover:underline">{openEdit} <ArrowRight className="h-3.5 w-3.5" /></Link>
           )}
         </SceneHoverCard>
       )}
 
       <div ref={strip} className="absolute right-3 top-3">
         <div className="relative flex flex-col rounded-xl border border-[#DCE7E8] bg-white p-1">
-          <StripButton icon={Building2} label="Facility" active={panel === "facility"} onClick={() => togglePanel("facility")} />
-          <StripButton icon={Eye} label="Viewpoint" active={panel === "view"} disabled={!engine} onClick={() => togglePanel("view")} />
-          <StripButton icon={options.realLight ? Lightbulb : LightbulbOff} label="Lamp" active={panel === "light"} pressed={!!options.realLight} disabled={!engine} onClick={() => togglePanel("light")} />
+          <StripButton icon={Building2} label={t({ en: "Facility", id: "Fasilitas" })} active={panel === "facility"} onClick={() => togglePanel("facility")} />
+          <StripButton icon={Eye} label={t({ en: "Viewpoint", id: "Sudut pandang" })} active={panel === "view"} disabled={!engine} onClick={() => togglePanel("view")} />
+          <StripButton icon={options.realLight ? Lightbulb : LightbulbOff} label={t({ en: "Lamp", id: "Lampu" })} active={panel === "light"} pressed={!!options.realLight} disabled={!engine} onClick={() => togglePanel("light")} />
           <StripButton icon={isFactory ? Layers : DoorOpen} label={doorLabel} active={panel === "door"} disabled={!engine} onClick={() => togglePanel("door")} />
-          <StripButton icon={SlidersHorizontal} label="Filter by rack" active={panel === "filter"} pressed={!!(filter.rack || filter.tier || filter.shelf)} disabled={!engine} onClick={() => togglePanel("filter")} />
-          {isFactory && <StripButton icon={Cctv} label="Camera" active={panel === "camera"} onClick={() => togglePanel("camera")} />}
+          <StripButton icon={SlidersHorizontal} label={t({ en: "Filter by rack", id: "Filter per rack" })} active={panel === "filter"} pressed={!!(filter.rack || filter.tier || filter.shelf)} disabled={!engine} onClick={() => togglePanel("filter")} />
+          {isFactory && <StripButton icon={Cctv} label={t({ en: "Camera", id: "Kamera" })} active={panel === "camera"} onClick={() => togglePanel("camera")} />}
           <div className="mx-1.5 my-1 h-px bg-[#EDF2F2]" />
-          <StripButton icon={Plus} label="Zoom in" disabled={!engine} onClick={() => engine && dolly(engine, 0.8)} />
-          <StripButton icon={Minus} label="Zoom out" disabled={!engine} onClick={() => engine && dolly(engine, 1.25)} />
+          <StripButton icon={Plus} label={t({ en: "Zoom in", id: "Perbesar" })} disabled={!engine} onClick={() => engine && dolly(engine, 0.8)} />
+          <StripButton icon={Minus} label={t({ en: "Zoom out", id: "Perkecil" })} disabled={!engine} onClick={() => engine && dolly(engine, 1.25)} />
           <StripButton
             icon={RotateCcw}
-            label="Initial view"
+            label={t({ en: "Initial view", id: "Tampilan awal" })}
             disabled={!engine}
             onClick={() => {
               applyFilter(isFactory ? { rack: 0, tier: 0 } : { shelf: 0 });
@@ -324,51 +330,51 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
               else ch?.setView("overview");
             }}
           />
-          <Link to={isFactory ? "/erp/plant-factory" : "/erp/seedlings"} aria-label="Open full screen" className={`${stripButton} text-[#36525A] hover:bg-[#EEF5F5] hover:text-[#0B6477]`}>
+          <Link to={isFactory ? "/erp/plant-factory" : "/erp/seedlings"} aria-label={t({ en: "Open full screen", id: "Buka layar penuh" })} className={`${stripButton} text-[#36525A] hover:bg-[#EEF5F5] hover:text-[#0B6477]`}>
             <Maximize2 className="h-4 w-4" strokeWidth={1.75} />
-            <span className="pointer-events-none absolute right-[calc(100%+10px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-[#0F2F36] px-2 py-1 text-[12px] font-medium text-white opacity-0 transition-opacity group-hover/tool:opacity-100">Open full screen</span>
+            <span className="pointer-events-none absolute right-[calc(100%+10px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-[#0F2F36] px-2 py-1 text-[12px] font-medium text-white opacity-0 transition-opacity group-hover/tool:opacity-100">{t({ en: "Open full screen", id: "Buka layar penuh" })}</span>
           </Link>
 
           {panel === "facility" && (
-            <Flyout title="Facility" top={topOf(0)} onClose={() => setPanel(null)}>
-              <div role="radiogroup" aria-label="Facility">
-                {FACILITIES.map((f) => <Choice key={f.key} on={facility === f.key} onClick={() => onFacility(f.key)}>{f.label}</Choice>)}
+            <Flyout title={t({ en: "Facility", id: "Fasilitas" })} top={topOf(0)} onClose={() => setPanel(null)}>
+              <div role="radiogroup" aria-label={t({ en: "Facility", id: "Fasilitas" })}>
+                {FACILITIES.map((f) => <Choice key={f.key} on={facility === f.key} onClick={() => onFacility(f.key)}>{t(f.label)}</Choice>)}
               </div>
             </Flyout>
           )}
           {panel === "view" && (
-            <Flyout title="Viewpoint" top={topOf(1)} onClose={() => setPanel(null)}>
-              <div role="radiogroup" aria-label="Viewpoint">
+            <Flyout title={t({ en: "Viewpoint", id: "Sudut pandang" })} top={topOf(1)} onClose={() => setPanel(null)}>
+              <div role="radiogroup" aria-label={t({ en: "Viewpoint", id: "Sudut pandang" })}>
                 {isFactory
-                  ? PF_VIEWS.map((v) => <Choice key={v.key} on={view === v.key} onClick={() => pf?.setView(v.key)}>{v.label}</Choice>)
-                  : CHAMBER_VIEWS.map((v) => <Choice key={v.key} on={view === v.key} onClick={() => { applyFilter({ shelf: 0 }); ch?.setView(v.key); }}>{v.label}</Choice>)}
+                  ? PF_VIEWS.map((v) => <Choice key={v.key} on={view === v.key} onClick={() => pf?.setView(v.key)}>{t(v.label)}</Choice>)
+                  : CHAMBER_VIEWS.map((v) => <Choice key={v.key} on={view === v.key} onClick={() => { applyFilter({ shelf: 0 }); ch?.setView(v.key); }}>{t(v.label)}</Choice>)}
               </div>
             </Flyout>
           )}
           {panel === "light" && (
-            <Flyout title="Lamp" note={MODEL_ONLY} top={topOf(2)} onClose={() => setPanel(null)}>
-              <Toggle on={!!options.realLight} label={isFactory ? "Grow lamp light" : "Dark room, lamps on"} onClick={() => setOption({ realLight: !options.realLight })} />
+            <Flyout title={t({ en: "Lamp", id: "Lampu" })} note={modelOnly} top={topOf(2)} onClose={() => setPanel(null)}>
+              <Toggle on={!!options.realLight} label={isFactory ? t({ en: "Grow lamp light", id: "Cahaya lampu tanam" }) : t({ en: "Dark room, lamps on", id: "Ruang gelap, lampu menyala" })} onClick={() => setOption({ realLight: !options.realLight })} />
             </Flyout>
           )}
           {panel === "door" && (
-            <Flyout title={doorLabel} note={MODEL_ONLY} top={topOf(3)} onClose={() => setPanel(null)}>
+            <Flyout title={doorLabel} note={modelOnly} top={topOf(3)} onClose={() => setPanel(null)}>
               {isFactory ? (
                 <>
-                  <Toggle on={!!options.showCovers} label="Rack covers" onClick={() => setOption({ showCovers: !options.showCovers })} />
-                  <Toggle on={!!options.showCeiling} label="Ceiling" onClick={() => setOption({ showCeiling: !options.showCeiling })} />
-                  <Toggle on={!!options.lowWalls} label="Low wall" onClick={() => setOption({ lowWalls: !options.lowWalls })} />
+                  <Toggle on={!!options.showCovers} label={t({ en: "Rack covers", id: "Penutup rack" })} onClick={() => setOption({ showCovers: !options.showCovers })} />
+                  <Toggle on={!!options.showCeiling} label={t({ en: "Ceiling", id: "Plafon" })} onClick={() => setOption({ showCeiling: !options.showCeiling })} />
+                  <Toggle on={!!options.lowWalls} label={t({ en: "Low wall", id: "Dinding rendah" })} onClick={() => setOption({ lowWalls: !options.lowWalls })} />
                 </>
               ) : (
                 <>
-                  <Toggle on={!!options.outerDoorOpen} label="Steel door open" onClick={() => setOption({ outerDoorOpen: !options.outerDoorOpen })} />
-                  <Toggle on={!!options.glassDoorOpen} label="Glass door open" onClick={() => setOption({ glassDoorOpen: !options.glassDoorOpen })} />
-                  <Toggle on={!!options.statusColors} label="Tray status colours" onClick={() => setOption({ statusColors: !options.statusColors })} />
+                  <Toggle on={!!options.outerDoorOpen} label={t({ en: "Steel door open", id: "Pintu baja terbuka" })} onClick={() => setOption({ outerDoorOpen: !options.outerDoorOpen })} />
+                  <Toggle on={!!options.glassDoorOpen} label={t({ en: "Glass door open", id: "Pintu kaca terbuka" })} onClick={() => setOption({ glassDoorOpen: !options.glassDoorOpen })} />
+                  <Toggle on={!!options.statusColors} label={t({ en: "Tray status colours", id: "Warna status tray" })} onClick={() => setOption({ statusColors: !options.statusColors })} />
                 </>
               )}
             </Flyout>
           )}
           {panel === "camera" && (
-            <Flyout title={LIVE_FEED.label} top={topOf(5)} wide onClose={() => setPanel(null)}>
+            <Flyout title={feedLabel(LIVE_FEED, lang)} top={topOf(5)} wide onClose={() => setPanel(null)}>
               <div className="px-1.5 pb-1.5 pt-0.5">
                 <CctvViewer
                   feed={LIVE_FEED}
@@ -384,7 +390,7 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
                       }}
                       className="inline-flex min-h-[40px] items-center gap-1 text-[13px] font-medium text-[#0B6477] hover:underline disabled:opacity-40 lg:min-h-[28px]"
                     >
-                      Show where it hangs in the model <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      {t({ en: "Show where it hangs in the model", id: "Tunjukkan posisinya di model" })} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                   }
                 />
@@ -392,14 +398,14 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
             </Flyout>
           )}
           {panel === "filter" && (
-            <Flyout title="Filter by rack" top={topOf(4)} onClose={() => setPanel(null)}>
+            <Flyout title={t({ en: "Filter by rack", id: "Filter per rack" })} top={topOf(4)} onClose={() => setPanel(null)}>
               {isFactory ? (
                 <div className="space-y-1.5 px-1 pb-1">
                   <FilterRow label="Rack" value={filter.rack ?? 0} options={RACK_NUMBERS} onChange={(rack) => applyFilter({ rack })} />
-                  <FilterRow label="Tier" value={filter.tier ?? 0} options={TIER_NUMBERS} onChange={(tier) => applyFilter({ tier })} />
+                  <FilterRow label={t({ en: "Tier", id: "Tingkat" })} value={filter.tier ?? 0} options={TIER_NUMBERS} onChange={(tier) => applyFilter({ tier })} />
                 </div>
               ) : (
-                <div className="px-1 pb-1"><FilterRow label="Shelf" value={filter.shelf ?? 0} options={SHELVES.map((s) => s.shelf as number)} onChange={(shelf) => applyFilter({ shelf })} /></div>
+                <div className="px-1 pb-1"><FilterRow label={t({ en: "Shelf", id: "Rak" })} value={filter.shelf ?? 0} options={SHELVES.map((s) => s.shelf as number)} onChange={(shelf) => applyFilter({ shelf })} /></div>
               )}
             </Flyout>
           )}
@@ -410,13 +416,14 @@ export default function FacilityViewer({ store, facility, onFacility, conditions
 }
 
 function FilterRow({ label, value, options, onChange }: { label: string; value: number; options: readonly number[]; onChange: (v: number) => void }) {
+  const t = useT();
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="text-[13px] text-[#4F6B73]">{label}</span>
       <div role="radiogroup" aria-label={label} className="flex rounded-lg bg-[#EEF3F4] p-0.5 text-[12.5px] font-medium">
         {[0, ...options].map((o) => (
           <button key={o} type="button" role="radio" aria-checked={value === o} onClick={() => onChange(o)} className={`h-6 min-w-[24px] rounded-md px-1.5 ${value === o ? "bg-white text-[#0F2F36] shadow-sm" : "text-[#4F6B73] hover:text-[#0F2F36]"}`}>
-            {o === 0 ? "All" : o}
+            {o === 0 ? t({ en: "All", id: "Semua" }) : o}
           </button>
         ))}
       </div>

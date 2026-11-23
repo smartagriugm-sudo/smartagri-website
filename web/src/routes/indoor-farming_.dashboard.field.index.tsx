@@ -4,13 +4,14 @@ import { useMemo, type ReactNode } from "react";
 import { body } from "../lib/fonts";
 import { Panel } from "../components/dashboard/parts";
 import { useSiteData } from "../components/greenhouse/FieldData";
-import { BAD, GOOD, WARN, ReadingTile, SeriesChart, StatTile, deviceState } from "../components/greenhouse/parts";
+import { BAD, GOOD, WARN, ReadingTile, SeriesChart, StatTile, agoText, deviceState, metricLabel, modeLabel } from "../components/greenhouse/parts";
+import { headLang, useLang, useT } from "../lib/i18n";
 import { FIELD_BASE } from "../components/greenhouse/nav";
-import { MODE_LABEL, ago, headlineReadings, metricMeta, siteOnline, summarize } from "../lib/edge/field";
+import { headlineReadings, siteOnline, summarize } from "../lib/edge/field";
 
 export const Route = createFileRoute("/indoor-farming_/dashboard/field/")({
   component: GreenhouseOverview,
-  head: () => ({ meta: [{ title: "Overview · Greenhouse | agrosphere" }] }),
+  head: ({ matches }) => ({ meta: [{ title: headLang(matches) === "id" ? "Ringkasan · Greenhouse | agrosphere" : "Overview · Greenhouse | agrosphere" }] }),
 });
 
 function GreenhouseOverview() {
@@ -19,36 +20,60 @@ function GreenhouseOverview() {
   const headlines = useMemo(() => headlineReadings(snap), [snap]);
   const online = siteOnline(site, now);
   const main = headlines[0] ?? null;
+  const t = useT();
+  const lang = useLang();
+  const since = (iso: string | null) => agoText(iso, now, lang);
 
   const attention: { tone: string; text: ReactNode }[] = [];
-  if (!online) attention.push({ tone: BAD, text: <>Edge PC has not pushed since {ago(site.last_seen_at, now)}.</> });
-  for (const d of sum.silent) attention.push({ tone: BAD, text: <><b className="font-medium">{d.name || d.source_id}</b>: {deviceState(d, now).text.toLowerCase()}.</> });
-  for (const a of sum.relaysOffline) attention.push({ tone: BAD, text: <><b className="font-medium">{a.name}</b>: relay offline.</> });
-  for (const a of sum.notAutomatic) attention.push({ tone: WARN, text: <><b className="font-medium">{a.name}</b> is in {(MODE_LABEL[a.mode] ?? a.mode).toLowerCase()} mode.</> });
+  if (!online)
+    attention.push({
+      tone: BAD,
+      text: lang === "id" ? <>Edge PC belum mengirim sejak {since(site.last_seen_at)}.</> : <>Edge PC has not pushed since {since(site.last_seen_at)}.</>,
+    });
+  for (const d of sum.silent) attention.push({ tone: BAD, text: <><b className="font-medium">{d.name || d.source_id}</b>: {deviceState(d, now, lang).text.toLowerCase()}.</> });
+  for (const a of sum.relaysOffline) attention.push({ tone: BAD, text: <><b className="font-medium">{a.name}</b>: {t({ en: "relay offline", id: "relay offline" })}.</> });
+  for (const a of sum.notAutomatic)
+    attention.push({
+      tone: WARN,
+      text:
+        lang === "id" ? (
+          <><b className="font-medium">{a.name}</b> dalam mode {modeLabel(a.mode, lang).toLowerCase()}.</>
+        ) : (
+          <><b className="font-medium">{a.name}</b> is in {modeLabel(a.mode, lang).toLowerCase()} mode.</>
+        ),
+    });
 
   return (
     <>
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatTile label="Edge PC" value={online ? "Online" : "Offline"} tone={online ? GOOD : BAD} note={`Last push ${ago(site.last_seen_at, now)}`} />
+        <StatTile label="Edge PC" value={online ? "Online" : "Offline"} tone={online ? GOOD : BAD} note={`${t({ en: "Last push", id: "Kiriman terakhir" })} ${since(site.last_seen_at)}`} />
         <StatTile
-          label="Sensors reporting"
-          value={`${sum.reporting} of ${sum.devices}`}
+          label={t({ en: "Sensors reporting", id: "Sensor mengirim" })}
+          value={`${sum.reporting} ${t({ en: "of", id: "dari" })} ${sum.devices}`}
           tone={sum.silent.length ? BAD : undefined}
-          note={sum.silent.length ? `${sum.silent.length} silent` : "All reporting"}
+          note={sum.silent.length ? `${sum.silent.length} ${t({ en: "silent", id: "diam" })}` : t({ en: "All reporting", id: "Semua mengirim" })}
         />
         <StatTile
-          label="Actuators on"
-          value={`${sum.on} of ${sum.actuators}`}
-          note={sum.relaysOffline.length ? `${sum.relaysOffline.length} relay offline` : "All relays online"}
+          label={t({ en: "Actuators on", id: "Aktuator nyala" })}
+          value={`${sum.on} ${t({ en: "of", id: "dari" })} ${sum.actuators}`}
+          note={sum.relaysOffline.length ? `${sum.relaysOffline.length} relay offline` : t({ en: "All relays online", id: "Semua relay online" })}
         />
-        <StatTile label="Newest reading" value={sum.newest ? ago(sum.newest, now) : "None"} note="10-minute averages" />
+        <StatTile
+          label={t({ en: "Newest reading", id: "Bacaan terbaru" })}
+          value={sum.newest ? since(sum.newest) : t({ en: "None", id: "Belum ada" })}
+          note={t({ en: "10-minute averages", id: "Rata-rata 10 menit" })}
+        />
       </div>
 
       <div className="grid gap-3 xl:grid-cols-3">
-        <Panel title="Current conditions" className="xl:col-span-2" action={<SectionLink to={`${FIELD_BASE}/sensors`}>All sensors</SectionLink>}>
+        <Panel
+          title={t({ en: "Current conditions", id: "Kondisi terkini" })}
+          className="xl:col-span-2"
+          action={<SectionLink to={`${FIELD_BASE}/sensors`}>{t({ en: "All sensors", id: "Semua sensor" })}</SectionLink>}
+        >
           {headlines.length === 0 ? (
             <p className="text-[13px] text-neutral-500" style={body}>
-              No readings yet.
+              {t({ en: "No readings yet.", id: "Belum ada bacaan." })}
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -59,11 +84,11 @@ function GreenhouseOverview() {
           )}
         </Panel>
 
-        <Panel title="Needs attention">
+        <Panel title={t({ en: "Needs attention", id: "Perlu perhatian" })}>
           {attention.length === 0 ? (
             <div className="flex items-start gap-2 text-[13px] text-neutral-600" style={body}>
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" style={{ color: GOOD }} />
-              Every sensor is reporting and every relay is online.
+              {t({ en: "Every sensor is reporting and every relay is online.", id: "Semua sensor mengirim data dan semua relay online." })}
             </div>
           ) : (
             <ul className="flex flex-col gap-2.5">
@@ -80,8 +105,8 @@ function GreenhouseOverview() {
 
       {main && (
         <Panel
-          title={`${metricMeta(main.metric).label} · last 24 hours`}
-          action={<SectionLink to={`${FIELD_BASE}/trends`}>Open trends</SectionLink>}
+          title={`${metricLabel(main.metric, lang)} · ${t({ en: "last 24 hours", id: "24 jam terakhir" })}`}
+          action={<SectionLink to={`${FIELD_BASE}/trends`}>{t({ en: "Open trends", id: "Buka tren" })}</SectionLink>}
         >
           <SeriesChart deviceId={main.device.id} deviceName={main.device.name || main.device.source_id} metric={main.metric} range="24h" height={220} />
         </Panel>

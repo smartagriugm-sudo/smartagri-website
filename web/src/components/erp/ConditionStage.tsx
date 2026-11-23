@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, GripVertical, PanelRightClose, PanelRightOpen } from "lucide-react";
-import { axisTicks, conditionsAt, groupsAt, mergeSeries, metricColor, parseCustomRange, rowState, rowValue, sampleSeries, STATE_WORD, summarize, toDateTimeLocal, type ChartGroup, type ConditionRow, type Conditions } from "../../lib/pf/conditions";
+import { axisTicks, chartGroupLabel, conditionsAt, groupsAt, mergeSeries, metricColor, parseCustomRange, rowState, rowValue, sampleSeries, stateWord, summarize, toDateTimeLocal, type ChartGroup, type ConditionRow, type Conditions } from "../../lib/pf/conditions";
 import { fetchRecipeTargets, fetchSeries, formatValue, formatWithUnit, type PlaceCode, type Series } from "../../lib/pf/monitoring";
 import type { ErpStore } from "../../lib/pf/store";
 import FacilityViewer, { useLargeScreen, type Facility } from "./FacilityViewer";
@@ -9,6 +9,7 @@ import { useLoad } from "./page";
 import SensorChart from "./SensorChart";
 import TrendChart from "./TrendChart";
 import { Segmented } from "./ui";
+import { localeOf, useLang, useT, type Bi } from "../../lib/i18n";
 
 // The top of the front page: the 3D model and what the sensors say, on one line whose
 // divide can be dragged. The model starts at three quarters and shortens down to one;
@@ -31,20 +32,20 @@ const CHART_ALONE_FROM_WIDTH = 640;
 const REFRESH_MS = 60_000;
 
 const CUSTOM_RANGE = 0;
-const RANGES = [
-  { key: 6, label: "6 h" },
-  { key: 24, label: "24 h" },
-  { key: 168, label: "7 days" },
-  { key: 720, label: "30 days" },
-  { key: CUSTOM_RANGE, label: "Custom" },
+const RANGES: { key: number; label: Bi }[] = [
+  { key: 6, label: { en: "6 h", id: "6 jam" } },
+  { key: 24, label: { en: "24 h", id: "24 jam" } },
+  { key: 168, label: { en: "7 days", id: "7 hari" } },
+  { key: 720, label: { en: "30 days", id: "30 hari" } },
+  { key: CUSTOM_RANGE, label: { en: "Custom", id: "Atur" } },
 ];
 
 let lastSplit = MAX_SPLIT;
 
 const placeOf = (f: Facility): PlaceCode => (f === "plant-factory" ? "PF01" : "CH1");
-const PLACES: { key: Facility; label: string }[] = [
-  { key: "plant-factory", label: "Plant factory" },
-  { key: "persemaian", label: "Seedlings" },
+const PLACES: { key: Facility; label: Bi }[] = [
+  { key: "plant-factory", label: { en: "Plant factory", id: "Plant factory" } },
+  { key: "persemaian", label: { en: "Seedlings", id: "Persemaian" } },
 ];
 
 const columns = (split: number) => `calc((100% - ${GAP}px) * ${split / 100}) ${GAP}px minmax(0, 1fr)`;
@@ -52,11 +53,12 @@ const columns = (split: number) => `calc((100% - ${GAP}px) * ${split / 100}) ${G
 /* ------------------------------------------------------------ the sensor data */
 
 function useConditions(store: ErpStore, place: PlaceCode) {
+  const lang = useLang();
   const here = [...store.batches.values()].filter((b) => (place === "CH1" ? store.traysOfBatch(b.code).length > 0 : store.holesOfBatch(b.code).length > 0));
   const batch = here[0] ?? null;
   const targets = useLoad(async () => (batch?.recipeId ? fetchRecipeTargets(batch.recipeId) : []), [batch?.recipeId]);
   const targetOf = (metric: string) => targets.data?.find((t) => t.phase === batch?.phaseKey && t.metric === metric) ?? null;
-  return conditionsAt(place, store.monitoring?.assets ?? [], store.monitoring?.latest ?? [], targetOf);
+  return conditionsAt(place, store.monitoring?.assets ?? [], store.monitoring?.latest ?? [], targetOf, lang);
 }
 
 /** The last day of every metric, for the numbers. Samples are drawn here, sensors are asked. */
@@ -82,25 +84,27 @@ const STATE_CLASS = { ok: "text-[#4F6B73]", rendah: "font-medium text-[#8A5A07]"
 function MetricRow({ row, day, selected, inChart, onPick }: { row: ConditionRow; day: Series | null | undefined; selected: boolean; inChart: boolean; onPick: () => void }) {
   const state = rowState(row);
   const range = summarize(day?.points ?? []);
+  const t = useT();
+  const lang = useLang();
   return (
     <li className="min-w-0 border-t border-[#EDF2F2] first:border-t-0 max-[639px]:[&:nth-child(2)]:border-t-0">
       <button
         type="button"
         onClick={onPick}
         aria-pressed={inChart ? selected : undefined}
-        aria-label={inChart ? undefined : `${row.label} ${rowValue(row)} ${row.unit}. Open its chart`}
+        aria-label={inChart ? undefined : `${row.label} ${rowValue(row, lang)} ${row.unit}. ${t({ en: "Open its chart", id: "Buka grafiknya" })}`}
         className={`group block w-full px-4 py-2 text-left transition-colors ${selected && inChart ? "bg-[#EEF5F5]" : "hover:bg-[#F6F8F8]"}`}
       >
         <span className="flex items-baseline justify-between gap-2 text-[13px]">
           <span className={`flex min-w-0 items-center gap-1.5 ${selected && inChart ? "font-medium text-[#0F2F36]" : "text-[#4F6B73]"}`}><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: metricColor(row.metric) }} /><span className="truncate">{row.label}</span></span>
-          {state && <span className={`text-[12.5px] ${STATE_CLASS[state]}`}>{STATE_WORD[state]}</span>}
+          {state && <span className={`text-[12.5px] ${STATE_CLASS[state]}`}>{stateWord(state, lang)}</span>}
         </span>
         <span className="mt-0.5 block text-[#0F2F36]">
-          <span className="text-[22px] font-semibold leading-tight tabular-nums tracking-[-0.02em]">{rowValue(row)}</span>
+          <span className="text-[22px] font-semibold leading-tight tabular-nums tracking-[-0.02em]">{rowValue(row, lang)}</span>
           {row.unit && <span className="ml-1 text-[13px] text-[#4F6B73]">{row.unit}</span>}
         </span>
         <span className="block truncate text-[12px] tabular-nums text-[#4F6B73]">
-          {range ? `24 h: ${formatValue(row.metric, range.min)}–${formatValue(row.metric, range.max)}` : "24 h: no readings yet"}
+          {range ? `${t({ en: "24 h", id: "24 jam" })}: ${formatValue(row.metric, range.min, lang)}–${formatValue(row.metric, range.max, lang)}` : t({ en: "24 h: no readings yet", id: "24 jam: belum ada data" })}
         </span>
       </button>
     </li>
@@ -138,18 +142,20 @@ function RangeFields({ initial, onApply, onError }: { initial: ChartWindow; onAp
   const [fromText, setFromText] = useState(() => toDateTimeLocal(initial.from));
   const [toText, setToText] = useState(() => toDateTimeLocal(initial.to));
   const [error, setError] = useState(onError);
+  const t = useT();
+  const lang = useLang();
   const field = "h-8 rounded-lg border border-[#C9D6D8] bg-white px-2 text-[13px] tabular-nums text-[#0F2F36]";
   const apply = () => {
-    const result = parseCustomRange(fromText, toText, Date.now());
+    const result = parseCustomRange(fromText, toText, Date.now(), lang);
     if ("error" in result) return setError(result.error);
     setError(null);
     onApply(result);
   };
   return (
     <form className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[12.5px] text-[#4F6B73]" onSubmit={(e) => { e.preventDefault(); apply(); }}>
-      <label className="flex items-center gap-1.5">From<input type="datetime-local" value={fromText} max={toDateTimeLocal(Date.now())} onChange={(e) => setFromText(e.target.value)} className={field} /></label>
-      <label className="flex items-center gap-1.5">To<input type="datetime-local" value={toText} max={toDateTimeLocal(Date.now())} onChange={(e) => setToText(e.target.value)} className={field} /></label>
-      <button type="submit" className="h-8 rounded-lg bg-[#45DFB1] px-3 text-[13px] font-medium text-[#0B2A22] hover:bg-[#80ED99]">Apply</button>
+      <label className="flex items-center gap-1.5">{t({ en: "From", id: "Dari" })}<input type="datetime-local" value={fromText} max={toDateTimeLocal(Date.now())} onChange={(e) => setFromText(e.target.value)} className={field} /></label>
+      <label className="flex items-center gap-1.5">{t({ en: "To", id: "Sampai" })}<input type="datetime-local" value={toText} max={toDateTimeLocal(Date.now())} onChange={(e) => setToText(e.target.value)} className={field} /></label>
+      <button type="submit" className="h-8 rounded-lg bg-[#45DFB1] px-3 text-[13px] font-medium text-[#0B2A22] hover:bg-[#80ED99]">{t({ en: "Apply", id: "Terapkan" })}</button>
       {error && <span role="alert" className="basis-full text-[#B3362C]">{error}</span>}
     </form>
   );
@@ -163,6 +169,8 @@ function SingleChart({ row, series, window, height }: { row: ConditionRow; serie
 /** Up to four parameters together, each on an axis of its own, in its own units. */
 function GroupChart({ group, rows, data, window, height, hidden, focus }: { group: ChartGroup; rows: readonly ConditionRow[]; data: Map<string, Series> | null; window: ChartWindow; height: number; hidden: ReadonlySet<string>; focus: string | null }) {
   const shown = rows.filter((r) => !hidden.has(r.metric));
+  const t = useT();
+  const lang = useLang();
   const step = shown.map((r) => data?.get(r.metric)?.stepMinutes).find((m) => m) ?? 15;
   const merged = useMemo(() => mergeSeries(shown.map((r) => ({ key: r.metric, points: data?.get(r.metric)?.points ?? [] })), step), [data, step, shown.map((r) => r.metric).join()]);
   const lines = useMemo(
@@ -173,11 +181,11 @@ function GroupChart({ group, rows, data, window, height, hidden, focus }: { grou
           key: r.metric,
           label: r.label,
           color: metricColor(r.metric),
-          format: (v: number) => formatWithUnit(r.metric, v),
-          axis: { ticks, title: r.unit.replace(" RH", "") || r.label, format: (v: number) => v.toLocaleString("en-GB", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) },
+          format: (v: number) => formatWithUnit(r.metric, v, lang),
+          axis: { ticks, title: r.unit.replace(" RH", "") || r.label, format: (v: number) => v.toLocaleString(lang === "id" ? localeOf(lang) : "en-GB", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) },
         };
       }),
-    [data, shown.map((r) => r.metric).join()],
+    [data, shown.map((r) => r.metric).join(), lang],
   );
   return (
     <TrendChart
@@ -187,7 +195,7 @@ function GroupChart({ group, rows, data, window, height, hidden, focus }: { grou
       to={window.to}
       height={height}
       focus={focus}
-      summary={`Combined chart ${group.label}: ${shown.map((r) => r.label).join(", ")}. Each line has its own vertical axis, in its own units.`}
+      summary={t({ en: `Combined chart ${chartGroupLabel(group, lang)}: ${shown.map((r) => r.label).join(", ")}. Each line has its own vertical axis, in its own units.`, id: `Grafik gabungan ${chartGroupLabel(group, lang)}: ${shown.map((r) => r.label).join(", ")}. Setiap garis punya sumbu vertikal sendiri, dalam satuannya sendiri.` })}
     />
   );
 }
@@ -200,6 +208,8 @@ export function ChartPane({ store, place, row, rows, sample }: { store: ErpStore
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
   const [legendFocus, setLegendFocus] = useState<string | null>(null);
   const [anchor, setAnchor] = useState(() => Date.now());
+  const t = useT();
+  const lang = useLang();
 
   const groups = groupsAt(rows.map((r) => r.metric));
   const group = groups.find((g) => g.key === mode) ?? null;
@@ -226,15 +236,15 @@ export function ChartPane({ store, place, row, rows, sample }: { store: ErpStore
   const single = series.data?.get(row.metric);
   const stats = group ? null : summarize(single?.points ?? []);
   const figure = (label: string, v: number) => (
-    <span className="whitespace-nowrap text-[12.5px] text-[#4F6B73]">{label} <span className="font-medium tabular-nums text-[#0F2F36]">{formatValue(row.metric, v)}</span></span>
+    <span className="whitespace-nowrap text-[12.5px] text-[#4F6B73]">{label} <span className="font-medium tabular-nums text-[#0F2F36]">{formatValue(row.metric, v, lang)}</span></span>
   );
   const empty = members.every((r) => !series.data?.get(r.metric)?.points.length);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-2 pt-2.5">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-        {groups.length > 0 && <Segmented value={mode} options={[{ key: "single", label: "One parameter" }, ...groups.map((g) => ({ key: g.key, label: g.label }))]} onChange={setMode} />}
-        <Segmented value={hours} options={RANGES} onChange={(h) => { setHours(h); setAnchor(Date.now()); }} />
+        {groups.length > 0 && <Segmented value={mode} options={[{ key: "single", label: t({ en: "One parameter", id: "Satu parameter" }) }, ...groups.map((g) => ({ key: g.key, label: chartGroupLabel(g, lang) }))]} onChange={setMode} />}
+        <Segmented value={hours} options={RANGES.map((r) => ({ key: r.key, label: t(r.label) }))} onChange={(h) => { setHours(h); setAnchor(Date.now()); }} />
       </div>
       {hours === CUSTOM_RANGE && <RangeFields initial={window} onApply={setCustom} onError={null} />}
       {group ? (
@@ -246,7 +256,7 @@ export function ChartPane({ store, place, row, rows, sample }: { store: ErpStore
                 key={r.metric}
                 type="button"
                 aria-pressed={!off}
-                title={off ? `Show ${r.label}` : `Hide ${r.label}`}
+                title={off ? t({ en: `Show ${r.label}`, id: `Tampilkan ${r.label}` }) : t({ en: `Hide ${r.label}`, id: `Sembunyikan ${r.label}` })}
                 onClick={() => setHidden((now) => { const next = new Set(now); if (!next.delete(r.metric)) next.add(r.metric); return next; })}
                 onPointerEnter={() => setLegendFocus(r.metric)}
                 onPointerLeave={() => setLegendFocus(null)}
@@ -264,16 +274,16 @@ export function ChartPane({ store, place, row, rows, sample }: { store: ErpStore
       ) : (
         <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
           <p className="text-[14px] font-medium text-[#0F2F36]">{row.label}{row.unit && <span className="ml-1 font-normal text-[#4F6B73]">{row.unit}</span>}</p>
-          {stats && <span className="flex flex-wrap gap-x-3">{figure("Lowest", stats.min)}{figure("Average", stats.avg)}{figure("Highest", stats.max)}</span>}
+          {stats && <span className="flex flex-wrap gap-x-3">{figure(t({ en: "Lowest", id: "Terendah" }), stats.min)}{figure(t({ en: "Average", id: "Rata-rata" }), stats.avg)}{figure(t({ en: "Highest", id: "Tertinggi" }), stats.max)}</span>}
         </div>
       )}
       <div ref={box} className="mt-1.5 min-h-0 flex-1">
         {series.error ? (
-          <p className="grid h-full place-items-center text-[14px] text-[#4F6B73]">The chart cannot be loaded yet.</p>
+          <p className="grid h-full place-items-center text-[14px] text-[#4F6B73]">{t({ en: "The chart cannot be loaded yet.", id: "Grafik belum bisa dimuat." })}</p>
         ) : empty && series.loading ? (
-          <p className="grid h-full place-items-center text-[14px] text-[#4F6B73]">Loading chart…</p>
+          <p className="grid h-full place-items-center text-[14px] text-[#4F6B73]">{t({ en: "Loading chart…", id: "Memuat grafik…" })}</p>
         ) : empty ? (
-          <p className="grid h-full place-items-center text-[14px] text-[#4F6B73]">No readings in this range.</p>
+          <p className="grid h-full place-items-center text-[14px] text-[#4F6B73]">{t({ en: "No readings in this range.", id: "Tidak ada data di rentang ini." })}</p>
         ) : height > 0 ? (
           group ? <GroupChart group={group} rows={members} data={series.data} window={window} height={height} hidden={hidden} focus={legendFocus} /> : <SingleChart row={row} series={single} window={window} height={height} />
         ) : null}
@@ -290,6 +300,7 @@ function ConditionsCard({ store, facility, onFacility, conditions, split, onSpli
   const [width, setWidth] = useState(0);
   const [chosen, setChosen] = useState<string | null>(null);
   const days = useDays(store, place, conditions);
+  const t = useT();
 
   useEffect(() => {
     const el = box.current;
@@ -314,14 +325,14 @@ function ConditionsCard({ store, facility, onFacility, conditions, split, onSpli
     <section ref={box} className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-[#DCE7E8] bg-white sm:h-full" aria-labelledby="conditions-title">
       <div className="flex min-h-[48px] flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-[#EDF2F2] pl-4 pr-2 py-1.5">
         <div className="flex min-w-0 items-baseline gap-2">
-          <h2 id="conditions-title" className="whitespace-nowrap text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">Conditions</h2>
+          <h2 id="conditions-title" className="whitespace-nowrap text-[16px] font-medium tracking-[-0.02em] text-[#0F2F36]">{t({ en: "Conditions", id: "Kondisi" })}</h2>
           <span className="truncate text-[12.5px] text-[#4F6B73]">{place}</span>
-          {conditions.sample && <span className="whitespace-nowrap rounded-md bg-[#FFF6E5] px-1.5 py-0.5 text-[12px] font-medium text-[#8A5A07]">Sample</span>}
+          {conditions.sample && <span className="whitespace-nowrap rounded-md bg-[#FFF6E5] px-1.5 py-0.5 text-[12px] font-medium text-[#8A5A07]">{t({ en: "Sample", id: "Contoh" })}</span>}
         </div>
         <div className="flex items-center gap-1">
-          {(wide || !showModel) && <Segmented value={facility} options={PLACES} onChange={onFacility} />}
+          {(wide || !showModel) && <Segmented value={facility} options={PLACES.map((p) => ({ key: p.key, label: t(p.label) }))} onChange={onFacility} />}
           {showModel && (
-            <button type="button" onClick={() => onSplit(growing ? MIN_SPLIT : MAX_SPLIT)} aria-label={growing ? "Widen chart" : "Shrink chart"} title={growing ? "Widen chart" : "Shrink chart"} className="grid h-8 w-8 place-items-center rounded-lg text-[#36525A] hover:bg-[#EEF5F5] hover:text-[#0B6477]">
+            <button type="button" onClick={() => onSplit(growing ? MIN_SPLIT : MAX_SPLIT)} aria-label={growing ? t({ en: "Widen chart", id: "Lebarkan grafik" }) : t({ en: "Shrink chart", id: "Kecilkan grafik" })} title={growing ? t({ en: "Widen chart", id: "Lebarkan grafik" }) : t({ en: "Shrink chart", id: "Kecilkan grafik" })} className="grid h-8 w-8 place-items-center rounded-lg text-[#36525A] hover:bg-[#EEF5F5] hover:text-[#0B6477]">
               <GrowIcon className="h-4 w-4" strokeWidth={1.75} />
             </button>
           )}
@@ -338,8 +349,8 @@ function ConditionsCard({ store, facility, onFacility, conditions, split, onSpli
       </div>
 
       <div className="flex items-center justify-between gap-2 border-t border-[#EDF2F2] px-4 py-1.5 text-[12.5px]">
-        <span className="truncate text-[#4F6B73]">{conditions.sample ? "Sensors not connected yet" : "From sensors"}</span>
-        <Link to="/erp/monitoring" className="inline-flex min-h-[28px] shrink-0 items-center gap-1 font-medium text-[#0B6477] hover:underline">Details <ArrowRight className="h-3.5 w-3.5" /></Link>
+        <span className="truncate text-[#4F6B73]">{conditions.sample ? t({ en: "Sensors not connected yet", id: "Sensor belum terhubung" }) : t({ en: "From sensors", id: "Dari sensor" })}</span>
+        <Link to="/erp/monitoring" className="inline-flex min-h-[28px] shrink-0 items-center gap-1 font-medium text-[#0B6477] hover:underline">{t({ en: "Details", id: "Detail" })} <ArrowRight className="h-3.5 w-3.5" /></Link>
       </div>
     </section>
   );
@@ -354,6 +365,7 @@ export default function ConditionStage({ store }: { store: ErpStore }) {
   const grid = useRef<HTMLDivElement>(null);
   const drag = useRef<{ left: number; width: number; value: number } | null>(null);
   const conditions = useConditions(store, placeOf(facility));
+  const t = useT();
 
   const setSplit = useCallback((v: number) => {
     const next = Math.min(MAX_SPLIT, Math.max(MIN_SPLIT, v));
@@ -410,7 +422,7 @@ export default function ConditionStage({ store }: { store: ErpStore }) {
         role="separator"
         tabIndex={0}
         aria-orientation="vertical"
-        aria-label="Width of the 3D model. Press the left or right arrow to change it."
+        aria-label={t({ en: "Width of the 3D model. Press the left or right arrow to change it.", id: "Lebar model 3D. Tekan panah kiri atau kanan untuk mengubahnya." })}
         aria-valuemin={MIN_SPLIT}
         aria-valuemax={MAX_SPLIT}
         aria-valuenow={Math.round(split)}
@@ -420,7 +432,7 @@ export default function ConditionStage({ store }: { store: ErpStore }) {
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
         onDoubleClick={() => setSplit(split > MIDDLE_SPLIT ? MIN_SPLIT : MAX_SPLIT)}
-        title="Drag to change the width. Double-click to switch ends."
+        title={t({ en: "Drag to change the width. Double-click to switch ends.", id: "Seret untuk mengubah lebar. Klik ganda untuk pindah ke ujung lain." })}
         className="group/split relative flex cursor-col-resize touch-none items-center justify-center rounded-md outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0B6477]"
       >
         <span className="grid h-12 w-[10px] place-items-center rounded-full border border-[#DCE7E8] bg-white text-[#9AAEB2] transition-colors group-hover/split:border-[#14919B] group-hover/split:text-[#0B6477] group-active/split:border-[#14919B]">

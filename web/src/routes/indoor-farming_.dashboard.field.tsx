@@ -3,6 +3,8 @@ import { ScreenHeading } from "../components/dashboard/AppShell";
 import { FieldDataProvider, useFieldData } from "../components/greenhouse/FieldData";
 import { Loading, Notice, SiteBar } from "../components/greenhouse/parts";
 import { greenhouseSection } from "../components/greenhouse/nav";
+import { greenhouseNavCopy } from "../components/greenhouse/parts";
+import { useLang, useT } from "../lib/i18n";
 
 // The Greenhouse dashboard (agrosphere /greenhouse): measured data pushed by each
 // field site's edge PC (supabase/edge-sync.sql). This layout loads the sites the
@@ -29,14 +31,16 @@ function FieldFrame() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const section = greenhouseSection(pathname);
   const { available, active, isAdmin, sites, site, snap, error } = useFieldData();
+  const t = useT();
+  const copy = greenhouseNavCopy(section, useLang());
 
-  const heading = <ScreenHeading title={section.label} blurb={section.blurb} />;
+  const heading = <ScreenHeading title={copy.label} blurb={copy.blurb} />;
 
   if (!available) {
     return (
       <>
         {heading}
-        <Notice>Sign-in is not configured on this deployment, so field data cannot be read.</Notice>
+        <Notice>{t({ en: "Sign-in is not configured on this deployment, so field data cannot be read.", id: "Login belum dikonfigurasi di deployment ini, jadi data lapangan tidak dapat dibaca." })}</Notice>
       </>
     );
   }
@@ -45,10 +49,12 @@ function FieldFrame() {
       <>
         {heading}
         <Notice>
-          Your account is waiting for approval by the smartagri team. Once it is approved and a site is shared with you,
-          its live data appears here.{" "}
+          {t({
+            en: "Your account is waiting for approval by the smartagri team. Once it is approved and a site is shared with you, its live data appears here.",
+            id: "Akun Anda sedang menunggu persetujuan tim smartagri. Setelah disetujui dan sebuah lokasi dibagikan kepada Anda, data langsungnya tampil di sini.",
+          })}{" "}
           <Link to="/welcome" search={{ redirect: "/indoor-farming/dashboard/field" }} className="font-medium text-[#0B6477] underline underline-offset-2">
-            Check your account
+            {t({ en: "Check your account", id: "Cek akun Anda" })}
           </Link>
         </Notice>
       </>
@@ -60,7 +66,7 @@ function FieldFrame() {
     return (
       <>
         {heading}
-        {isAdmin ? <Outlet /> : <Notice>Only smartagri lab admins can manage field sites.</Notice>}
+        {isAdmin ? <Outlet /> : <Notice>{t({ en: "Only smartagri lab admins can manage field sites.", id: "Hanya admin lab smartagri yang dapat mengelola lokasi lapangan." })}</Notice>}
       </>
     );
   }
@@ -68,17 +74,17 @@ function FieldFrame() {
   return (
     <>
       {heading}
-      {error && <Notice tone="bad">Could not read field data: {error}</Notice>}
+      {error && <Notice tone="bad">{t({ en: "Could not read field data:", id: "Data lapangan tidak dapat dibaca:" })} {error}</Notice>}
       {sites === null ? (
         <Loading />
       ) : sites.length === 0 ? (
-        <Notice>No field site is shared with this account yet. Ask a smartagri lab admin to give your account access to your site.</Notice>
+        <Notice>{t({ en: "No field site is shared with this account yet. Ask a smartagri lab admin to give your account access to your site.", id: "Belum ada lokasi lapangan yang dibagikan ke akun ini. Minta admin lab smartagri memberi akun Anda akses ke lokasi Anda." })}</Notice>
       ) : (
         <>
           <SiteBar />
           {site && snap ? (
             snap.devices.length === 0 && snap.actuators.length === 0 ? (
-              <Notice>This site has not sent its device list yet. It appears after the edge PC's first push.</Notice>
+              <Notice>{t({ en: "This site has not sent its device list yet. It appears after the edge PC's first push.", id: "Lokasi ini belum mengirim daftar perangkatnya. Daftar tampil setelah kiriman pertama edge PC." })}</Notice>
             ) : (
               <Outlet />
             )

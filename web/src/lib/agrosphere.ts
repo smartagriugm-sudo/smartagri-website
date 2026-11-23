@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './auth/supabase'
 import { useAuth } from './auth/auth'
+import type { Lang } from './i18n-core'
 
 /** Where an agrosphere sign-in lands: the launcher that lists the dashboards an account may open. */
 export const AGROSPHERE_HOME = '/agrosphere'
@@ -46,13 +47,35 @@ export const AGRO_APPS: { app: AgroApp; name: string; to: string; blurb: string 
   },
 ]
 
+// Indonesian names and blurbs for AGRO_APPS, keyed by app; `app` and `to` never change.
+const AGRO_APPS_ID: Record<AgroApp, { name: string; blurb: string }> = {
+  'plant-factory': {
+    name: 'Plant Factory',
+    blurb: 'Batch, tray dan panen, stok, penjualan, serta tim yang menjalankan plant factory.',
+  },
+  greenhouse: {
+    name: 'Greenhouse',
+    blurb: 'Data iklim, nutrisi dan cuaca yang diukur di lokasi dan dikirim oleh komputer edge-nya.',
+  },
+  indoor: {
+    name: 'Indoor Farming',
+    blurb: 'Ruang, iklim, nutrisi dan sensor fasilitas indoor.',
+  },
+}
+
+/** AGRO_APPS in the given language (English is AGRO_APPS itself). */
+export function agroAppsFor(lang: Lang): typeof AGRO_APPS {
+  return lang === 'id' ? AGRO_APPS.map((a) => ({ ...a, ...AGRO_APPS_ID[a.app] })) : AGRO_APPS
+}
+
 export type AgroAccess =
   /** Still asking. */
   | { state: 'loading' }
   /** No Supabase settings (local development): every dashboard is open, as elsewhere on the site. */
   | { state: 'open' }
   | { state: 'ready'; entries: AgroEntry[] }
-  | { state: 'error'; message: string }
+  /** `notInstalled`: agro_my_apps() is missing, so the page can say so in its own language. */
+  | { state: 'error'; message: string; notInstalled?: boolean }
 
 // One answer per signed-in account, shared by every page until the account changes,
 // so moving between dashboards does not ask again.
@@ -62,11 +85,11 @@ async function fetchAccess(): Promise<AgroAccess> {
   if (!supabase) return { state: 'open' }
   const { data, error } = await supabase.rpc('agro_my_apps')
   if (error) {
+    const notInstalled = /agro_my_apps/.test(error.message)
     return {
       state: 'error',
-      message: /agro_my_apps/.test(error.message)
-        ? 'The access rules are not installed yet (supabase/agrosphere.sql).'
-        : error.message,
+      message: notInstalled ? 'The access rules are not installed yet (supabase/agrosphere.sql).' : error.message,
+      notInstalled,
     }
   }
   return { state: 'ready', entries: (data ?? []) as AgroEntry[] }
@@ -104,6 +127,12 @@ export function useAgroAccess(): AgroAccess {
 }
 
 /** Whether the access answer lets the account open this dashboard (open counts as yes). */
+/** The error text to show for an access answer that failed. */
+export function accessErrorText(access: { message: string; notInstalled?: boolean }, lang: Lang): string {
+  if (lang === 'id' && access.notInstalled) return 'Aturan akses belum dipasang (supabase/agrosphere.sql).'
+  return access.message
+}
+
 export function canOpen(access: AgroAccess, app: AgroApp): boolean {
   if (access.state === 'open') return true
   return access.state === 'ready' && access.entries.some((e) => e.app === app)

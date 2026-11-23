@@ -2,19 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { body, display } from "../lib/fonts";
 import {
   AERIAL_KEYS,
-  DASHBOARD_NAV,
-  METRICS,
   ROOT_KEYS,
+  dashboardScreen,
+  metricsFor,
 } from "../lib/indoor-dashboard";
+import { headLang, useLang, useT } from "../lib/i18n";
 import { Panel } from "../components/dashboard/parts";
 import { ScreenHeading } from "../components/dashboard/AppShell";
 
 export const Route = createFileRoute("/indoor-farming_/dashboard/calibration")({
   component: CalibrationScreen,
-  head: () => ({ meta: [{ title: "Calibration · Dashboard | smartagri" }] }),
+  head: ({ matches }) => ({ meta: [{ title: headLang(matches) === "id" ? "Kalibrasi · Dashboard | smartagri" : "Calibration · Dashboard | smartagri" }] }),
 });
 
-const NAV = DASHBOARD_NAV.find((n) => n.label === "Calibration")!;
 
 // Calibration intervals per parameter, in days. Wet chemistry drifts fastest,
 // which is why pH and EC head the list; a solid state CO2 or PAR sensor holds
@@ -46,7 +46,36 @@ const DAYS_SINCE: Partial<Record<string, number>> = {
   leafTemp: 150,
 };
 
+// How each kind of instrument is calibrated.
+const METHODS = [
+  {
+    title: { en: "pH and conductivity", id: "pH dan konduktivitas" },
+    body: {
+      en: "Two point calibration against fresh buffer, pH 4.01 and 7.00, and a 1413 µS/cm conductivity standard. Probes are cleaned and inspected at the same visit.",
+      id: "Kalibrasi dua titik dengan buffer segar, pH 4,01 dan 7,00, serta standar konduktivitas 1413 µS/cm. Probe dibersihkan dan diperiksa pada kunjungan yang sama.",
+    },
+  },
+  {
+    title: { en: "Dissolved oxygen", id: "Oksigen terlarut" },
+    body: {
+      en: "Single point in water saturated air, corrected for temperature and local barometric pressure. Membrane and electrolyte replaced when response time lengthens.",
+      id: "Satu titik di udara jenuh air, dikoreksi terhadap suhu dan tekanan barometrik setempat. Membran dan elektrolit diganti saat waktu respons memanjang.",
+    },
+  },
+  {
+    title: { en: "Light and CO2", id: "Cahaya dan CO2" },
+    body: {
+      en: "PAR sensors checked against a reference quantum sensor under the same fixture. CO2 verified with a certified span gas, with a fresh air zero as a cross check.",
+      id: "Sensor PAR dicek terhadap sensor kuantum referensi di bawah lampu yang sama. CO2 diverifikasi dengan span gas bersertifikat, ditambah nol udara segar sebagai pembanding.",
+    },
+  },
+];
+
 function CalibrationScreen() {
+  const lang = useLang();
+  const t = useT();
+  const NAV = dashboardScreen("/indoor-farming/dashboard/calibration", lang);
+  const METRICS = metricsFor(lang);
   const rows = [...AERIAL_KEYS, ...ROOT_KEYS]
     .filter((k) => INTERVAL_DAYS[k] != null)
     .map((k) => {
@@ -59,13 +88,13 @@ function CalibrationScreen() {
 
   return (
     <>
-      <ScreenHeading title="Calibration" blurb={NAV.blurb} />
+      <ScreenHeading title={NAV.label} blurb={NAV.blurb} />
 
       <Panel
-        title="Calibration schedule"
+        title={t({ en: "Calibration schedule", id: "Jadwal kalibrasi" })}
         action={
           <span className="text-[11px] text-neutral-400" style={body}>
-            Sorted by what falls due first
+            {t({ en: "Sorted by what falls due first", id: "Diurutkan dari yang paling dulu jatuh tempo" })}
           </span>
         }
       >
@@ -73,11 +102,11 @@ function CalibrationScreen() {
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
               <tr className="text-[11px] text-neutral-400">
-                <th className="pb-2 pr-3 font-medium" style={body}>Parameter</th>
-                <th className="pb-2 pr-3 font-medium" style={body}>Instrument</th>
-                <th className="pb-2 pr-3 font-medium" style={body}>Interval</th>
-                <th className="pb-2 pr-3 font-medium" style={body}>Last checked</th>
-                <th className="pb-2 font-medium" style={body}>Status</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>{t({ en: "Parameter", id: "Parameter" })}</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>{t({ en: "Instrument", id: "Instrumen" })}</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>{t({ en: "Interval", id: "Interval" })}</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>{t({ en: "Last checked", id: "Terakhir dicek" })}</th>
+                <th className="pb-2 font-medium" style={body}>{t({ en: "Status", id: "Status" })}</th>
               </tr>
             </thead>
             <tbody>
@@ -100,10 +129,10 @@ function CalibrationScreen() {
                       {metric.sensor}
                     </td>
                     <td className="py-2.5 pr-3 text-[13px] text-neutral-600 tabular-nums" style={body}>
-                      {r.interval} days
+                      {t({ en: `${r.interval} days`, id: `${r.interval} hari` })}
                     </td>
                     <td className="py-2.5 pr-3 text-[13px] text-neutral-600 tabular-nums" style={body}>
-                      {r.since} days ago
+                      {t({ en: `${r.since} days ago`, id: `${r.since} hari lalu` })}
                     </td>
                     <td className="py-2.5" style={body}>
                       <span
@@ -111,10 +140,8 @@ function CalibrationScreen() {
                         style={{ color: tone, backgroundColor: `${tone}1A` }}
                       >
                         {overdue
-                          ? `${Math.abs(r.due)} days overdue`
-                          : soon
-                            ? `Due in ${r.due} days`
-                            : `Due in ${r.due} days`}
+                          ? t({ en: `${Math.abs(r.due)} days overdue`, id: `Terlambat ${Math.abs(r.due)} hari` })
+                          : t({ en: `Due in ${r.due} days`, id: `Jatuh tempo ${r.due} hari lagi` })}
                       </span>
                     </td>
                   </tr>
@@ -125,28 +152,15 @@ function CalibrationScreen() {
         </div>
       </Panel>
 
-      <Panel title="How we calibrate">
+      <Panel title={t({ en: "How we calibrate", id: "Cara kami mengalibrasi" })}>
         <div className="grid gap-4 sm:grid-cols-3">
-          {[
-            {
-              title: "pH and conductivity",
-              body: "Two point calibration against fresh buffer, pH 4.01 and 7.00, and a 1413 µS/cm conductivity standard. Probes are cleaned and inspected at the same visit.",
-            },
-            {
-              title: "Dissolved oxygen",
-              body: "Single point in water saturated air, corrected for temperature and local barometric pressure. Membrane and electrolyte replaced when response time lengthens.",
-            },
-            {
-              title: "Light and CO2",
-              body: "PAR sensors checked against a reference quantum sensor under the same fixture. CO2 verified with a certified span gas, with a fresh air zero as a cross check.",
-            },
-          ].map((c) => (
-            <div key={c.title} className="rounded-xl border border-[#0B6477]/8 bg-[#FAFCFB] p-4">
+          {METHODS.map((c) => (
+            <div key={c.title.en} className="rounded-xl border border-[#0B6477]/8 bg-[#FAFCFB] p-4">
               <h3 className="text-[13px] font-medium text-neutral-900" style={display}>
-                {c.title}
+                {t(c.title)}
               </h3>
               <p className="mt-1.5 text-[12px] text-neutral-500 leading-relaxed" style={body}>
-                {c.body}
+                {t(c.body)}
               </p>
             </div>
           ))}

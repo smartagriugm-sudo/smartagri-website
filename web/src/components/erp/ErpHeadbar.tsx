@@ -5,23 +5,25 @@ import { useAuth } from "../../lib/auth/auth";
 import { A } from "../../lib/assets";
 import { display } from "../../lib/fonts";
 import { batchStage } from "../../lib/pf/batch";
-import { searchErp, type SearchHit } from "../../lib/pf/erp-search";
+import { kindLabel, searchErp, type SearchHit } from "../../lib/pf/erp-search";
 import { accessLabel, type ErpAccess } from "../../lib/pf/foundation";
 import type { StoreMode } from "../../lib/pf/store";
 import { notifications } from "../../lib/pf/work";
 import { useErpStore } from "./ErpContext";
 import { NAV_GROUPS, NAV_HOME, navActive, navAllowed, navGroupOf } from "./erpNav";
 import { WorkLinkTo } from "./WorkLinkTo";
+import LanguageMenu from "../LanguageToggle";
+import { useLang, useT, type Bi } from "../../lib/i18n";
 
 // The bar above every ERP page, in the same shape as the public site's header: a
 // floating 64px bar with a 12px radius and one hairline. The page's place on the
 // left; search, the bell and the profile on the right.
 
-const MODE_CHIP: Record<StoreMode, { label: string; dot: string }> = {
-  loading: { label: "Loading data", dot: "bg-[#8D9398]" },
-  live: { label: "Real data", dot: "bg-[#0E9F6E]" },
-  sample: { label: "Sample data", dot: "bg-[#E0A526]" },
-  error: { label: "Could not load data", dot: "bg-[#D9433B]" },
+const MODE_CHIP: Record<StoreMode, { label: Bi; dot: string }> = {
+  loading: { label: { en: "Loading data", id: "Memuat data" }, dot: "bg-[#8D9398]" },
+  live: { label: { en: "Real data", id: "Data nyata" }, dot: "bg-[#0E9F6E]" },
+  sample: { label: { en: "Sample data", id: "Data contoh" }, dot: "bg-[#E0A526]" },
+  error: { label: { en: "Could not load data", id: "Data tidak bisa dimuat" }, dot: "bg-[#D9433B]" },
 };
 
 const iconButton = "relative grid h-11 w-11 shrink-0 place-items-center rounded-lg text-[#36525A] transition-colors hover:bg-[#0B6477]/8 hover:text-[#0F2F36] lg:h-9 lg:w-9";
@@ -52,25 +54,28 @@ function useDismiss<T extends HTMLElement>(open: boolean, onClose: () => void) {
 
 function useSearchSource(access: ErpAccess) {
   const store = useErpStore();
+  const lang = useLang();
   return useMemo(
     () => ({
-      pages: [{ to: NAV_HOME.to as string, label: NAV_HOME.label, group: "Dashboard" }, ...NAV_GROUPS.flatMap((g) => g.items.filter((i) => navAllowed(i, access)).map((i) => ({ to: i.to as string, label: i.label, group: g.label })))],
+      lang,
+      pages: [{ to: NAV_HOME.to as string, label: NAV_HOME.label[lang], group: "Dashboard" }, ...NAV_GROUPS.flatMap((g) => g.items.filter((i) => navAllowed(i, access)).map((i) => ({ to: i.to as string, label: i.label[lang], group: g.label[lang] })))],
       batches: [...store.batches.values()].map((b) => ({
         id: b.id,
         code: b.code,
         crop: b.crop,
-        stage: batchStage({ status: "berjalan", sown_at: b.sownAt, cycle_days: b.cycle, plants_now: store.holesOfBatch(b.code).length, trays_now: store.traysOfBatch(b.code).length }, store.today),
+        stage: batchStage({ status: "berjalan", sown_at: b.sownAt, cycle_days: b.cycle, plants_now: store.holesOfBatch(b.code).length, trays_now: store.traysOfBatch(b.code).length }, store.today, lang),
       })),
       isHole: (code: string) => !!store.pf.getHole(code),
       isSlot: (code: string) => !!store.chamber.getSlot(code),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, store.dataVersion, access],
+    [store, store.dataVersion, access, lang],
   );
 }
 
 function SearchBox({ access }: { access: ErpAccess }) {
   const source = useSearchSource(access);
+  const t = useT();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -110,13 +115,13 @@ function SearchBox({ access }: { access: ErpAccess }) {
 
   return (
     <>
-      <button type="button" className={`${iconButton} md:hidden`} aria-label="Search" onClick={() => { setPhoneOpen(true); window.setTimeout(() => input.current?.focus()); }}>
+      <button type="button" className={`${iconButton} md:hidden`} aria-label={t({ en: "Search", id: "Cari" })} onClick={() => { setPhoneOpen(true); window.setTimeout(() => input.current?.focus()); }}>
         <Search className="h-[18px] w-[18px]" strokeWidth={1.75} />
       </button>
       <div ref={box} className={`${phoneOpen ? "absolute inset-x-2 top-2.5 z-10 block" : "hidden"} md:relative md:inset-auto md:top-auto md:block md:w-[220px] lg:w-[260px] xl:w-[320px]`}>
         <label className="flex h-11 items-center gap-2 rounded-lg border border-[#0B6477]/15 bg-white px-3 focus-within:border-[#14919B] md:h-9">
           <Search className="h-4 w-4 shrink-0 text-[#4F6B73]" strokeWidth={1.75} />
-          <span className="sr-only">Search the ERP</span>
+          <span className="sr-only">{t({ en: "Search the ERP", id: "Cari di ERP" })}</span>
           <input
             ref={input}
             role="combobox"
@@ -126,7 +131,7 @@ function SearchBox({ access }: { access: ErpAccess }) {
             aria-autocomplete="list"
             autoComplete="off"
             value={query}
-            placeholder="Search batches, pages, codes"
+            placeholder={t({ en: "Search batches, pages, codes", id: "Cari batch, halaman, kode" })}
             onFocus={() => setFocused(true)}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -148,7 +153,7 @@ function SearchBox({ access }: { access: ErpAccess }) {
           />
           <kbd className="hidden shrink-0 rounded border border-[#0B6477]/15 px-1.5 text-[11px] text-[#4F6B73] xl:block">Ctrl K</kbd>
           {phoneOpen && (
-            <button type="button" aria-label="Close search" className="-mr-2 grid h-10 w-10 place-items-center text-[#36525A] md:hidden" onClick={close}>
+            <button type="button" aria-label={t({ en: "Close search", id: "Tutup pencarian" })} className="-mr-2 grid h-10 w-10 place-items-center text-[#36525A] md:hidden" onClick={close}>
               <X className="h-4 w-4" />
             </button>
           )}
@@ -156,9 +161,9 @@ function SearchBox({ access }: { access: ErpAccess }) {
         {open && (
           <div className={`${popover} right-0 top-full mt-2 w-full p-1.5 md:w-[420px]`}>
             {hits.length === 0 ? (
-              <p className="px-2.5 py-3 text-[14px] text-[#4F6B73]">Nothing matches &ldquo;{query.trim()}&rdquo;.</p>
+              <p className="px-2.5 py-3 text-[14px] text-[#4F6B73]">{t({ en: "Nothing matches", id: "Tidak ada yang cocok dengan" })} &ldquo;{query.trim()}&rdquo;.</p>
             ) : (
-              <ul id={listId} role="listbox" aria-label="Search results">
+              <ul id={listId} role="listbox" aria-label={t({ en: "Search results", id: "Hasil pencarian" })}>
                 {hits.map((h, i) => (
                   <li key={h.key} id={`${listId}-${i}`} role="option" aria-selected={i === active}>
                     <button
@@ -168,7 +173,7 @@ function SearchBox({ access }: { access: ErpAccess }) {
                       onClick={() => go(h)}
                       className={`flex min-h-[44px] w-full items-center gap-3 rounded-lg px-2.5 py-1.5 text-left ${i === active ? "bg-[#EEF5F5]" : ""}`}
                     >
-                      <span className="w-[62px] shrink-0 text-[12px] text-[#4F6B73]">{h.kind}</span>
+                      <span className="w-[62px] shrink-0 text-[12px] text-[#4F6B73]">{kindLabel(h.kind, source.lang)}</span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[14px] font-medium text-[#0F2F36]">{h.title}</span>
                         <span className="block truncate text-[12.5px] text-[#4F6B73]">{h.detail}</span>
@@ -191,14 +196,16 @@ const NOTICE_SHOWN = 7;
 
 function NotificationBell() {
   const store = useErpStore();
+  const lang = useLang();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const box = useDismiss<HTMLDivElement>(open, () => setOpen(false));
-  const items = notifications(store);
+  const items = notifications(store, lang);
   const urgent = items.filter((i) => i.tone === "urgent").length;
 
   return (
     <div ref={box} className="relative">
-      <button type="button" className={iconButton} aria-haspopup="dialog" aria-expanded={open} aria-label={items.length ? `Notifications, ${items.length} waiting` : "Notifications"} onClick={() => setOpen(!open)}>
+      <button type="button" className={iconButton} aria-haspopup="dialog" aria-expanded={open} aria-label={items.length ? t({ en: `Notifications, ${items.length} waiting`, id: `Notifikasi, ${items.length} menunggu` }) : t({ en: "Notifications", id: "Notifikasi" })} onClick={() => setOpen(!open)}>
         <Bell className="h-[18px] w-[18px]" strokeWidth={1.75} />
         {items.length > 0 && (
           <span className={`absolute right-0.5 top-0.5 grid h-[17px] min-w-[17px] place-items-center rounded-full px-1 text-[11px] font-semibold tabular-nums text-white ${urgent ? "bg-[#B3362C]" : "bg-[#0B6477]"}`}>
@@ -207,13 +214,13 @@ function NotificationBell() {
         )}
       </button>
       {open && (
-        <div role="dialog" aria-label="Notifications" className={`${popover} -right-[60px] top-full mt-2 w-[calc(100vw-24px)] max-w-[380px] sm:right-0`}>
+        <div role="dialog" aria-label={t({ en: "Notifications", id: "Notifikasi" })} className={`${popover} -right-[60px] top-full mt-2 w-[calc(100vw-24px)] max-w-[380px] sm:right-0`}>
           <div className="flex items-baseline justify-between gap-3 px-4 pb-2 pt-3">
-            <p className="text-[15px] font-medium tracking-[-0.02em] text-[#0F2F36]">Notifications</p>
-            {urgent > 0 && <p className="text-[12.5px] text-[#B3362C]">{urgent} urgent</p>}
+            <p className="text-[15px] font-medium tracking-[-0.02em] text-[#0F2F36]">{t({ en: "Notifications", id: "Notifikasi" })}</p>
+            {urgent > 0 && <p className="text-[12.5px] text-[#B3362C]">{urgent} {t({ en: "urgent", id: "mendesak" })}</p>}
           </div>
           {items.length === 0 ? (
-            <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">{store.hasData ? "Nothing waiting from batches and sensors." : "Cannot be read yet."}</p>
+            <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">{store.hasData ? t({ en: "Nothing waiting from batches and sensors.", id: "Tidak ada yang menunggu dari batch dan sensor." }) : t({ en: "Cannot be read yet.", id: "Belum bisa dibaca." })}</p>
           ) : (
             <ul className="max-h-[360px] overflow-y-auto">
               {items.slice(0, NOTICE_SHOWN).map((item) => (
@@ -230,7 +237,7 @@ function NotificationBell() {
             </ul>
           )}
           <Link to="/erp" onClick={() => setOpen(false)} className="flex min-h-[44px] items-center border-t border-[#EDF2F2] px-4 text-[14px] font-medium text-[#0B6477] hover:underline">
-            {items.length > NOTICE_SHOWN ? `View all (${items.length}) on the Overview` : "Full list on the Overview"}
+            {items.length > NOTICE_SHOWN ? t({ en: `View all (${items.length}) on the Overview`, id: `Lihat semua (${items.length}) di Ringkasan` }) : t({ en: "Full list on the Overview", id: "Daftar lengkap di Ringkasan" })}
           </Link>
         </div>
       )}
@@ -242,11 +249,12 @@ function NotificationBell() {
 
 function useProfile(access: ErpAccess) {
   const { user, account, signOut } = useAuth();
+  const lang = useLang();
   const email = user?.email ?? "";
   const name = account?.name ?? "";
   const parts = (name || email).trim().split(/[\s@]+/).filter(Boolean);
   const initials = name ? ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() : (email[0] ?? "?").toUpperCase();
-  return { name, email, initials, avatarUrl: account?.avatarUrl ?? null, role: accessLabel(access), signOut };
+  return { name, email, initials, avatarUrl: account?.avatarUrl ?? null, role: accessLabel(access, lang), signOut };
 }
 
 function Avatar({ initials, url, className = "h-9 w-9 text-[13px]" }: { initials: string; url: string | null; className?: string }) {
@@ -259,18 +267,19 @@ function Avatar({ initials, url, className = "h-9 w-9 text-[13px]" }: { initials
 
 function ProfileItems({ access, onPick }: { access: ErpAccess; onPick: () => void }) {
   const p = useProfile(access);
+  const t = useT();
   const row = "flex min-h-[44px] w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[14px] text-[#36525A] hover:bg-[#EEF5F5] hover:text-[#0F2F36] lg:min-h-[36px]";
   return (
     <>
       <div className="px-2.5 py-2">
-        <p className="truncate text-[14px] font-medium text-[#0F2F36]">{p.name || p.email || "No login"}</p>
+        <p className="truncate text-[14px] font-medium text-[#0F2F36]">{p.name || p.email || t({ en: "No login", id: "Belum masuk" })}</p>
         {p.name && <p className="truncate text-[12.5px] text-[#4F6B73]">{p.email}</p>}
         <p className="mt-0.5 text-[12.5px] text-[#0B6477]">{p.role}</p>
       </div>
       <div className="my-1 h-px bg-[#EDF2F2]" />
-      <Link to="/account" onClick={onPick} className={row}><UserRound className="h-4 w-4 text-[#4F6B73]" strokeWidth={1.75} />My account</Link>
-      <Link to="/indoor-farming/dashboard" onClick={onPick} className={row}><ArrowLeft className="h-4 w-4 text-[#4F6B73]" strokeWidth={1.75} />Back to smartagri</Link>
-      <button type="button" onClick={() => { onPick(); void p.signOut(); }} className={row}><LogOut className="h-4 w-4 text-[#4F6B73]" strokeWidth={1.75} />Sign out</button>
+      <Link to="/account" onClick={onPick} className={row}><UserRound className="h-4 w-4 text-[#4F6B73]" strokeWidth={1.75} />{t({ en: "My account", id: "Akun saya" })}</Link>
+      <Link to="/indoor-farming/dashboard" onClick={onPick} className={row}><ArrowLeft className="h-4 w-4 text-[#4F6B73]" strokeWidth={1.75} />{t({ en: "Back to smartagri", id: "Kembali ke smartagri" })}</Link>
+      <button type="button" onClick={() => { onPick(); void p.signOut(); }} className={row}><LogOut className="h-4 w-4 text-[#4F6B73]" strokeWidth={1.75} />{t({ en: "Sign out", id: "Keluar" })}</button>
     </>
   );
 }
@@ -280,9 +289,10 @@ export function ProfileButton({ access }: { access: ErpAccess }) {
   const [open, setOpen] = useState(false);
   const box = useDismiss<HTMLDivElement>(open, () => setOpen(false));
   const p = useProfile(access);
+  const t = useT();
   return (
     <div ref={box} className="relative">
-      <button type="button" className="grid h-11 w-11 place-items-center rounded-full lg:h-9 lg:w-9" aria-haspopup="menu" aria-expanded={open} aria-label={p.name ? `Account menu: ${p.name}` : "Account menu"} onClick={() => setOpen(!open)}>
+      <button type="button" className="grid h-11 w-11 place-items-center rounded-full lg:h-9 lg:w-9" aria-haspopup="menu" aria-expanded={open} aria-label={p.name ? t({ en: `Account menu: ${p.name}`, id: `Menu akun: ${p.name}` }) : t({ en: "Account menu", id: "Menu akun" })} onClick={() => setOpen(!open)}>
         <Avatar initials={p.initials} url={p.avatarUrl} />
       </button>
       {open && <div className={`${popover} right-0 top-full mt-2 w-[250px] p-1.5`}><ProfileItems access={access} onPick={() => setOpen(false)} /></div>}
@@ -295,12 +305,13 @@ export function ProfileRow({ access }: { access: ErpAccess }) {
   const [open, setOpen] = useState(false);
   const box = useDismiss<HTMLDivElement>(open, () => setOpen(false));
   const p = useProfile(access);
+  const t = useT();
   return (
     <div ref={box} className="relative">
       <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} className="flex min-h-[52px] w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-[#E9EFEF]">
         <Avatar initials={p.initials} url={p.avatarUrl} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[14px] font-medium text-[#0F2F36]">{p.name || p.email || "No login"}</span>
+          <span className="block truncate text-[14px] font-medium text-[#0F2F36]">{p.name || p.email || t({ en: "No login", id: "Belum masuk" })}</span>
           <span className="block truncate text-[12.5px] text-[#4F6B73]">{p.role}</span>
         </span>
         <ChevronsUpDown className="h-4 w-4 shrink-0 text-[#4F6B73]" strokeWidth={1.75} />
@@ -314,12 +325,13 @@ export function ProfileRow({ access }: { access: ErpAccess }) {
 
 function DataChip() {
   const store = useErpStore();
+  const t = useT();
   const live = store.mode === "live" && !store.monitoring?.latest.length;
-  const chip = live ? { ...MODE_CHIP.live, label: "Real batches, sample climate" } : MODE_CHIP[store.mode];
+  const chip = live ? { ...MODE_CHIP.live, label: { en: "Real batches, sample climate", id: "Batch nyata, iklim contoh" } } : MODE_CHIP[store.mode];
   return (
     <span role="status" className="hidden items-center gap-1.5 whitespace-nowrap rounded-md border border-[#0B6477]/12 px-2 py-1 text-[12.5px] text-[#36525A] 2xl:flex">
       <span className={`h-1.5 w-1.5 rounded-full ${chip.dot}`} />
-      {chip.label}
+      {t(chip.label)}
     </span>
   );
 }
@@ -328,25 +340,27 @@ export default function ErpHeadbar({ pathname, access, sidebarShown, showLogo, o
   const group = navGroupOf(pathname);
   const page = [NAV_HOME, ...NAV_GROUPS.flatMap((g) => g.items)].find((i) => navActive(i, pathname));
   const PanelIcon = sidebarShown ? PanelLeftClose : PanelLeftOpen;
+  const t = useT();
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 print:hidden md:px-4">
       <div className="relative flex h-16 items-center gap-1 rounded-xl border border-[#0B6477]/15 bg-[#F3F7F6]/92 pl-2 pr-2 backdrop-blur-lg md:gap-2 md:pr-3">
-        <button ref={menuButton} type="button" className={`${iconButton} lg:hidden`} aria-label="Open menu" onClick={onOpenMenu}>
+        <button ref={menuButton} type="button" className={`${iconButton} lg:hidden`} aria-label={t({ en: "Open menu", id: "Buka menu" })} onClick={onOpenMenu}>
           <Menu className="h-5 w-5" strokeWidth={1.75} />
         </button>
-        <button type="button" className={`${iconButton} hidden lg:grid`} aria-label={sidebarShown ? "Hide menu" : "Show menu"} title={`${sidebarShown ? "Hide" : "Show"} menu (Ctrl B)`} aria-pressed={sidebarShown} onClick={onToggleSidebar}>
+        <button type="button" className={`${iconButton} hidden lg:grid`} aria-label={sidebarShown ? t({ en: "Hide menu", id: "Sembunyikan menu" }) : t({ en: "Show menu", id: "Tampilkan menu" })} title={`${sidebarShown ? t({ en: "Hide menu", id: "Sembunyikan menu" }) : t({ en: "Show menu", id: "Tampilkan menu" })} (Ctrl B)`} aria-pressed={sidebarShown} onClick={onToggleSidebar}>
           <PanelIcon className="h-[18px] w-[18px]" strokeWidth={1.75} />
         </button>
-        <Link to="/erp" aria-label="agrosphere, to Overview" className={`shrink-0 ${showLogo}`}>
+        <Link to="/erp" aria-label={t({ en: "agrosphere, to Overview", id: "agrosphere, ke Ringkasan" })} className={`shrink-0 ${showLogo}`}>
           <img src={A.agrosphereIcon} alt="" className="h-7 w-7" />
         </Link>
         <div className="ml-1 flex min-w-0 flex-1 items-center gap-1.5 text-[14px]" style={display}>
-          {group && <><span className="hidden whitespace-nowrap text-[#4F6B73] sm:inline">{group.label}</span><span className="hidden text-[#9AAEB2] sm:inline">/</span></>}
-          <span className="truncate font-medium tracking-[-0.01em] text-[#0F2F36]">{page?.label ?? "ERP"}</span>
+          {group && <><span className="hidden whitespace-nowrap text-[#4F6B73] sm:inline">{t(group.label)}</span><span className="hidden text-[#9AAEB2] sm:inline">/</span></>}
+          <span className="truncate font-medium tracking-[-0.01em] text-[#0F2F36]">{page ? t(page.label) : "ERP"}</span>
         </div>
         <DataChip />
         <SearchBox access={access} />
         <NotificationBell />
+        <LanguageMenu tone="light" align="right" />
         <ProfileButton access={access} />
       </div>
     </header>

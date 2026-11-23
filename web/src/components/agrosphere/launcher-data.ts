@@ -3,6 +3,7 @@ import { loadSites, loadSnapshot, metricMeta, siteOnline, type EdgeSite } from "
 import { fetchBatches } from "../../lib/pf/batch";
 import { fetchMonitoringIfInstalled } from "../../lib/pf/monitoring";
 import type { AgroAccess } from "../../lib/agrosphere";
+import type { Bi, Lang } from "../../lib/i18n";
 
 // The live figures on the launcher's cards, read with the signed-in account's own
 // token: a dashboard the account was not given returns nothing here either.
@@ -20,15 +21,20 @@ export type LauncherData = {
 // The readings a grower looks at first, in this order; the card shows up to three.
 const FIRST_METRICS = ["temperature", "humidity", "vpd", "ec", "ph", "co2", "water_temp"];
 // Card labels are short so three fit side by side on a phone.
-const SHORT_LABEL: Record<string, string> = {
-  temperature: "Air temp",
-  humidity: "Humidity",
-  vpd: "VPD",
-  ec: "EC",
-  ph: "pH",
-  co2: "CO₂",
-  water_temp: "Water temp",
+const SHORT_LABEL: Record<string, Bi> = {
+  temperature: { en: "Air temp", id: "Suhu udara" },
+  humidity: { en: "Humidity", id: "Kelembapan" },
+  vpd: { en: "VPD", id: "VPD" },
+  ec: { en: "EC", id: "EC" },
+  ph: { en: "pH", id: "pH" },
+  co2: { en: "CO₂", id: "CO₂" },
+  water_temp: { en: "Water temp", id: "Suhu air" },
 };
+
+/** A reading's card label in the given language (the edge library's own label otherwise). */
+export function readingLabel(r: Pick<Reading, "metric" | "label">, lang: Lang): string {
+  return SHORT_LABEL[r.metric]?.[lang] ?? r.label;
+}
 const REFRESH_MS = 120_000; // edge PCs send 10-minute averages; two minutes shows them soon after
 
 async function siteLive(site: EdgeSite): Promise<SiteLive> {
@@ -46,7 +52,7 @@ async function siteLive(site: EdgeSite): Promise<SiteLive> {
       const meta = metricMeta(metric);
       return {
         metric,
-        label: SHORT_LABEL[metric] ?? meta.label,
+        label: SHORT_LABEL[metric]?.en ?? meta.label,
         unit: meta.unit,
         decimals: meta.decimals,
         value: values.reduce((a, b) => a + b, 0) / values.length,

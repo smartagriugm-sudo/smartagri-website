@@ -4,21 +4,23 @@ import { body } from "../lib/fonts";
 import { useSiteData } from "../components/greenhouse/FieldData";
 import { DeviceCard, byZone } from "../components/greenhouse/parts";
 import { latestByKey } from "../lib/edge/field";
+import { headLang, useLang, useT } from "../lib/i18n";
 
 export const Route = createFileRoute("/indoor-farming_/dashboard/field/sensors")({
   component: GreenhouseSensors,
-  head: () => ({ meta: [{ title: "Sensors · Greenhouse | agrosphere" }] }),
+  head: ({ matches }) => ({ meta: [{ title: headLang(matches) === "id" ? "Sensor · Greenhouse | agrosphere" : "Sensors · Greenhouse | agrosphere" }] }),
 });
 
 function GreenhouseSensors() {
   const { snap, now } = useSiteData();
   const latest = useMemo(() => latestByKey(snap.latest), [snap.latest]);
-  const zones = byZone(snap.devices);
+  const t = useT();
+  const zones = byZone(snap.devices, useLang());
 
   if (snap.devices.length === 0) {
     return (
       <p className="text-[13px] text-neutral-500" style={body}>
-        This site reports no sensors.
+        {t({ en: "This site reports no sensors.", id: "Lokasi ini tidak melaporkan sensor." })}
       </p>
     );
   }

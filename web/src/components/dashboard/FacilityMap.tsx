@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { SITES, STATUS_TONE, ZONES, roomsAtSite, type Site, type Zone } from "../../lib/indoor-dashboard";
+import { SITES, STATUS_TONE, ZONES, roomsAtSite, sitesFor, statusLabel, type Site, type Zone } from "../../lib/indoor-dashboard";
+import { useLang, useT, type Lang } from "../../lib/i18n";
 import { body, display } from "../../lib/fonts";
 import type { Status } from "../../lib/indoor-dashboard";
 
@@ -26,9 +27,13 @@ function siteStatus(site: Site, statusOf: (z: Zone) => Status): Status | "offlin
   return "optimal";
 }
 
-function toneFor(s: Status | "offline") {
+function toneFor(s: Status | "offline", lang: Lang) {
   if (s === "offline") return { color: "#9CA3AF", label: "Offline" };
-  return { color: STATUS_TONE[s].color, label: STATUS_TONE[s].label };
+  return { color: STATUS_TONE[s].color, label: statusLabel(s, lang) };
+}
+
+function roomCount(count: number, lang: Lang): string {
+  return lang === "id" ? `${count} ruang` : `${count} room${count === 1 ? "" : "s"}`;
 }
 
 export default function FacilityMap({
@@ -43,6 +48,9 @@ export default function FacilityMap({
   const holder = useRef<HTMLDivElement>(null);
   const mapRef = useRef<unknown>(null);
   const [ready, setReady] = useState(false);
+  const lang = useLang();
+  const t = useT();
+  const sites = sitesFor(lang);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,8 +74,9 @@ export default function FacilityMap({
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map);
 
-      const markers = SITES.map((site) => {
-        const tone = toneFor(siteStatus(site, zoneStatus));
+      // Popups take the language the map mounted in, like the marker colours.
+      const markers = sites.map((site) => {
+        const tone = toneFor(siteStatus(site, zoneStatus), lang);
         const count = roomsAtSite(site.id).length;
         const icon = L.divIcon({
           className: "",
@@ -80,7 +89,7 @@ export default function FacilityMap({
         });
         const m = L.marker([site.lat, site.lng], { icon, title: site.name }).addTo(map);
         m.bindPopup(
-          `<strong>${site.name}</strong><br/>${site.city}<br/>${count} room${count === 1 ? "" : "s"} · ${tone.label}`,
+          `<strong>${site.name}</strong><br/>${site.city}<br/>${roomCount(count, lang)} · ${tone.label}`,
         );
         m.on("click", () => onSelectSite(site.id));
         return m;
@@ -118,7 +127,7 @@ export default function FacilityMap({
         {!ready && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#F3F7F6]">
             <span className="text-[12px] text-neutral-400" style={body}>
-              Loading map
+              {t({ en: "Loading map", id: "Memuat peta" })}
             </span>
           </div>
         )}
@@ -127,8 +136,8 @@ export default function FacilityMap({
       {/* Rendered on the server too, so the panel says something useful before
           Leaflet arrives and for anyone the map does not reach. */}
       <div className="mt-3 flex flex-col gap-1.5">
-        {SITES.map((site) => {
-          const tone = toneFor(siteStatus(site, zoneStatus));
+        {sites.map((site) => {
+          const tone = toneFor(siteStatus(site, zoneStatus), lang);
           const rooms = roomsAtSite(site.id);
           const selected = site.id === selectedSiteId;
           return (
@@ -151,12 +160,12 @@ export default function FacilityMap({
                   {site.name}
                 </span>
                 <span className="block truncate text-[11px] text-neutral-400" style={body}>
-                  {site.city} · {rooms.length} room{rooms.length === 1 ? "" : "s"}
+                  {site.city} · {roomCount(rooms.length, lang)}
                 </span>
               </span>
               {selected && (
                 <span className="shrink-0 text-[10px] font-medium text-[#0B6477]" style={body}>
-                  Filtering
+                  {t({ en: "Filtering", id: "Disaring" })}
                 </span>
               )}
             </button>
@@ -165,8 +174,10 @@ export default function FacilityMap({
       </div>
 
       <p className="mt-2 text-[10px] text-neutral-400 leading-relaxed" style={body}>
-        Site coordinates are placeholders pending survey. {ZONES.length} rooms across{" "}
-        {SITES.length} sites.
+        {t({
+          en: `Site coordinates are placeholders pending survey. ${ZONES.length} rooms across ${SITES.length} sites.`,
+          id: `Koordinat lokasi masih sementara sampai disurvei. ${ZONES.length} ruang di ${SITES.length} lokasi.`,
+        })}
       </p>
     </div>
   );

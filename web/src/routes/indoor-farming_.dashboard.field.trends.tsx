@@ -3,7 +3,8 @@ import { useState } from "react";
 import { body } from "../lib/fonts";
 import { Panel, Pill } from "../components/dashboard/parts";
 import { useSiteData } from "../components/greenhouse/FieldData";
-import { SeriesChart } from "../components/greenhouse/parts";
+import { SeriesChart, metricLabel, rangeLabel } from "../components/greenhouse/parts";
+import { headLang, useLang, useT } from "../lib/i18n";
 import { RANGES, metricMeta, type RangeKey } from "../lib/edge/field";
 
 const ID = /^[A-Za-z0-9_:.-]{1,80}$/;
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/indoor-farming_/dashboard/field/trends")(
     metric: typeof search.metric === "string" && ID.test(search.metric) ? search.metric : undefined,
   }),
   component: GreenhouseTrends,
-  head: () => ({ meta: [{ title: "Trends · Greenhouse | agrosphere" }] }),
+  head: ({ matches }) => ({ meta: [{ title: headLang(matches) === "id" ? "Tren · Greenhouse | agrosphere" : "Trends · Greenhouse | agrosphere" }] }),
 });
 
 function GreenhouseTrends() {
@@ -23,6 +24,8 @@ function GreenhouseTrends() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const [range, setRange] = useState<RangeKey>("24h");
+  const t = useT();
+  const lang = useLang();
 
   const withMetrics = snap.devices.filter((d) => d.metrics.length > 0);
   const device = withMetrics.find((d) => d.id === search.device) ?? withMetrics[0] ?? null;
@@ -35,7 +38,7 @@ function GreenhouseTrends() {
     return (
       <Panel>
         <p className="text-[13px] text-neutral-500" style={body}>
-          This site reports no measured values yet.
+          {t({ en: "This site reports no measured values yet.", id: "Lokasi ini belum melaporkan nilai terukur." })}
         </p>
       </Panel>
     );
@@ -43,12 +46,12 @@ function GreenhouseTrends() {
 
   return (
     <Panel
-      title={`${metricMeta(metric).label} · ${device.name || device.source_id}`}
+      title={`${metricLabel(metric, lang)} · ${device.name || device.source_id}`}
       action={
         <div className="flex gap-1.5">
           {RANGES.map((r) => (
             <Pill key={r.key} active={r.key === range} onClick={() => setRange(r.key)}>
-              {r.label}
+              {rangeLabel(r.key, lang)}
             </Pill>
           ))}
         </div>
@@ -58,7 +61,7 @@ function GreenhouseTrends() {
         {withMetrics.length > 1 && (
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="w-14 shrink-0 text-[11px] text-neutral-400" style={body}>
-              Device
+              {t({ en: "Device", id: "Perangkat" })}
             </span>
             {withMetrics.map((d) => (
               <Pill key={d.id} active={d.id === device.id} onClick={() => choose(d.id, d.metrics.includes(metric) ? metric : d.metrics[0])}>
@@ -69,11 +72,11 @@ function GreenhouseTrends() {
         )}
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="w-14 shrink-0 text-[11px] text-neutral-400" style={body}>
-            Reading
+            {t({ en: "Reading", id: "Bacaan" })}
           </span>
           {device.metrics.map((m) => (
             <Pill key={m} tone={metricMeta(m).color} active={m === metric} onClick={() => choose(device.id, m)}>
-              {metricMeta(m).label}
+              {metricLabel(m, lang)}
             </Pill>
           ))}
         </div>

@@ -3,6 +3,7 @@
 // (docs/setup/SETUP-CCTV.md). Kept free of React so it can be tested.
 
 import { getAccessToken } from "../auth/supabase";
+import type { Lang } from "../i18n-core";
 
 export type CctvQuality = "sd" | "hd";
 export type PtzDir = "left" | "right" | "up" | "down" | "stop";
@@ -24,6 +25,17 @@ export const CCTV_FEEDS: Record<string, CctvFeed> = {
 };
 
 export const LIVE_FEED = CCTV_FEEDS["CCTV-GROW"];
+
+const FEED_TEXT_ID: Record<string, { label: string; device?: string }> = {
+  "CCTV-GROW": { label: "Kamera ruang tanam" },
+  "CCTV-CONTROL": { label: "Kamera ruang kontrol", device: "Belum dipasang" },
+};
+
+/** A feed's name in the reader's language. */
+export const feedLabel = (feed: CctvFeed, lang: Lang = "en") => (lang === "id" ? FEED_TEXT_ID[feed.id]?.label ?? feed.label : feed.label);
+
+/** A feed's device line in the reader's language (a model name stays as it is). */
+export const feedDevice = (feed: CctvFeed, lang: Lang = "en") => (lang === "id" ? FEED_TEXT_ID[feed.id]?.device ?? feed.device : feed.device);
 
 export function cctvFeed(objectId: string | undefined | null): CctvFeed | null {
   return objectId ? CCTV_FEEDS[objectId] ?? null : null;
@@ -69,6 +81,19 @@ export class CctvError extends Error {
   constructor(message: string, readonly kind: "not_set_up" | "not_allowed" | "offline") {
     super(message);
   }
+}
+
+const CCTV_ERROR_ID: Record<CctvError["kind"], string> = {
+  not_set_up: "Kamera belum disiapkan.",
+  not_allowed: "Akses kamera ditolak.",
+  offline: "Kamera tidak dapat dihubungi.",
+};
+
+/** What to tell the reader about a camera error; English keeps the error's own message. */
+export function cctvErrorText(e: unknown, lang: Lang = "en"): string {
+  if (e instanceof CctvError) return lang === "id" ? CCTV_ERROR_ID[e.kind] : e.message;
+  const message = e instanceof Error ? e.message : String(e);
+  return lang === "id" ? "Kamera tidak dapat dihubungi." : message;
 }
 
 export async function fetchTicket(): Promise<CctvTicket> {

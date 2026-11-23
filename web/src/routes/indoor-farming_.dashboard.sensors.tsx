@@ -1,15 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { body } from "../lib/fonts";
 import {
-  DASHBOARD_NAV,
-  METRICS,
   STATUS_TONE,
-  ZONES,
+  actuatorLabel,
+  dashboardScreen,
   formatValue,
+  metricsFor,
   readingAt,
   statusOf,
+  zonesFor,
   ACTUATOR_TONE,
 } from "../lib/indoor-dashboard";
+import { headLang, useLang, useT } from "../lib/i18n";
 import { useDashboard } from "../lib/dashboard-state";
 import { Panel } from "../components/dashboard/parts";
 import { ScreenHeading } from "../components/dashboard/AppShell";
@@ -18,28 +20,35 @@ import { CircleDot } from "lucide-react";
 
 export const Route = createFileRoute("/indoor-farming_/dashboard/sensors")({
   component: SensorsScreen,
-  head: () => ({ meta: [{ title: "Sensors · Dashboard | smartagri" }] }),
+  head: ({ matches }) => ({ meta: [{ title: headLang(matches) === "id" ? "Sensor · Dashboard | smartagri" : "Sensors · Dashboard | smartagri" }] }),
 });
 
-const NAV = DASHBOARD_NAV.find((n) => n.label === "Sensors")!;
 
 // The instrument list behind the readings. Each metric names the sensor that
 // produces it, so this screen is generated from the same METRICS table the
 // rest of the dashboard reads: there is no second list to keep in step.
 function SensorsScreen() {
   const { tick, actuators } = useDashboard();
+  const lang = useLang();
+  const t = useT();
+  const NAV = dashboardScreen("/indoor-farming/dashboard/sensors", lang);
+  const METRICS = metricsFor(lang);
+  const ZONES = zonesFor(lang);
   const keys = [...AERIAL_KEYS, ...ROOT_KEYS];
   const online = ZONES.filter((z) => z.online);
 
   return (
     <>
-      <ScreenHeading title="Sensors" blurb={NAV.blurb} />
+      <ScreenHeading title={NAV.label} blurb={NAV.blurb} />
 
       <Panel
-        title="Deployed instruments"
+        title={t({ en: "Deployed instruments", id: "Instrumen terpasang" })}
         action={
           <span className="text-[11px] text-neutral-400" style={body}>
-            {keys.length} parameters · {online.length} rooms reporting
+            {t({
+              en: `${keys.length} parameters · ${online.length} rooms reporting`,
+              id: `${keys.length} parameter · ${online.length} ruang mengirim data`,
+            })}
           </span>
         }
       >
@@ -47,8 +56,8 @@ function SensorsScreen() {
           <table className="w-full min-w-[720px] border-collapse text-left">
             <thead>
               <tr className="text-[11px] text-neutral-400">
-                <th className="pb-2 pr-3 font-medium" style={body}>Parameter</th>
-                <th className="pb-2 pr-3 font-medium" style={body}>Instrument</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>{t({ en: "Parameter", id: "Parameter" })}</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>{t({ en: "Instrument", id: "Instrumen" })}</th>
                 {online.map((z) => (
                   <th key={z.id} className="pb-2 pr-3 font-medium text-right" style={body}>
                     {z.short}
@@ -81,7 +90,7 @@ function SensorsScreen() {
                           className="py-2.5 pr-3 text-right text-[13px] font-medium tabular-nums"
                           style={{ ...body, color: STATUS_TONE[status].color }}
                         >
-                          {formatValue(k, r[k])}
+                          {formatValue(k, r[k], lang)}
                         </td>
                       );
                     })}
@@ -94,7 +103,7 @@ function SensorsScreen() {
       </Panel>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <Panel title="Room reporting status">
+        <Panel title={t({ en: "Room reporting status", id: "Status pengiriman ruang" })}>
           <div className="flex flex-col gap-2.5">
             {ZONES.map((z) => (
               <div key={z.id} className="flex items-center gap-3">
@@ -109,14 +118,14 @@ function SensorsScreen() {
                   className="text-[12px] font-medium shrink-0"
                   style={{ ...body, color: z.online ? "#0E9F6E" : "#C4342F" }}
                 >
-                  {z.online ? "Reporting" : "No data"}
+                  {z.online ? t({ en: "Reporting", id: "Mengirim data" }) : t({ en: "No data", id: "Tidak ada data" })}
                 </span>
               </div>
             ))}
           </div>
         </Panel>
 
-        <Panel title="Actuators">
+        <Panel title={t({ en: "Actuators", id: "Aktuator" })}>
           <div className="flex flex-col gap-2.5">
             {actuators.map((d) => (
               <div key={d.name} className="flex items-center gap-3">
@@ -137,7 +146,7 @@ function SensorsScreen() {
                     backgroundColor: ACTUATOR_TONE[d.state].bg,
                   }}
                 >
-                  {ACTUATOR_TONE[d.state].label}
+                  {actuatorLabel(d.state, lang)}
                 </span>
               </div>
             ))}

@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import StockCountPage from "../components/erp/StockCountPage";
+import { headLang } from "../lib/i18n";
 
 export const Route = createFileRoute("/erp/stock-count")({
   component: StockCountPage,
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Stock count | agrosphere" },
+      { title: headLang(matches) === "id" ? "Stok opname | agrosphere" : "Stock count | agrosphere" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

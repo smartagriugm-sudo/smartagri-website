@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, RefreshCw } from "lucide-react";
-import { SHELVES, slotColor, SLOT_STATE_KEYS, SLOT_STATES, type Slot } from "../../lib/pf/chamber";
+import { SHELVES, slotColor, slotStateLabel, SLOT_STATE_KEYS, type Slot } from "../../lib/pf/chamber";
 import { batchStage, fetchBatches, fetchSeedLots, batchLabel, jakartaToday } from "../../lib/pf/batch";
-import { HOLES_TOTAL, HOLE_STATE_KEYS, HOLE_STATES, addDays, isPlanted, stateColor, type Hole, type HoleState } from "../../lib/pf/facility";
-import { fetchFoundationSummary } from "../../lib/pf/foundation";
+import { HOLES_TOTAL, HOLE_STATE_KEYS, addDays, holeStateLabel, isPlanted, stateColor, type Hole, type HoleState } from "../../lib/pf/facility";
+import { erpMessage, fetchFoundationSummary } from "../../lib/pf/foundation";
 import { buildWork, formatShortDate, positionOf, scheduleBar, scheduleWindow, weekTicks, type WorkItem, type WorkTone } from "../../lib/pf/dashboard";
+import { localeOf, useLang, useT } from "../../lib/i18n";
 import { batchWork } from "../../lib/pf/work";
-import { ago, formatWithUnit, latestAt, metricInfo } from "../../lib/pf/monitoring";
+import { ago, formatWithUnit, latestAt, metricLabel } from "../../lib/pf/monitoring";
 import { fetchPlans, fetchWorkOrders } from "../../lib/pf/cost";
-import { attendanceFlags, buildRoster, clockText, contractEndingSoon, fetchAllContracts, fetchAttendance, fetchLeaves, fetchPeople, fetchShifts } from "../../lib/pf/people";
+import { LEAVE_TYPES, attendanceFlags, buildRoster, clockText, contractEndingSoon, fetchAllContracts, fetchAttendance, fetchLeaves, fetchPeople, fetchShifts } from "../../lib/pf/people";
 import { fetchItems, fetchOpenShortages, fetchPurchaseOrders, fetchStockLots, formatQty, formatShort } from "../../lib/pf/inventory";
 import { fetchAvailableLots, fetchInvoices, fetchOrders, formatKg, formatRupiah, roundKg } from "../../lib/pf/sales";
 import { addDays as addCalendarDays } from "../../lib/pf/facility";
@@ -20,7 +21,7 @@ import { RACK_NUMBERS, TIER_NUMBERS } from "../../lib/pf/provider";
 import { useErpStore } from "./ErpContext";
 import ConditionStage from "./ConditionStage";
 import { WorkLinkTo } from "./WorkLinkTo";
-import { ErrorNote, SLOW_TEXT, formatDateTime, useErpAccess, useLoad, useSlow } from "./page";
+import { ErrorNote, formatDateTime, slowText, useErpAccess, useLoad, useSlow } from "./page";
 
 // The ERP's front page, top to bottom: the facility and its conditions, what fills it
 // beside what needs doing today, then every running batch on one calendar. It takes
@@ -104,6 +105,7 @@ const TONE: Record<WorkTone, string> = {
 
 // On a phone the tag and the action share the first line, so a row stays two lines of text under one of controls.
 function WorkRow({ item, canAct, phoneHidden }: { item: WorkItem; canAct: boolean; phoneHidden: boolean }) {
+  const t = useT();
   return (
     <li className={`${phoneHidden ? "hidden sm:flex" : "flex"} flex-wrap items-center gap-x-3 border-t border-[#EDF2F2] px-4 pb-2.5 sm:flex-nowrap sm:pt-2.5`}>
       <span className={`w-[104px] shrink-0 rounded-md px-2 py-0.5 text-center text-[12.5px] font-medium ${TONE[item.tone]}`}>{item.tag}</span>
@@ -112,7 +114,7 @@ function WorkRow({ item, canAct, phoneHidden }: { item: WorkItem; canAct: boolea
         <span className="block truncate text-[13px] text-[#4F6B73]">{item.detail}</span>
       </span>
       <WorkLinkTo link={item.link} className="ml-auto inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-0">
-        {canAct ? item.action : "View"}
+        {canAct ? item.action : t({ en: "View", id: "Lihat" })}
       </WorkLinkTo>
     </li>
   );
@@ -136,26 +138,28 @@ function WorkPlaceholder() {
 
 function WorkPanel({ items, known, loading, canAct, stamp, refreshing, onRefresh }: { items: WorkItem[]; known: boolean; loading: boolean; canAct: boolean; stamp: string | null; refreshing: boolean; onRefresh: () => void }) {
   const [all, setAll] = useState(false);
+  const lang = useLang();
+  const t = useT();
   const slow = useSlow(loading);
   const shown = all ? items : items.slice(0, WORK_SHOWN);
   return (
     <section className={`${panel} flex min-w-0 flex-col`} aria-labelledby="work-title">
       <div className="flex min-h-[48px] items-center justify-between gap-3 py-1.5 pl-4 pr-2">
         <h2 id="work-title" className={sectionTitle}>
-          Needs action{known && <span className="ml-1.5 tabular-nums text-[#4F6B73]">{items.length}</span>}
+          {t({ en: "Needs action", id: "Perlu tindakan" })}{known && <span className="ml-1.5 tabular-nums text-[#4F6B73]">{items.length}</span>}
         </h2>
         <div className="flex items-center gap-1.5 text-[12.5px] tabular-nums text-[#4F6B73]">
-          {loading ? <span role="status">{slow ? SLOW_TEXT : "Loading…"}</span> : stamp && <span className="whitespace-nowrap">Data at {stamp}</span>}
-          <button type="button" disabled={refreshing} onClick={onRefresh} aria-label="Reload data" className="grid h-11 w-11 place-items-center rounded-lg text-[#36525A] hover:bg-[#EEF5F5] disabled:opacity-50 sm:h-8 sm:w-8">
+          {loading ? <span role="status">{slow ? slowText(lang) : t({ en: "Loading…", id: "Memuat…" })}</span> : stamp && <span className="whitespace-nowrap">{t({ en: "Data at", id: "Data pukul" })} {stamp}</span>}
+          <button type="button" disabled={refreshing} onClick={onRefresh} aria-label={t({ en: "Reload data", id: "Muat ulang data" })} className="grid h-11 w-11 place-items-center rounded-lg text-[#36525A] hover:bg-[#EEF5F5] disabled:opacity-50 sm:h-8 sm:w-8">
             <RefreshCw className={`h-4 w-4 ${refreshing ? "motion-safe:animate-spin" : ""}`} strokeWidth={1.75} />
           </button>
         </div>
       </div>
       {!known ? (
-        loading ? <WorkPlaceholder /> : <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">The task list cannot be shown yet.</p>
+        loading ? <WorkPlaceholder /> : <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">{t({ en: "The task list cannot be shown yet.", id: "Daftar tugas belum bisa ditampilkan." })}</p>
       ) : items.length === 0 ? (
         <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">
-          Nothing pending.
+          {t({ en: "Nothing pending.", id: "Tidak ada yang tertunda." })}
         </p>
       ) : (
         <ul>{shown.map((item, i) => <WorkRow key={item.key} item={item} canAct={canAct} phoneHidden={!all && i >= WORK_SHOWN_ON_PHONE} />)}</ul>
@@ -163,10 +167,10 @@ function WorkPanel({ items, known, loading, canAct, stamp, refreshing, onRefresh
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-[#EDF2F2] px-4 text-[14px] font-medium text-[#0B6477]">
         {items.length > WORK_SHOWN_ON_PHONE ? (
           <button type="button" aria-expanded={all} onClick={() => setAll(!all)} className={`${items.length > WORK_SHOWN ? "" : "sm:invisible"} min-h-[44px] text-left hover:underline`}>
-            {all ? "Show less" : `View all (${items.length})`}
+            {all ? t({ en: "Show less", id: "Tampilkan lebih sedikit" }) : t({ en: `View all (${items.length})`, id: `Lihat semua (${items.length})` })}
           </button>
         ) : <span />}
-        <Link to="/erp/batch" className="inline-flex min-h-[44px] items-center gap-1 whitespace-nowrap hover:underline">All batches <ArrowRight className="h-3.5 w-3.5" /></Link>
+        <Link to="/erp/batch" className="inline-flex min-h-[44px] items-center gap-1 whitespace-nowrap hover:underline">{t({ en: "All batches", id: "Semua batch" })} <ArrowRight className="h-3.5 w-3.5" /></Link>
       </div>
     </section>
   );
@@ -177,18 +181,19 @@ function WorkPanel({ items, known, loading, canAct, stamp, refreshing, onRefresh
 const dash = "-";
 
 function TierCell({ code, holes, known }: { code: string; holes: Hole[]; known: boolean }) {
+  const t = useT();
   const counts = new Map<HoleState, number>();
   for (const h of holes) counts.set(h.state, (counts.get(h.state) ?? 0) + 1);
   const planted = holes.filter((h) => isPlanted(h.state));
   const batch = planted.find((h) => h.batch)?.batch;
-  const label = !known ? dash : (batch ?? (counts.get("sanitasi") ? "Sanitation" : "Empty"));
+  const label = !known ? dash : (batch ?? (counts.get("sanitasi") ? t({ en: "Sanitation", id: "Sanitasi" }) : t({ en: "Empty", id: "Kosong" })));
   const target = holes[0];
   return (
     <Link
       to="/erp/plant-factory"
       search={target ? { hole: target.id } : {}}
       className="block rounded-lg border border-[#E3ECED] px-2.5 py-2 hover:border-[#14919B]"
-      aria-label={known ? `${code}: ${label}, ${planted.length} of ${holes.length} holes filled` : code}
+      aria-label={known ? t({ en: `${code}: ${label}, ${planted.length} of ${holes.length} holes filled`, id: `${code}: ${label}, ${planted.length} dari ${holes.length} lubang terisi` }) : code}
     >
       <span className="flex items-baseline justify-between gap-2 text-[12.5px]">
         <span className="font-medium text-[#0F2F36]">{code}</span>
@@ -199,16 +204,17 @@ function TierCell({ code, holes, known }: { code: string; holes: Hole[]; known: 
           <span key={s} style={{ width: `${((counts.get(s) ?? 0) / Math.max(holes.length, 1)) * 100}%`, background: stateColor(s) }} />
         ))}
       </span>
-      <span className="mt-1 block text-[12px] tabular-nums text-[#4F6B73]">{known ? planted.length : dash} of {holes.length}</span>
+      <span className="mt-1 block text-[12px] tabular-nums text-[#4F6B73]">{known ? planted.length : dash} {t({ en: "of", id: "dari" })} {holes.length}</span>
     </Link>
   );
 }
 
 function TrayMark({ slot }: { slot: Slot }) {
+  const lang = useLang();
   const empty = slot.state === "kosong";
   return (
     <span
-      title={empty ? `${slot.id}: empty` : `${slot.id}: ${slot.batch ?? ""}, ${SLOT_STATES[slot.state].label}`}
+      title={empty ? `${slot.id}: ${lang === "id" ? "kosong" : "empty"}` : `${slot.id}: ${slot.batch ?? ""}, ${slotStateLabel(slot.state, lang)}`}
       className={`h-[22px] flex-1 rounded-[3px] ${empty ? "border border-[#DCE7E8] bg-white" : ""}`}
       style={empty ? undefined : { background: slotColor(slot.state) }}
     />
@@ -228,16 +234,19 @@ function Legend({ items }: { items: { key: string; label: string; color: string 
 
 /** Temperature and humidity at a place, from its sensors. Says nothing where none report. */
 function Conditions({ store, place, note }: { store: ErpStore; place: string; note?: string }) {
+  const lang = useLang();
+  const t = useT();
   const latest = store.monitoring?.latest ?? [];
   const parts = ["suhu", "rh"].map((m) => latestAt(latest, place, m)).filter((r) => r !== null);
   return (
     <Link to="/erp/monitoring" className="mb-2.5 flex min-h-[44px] items-center text-[13px] sm:block sm:min-h-0 text-[#4F6B73] hover:text-[#0B6477]">
-      {note && `${note} · `}{parts.length ? parts.map((r) => formatWithUnit(r.metric, r.value)).join(" · ") : "Sensors not connected yet"}
+      {note && `${note} · `}{parts.length ? parts.map((r) => formatWithUnit(r.metric, r.value, lang)).join(" · ") : t({ en: "Sensors not connected yet", id: "Sensor belum terhubung" })}
     </Link>
   );
 }
 
 function FacilityHead({ title, to, value, unit }: { title: string; to: "/erp/plant-factory" | "/erp/seedlings"; value: string; unit: string }) {
+  const t = useT();
   return (
     <div className="mb-1 flex items-end justify-between gap-3">
       <div>
@@ -245,13 +254,15 @@ function FacilityHead({ title, to, value, unit }: { title: string; to: "/erp/pla
         <p className="tabular-nums text-[#0F2F36]"><span className="text-[24px] font-semibold leading-tight tracking-[-0.02em]">{value}</span> <span className="whitespace-nowrap text-[13px] text-[#4F6B73]">{unit}</span></p>
       </div>
       <Link to={to} className="inline-flex min-h-[44px] items-center gap-1 whitespace-nowrap text-[13px] font-medium text-[#0B6477] hover:underline sm:min-h-0">
-        Open 3D <ArrowRight className="h-3.5 w-3.5" />
+        {t({ en: "Open 3D", id: "Buka 3D" })} <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </div>
   );
 }
 
 function FacilityPanel({ store }: { store: ErpStore }) {
+  const lang = useLang();
+  const t = useT();
   const shown = (v: number) => (store.hasData ? `${v}` : dash);
   const holes = [...store.pf.holes.values()];
   const filled = holes.filter((h) => isPlanted(h.state)).length;
@@ -262,12 +273,12 @@ function FacilityPanel({ store }: { store: ErpStore }) {
 
   return (
     <section className={`${panel} @container min-w-0`} aria-labelledby="facility-title">
-      <h2 id="facility-title" className={`${sectionTitle} px-4 pt-3`}>Inside the facility</h2>
+      <h2 id="facility-title" className={`${sectionTitle} px-4 pt-3`}>{t({ en: "Inside the facility", id: "Di dalam fasilitas" })}</h2>
 
       <div className="grid grid-cols-1 @[620px]:grid-cols-2">
         <div className="min-w-0 px-4 pb-3 pt-2.5">
-          <FacilityHead title="Plant factory · PF01" to="/erp/plant-factory" value={shown(filled)} unit={`of ${HOLES_TOTAL} holes`} />
-          <Conditions store={store} place="PF01" note={`${store.hasData ? store.freeCapacity() : dash} ready to use`} />
+          <FacilityHead title="Plant factory · PF01" to="/erp/plant-factory" value={shown(filled)} unit={t({ en: `of ${HOLES_TOTAL} holes`, id: `dari ${HOLES_TOTAL} lubang` })} />
+          <Conditions store={store} place="PF01" note={`${store.hasData ? store.freeCapacity() : dash} ${t({ en: "ready to use", id: "siap dipakai" })}`} />
           <div className="grid grid-cols-2 gap-2">
             {TIER_NUMBERS.flatMap((tier) =>
               RACK_NUMBERS.map((rack) => (
@@ -275,16 +286,16 @@ function FacilityPanel({ store }: { store: ErpStore }) {
               )),
             )}
           </div>
-          <Legend items={holeStates.map((s) => ({ key: s, label: HOLE_STATES[s].label, color: stateColor(s) }))} />
+          <Legend items={holeStates.map((s) => ({ key: s, label: holeStateLabel(s, lang), color: stateColor(s) }))} />
         </div>
 
         <div className="min-w-0 border-t border-[#EDF2F2] px-4 pb-3 pt-2.5 @[620px]:border-l @[620px]:border-t-0">
-          <FacilityHead title="Seedlings · CH1" to="/erp/seedlings" value={shown(trays)} unit={`of ${slots.length} trays`} />
+          <FacilityHead title={t({ en: "Seedlings · CH1", id: "Bibit · CH1" })} to="/erp/seedlings" value={shown(trays)} unit={t({ en: `of ${slots.length} trays`, id: `dari ${slots.length} tray` })} />
           <Conditions store={store} place="CH1" />
           <div className="space-y-2">
             {SHELVES.map((shelf) => (
               <div key={shelf.shelf} className="flex items-center gap-2">
-                <span className="w-[40px] shrink-0 text-[12px] text-[#4F6B73]">Shelf {shelf.shelf}</span>
+                <span className="w-[40px] shrink-0 text-[12px] text-[#4F6B73]">{t({ en: "Shelf", id: "Rak" })} {shelf.shelf}</span>
                 {/* Rak 4 is shorter than the rest, and stays shorter here: two empty cells keep the columns in line. */}
                 <div className="grid flex-1 grid-cols-6 gap-1">
                   {slots.filter((s) => s.shelf === shelf.shelf).map((s) => <span key={s.id} className="flex"><TrayMark slot={s} /></span>)}
@@ -292,7 +303,7 @@ function FacilityPanel({ store }: { store: ErpStore }) {
               </div>
             ))}
           </div>
-          <Legend items={trayStates.map((s) => ({ key: s, label: SLOT_STATES[s].label, color: slotColor(s) }))} />
+          <Legend items={trayStates.map((s) => ({ key: s, label: slotStateLabel(s, lang), color: slotColor(s) }))} />
         </div>
       </div>
     </section>
@@ -307,6 +318,8 @@ const OVERDUE_BAR = "#E0A526";
 const MAX_WEEK_LABELS = 12;
 
 function SchedulePanel({ store }: { store: ErpStore }) {
+  const lang = useLang();
+  const t = useT();
   const today = store.today;
   const batches = [...store.batches.values()].filter((b) => b.sownAt).sort((a, b) => addDays(a.sownAt, a.cycle).localeCompare(addDays(b.sownAt, b.cycle)));
   const w = scheduleWindow(batches, today);
@@ -320,30 +333,30 @@ function SchedulePanel({ store }: { store: ErpStore }) {
   return (
     <section className={panel} aria-labelledby="schedule-title">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3">
-        <h2 id="schedule-title" className={sectionTitle}>Batch schedule</h2>
+        <h2 id="schedule-title" className={sectionTitle}>{t({ en: "Batch schedule", id: "Jadwal batch" })}</h2>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#4F6B73]">
-          <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: CHAMBER_BAR }} />Seedlings</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: CHAMBER_BAR }} />{t({ en: "Seedlings", id: "Bibit" })}</span>
           <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: FACTORY_BAR }} />Plant factory</span>
-          {anyOverdue && <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: OVERDUE_BAR }} />Past target</span>}
-          <span>Faded colour: planned</span>
+          {anyOverdue && <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: OVERDUE_BAR }} />{t({ en: "Past target", id: "Lewat target" })}</span>}
+          <span>{t({ en: "Faded colour: planned", id: "Warna pudar: rencana" })}</span>
         </div>
       </div>
 
       {batches.length === 0 ? (
-        <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">{store.mode === "loading" ? "Loading data…" : store.hasData ? "No running batches yet." : "The schedule cannot be shown yet."}</p>
+        <p className="border-t border-[#EDF2F2] px-4 py-6 text-center text-[14px] text-[#4F6B73]">{store.mode === "loading" ? t({ en: "Loading data…", id: "Memuat data…" }) : store.hasData ? t({ en: "No running batches yet.", id: "Belum ada batch berjalan." }) : t({ en: "The schedule cannot be shown yet.", id: "Jadwal belum bisa ditampilkan." })}</p>
       ) : (
         <>
           <div className="hidden border-t border-[#EDF2F2] px-4 pt-2 text-[12px] text-[#4F6B73] md:grid md:grid-cols-[230px_minmax(0,1fr)_84px] md:gap-3">
             <span>Batch</span>
             <div className="relative h-4" aria-hidden="true">
-              {labelledTicks.map((d, i) => <span key={d} className={`absolute -translate-x-1/2 whitespace-nowrap tabular-nums ${i % 2 ? "hidden lg:inline" : ""}`} style={{ left: left(d) }}>{formatShortDate(d)}</span>)}
+              {labelledTicks.map((d, i) => <span key={d} className={`absolute -translate-x-1/2 whitespace-nowrap tabular-nums ${i % 2 ? "hidden lg:inline" : ""}`} style={{ left: left(d) }}>{formatShortDate(d, lang)}</span>)}
             </div>
-            <span className="text-right">Harvest</span>
+            <span className="text-right">{t({ en: "Harvest", id: "Panen" })}</span>
           </div>
           <ul className="px-4 pb-2 pt-1">
             {batches.map((b) => {
               const bar = scheduleBar(b, today);
-              const stage = batchStage({ status: "berjalan", sown_at: b.sownAt, cycle_days: b.cycle, plants_now: store.holesOfBatch(b.code).length, trays_now: store.traysOfBatch(b.code).length }, today);
+              const stage = batchStage({ status: "berjalan", sown_at: b.sownAt, cycle_days: b.cycle, plants_now: store.holesOfBatch(b.code).length, trays_now: store.traysOfBatch(b.code).length }, today, lang);
               const row = (
                 <span className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 py-2 md:grid-cols-[230px_minmax(0,1fr)_84px]">
                   <span className="min-w-0">
@@ -357,7 +370,7 @@ function SchedulePanel({ store }: { store: ErpStore }) {
                     {bar.overdueTo && <span className="absolute inset-y-0" style={{ ...span(bar.end, bar.overdueTo), background: OVERDUE_BAR }} />}
                     <span className="absolute -inset-y-1.5 w-px bg-[#0B6477]" style={{ left: left(today) }} />
                   </span>
-                  <span className="col-start-2 row-start-1 text-right text-[13px] tabular-nums text-[#0F2F36] md:col-start-3">{formatShortDate(bar.end)}</span>
+                  <span className="col-start-2 row-start-1 text-right text-[13px] tabular-nums text-[#0F2F36] md:col-start-3">{formatShortDate(bar.end, lang)}</span>
                 </span>
               );
               return (
@@ -367,7 +380,7 @@ function SchedulePanel({ store }: { store: ErpStore }) {
               );
             })}
           </ul>
-          <p className="border-t border-[#EDF2F2] px-4 py-2 text-[12px] text-[#4F6B73]">Vertical line: today, {formatShortDate(today)}</p>
+          <p className="border-t border-[#EDF2F2] px-4 py-2 text-[12px] text-[#4F6B73]">{t({ en: "Vertical line: today,", id: "Garis vertikal: hari ini," })} {formatShortDate(today, lang)}</p>
         </>
       )}
     </section>
@@ -378,6 +391,8 @@ function SchedulePanel({ store }: { store: ErpStore }) {
 
 export default function ErpDashboard() {
   const store = useErpStore();
+  const lang = useLang();
+  const t = useT();
   const records = useLoad(fetchRecords);
   const { canOperate, canReadSales, canManageProduction, canReadPeople, canReadPrivate, canReadMaintenance } = useErpAccess();
   const maintenance = useLoad(async () => (canReadMaintenance ? fetchMaintenanceDue(jakartaToday()) : []), [canReadMaintenance]);
@@ -392,30 +407,31 @@ export default function ErpDashboard() {
   const known = store.hasData && (records.data !== null || recordsMissing);
   const loading = store.mode === "loading" || records.loading;
 
-  const rosterToday = team.data ? buildRoster(store.today, store.today, new Date(), team.data.shifts, team.data.attendance, team.data.leaves) : [];
+  const rosterToday = team.data ? buildRoster(store.today, store.today, new Date(), team.data.shifts, team.data.attendance, team.data.leaves, lang) : [];
   const items = known
     ? buildWork({
+        lang,
         maintenanceDue: maintenance.data ?? [],
         absentToday: rosterToday.filter((r) => r.state === "tidak_hadir").map((r) => ({ id: r.key, name: r.name, start: clockText(r.shift!.start_at) })),
-        flaggedAttendance: team.data?.attendance.filter((a) => a.work_date === store.today && a.source === "ponsel" && attendanceFlags(a).length > 0).map((a) => ({ id: a.id, name: a.full_name, flag: attendanceFlags(a)[0] })),
-        leavePending: team.data?.leaves.filter((l) => l.status === "diajukan").map((l) => ({ id: l.id, name: l.full_name, label: l.type, from: l.start_date })),
-        contractsEnding: team.data?.contracts.filter((c) => contractEndingSoon(c, store.today)).map((c) => ({ id: c.id, name: team.data!.people.find((p) => p.id === c.person_id)?.full_name ?? "seseorang", until: c.end_date! })),
+        flaggedAttendance: team.data?.attendance.filter((a) => a.work_date === store.today && a.source === "ponsel" && attendanceFlags(a).length > 0).map((a) => ({ id: a.id, name: a.full_name, flag: attendanceFlags(a, lang)[0] })),
+        leavePending: team.data?.leaves.filter((l) => l.status === "diajukan").map((l) => ({ id: l.id, name: l.full_name, label: lang === "id" ? (LEAVE_TYPES.find((x) => x.key === l.type)?.labelId.toLowerCase() ?? l.type) : l.type, from: l.start_date })),
+        contractsEnding: team.data?.contracts.filter((c) => contractEndingSoon(c, store.today)).map((c) => ({ id: c.id, name: team.data!.people.find((p) => p.id === c.person_id)?.full_name ?? t({ en: "someone", id: "seseorang" }), until: c.end_date! })),
         today: store.today,
         batches: batchWork(store),
         freeHoles: store.freeCapacity(),
         sanitation: store.mode === "sample" ? [] : store.tiersInSanitation(),
         planned: records.data?.planned.map((b) => ({ id: b.id, code: b.code, crop: batchLabel(b) })) ?? null,
         lots: records.data ? [...records.data.lots, ...(stock.data?.lots.map((l) => ({ id: l.id, lot_no: l.lot_no, qty_on_hand: l.qty_on_hand, unit: l.unit as never, expiry_date: l.expiry_date, itemName: l.item_name })) ?? [])] : null,
-        lowStock: stock.data?.items.filter((i) => i.active && i.below_reorder).map((i) => ({ id: i.id, name: i.name, left: formatQty(i.usable_qty, i.unit), minimum: formatQty(i.reorder_point ?? 0, i.unit) })),
-        shortages: stock.data?.shortages.map((x) => ({ id: x.id, name: x.item_name, short: formatShort(x.qty_short, x.unit), batch: x.batch_code })),
+        lowStock: stock.data?.items.filter((i) => i.active && i.below_reorder).map((i) => ({ id: i.id, name: i.name, left: formatQty(i.usable_qty, i.unit, lang), minimum: formatQty(i.reorder_point ?? 0, i.unit, lang) })),
+        shortages: stock.data?.shortages.map((x) => ({ id: x.id, name: x.item_name, short: formatShort(x.qty_short, x.unit, lang), batch: x.batch_code })),
         purchasesLate: stock.data?.purchases.filter((p) => p.status === "dipesan" && p.open_lines > 0 && p.expected_on && p.expected_on < store.today).map((p) => ({ id: p.id, no: p.po_no, supplier: p.supplier_name, expected: p.expected_on! })),
         setup: records.data?.setup ?? null,
-        alarms: store.monitoring?.alarms.map((a) => ({ id: a.id, level: a.level, label: metricInfo(a.metric).label, value: formatWithUnit(a.metric, a.value), place: a.location_code, since: formatDateTime(a.opened_at) })),
-        silentDevices: store.monitoring?.assets.filter((a) => a.link_state === "terlambat").map((a) => ({ id: a.id, code: a.code, since: a.last_seen_at ? ago(a.last_seen_at) : "unknown" })),
+        alarms: store.monitoring?.alarms.map((a) => ({ id: a.id, level: a.level, label: metricLabel(a.metric, lang), value: formatWithUnit(a.metric, a.value, lang), place: a.location_code, since: formatDateTime(a.opened_at, lang) })),
+        silentDevices: store.monitoring?.assets.filter((a) => a.link_state === "terlambat").map((a) => ({ id: a.id, code: a.code, since: a.last_seen_at ? ago(a.last_seen_at, new Date(), lang) : t({ en: "unknown", id: "tidak diketahui" }) })),
         calibrationsDue: store.monitoring?.assets.filter((a) => a.status === "aktif" && a.next_due && a.next_due < store.today).map((a) => ({ id: a.id, code: a.code, due: a.next_due! })),
-        ordersDue: sales.data?.orders.filter((o) => o.status === "dikonfirmasi" && o.requested_on && o.requested_on <= store.today && o.delivered_kg < o.ordered_kg).map((o) => ({ id: o.id, no: o.so_no, customer: o.partner_name, requested: o.requested_on!, openKg: formatKg(roundKg(o.ordered_kg - o.delivered_kg)) })),
-        invoicesOverdue: sales.data?.invoices.filter((i) => i.status === "terbit" && i.balance > 0 && i.due_on < store.today).map((i) => ({ id: i.id, no: i.invoice_no, customer: i.partner_name, due: i.due_on, balance: formatRupiah(i.balance) })),
-        lotsAging: sales.data?.lots.filter((l) => l.best_before && l.best_before >= store.today && l.best_before <= addCalendarDays(store.today, LOT_AGING_DAYS)).map((l) => ({ id: l.id, code: l.lot_code, label: cropLabel({ name: l.crop_name, variety: l.crop_variety }), kg: formatKg(l.remaining_kg), until: l.best_before! })),
+        ordersDue: sales.data?.orders.filter((o) => o.status === "dikonfirmasi" && o.requested_on && o.requested_on <= store.today && o.delivered_kg < o.ordered_kg).map((o) => ({ id: o.id, no: o.so_no, customer: o.partner_name, requested: o.requested_on!, openKg: formatKg(roundKg(o.ordered_kg - o.delivered_kg), lang) })),
+        invoicesOverdue: sales.data?.invoices.filter((i) => i.status === "terbit" && i.balance > 0 && i.due_on < store.today).map((i) => ({ id: i.id, no: i.invoice_no, customer: i.partner_name, due: i.due_on, balance: formatRupiah(i.balance, lang) })),
+        lotsAging: sales.data?.lots.filter((l) => l.best_before && l.best_before >= store.today && l.best_before <= addCalendarDays(store.today, LOT_AGING_DAYS)).map((l) => ({ id: l.id, code: l.lot_code, label: cropLabel({ name: l.crop_name, variety: l.crop_variety }), kg: formatKg(l.remaining_kg, lang), until: l.best_before! })),
       })
     : [];
 
@@ -427,12 +443,12 @@ export default function ErpDashboard() {
 
   const failure = store.mode === "error" ? store.loadError : recordsFailed ? records.error!.message : sales.error?.message ?? stock.error?.message ?? team.error?.message ?? maintenance.error?.message ?? null;
 
-  const stamp = store.loadedAt ? new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(store.loadedAt) : null;
+  const stamp = store.loadedAt ? new Intl.DateTimeFormat(lang === "id" ? localeOf(lang) : "en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(store.loadedAt) : null;
 
   return (
     <main className="flex-1 space-y-4 px-3 pb-6 pt-4 md:px-4">
-      <h1 className="sr-only">agrosphere overview</h1>
-      {failure && <ErrorNote message={`${failure}${store.hasData ? " The figures below are from the last load." : ""}`} onRetry={refresh} />}
+      <h1 className="sr-only">{t({ en: "agrosphere overview", id: "Ringkasan agrosphere" })}</h1>
+      {failure && <ErrorNote message={`${erpMessage(failure, lang)}${store.hasData ? t({ en: " The figures below are from the last load.", id: " Angka di bawah dari pemuatan terakhir." }) : ""}`} onRetry={refresh} />}
       <ConditionStage store={store} />
       <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
         <FacilityPanel store={store} />

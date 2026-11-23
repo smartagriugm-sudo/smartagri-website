@@ -25,7 +25,9 @@ import {
   type ActuatorRow,
   type ResourceRow,
   type RangeKey,
+  zonesFor,
 } from "./indoor-dashboard";
+import { useLang } from "./i18n";
 
 // Shared state for the dashboard application.
 //
@@ -82,8 +84,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [range, setRange] = useState<RangeKey>("daily");
   const [tick, setTick] = useState(INITIAL_TICK);
   const [playing, setPlaying] = useState(true);
+  const lang = useLang();
+  // Rooms carry their names, crops, and stages in the reader's language.
+  const zones = zonesFor(lang);
 
-  const zone = ZONES.find((z) => z.id === zoneId) ?? ZONES[0];
+  const zone = zones.find((z) => z.id === zoneId) ?? zones[0];
 
   // The clock only starts after mount, so first paint matches the server.
   useEffect(() => {
@@ -101,11 +106,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   );
   const weather = useMemo(() => sampleWeather(tick), [tick]);
   const rain = useMemo(() => rainfallToDate(tick), [tick]);
-  const actuators = useMemo(() => actuatorsAt(tick), [tick]);
-  const resources = useMemo(() => resourceUseAt(tick), [tick]);
-  const alerts = useMemo(() => alertsAt(tick), [tick]);
+  const actuators = useMemo(() => actuatorsAt(tick, lang), [tick, lang]);
+  const resources = useMemo(() => resourceUseAt(tick, lang), [tick, lang]);
+  const alerts = useMemo(() => alertsAt(tick, lang), [tick, lang]);
 
-  const onlineZones = ZONES.filter((z) => z.online);
+  const onlineZones = zones.filter((z) => z.online);
   const totalArea = onlineZones.reduce((sum, z) => sum + z.area, 0);
 
   // A zone is healthy when every aerial and root metric sits inside its band.

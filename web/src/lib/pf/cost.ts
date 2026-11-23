@@ -1,5 +1,6 @@
 import { addDays } from "./facility";
 import { check, db, unwrap, parseAmount } from "./foundation";
+import type { Lang } from "../i18n-core";
 
 // Costs (supabase/pf-cost.sql): what a batch cost, per kg, bills, and maintenance. The
 // sums run in the database and come back with their parts, so every figure on a page can
@@ -8,24 +9,30 @@ import { check, db, unwrap, parseAmount } from "./foundation";
 /* -------------------------------------------------------------------- types */
 
 export const COST_CATEGORIES = [
-  { key: "listrik", label: "Power" },
-  { key: "air", label: "Water" },
-  { key: "sewa", label: "Rent" },
-  { key: "penyusutan", label: "Depreciation" },
-  { key: "perawatan", label: "Maintenance" },
-  { key: "bahan_lain", label: "Other materials" },
-  { key: "tenaga_lain", label: "Other labour" },
-  { key: "lainnya", label: "Other" },
+  { key: "listrik", label: "Power", labelId: "Listrik" },
+  { key: "air", label: "Water", labelId: "Air" },
+  { key: "sewa", label: "Rent", labelId: "Sewa" },
+  { key: "penyusutan", label: "Depreciation", labelId: "Penyusutan" },
+  { key: "perawatan", label: "Maintenance", labelId: "Pemeliharaan" },
+  { key: "bahan_lain", label: "Other materials", labelId: "Bahan lain" },
+  { key: "tenaga_lain", label: "Other labour", labelId: "Tenaga kerja lain" },
+  { key: "lainnya", label: "Other", labelId: "Lainnya" },
 ] as const;
 export type CostCategory = (typeof COST_CATEGORIES)[number]["key"];
-export const costCategoryLabel = (key: string) => COST_CATEGORIES.find((c) => c.key === key)?.label ?? key;
+export const costCategoryLabel = (key: string, lang: Lang = "en") => {
+  const c = COST_CATEGORIES.find((x) => x.key === key);
+  return c ? (lang === "id" ? c.labelId : c.label) : key;
+};
 
 export const COST_AREAS = [
-  { key: "persemaian", label: "Seedlings" },
-  { key: "plant_factory", label: "Plant factory" },
+  { key: "persemaian", label: "Seedlings", labelId: "Persemaian" },
+  { key: "plant_factory", label: "Plant factory", labelId: "Plant factory" },
 ] as const;
 export type CostArea = (typeof COST_AREAS)[number]["key"];
-export const costAreaLabel = (key: string | null) => COST_AREAS.find((a) => a.key === key)?.label ?? "";
+export const costAreaLabel = (key: string | null, lang: Lang = "en") => {
+  const a = COST_AREAS.find((x) => x.key === key);
+  return a ? (lang === "id" ? a.labelId : a.label) : "";
+};
 /** What a room's bill is shared by. */
 export const areaBasis = (key: string) => (key === "persemaian" ? "nampan-hari" : "lubang-hari");
 
@@ -72,19 +79,20 @@ export const batchTotal = (b: Pick<BatchCost, "material" | "labor" | "direct" | 
 export const perKg = (amount: number, kg: number) => (kg > 0 ? amount / kg : null);
 
 /** What the total leaves out, in words. Empty when it is complete. */
-export function costGaps(b: Pick<BatchCost, "unpriced_lots" | "unrated_minutes">) {
+export function costGaps(b: Pick<BatchCost, "unpriced_lots" | "unrated_minutes">, lang: Lang = "en") {
   const gaps: string[] = [];
-  if (b.unpriced_lots > 0) gaps.push(`${b.unpriced_lots} lots without a price`);
-  if (b.unrated_minutes > 0) gaps.push(`${formatHours(b.unrated_minutes)} without a rate`);
+  if (b.unpriced_lots > 0) gaps.push(lang === "id" ? `${b.unpriced_lots} lot tanpa harga` : `${b.unpriced_lots} lots without a price`);
+  if (b.unrated_minutes > 0) gaps.push(lang === "id" ? `${formatHours(b.unrated_minutes, lang)} tanpa tarif` : `${formatHours(b.unrated_minutes)} without a rate`);
   return gaps;
 }
 
-export const formatHours = (minutes: number) => {
+export const formatHours = (minutes: number, lang: Lang = "en") => {
   const hours = minutes / 60;
-  return `${Number.isInteger(hours) ? hours : hours.toLocaleString("en-GB", { maximumFractionDigits: 1 })} hours`;
+  const n = Number.isInteger(hours) ? hours : hours.toLocaleString(lang === "id" ? "id-ID" : "en-GB", { maximumFractionDigits: 1 });
+  return lang === "id" ? `${n} jam` : `${n} hours`;
 };
 
-export const formatQty = (qty: number) => qty.toLocaleString("en-GB", { maximumFractionDigits: 3 });
+export const formatQty = (qty: number, lang: Lang = "en") => qty.toLocaleString(lang === "id" ? "id-ID" : "en-GB", { maximumFractionDigits: 3 });
 
 export const MONTH_SIMPLE = ["bahan", "tenaga", "listrik", "air"] as const;
 
@@ -112,14 +120,15 @@ export function parseRupiah(text: string) {
   return value;
 }
 
-export function parseEntryForm(f: { amount: string; scope: "batch" | "ruang"; batch: string; area: string; start: string; end: string }) {
+export function parseEntryForm(f: { amount: string; scope: "batch" | "ruang"; batch: string; area: string; start: string; end: string }, lang: Lang = "en") {
+  const id = lang === "id";
   const amount = parseRupiah(f.amount);
-  if (amount === null || amount === 0) return { error: "Quantity must be above zero." } as const;
-  if (f.scope === "batch" && !f.batch) return { error: "Choose a batch." } as const;
-  if (f.scope === "ruang" && !f.area) return { error: "Choose a room." } as const;
-  if (!f.start) return { error: "A date is required." } as const;
+  if (amount === null || amount === 0) return { error: id ? "Jumlah harus lebih dari nol." : "Quantity must be above zero." } as const;
+  if (f.scope === "batch" && !f.batch) return { error: id ? "Pilih batch." : "Choose a batch." } as const;
+  if (f.scope === "ruang" && !f.area) return { error: id ? "Pilih ruang." : "Choose a room." } as const;
+  if (!f.start) return { error: id ? "Tanggal wajib diisi." : "A date is required." } as const;
   const end = f.scope === "batch" ? f.start : f.end;
-  if (!end || end < f.start) return { error: "The period ends before it starts." } as const;
+  if (!end || end < f.start) return { error: id ? "Periode berakhir sebelum dimulai." : "The period ends before it starts." } as const;
   return { error: null, amount, end } as const;
 }
 

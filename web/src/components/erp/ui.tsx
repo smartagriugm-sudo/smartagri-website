@@ -2,9 +2,10 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import type { PerspectiveCamera } from "three";
 import { body, display } from "../../lib/fonts";
-import { HOLE_STATES, HOLE_STATE_KEYS, stateColor, type Batch, type HoleState, type Reading } from "../../lib/pf/facility";
+import { HOLE_STATE_KEYS, holeStateLabel, stateColor, type Batch, type HoleState, type Reading } from "../../lib/pf/facility";
 import { LIFECYCLE_PHASES, lifecycleDay } from "../../lib/pf/store";
 import { modelProgress, onModelProgress, type Facility as ModelFacility, type ModelProgress } from "../../lib/pf/model-load";
+import { useLang, useT, type Lang } from "../../lib/i18n";
 
 // Pieces shared by the two ERP screens, the plant factory and the growth chamber.
 
@@ -91,6 +92,7 @@ export function Segmented<T extends string | number>({ label, value, options, on
 }
 
 export function Readings({ title, items }: { title: string; items: Reading[] }) {
+  const t = useT();
   return (
     <div>
       <p className="mb-2 text-[13px] font-medium text-[#4F6B73]">{title}</p>
@@ -101,7 +103,7 @@ export function Readings({ title, items }: { title: string; items: Reading[] }) 
             <p className="text-[16px] font-semibold tracking-[-0.01em] text-[#0F2F36]">
               {r.value} <span className="text-[12px] font-normal text-[#4F6B73]">{r.unit}</span>
             </p>
-            {!r.ok && <p className="text-[12px] font-medium text-[#B26205]">Out of range</p>}
+            {!r.ok && <p className="text-[12px] font-medium text-[#B26205]">{t({ en: "Out of range", id: "Di luar batas" })}</p>}
           </div>
         ))}
       </div>
@@ -118,6 +120,7 @@ export function Bar({ value, max, color = "#14919B" }: { value: number; max: num
 }
 
 export function StateBreakdown({ counts, total }: { counts: Record<HoleState, number>; total: number }) {
+  const lang = useLang();
   return (
     <div>
       <div className="flex h-2.5 w-full overflow-hidden rounded-full">
@@ -130,7 +133,7 @@ export function StateBreakdown({ counts, total }: { counts: Record<HoleState, nu
           <div key={s} className="flex items-center justify-between text-[12.5px]">
             <span className="flex items-center gap-1.5 text-[#4F6B73]">
               <span className="h-2 w-2 rounded-full" style={{ background: stateColor(s) }} />
-              {HOLE_STATES[s].label}
+              {holeStateLabel(s, lang)}
             </span>
             <span className="font-medium text-[#0F2F36]">{counts[s]}</span>
           </div>
@@ -198,14 +201,16 @@ export function PanelHeader({ eyebrow, title, sub }: { eyebrow: string; title: s
 }
 
 /** Soft hyphens where the long step names may break; the browser shows one only when it breaks there. */
-const breakable = (label: string) => label.replace(/^Germination$/, "Germi­nation").replace(/^Vegetative$/, "Vege­tative");
+const breakable = (label: string) =>
+  label.replace(/^Germination$/, "Germi­nation").replace(/^Vegetative$/, "Vege­tative").replace(/^Perkecambahan$/, "Perke­cambahan").replace(/^Vegetatif$/, "Vege­tatif");
 
 /** One batch's way from sowing in the chamber to harvest in the plant factory. */
 export function Lifecycle({ batch, phase, compact = false }: { batch: Batch; phase: number; compact?: boolean }) {
+  const t = useT();
   return (
     <Card className="h-full px-5 py-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F2F36]" style={display}>Batch flow</p>
+        <p className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F2F36]" style={display}>{t({ en: "Batch flow", id: "Alur batch" })}</p>
         <p className="text-[12.5px] text-[#4F6B73]">{batch.code} · {batch.crop} · {batch.recipe}</p>
       </div>
       <ol className="grid grid-cols-5">
@@ -223,8 +228,8 @@ export function Lifecycle({ batch, phase, compact = false }: { batch: Batch; pha
                 {i + 1}
               </span>
               {/* A fifth of a phone is narrower than "Germination": it breaks at a soft hyphen instead of running into the next step. */}
-              <span className={`mt-1.5 w-full text-[12px] font-medium leading-tight sm:text-[12.5px] ${now ? "text-[#0F2F36]" : "text-[#4F6B73]"}`}>{breakable(p.label)}</span>
-              <span className="text-[12px] text-[#4F6B73]">{compact ? "" : `${p.place} · `}day {lifecycleDay(i, batch)}</span>
+              <span className={`mt-1.5 w-full text-[12px] font-medium leading-tight sm:text-[12.5px] ${now ? "text-[#0F2F36]" : "text-[#4F6B73]"}`}>{breakable(t({ en: p.label, id: p.labelId }))}</span>
+              <span className="text-[12px] text-[#4F6B73]">{compact ? "" : `${t({ en: p.place, id: p.placeId })} · `}{t({ en: "day", id: "hari" })} {lifecycleDay(i, batch)}</span>
             </li>
           );
         })}
@@ -236,27 +241,30 @@ export function Lifecycle({ batch, phase, compact = false }: { batch: Batch; pha
 const MB = 1024 * 1024;
 
 /** What the model is doing, in words: how much is downloaded, or that it is being built. */
-export function progressText(p: ModelProgress | null) {
-  if (!p) return "Loading 3D model…";
-  if (p.phase === "prepare") return "Preparing 3D model…";
+export function progressText(p: ModelProgress | null, lang: Lang = "en") {
+  const id = lang === "id";
+  if (!p) return id ? "Memuat model 3D…" : "Loading 3D model…";
+  if (p.phase === "prepare") return id ? "Menyiapkan model 3D…" : "Preparing 3D model…";
   const got = (p.loaded / MB).toFixed(1);
-  if (!p.total) return `Downloading 3D model · ${got} MB`;
+  if (!p.total) return id ? `Mengunduh model 3D · ${got} MB` : `Downloading 3D model · ${got} MB`;
   const pct = Math.min(99, Math.floor((p.loaded / p.total) * 100));
-  return `Downloading 3D model · ${pct}% of ${(p.total / MB).toFixed(1)} MB`;
+  return id ? `Mengunduh model 3D · ${pct}% dari ${(p.total / MB).toFixed(1)} MB` : `Downloading 3D model · ${pct}% of ${(p.total / MB).toFixed(1)} MB`;
 }
 
 export function SceneStatus({ failed, facility }: { failed: boolean; facility?: ModelFacility }) {
+  const lang = useLang();
+  const t = useT();
   const progress = useSyncExternalStore(onModelProgress, () => (facility ? modelProgress(facility) : null), () => null);
   const pct = progress?.phase === "download" && progress.total ? Math.min(100, (progress.loaded / progress.total) * 100) : null;
   return (
     <div className="absolute inset-0 flex items-center justify-center text-[#4F6B73]">
       {failed ? (
-        <span className="text-[13px]">The 3D model could not be loaded. Reload the page to try again.</span>
+        <span className="text-[13px]">{t({ en: "The 3D model could not be loaded. Reload the page to try again.", id: "Model 3D tidak bisa dimuat. Muat ulang halaman untuk mencoba lagi." })}</span>
       ) : (
         <div className="flex flex-col items-center gap-2" role="status" aria-live="polite">
           <span className="flex items-center">
             <Loader2 className="mr-2 h-5 w-5 animate-spin text-[#0B6477]" />
-            <span className="text-[13px] tabular-nums" style={body}>{progressText(progress)}</span>
+            <span className="text-[13px] tabular-nums" style={body}>{progressText(progress, lang)}</span>
           </span>
           {pct !== null && (
             <span className="block h-1 w-40 overflow-hidden rounded-full bg-[#DCE7E8]" aria-hidden>

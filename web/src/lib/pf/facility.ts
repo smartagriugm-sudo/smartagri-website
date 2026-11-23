@@ -12,6 +12,8 @@
 // A batch germinates in the growth chamber first (chamber.ts), so only batches
 // past transplanting appear in these holes.
 
+import type { Lang } from "../i18n-core";
+
 /* ------------------------------------------------------------------ holes */
 
 export const FACILITY_CODE = "PF01";
@@ -38,6 +40,18 @@ export const HOLE_STATES: Record<HoleState, { label: string; color: number; plan
 };
 
 export const HOLE_STATE_KEYS = Object.keys(HOLE_STATES) as HoleState[];
+
+const HOLE_STATE_LABEL_ID: Record<HoleState, string> = {
+  semai: "Bibit",
+  vegetatif: "Vegetatif",
+  siap_panen: "Siap panen",
+  masalah: "Bermasalah",
+  kosong: "Kosong",
+  sanitasi: "Sanitasi",
+};
+
+/** A hole state's label in the reader's language; English is the `label` above. */
+export const holeStateLabel = (s: HoleState, lang: Lang = "en") => (lang === "id" ? HOLE_STATE_LABEL_ID[s] : HOLE_STATES[s].label);
 
 export const stateColor = (s: HoleState) => `#${HOLE_STATES[s].color.toString(16).padStart(6, "0")}`;
 
@@ -194,3 +208,13 @@ export const RESERVOIR_READINGS: Reading[] = [
   { label: "Solution temperature", value: "23.1", unit: "°C", ok: true },
   { label: "Tank level", value: "74", unit: "%", ok: true },
 ];
+
+const READING_LABEL_ID: Record<string, string> = {
+  Temperature: "Suhu",
+  "Solution temperature": "Suhu larutan",
+  "Tank level": "Level tangki",
+};
+
+/** The sample readings with their labels in the reader's language. */
+export const localizeReadings = (items: readonly Reading[], lang: Lang = "en"): Reading[] =>
+  lang === "id" ? items.map((r) => ({ ...r, label: READING_LABEL_ID[r.label] ?? r.label })) : [...items];

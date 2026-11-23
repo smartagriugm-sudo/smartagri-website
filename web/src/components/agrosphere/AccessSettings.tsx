@@ -6,7 +6,7 @@ import { accent, body, display } from "../../lib/fonts";
 import { useAuth } from "../../lib/auth/auth";
 import { labRoleLabel } from "../../lib/account";
 import { loadSites, type EdgeSite } from "../../lib/edge/field";
-import { ERP_ROLES } from "../../lib/pf/foundation";
+import { roleLabel } from "../../lib/pf/foundation";
 import {
   approveAccount,
   loadAccessRows,
@@ -14,8 +14,10 @@ import {
   setGreenhouseSite,
   setIndoor,
   setPlantFactoryRead,
+  accessAdminErrorText,
   type AccessRow,
 } from "../../lib/agrosphere-admin";
+import { useLang, useT, type Bi } from "../../lib/i18n";
 import AgroHeader from "./AgroHeader";
 
 // The access page: one question, "who can open what?". Waiting accounts come
@@ -26,11 +28,11 @@ import AgroHeader from "./AgroHeader";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 type Filter = "all" | "researchers" | "partners" | "inactive";
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: "all", label: "Everyone active" },
-  { key: "researchers", label: "Researchers" },
-  { key: "partners", label: "Partners" },
-  { key: "inactive", label: "Inactive" },
+const FILTERS: { key: Filter; label: Bi }[] = [
+  { key: "all", label: { en: "Everyone active", id: "Semua yang aktif" } },
+  { key: "researchers", label: { en: "Researchers", id: "Peneliti" } },
+  { key: "partners", label: { en: "Partners", id: "Mitra" } },
+  { key: "inactive", label: { en: "Inactive", id: "Nonaktif" } },
 ];
 const PAGE_SIZES = [10, 25, 50];
 type SortKey = "name" | "role";
@@ -73,11 +75,12 @@ function Highlight({ text, query }: { text: string; query: string }): ReactNode 
 
 const isPartner = (r: AccessRow) => r.lab_role === "mitra";
 const nameOf = (r: AccessRow) => r.full_name || r.email.split("@")[0];
-const roleLabel = (key: string) => ERP_ROLES.find((r) => r.key === key)?.label ?? key;
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 export default function AccessSettings() {
   const { account } = useAuth();
+  const lang = useLang();
+  const t = useT();
   if (account && !account.isAdmin) {
     return (
       <Page>
@@ -86,11 +89,24 @@ export default function AccessSettings() {
             <Lock className="h-5 w-5 text-[#45DFB1]" />
           </span>
           <h1 className="text-[24px] font-semibold tracking-[-0.025em] text-neutral-900" style={display}>
-            For lab <span style={accent}>admins</span>
+            {lang === "id" ? (
+              <>
+                Khusus <span style={accent}>admin</span> lab
+              </>
+            ) : (
+              <>
+                For lab <span style={accent}>admins</span>
+              </>
+            )}
           </h1>
-          <p className="mt-2 text-[15px] leading-[1.5] text-neutral-500">Only a smartagri lab admin can change who opens which dashboard.</p>
+          <p className="mt-2 text-[15px] leading-[1.5] text-neutral-500">
+            {t({
+              en: "Only a smartagri lab admin can change who opens which dashboard.",
+              id: "Hanya admin lab smartagri yang dapat mengubah siapa yang membuka dashboard mana.",
+            })}
+          </p>
           <Link to="/agrosphere" className="mt-6 inline-flex rounded-xl bg-[#45DFB1] px-5 py-3 text-[15px] font-medium text-[#0B2A22] hover:bg-[#80ED99]">
-            Back to your dashboards
+            {t({ en: "Back to your dashboards", id: "Kembali ke dashboard Anda" })}
           </Link>
         </div>
       </Page>
@@ -120,6 +136,8 @@ function AccessBoard() {
 
   const { isConfigured } = useAuth();
   const sample = !isConfigured && import.meta.env.DEV;
+  const lang = useLang();
+  const t = useT();
 
   const reload = async () => {
     if (sample) {
@@ -157,20 +175,42 @@ function AccessBoard() {
   const pending = useMemo(() => (rows ?? []).filter((r) => r.status === "pending"), [rows]);
   const active = (rows ?? []).filter((r) => r.status === "active");
   const partners = active.filter(isPartner).length;
-  const summary = !rows
-    ? "Reading every account..."
-    : pending.length
-      ? `${plural(pending.length, "account is", "accounts are")} waiting for approval. ${plural(active.length - partners, "researcher")} and ${plural(partners, "partner")} are active.`
-      : `No account is waiting. ${plural(active.length - partners, "researcher")} and ${plural(partners, "partner")} are active.`;
+  const summary =
+    lang === "id"
+      ? !rows
+        ? "Membaca semua akun..."
+        : pending.length
+          ? `${pending.length} akun menunggu persetujuan. ${active.length - partners} peneliti dan ${partners} mitra aktif.`
+          : `Tidak ada akun yang menunggu. ${active.length - partners} peneliti dan ${partners} mitra aktif.`
+      : !rows
+        ? "Reading every account..."
+        : pending.length
+          ? `${plural(pending.length, "account is", "accounts are")} waiting for approval. ${plural(active.length - partners, "researcher")} and ${plural(partners, "partner")} are active.`
+          : `No account is waiting. ${plural(active.length - partners, "researcher")} and ${plural(partners, "partner")} are active.`;
 
   return (
     <>
       <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }} className="pt-6 sm:pt-10">
         <h1 className="text-[32px] font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 sm:text-[40px]" style={display}>
-          Dashboard <span style={accent}>access</span>
+          {lang === "id" ? (
+            <>
+              Akses <span style={accent}>dashboard</span>
+            </>
+          ) : (
+            <>
+              Dashboard <span style={accent}>access</span>
+            </>
+          )}
         </h1>
         <p className="mt-3 max-w-[640px] text-[16px] leading-[1.5] text-neutral-600">{summary}</p>
-        {sample && <p className="mt-2 text-[13px] text-[#8A5A07]">Sample accounts, development only. Changes are not saved.</p>}
+        {sample && (
+          <p className="mt-2 text-[13px] text-[#8A5A07]">
+            {t({
+              en: "Sample accounts, development only. Changes are not saved.",
+              id: "Akun contoh, hanya untuk pengembangan. Perubahan tidak disimpan.",
+            })}
+          </p>
+        )}
       </motion.section>
 
       <AnimatePresence>
@@ -182,8 +222,8 @@ function AccessBoard() {
             role="alert"
             className="mt-5 flex items-start justify-between gap-3 rounded-2xl bg-[#FDECEC] px-4 py-3 text-[14px] text-[#9B2C2C]"
           >
-            {error}
-            <button type="button" onClick={() => setError(null)} aria-label="Dismiss" className="shrink-0 rounded-full p-1 hover:bg-white/60">
+            {accessAdminErrorText(error, lang)}
+            <button type="button" onClick={() => setError(null)} aria-label={t({ en: "Dismiss", id: "Tutup" })} className="shrink-0 rounded-full p-1 hover:bg-white/60">
               <X className="h-4 w-4" />
             </button>
           </motion.p>
@@ -192,20 +232,26 @@ function AccessBoard() {
 
       {rows === null ? (
         <div className="mt-8 flex items-center gap-2 text-sm text-neutral-500">
-          <Loader2 className="h-4 w-4 animate-spin text-[#0B6477]" /> Loading accounts...
+          <Loader2 className="h-4 w-4 animate-spin text-[#0B6477]" /> {t({ en: "Loading accounts...", id: "Memuat akun..." })}
         </div>
       ) : (
         <>
           {pending.length > 0 && <PendingList rows={pending} sites={sites} onDone={reload} onError={setError} />}
 
-          <section className="mt-8" aria-label="Accounts">
+          <section className="mt-8" aria-label={t({ en: "Accounts", id: "Akun" })}>
             <AccountsTable rows={rows} sites={sites} busy={busy} change={change} />
             <p className="mt-3 text-[13px] text-neutral-500">
-              Plant Factory read access is the ERP role Researchers and students. Other ERP roles are set in{" "}
+              {t({
+                en: "Plant Factory read access is the ERP role Researchers and students. Other ERP roles are set in ",
+                id: "Akses baca Plant Factory adalah peran ERP Peneliti dan mahasiswa. Peran ERP lainnya diatur di ",
+              })}
               <Link to="/erp/settings/roles" className="font-medium text-[#0B6477] hover:underline">
-                the ERP's roles page
+                {t({ en: "the ERP's roles page", id: "halaman peran ERP" })}
               </Link>
-              . Partners never get the Plant Factory or Indoor; the database refuses it.
+              {t({
+                en: ". Partners never get the Plant Factory or Indoor; the database refuses it.",
+                id: ". Mitra tidak pernah mendapat Plant Factory atau Indoor; database menolaknya.",
+              })}
             </p>
           </section>
         </>
@@ -217,10 +263,11 @@ function AccessBoard() {
 /* --------------------------------------------------------------- pending */
 
 function PendingList({ rows, sites, onDone, onError }: { rows: AccessRow[]; sites: EdgeSite[]; onDone: () => Promise<void>; onError: (e: string) => void }) {
+  const t = useT();
   return (
     <section className="mt-8" aria-labelledby="pending-heading">
       <h2 id="pending-heading" className="text-[20px] font-medium tracking-[-0.02em] text-neutral-900" style={display}>
-        Waiting for approval
+        {t({ en: "Waiting for approval", id: "Menunggu persetujuan" })}
       </h2>
       <ul className="mt-4 grid gap-3 md:grid-cols-2">
         {rows.map((r, i) => (
@@ -237,9 +284,14 @@ function PendingCard({ row, sites, onDone, onError }: { row: AccessRow; sites: E
   const [picked, setPicked] = useState<string[]>([]);
   const [working, setWorking] = useState<"approve" | "reject" | null>(null);
   const partner = isPartner(row);
+  const t = useT();
 
   const act = async (kind: "approve" | "reject") => {
-    if (kind === "reject" && !window.confirm(`Reject ${nameOf(row)}? They will not be able to sign in to the tools.`)) return;
+    const ask = t({
+      en: `Reject ${nameOf(row)}? They will not be able to sign in to the tools.`,
+      id: `Tolak ${nameOf(row)}? Akun ini tidak akan bisa masuk ke alat-alat lab.`,
+    });
+    if (kind === "reject" && !window.confirm(ask)) return;
     setWorking(kind);
     const r = kind === "approve" ? await approveAccount(row, picked) : await rejectAccount(row.user_id);
     if (r.error) {
@@ -255,7 +307,9 @@ function PendingCard({ row, sites, onDone, onError }: { row: AccessRow; sites: E
       <AccountIdentity row={row} />
       {partner && sites.length > 0 && (
         <div className="mt-4">
-          <p className="text-[13px] text-neutral-600">Greenhouse sites to share on approval</p>
+          <p className="text-[13px] text-neutral-600">
+            {t({ en: "Greenhouse sites to share on approval", id: "Lokasi greenhouse yang dibagikan saat disetujui" })}
+          </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {sites.map((s) => (
               <SiteChip
@@ -276,7 +330,7 @@ function PendingCard({ row, sites, onDone, onError }: { row: AccessRow; sites: E
           className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#45DFB1] px-4 text-[15px] font-medium text-[#0B2A22] transition-colors hover:bg-[#80ED99] active:scale-[0.98] disabled:opacity-60"
         >
           {working === "approve" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-          Approve
+          {t({ en: "Approve", id: "Setujui" })}
         </button>
         <button
           type="button"
@@ -285,7 +339,7 @@ function PendingCard({ row, sites, onDone, onError }: { row: AccessRow; sites: E
           className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-white px-4 text-[15px] font-medium text-neutral-600 transition-colors hover:text-[#9B2C2C] active:scale-[0.98] disabled:opacity-60"
         >
           {working === "reject" ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-          Reject
+          {t({ en: "Reject", id: "Tolak" })}
         </button>
       </div>
     </div>
@@ -303,6 +357,7 @@ function AccountsTable({ rows, sites, busy, change }: { rows: AccessRow[]; sites
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(0);
   const [hovered, setHovered] = useState<string | null>(null);
+  const t = useT();
 
   const listed = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -329,12 +384,12 @@ function AccountsTable({ rows, sites, busy, change }: { rows: AccessRow[]; sites
   const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
   const activeCount = rows.filter((r) => r.status === "active").length;
 
-  const headers: { label: string; sort?: SortKey }[] = [
-    { label: "Account", sort: "name" },
-    { label: "Role", sort: "role" },
-    { label: "Plant Factory" },
-    { label: "Greenhouse sites" },
-    { label: "Indoor" },
+  const headers: { label: Bi; sort?: SortKey }[] = [
+    { label: { en: "Account", id: "Akun" }, sort: "name" },
+    { label: { en: "Role", id: "Peran" }, sort: "role" },
+    { label: { en: "Plant Factory", id: "Plant Factory" } },
+    { label: { en: "Greenhouse sites", id: "Lokasi greenhouse" } },
+    { label: { en: "Indoor", id: "Indoor" } },
   ];
 
   return (
@@ -347,10 +402,13 @@ function AccountsTable({ rows, sites, busy, change }: { rows: AccessRow[]; sites
           </span>
           <span>
             <span className="block text-lg font-semibold tracking-[-0.02em] text-neutral-900" style={display}>
-              Accounts
+              {t({ en: "Accounts", id: "Akun" })}
             </span>
             <span className="block text-[13px] text-neutral-500">
-              {activeCount} active, {sites.length} greenhouse {sites.length === 1 ? "site" : "sites"} to share
+              {t({
+                en: `${activeCount} active, ${sites.length} greenhouse ${sites.length === 1 ? "site" : "sites"} to share`,
+                id: `${activeCount} aktif, ${sites.length} lokasi greenhouse untuk dibagikan`,
+              })}
             </span>
           </span>
         </div>
@@ -361,28 +419,28 @@ function AccountsTable({ rows, sites, busy, change }: { rows: AccessRow[]; sites
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search accounts..."
-              aria-label="Search accounts"
+              placeholder={t({ en: "Search accounts...", id: "Cari akun..." })}
+              aria-label={t({ en: "Search accounts", id: "Cari akun" })}
               className={`${controlClass} w-full pl-9`}
             />
           </div>
           <div className="grid grid-cols-2 gap-2 md:flex">
-            <select value={filter} onChange={(e) => setFilter(e.target.value as Filter)} aria-label="Show" className={`${controlClass} w-full min-w-0 px-2 md:w-auto md:px-3`}>
+            <select value={filter} onChange={(e) => setFilter(e.target.value as Filter)} aria-label={t({ en: "Show", id: "Tampilkan" })} className={`${controlClass} w-full min-w-0 px-2 md:w-auto md:px-3`}>
               {FILTERS.map((f) => (
                 <option key={f.key} value={f.key}>
-                  {f.label}
+                  {t(f.label)}
                 </option>
               ))}
             </select>
             <select
               value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
-              aria-label="Accounts per page"
+              aria-label={t({ en: "Accounts per page", id: "Akun per halaman" })}
               className={`${controlClass} w-full min-w-0 px-2 md:w-auto md:px-3`}
             >
               {PAGE_SIZES.map((n) => (
                 <option key={n} value={n}>
-                  Show {n}
+                  {t({ en: `Show ${n}`, id: `Tampilkan ${n}` })}
                 </option>
               ))}
             </select>
@@ -397,13 +455,13 @@ function AccountsTable({ rows, sites, busy, change }: { rows: AccessRow[]; sites
           const cls = "inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em]";
           return h.sort ? (
             <button
-              key={h.label}
+              key={h.label.en}
               type="button"
               onClick={() => toggleSort(h.sort!)}
               aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
               className={`${cls} transition-colors ${active ? "text-[#0B6477]" : "text-neutral-400 hover:text-neutral-700"}`}
             >
-              {h.label}
+              {t(h.label)}
               {active ? (
                 <motion.span animate={{ rotate: sort.dir === "asc" ? 180 : 0 }} transition={{ duration: 0.3, ease: EASE }} className="inline-flex text-[#14919B]">
                   <ArrowDown className="h-3.5 w-3.5" />
@@ -413,8 +471,8 @@ function AccountsTable({ rows, sites, busy, change }: { rows: AccessRow[]; sites
               )}
             </button>
           ) : (
-            <span key={h.label} className={`${cls} text-neutral-400`}>
-              {h.label}
+            <span key={h.label.en} className={`${cls} text-neutral-400`}>
+              {t(h.label)}
             </span>
           );
         })}
@@ -423,7 +481,9 @@ function AccountsTable({ rows, sites, busy, change }: { rows: AccessRow[]; sites
       {/* Rows */}
       <div onMouseLeave={() => setHovered(null)}>
         {view.length === 0 ? (
-          <p className="px-6 py-14 text-center text-neutral-500">No account matches your search.</p>
+          <p className="px-6 py-14 text-center text-neutral-500">
+            {t({ en: "No account matches your search.", id: "Tidak ada akun yang cocok dengan pencarian." })}
+          </p>
         ) : (
           <AnimatePresence mode="wait" initial={false}>
             <motion.ul
@@ -456,30 +516,30 @@ function AccountsTable({ rows, sites, busy, change }: { rows: AccessRow[]; sites
       {/* Footer */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#0B6477]/10 bg-[#F3F7F6]/60 px-5 py-4 md:px-6">
         <span className="text-[13px] text-neutral-500">
-          <span className="font-semibold tabular-nums text-neutral-900">{listed.length}</span> results
+          <span className="font-semibold tabular-nums text-neutral-900">{listed.length}</span> {t({ en: "results", id: "hasil" })}
         </span>
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setPage(current - 1)}
             disabled={current === 0}
-            aria-label="Previous page"
+            aria-label={t({ en: "Previous page", id: "Halaman sebelumnya" })}
             className="grid h-9 w-9 place-items-center rounded-lg border border-[#0B6477]/15 bg-white text-neutral-700 transition-colors hover:border-[#08313A] hover:bg-[#08313A] hover:text-[#45DFB1] disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="min-w-[96px] text-center text-[13px] tabular-nums text-neutral-600">
-            Page{" "}
+            {t({ en: "Page", id: "Halaman" })}{" "}
             <motion.span key={current} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="inline-block font-semibold text-neutral-900">
               {current + 1}
             </motion.span>{" "}
-            of {pages}
+            {t({ en: "of", id: "dari" })} {pages}
           </span>
           <button
             type="button"
             onClick={() => setPage(current + 1)}
             disabled={current >= pages - 1}
-            aria-label="Next page"
+            aria-label={t({ en: "Next page", id: "Halaman berikutnya" })}
             className="grid h-9 w-9 place-items-center rounded-lg border border-[#0B6477]/15 bg-white text-neutral-700 transition-colors hover:border-[#08313A] hover:bg-[#08313A] hover:text-[#45DFB1] disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronRight className="h-4 w-4" />
@@ -509,6 +569,8 @@ function AccountRow({
   const inactive = row.status !== "active";
   const pfRead = row.pf_roles.includes("peneliti");
   const otherPf = row.pf_roles.filter((r) => r !== "peneliti");
+  const lang = useLang();
+  const t = useT();
 
   return (
     <div className={`relative px-5 py-4 md:px-6 ${GRID} ${inactive ? "opacity-60" : ""}`}>
@@ -526,22 +588,24 @@ function AccountRow({
         </span>
       </span>
 
-      <Cell label="Role">
+      <Cell label={t({ en: "Role", id: "Peran" })}>
         <RolePill row={row} />
       </Cell>
 
       {row.is_admin ? (
-        <p className="text-[13px] text-neutral-500 lg:col-span-3">Opens every dashboard and every site.</p>
+        <p className="text-[13px] text-neutral-500 lg:col-span-3">
+          {t({ en: "Opens every dashboard and every site.", id: "Membuka semua dashboard dan semua lokasi." })}
+        </p>
       ) : (
         <>
           <Cell label="Plant Factory">
             {partner ? (
-              <Muted>Not for partners</Muted>
+              <Muted>{t({ en: "Not for partners", id: "Bukan untuk mitra" })}</Muted>
             ) : otherPf.length ? (
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="text-[13px] text-neutral-700">{otherPf.map(roleLabel).join(", ")}</span>
+                <span className="text-[13px] text-neutral-700">{otherPf.map((k) => roleLabel(k, lang)).join(", ")}</span>
                 <Link to="/erp/settings/roles" className="inline-flex items-center gap-1 text-[13px] font-medium text-[#0B6477] hover:underline">
-                  Edit <ExternalLink className="h-3 w-3" />
+                  {t({ en: "Edit", id: "Ubah" })} <ExternalLink className="h-3 w-3" />
                 </Link>
               </div>
             ) : (
@@ -549,8 +613,11 @@ function AccountRow({
                 on={pfRead}
                 busy={busy.has(`pf-${row.user_id}`)}
                 disabled={inactive}
-                label={`Plant Factory read access for ${nameOf(row)}`}
-                caption={pfRead ? "Read" : "None"}
+                label={t({
+                  en: `Plant Factory read access for ${nameOf(row)}`,
+                  id: `Akses baca Plant Factory untuk ${nameOf(row)}`,
+                })}
+                caption={pfRead ? t({ en: "Read", id: "Baca" }) : t({ en: "None", id: "Tidak ada" })}
                 onChange={(on) =>
                   void change(
                     `pf-${row.user_id}`,
@@ -563,9 +630,9 @@ function AccountRow({
             )}
           </Cell>
 
-          <Cell label="Greenhouse sites">
+          <Cell label={t({ en: "Greenhouse sites", id: "Lokasi greenhouse" })}>
             {sites.length === 0 ? (
-              <Muted>No site registered yet</Muted>
+              <Muted>{t({ en: "No site registered yet", id: "Belum ada lokasi terdaftar" })}</Muted>
             ) : (
               <div className="flex flex-wrap gap-1.5 lg:justify-start">
                 {sites.map((s) => {
@@ -595,13 +662,13 @@ function AccountRow({
 
           <Cell label="Indoor">
             {partner ? (
-              <Muted>Not for partners</Muted>
+              <Muted>{t({ en: "Not for partners", id: "Bukan untuk mitra" })}</Muted>
             ) : (
               <Toggle
                 on={row.indoor}
                 busy={busy.has(`in-${row.user_id}`)}
                 disabled={inactive}
-                label={`Indoor access for ${nameOf(row)}`}
+                label={t({ en: `Indoor access for ${nameOf(row)}`, id: `Akses Indoor untuk ${nameOf(row)}` })}
                 onChange={(on) =>
                   void change(
                     `in-${row.user_id}`,
@@ -625,7 +692,13 @@ function AccountRow({
 // outline for partners (StudentsTable uses the same three for its levels).
 function RolePill({ row }: { row: AccessRow }) {
   const partner = isPartner(row);
-  const label = row.is_admin ? "Lab admin" : partner ? "Partner" : labRoleLabel(row.lab_role) || "Researcher";
+  const lang = useLang();
+  const t = useT();
+  const label = row.is_admin
+    ? t({ en: "Lab admin", id: "Admin lab" })
+    : partner
+      ? t({ en: "Partner", id: "Mitra" })
+      : labRoleLabel(row.lab_role, lang) || t({ en: "Researcher", id: "Peneliti" });
   const cls = row.is_admin
     ? "bg-[#08313A] text-[#45DFB1]"
     : partner
@@ -635,7 +708,7 @@ function RolePill({ row }: { row: AccessRow }) {
     <span className="inline-flex flex-wrap items-center gap-1.5">
       <span className={`inline-flex rounded-full px-2.5 py-1 text-[12px] font-semibold ${cls}`}>{label}</span>
       {row.status === "suspended" || row.status === "rejected" ? (
-        <span className="text-[12px] text-neutral-500">{row.status === "suspended" ? "Suspended" : "Rejected"}</span>
+        <span className="text-[12px] text-neutral-500">{row.status === "suspended" ? t({ en: "Suspended", id: "Ditangguhkan" }) : t({ en: "Rejected", id: "Ditolak" })}</span>
       ) : null}
     </span>
   );

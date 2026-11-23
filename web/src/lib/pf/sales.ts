@@ -1,4 +1,5 @@
 import { check, cropLabel, db, unwrap } from "./foundation";
+import type { Lang } from "../i18n-core";
 
 // Sales (supabase/pf-sales.sql): customers, orders, which harvest lot filled what,
 // delivery, invoices and payments. Every write is a database function that checks
@@ -118,11 +119,15 @@ export type InvoiceOverview = {
 export type InvoiceLine = { id: string; description: string; qty_kg: number; price_per_kg: number; amount: number };
 
 export type PaymentMethod = "transfer" | "tunai" | "lainnya";
-export const PAYMENT_METHODS: { key: PaymentMethod; label: string }[] = [
-  { key: "transfer", label: "Bank transfer" },
-  { key: "tunai", label: "Cash" },
-  { key: "lainnya", label: "Other" },
+export const PAYMENT_METHODS: { key: PaymentMethod; label: string; labelId: string }[] = [
+  { key: "transfer", label: "Bank transfer", labelId: "Transfer bank" },
+  { key: "tunai", label: "Cash", labelId: "Tunai" },
+  { key: "lainnya", label: "Other", labelId: "Lainnya" },
 ];
+export const paymentMethodLabel = (key: string, lang: Lang = "en") => {
+  const m = PAYMENT_METHODS.find((x) => x.key === key);
+  return m ? (lang === "id" ? m.labelId : m.label) : key;
+};
 
 export type Payment = { id: string; invoice_id: string; paid_on: string; amount: number; method: PaymentMethod; reference: string; voided_at: string | null; void_note: string };
 
@@ -153,12 +158,15 @@ export type TraceRow = {
 
 /* -------------------------------------------------------------------- rules */
 
-export const formatRupiah = (value: number) => `Rp ${Math.round(value).toLocaleString("en-GB")}`;
-export const formatKg = (value: number) => `${value.toLocaleString("en-GB", { maximumFractionDigits: 3 })} kg`;
+const numberLocale = (lang: Lang) => (lang === "id" ? "id-ID" : "en-GB");
+export const formatRupiah = (value: number, lang: Lang = "en") => `Rp ${Math.round(value).toLocaleString(numberLocale(lang))}`;
+export const formatKg = (value: number, lang: Lang = "en") => `${value.toLocaleString(numberLocale(lang), { maximumFractionDigits: 3 })} kg`;
 
 export const lineLabel = (l: Pick<OrderLine, "crop_name" | "crop_variety" | "grade">) => `${cropLabel({ name: l.crop_name, variety: l.crop_variety })}, grade ${l.grade}`;
 
 export const ORDER_STEPS = ["Draft", "Choose lots", "Send", "Invoice", "Receive payment", "Done"] as const;
+export const ORDER_STEPS_ID = ["Draf", "Pilih lot", "Kirim", "Invoice", "Terima bayaran", "Selesai"] as const;
+export const orderSteps = (lang: Lang = "en"): readonly string[] => (lang === "id" ? ORDER_STEPS_ID : ORDER_STEPS);
 
 export type StageNumbers = Pick<OrderOverview, "status" | "ordered_kg" | "allocated_kg" | "delivered_kg" | "invoiced_kg" | "invoiced_amount" | "paid_amount">;
 
@@ -173,8 +181,12 @@ export function orderStep(o: StageNumbers) {
   return 5;
 }
 
-export function orderStageLabel(o: StageNumbers) {
+export function orderStageLabel(o: StageNumbers, lang: Lang = "en") {
   const step = orderStep(o);
+  if (lang === "id") {
+    if (step === null) return "Dibatalkan";
+    return ["Draf", "Lot belum dipilih", "Siap dikirim", "Perlu invoice", "Menunggu bayaran", "Selesai"][step];
+  }
   if (step === null) return "Cancelled";
   return ["Draft", "Lots to choose", "Ready to send", "To invoice", "Waiting for payment", "Done"][step];
 }
@@ -188,6 +200,9 @@ export const PAY_STATE: Record<PayState, { label: string; className: string }> =
   lewat: { label: "Past due", className: "bg-[#FDECEA] text-[#B3362C]" },
   batal: { label: "Cancelled", className: "bg-[#EEF3F4] text-[#4F6B73]" },
 };
+
+const PAY_STATE_ID: Record<PayState, string> = { lunas: "Lunas", sebagian: "Dibayar sebagian", belum: "Belum dibayar", lewat: "Lewat jatuh tempo", batal: "Dibatalkan" };
+export const payStateLabel = (state: PayState, lang: Lang = "en") => (lang === "id" ? PAY_STATE_ID[state] : PAY_STATE[state].label);
 
 export function payState(i: Pick<InvoiceOverview, "status" | "balance" | "paid" | "due_on">, today: string): PayState {
   if (i.status === "batal") return "batal";
@@ -210,38 +225,41 @@ const parseKgText = (s: string) => (s.trim() === "" ? null : Number(s.trim().rep
 
 export type LineForm = { cropId: string; grade: string; qtyKg: string; pricePerKg: string };
 
-export function parseOrderForm(partnerId: string, orderedOn: string, requestedOn: string, rows: readonly LineForm[]) {
-  if (!partnerId) return { error: "Choose a customer." } as const;
-  if (!orderedOn) return { error: "An order date is required." } as const;
-  if (requestedOn && requestedOn < orderedOn) return { error: "The requested date is before the order date." } as const;
-  if (rows.length === 0) return { error: "Add at least one line." } as const;
+export function parseOrderForm(partnerId: string, orderedOn: string, requestedOn: string, rows: readonly LineForm[], lang: Lang = "en") {
+  const id = lang === "id";
+  if (!partnerId) return { error: id ? "Pilih pelanggan." : "Choose a customer." } as const;
+  if (!orderedOn) return { error: id ? "Tanggal pesanan wajib diisi." : "An order date is required." } as const;
+  if (requestedOn && requestedOn < orderedOn) return { error: id ? "Tanggal yang diminta lebih awal dari tanggal pesanan." : "The requested date is before the order date." } as const;
+  if (rows.length === 0) return { error: id ? "Tambahkan minimal satu baris." : "Add at least one line." } as const;
   const lines = [];
   for (const [i, r] of rows.entries()) {
-    const label = `Line ${i + 1}`;
-    if (!r.cropId) return { error: `${label}: choose a crop.` } as const;
+    const label = id ? `Baris ${i + 1}` : `Line ${i + 1}`;
+    if (!r.cropId) return { error: id ? `${label}: pilih tanaman.` : `${label}: choose a crop.` } as const;
     const qty = parseKgText(r.qtyKg);
-    if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: `${label}: weight must be above 0.` } as const;
+    if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: id ? `${label}: berat harus lebih dari 0.` : `${label}: weight must be above 0.` } as const;
     const price = parseNumber(r.pricePerKg);
-    if (price === null || !Number.isFinite(price) || price < 0) return { error: `${label}: price must be a number.` } as const;
+    if (price === null || !Number.isFinite(price) || price < 0) return { error: id ? `${label}: harga harus berupa angka.` : `${label}: price must be a number.` } as const;
     lines.push({ crop_id: r.cropId, grade: r.grade, qty_kg: qty, price_per_kg: price });
   }
   return { error: null, lines } as const;
 }
 
-export function parseAllocation(kg: string, line: Pick<OrderLine, "qty_kg" | "allocated_kg">, lot: Pick<AvailableLot, "remaining_kg" | "lot_code"> | undefined) {
-  if (!lot) return { error: "Choose a harvest lot." } as const;
+export function parseAllocation(kg: string, line: Pick<OrderLine, "qty_kg" | "allocated_kg">, lot: Pick<AvailableLot, "remaining_kg" | "lot_code"> | undefined, lang: Lang = "en") {
+  const id = lang === "id";
+  if (!lot) return { error: id ? "Pilih lot panen." : "Choose a harvest lot." } as const;
   const value = parseKgText(kg);
-  if (value === null || !Number.isFinite(value) || value <= 0) return { error: "Weight must be above 0." } as const;
-  if (value > lot.remaining_kg) return { error: `Lot ${lot.lot_code} only has ${formatKg(lot.remaining_kg)}.` } as const;
-  if (roundKg(line.allocated_kg + value) > line.qty_kg) return { error: `More than ordered: still needs ${formatKg(roundKg(line.qty_kg - line.allocated_kg))}.` } as const;
+  if (value === null || !Number.isFinite(value) || value <= 0) return { error: id ? "Berat harus lebih dari 0." : "Weight must be above 0." } as const;
+  if (value > lot.remaining_kg) return { error: id ? `Lot ${lot.lot_code} hanya tersisa ${formatKg(lot.remaining_kg, lang)}.` : `Lot ${lot.lot_code} only has ${formatKg(lot.remaining_kg)}.` } as const;
+  if (roundKg(line.allocated_kg + value) > line.qty_kg) return { error: id ? `Melebihi pesanan: masih kurang ${formatKg(roundKg(line.qty_kg - line.allocated_kg), lang)}.` : `More than ordered: still needs ${formatKg(roundKg(line.qty_kg - line.allocated_kg))}.` } as const;
   return { error: null, kg: value } as const;
 }
 
-export function parsePayment(amount: string, paidOn: string, balance: number, today: string) {
+export function parsePayment(amount: string, paidOn: string, balance: number, today: string, lang: Lang = "en") {
+  const id = lang === "id";
   const value = parseNumber(amount);
-  if (value === null || !Number.isFinite(value) || value <= 0) return { error: "The payment must be above 0." } as const;
-  if (value > balance) return { error: `More than the balance of ${formatRupiah(balance)}.` } as const;
-  if (!paidOn || paidOn > today) return { error: "The payment date cannot be in the future." } as const;
+  if (value === null || !Number.isFinite(value) || value <= 0) return { error: id ? "Pembayaran harus lebih dari 0." : "The payment must be above 0." } as const;
+  if (value > balance) return { error: id ? `Melebihi sisa tagihan ${formatRupiah(balance, lang)}.` : `More than the balance of ${formatRupiah(balance)}.` } as const;
+  if (!paidOn || paidOn > today) return { error: id ? "Tanggal bayar tidak boleh di masa depan." : "The payment date cannot be in the future." } as const;
   return { error: null, amount: value } as const;
 }
 

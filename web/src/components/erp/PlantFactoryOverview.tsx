@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { ObjectRecord, Selection, ViewName } from "plant-factory-3d";
 import { ArrowRight, Cctv, CircleAlert, Home, Lightbulb, LightbulbOff, Minus, MoveRight, Plus } from "lucide-react";
-import { LIVE_FEED, cctvFeed } from "../../lib/pf/cctv";
+import { LIVE_FEED, cctvFeed, feedLabel } from "../../lib/pf/cctv";
+import { useLang, useT, type Bi, type Lang } from "../../lib/i18n";
+import { formatLongDate } from "../../lib/pf/dashboard";
 import { CHAMBER_CODE } from "../../lib/pf/chamber";
 import { CctvViewer } from "./Cctv";
 import {
@@ -10,18 +12,18 @@ import {
   GROW_ROOM_READINGS,
   HOLES_PER_RACK,
   HOLES_TOTAL,
-  HOLE_STATES,
   HOLE_STATE_KEYS,
   RESERVOIR_READINGS,
   countByState,
+  holeStateLabel,
   isPlanted,
+  localizeReadings,
   stateColor,
 } from "../../lib/pf/facility";
 import { RACK_NUMBERS, TIER_NUMBERS, type PfProvider } from "../../lib/pf/provider";
 import type { ErpStore } from "../../lib/pf/store";
 import { useErpStore } from "./ErpContext";
 import PlantFactoryScene, { type SceneEngine } from "./PlantFactoryScene";
-import { formatLongDate } from "../../lib/pf/dashboard";
 import { formatValue, formatWithUnit } from "../../lib/pf/monitoring";
 import SceneHoverCard, { sceneFacts, useSceneHover, zoomToCursor } from "./SceneHoverCard";
 import { Bar, Card, Kpi, Lifecycle, Note, PanelHeader, Readings, Rows, SceneStatus, Segmented, StateBreakdown, dolly, useEngineActivity, useSceneGate } from "./ui";
@@ -35,11 +37,11 @@ import { HoleEditor } from "./SpotEditor";
 // placeholder. Selecting a hole needs one tier filtered, because the rack
 // covers and lights sit on top of the holes in the full view.
 
-const VIEWS: { key: ViewName; label: string }[] = [
-  { key: "iso", label: "Isometric" },
-  { key: "top", label: "Top" },
-  { key: "grow", label: "Grow room" },
-  { key: "control", label: "Control room" },
+const VIEWS: { key: ViewName; label: Bi }[] = [
+  { key: "iso", label: { en: "Isometric", id: "Isometrik" } },
+  { key: "top", label: { en: "Top", id: "Atas" } },
+  { key: "grow", label: { en: "Grow room", id: "Ruang tanam" } },
+  { key: "control", label: { en: "Control room", id: "Ruang kontrol" } },
 ];
 
 
@@ -49,31 +51,33 @@ function HolePanel({ id, store }: { id: string; store: ErpStore }) {
   const hole = store.pf.getHole(id)!;
   const b = store.batch(hole.batch);
   const germination = b ? store.germinationOf(b.code) : null;
+  const t = useT();
+  const lang = useLang();
   return (
     <div className="space-y-4">
-      <PanelHeader eyebrow="Planting hole" title={id} sub={`Rack ${hole.rack} · Tier ${hole.tier} · Gully ${hole.gully} · Hole ${hole.hole}`} />
+      <PanelHeader eyebrow={t({ en: "Planting hole", id: "Lubang tanam" })} title={id} sub={t({ en: `Rack ${hole.rack} · Tier ${hole.tier} · Gully ${hole.gully} · Hole ${hole.hole}`, id: `Rack ${hole.rack} · Tingkat ${hole.tier} · Gully ${hole.gully} · Lubang ${hole.hole}` })} />
       {b ? (
         <div className="space-y-2">
-          <Rows rows={[["Status", HOLE_STATES[hole.state].label], ["Batch", b.code], ["Crop", b.crop], ["Recipe", b.recipe], ["Sowing date", b.sownAt], ["Age", `${b.age} of ${b.cycle} days`]]} />
+          <Rows rows={[["Status", holeStateLabel(hole.state, lang)], ["Batch", b.code], [t({ en: "Crop", id: "Tanaman" }), b.crop], [t({ en: "Recipe", id: "Resep" }), b.recipe], [t({ en: "Sowing date", id: "Tanggal semai" }), b.sownAt], [t({ en: "Age", id: "Umur" }), t({ en: `${b.age} of ${b.cycle} days`, id: `${b.age} dari ${b.cycle} hari` })]]} />
           <Bar value={Math.min(b.age, b.cycle)} max={b.cycle || 1} />
           {hole.note && <Note>{hole.note}</Note>}
         </div>
       ) : (
-        <Note>{hole.state === "sanitasi" ? "This hole is being sanitised." : hole.offline ? "This hole is out of use." : "No batch in this hole."}</Note>
+        <Note>{hole.state === "sanitasi" ? t({ en: "This hole is being sanitised.", id: "Lubang ini sedang disanitasi." }) : hole.offline ? t({ en: "This hole is out of use.", id: "Lubang ini tidak dipakai." }) : t({ en: "No batch in this hole.", id: "Tidak ada batch di lubang ini." })}</Note>
       )}
       {b && germination && (
         <div className="space-y-2 rounded-lg bg-[#F3F7F7] px-3 py-2.5">
-          <p className="text-[13px] font-medium text-[#4F6B73]">From the seedling chamber</p>
+          <p className="text-[13px] font-medium text-[#4F6B73]">{t({ en: "From the seedling chamber", id: "Dari ruang bibit" })}</p>
           <Rows
             rows={[
-              ["Transplant", b.transplantedAt ? formatLongDate(b.transplantedAt) : "Not recorded"],
-              ["Batch germination", `${Math.round(germination.rate * 100)}%`],
-              ...(hole.sourceSlot ? ([["Source tray", hole.sourceSlot]] as [string, string][]) : []),
+              [t({ en: "Transplant", id: "Pindah tanam" }), b.transplantedAt ? formatLongDate(b.transplantedAt, lang) : t({ en: "Not recorded", id: "Tidak tercatat" })],
+              [t({ en: "Batch germination", id: "Perkecambahan batch" }), `${Math.round(germination.rate * 100)}%`],
+              ...(hole.sourceSlot ? ([[t({ en: "Source tray", id: "Tray asal" }), hole.sourceSlot]] as [string, string][]) : []),
             ]}
           />
           {hole.sourceSlot && (
             <Link to="/erp/seedlings" search={{ slot: hole.sourceSlot }} className="flex items-center gap-1 text-[13px] font-medium text-[#0B6477] hover:underline">
-              Open its spot in the seedling chamber <ArrowRight className="h-3.5 w-3.5" />
+              {t({ en: "Open its spot in the seedling chamber", id: "Buka posisinya di ruang bibit" })} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           )}
         </div>
@@ -81,21 +85,25 @@ function HolePanel({ id, store }: { id: string; store: ErpStore }) {
       <HoleEditor id={id} store={store} />
       {b?.id && (
         <Link to="/erp/batch/$id" params={{ id: b.id }} search={{ hole: id }} className="flex items-center gap-1 text-[13px] font-medium text-[#0B6477] hover:underline">
-          Open the batch <ArrowRight className="h-3.5 w-3.5" />
+          {t({ en: "Open the batch", id: "Buka batch" })} <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       )}
     </div>
   );
 }
 
-function objectTitle(o: ObjectRecord) {
+function objectTitle(o: ObjectRecord, lang: Lang) {
+  const id = lang === "id";
   switch (o.type) {
-    case "lamp": return `Lamp, Rack ${o.rack} · Tier ${o.tier}`;
-    case "pump": return o.rack ? `Pump, Rack ${o.rack}` : "Main pump";
-    case "sensor_climate": return `Climate sensor, Rack ${o.rack}`;
-    case "sensor_nutrient": return "Nutrient sensor";
-    case "tank": return "Nutrient tank";
-    case "cctv": return cctvFeed(o.id)?.label ?? "Camera";
+    case "lamp": return id ? `Lampu, Rack ${o.rack} · Tingkat ${o.tier}` : `Lamp, Rack ${o.rack} · Tier ${o.tier}`;
+    case "pump": return o.rack ? (id ? `Pompa, Rack ${o.rack}` : `Pump, Rack ${o.rack}`) : id ? "Pompa utama" : "Main pump";
+    case "sensor_climate": return id ? `Sensor iklim, Rack ${o.rack}` : `Climate sensor, Rack ${o.rack}`;
+    case "sensor_nutrient": return id ? "Sensor nutrisi" : "Nutrient sensor";
+    case "tank": return id ? "Tangki nutrisi" : "Nutrient tank";
+    case "cctv": {
+      const feed = cctvFeed(o.id);
+      return feed ? feedLabel(feed, lang) : id ? "Kamera" : "Camera";
+    }
     default: return o.id;
   }
 }
@@ -103,59 +111,63 @@ function objectTitle(o: ObjectRecord) {
 function ObjectPanel({ object: o, provider }: { object: ObjectRecord; provider: PfProvider }) {
   const lampOn = provider.lamps.get(o.id);
   const pumpOn = provider.pumps.get(o.id);
+  const t = useT();
+  const lang = useLang();
+  const sample = t({ en: "Sample readings", id: "Pembacaan contoh" });
   return (
     <div className="space-y-4">
-      <PanelHeader eyebrow={o.id} title={objectTitle(o)} />
+      <PanelHeader eyebrow={o.id} title={objectTitle(o, lang)} />
       {o.assumed && (
         <Note tone="warn">
           <CircleAlert className="mr-1 inline h-3.5 w-3.5" />
-          Whether it exists and where it sits are still assumed, not confirmed.
+          {t({ en: "Whether it exists and where it sits are still assumed, not confirmed.", id: "Keberadaan dan posisinya masih perkiraan, belum dipastikan." })}
         </Note>
       )}
-      {o.type === "lamp" && <Rows rows={[["Status", lampOn ? "On" : "Off"]]} />}
-      {o.type === "pump" && <Rows rows={[["Status", pumpOn ? "In progress" : "Stopped"]]} />}
+      {o.type === "lamp" && <Rows rows={[["Status", lampOn ? t({ en: "On", id: "Menyala" }) : t({ en: "Off", id: "Mati" })]]} />}
+      {o.type === "pump" && <Rows rows={[["Status", pumpOn ? t({ en: "In progress", id: "Berjalan" }) : t({ en: "Stopped", id: "Berhenti" })]]} />}
       {(o.type === "lamp" || o.type === "pump") && (
-        <Note>Sample status. Control is not available, since commands to a device must go through authentication, permissions and confirmation.</Note>
+        <Note>{t({ en: "Sample status. Control is not available, since commands to a device must go through authentication, permissions and confirmation.", id: "Status contoh. Kontrol belum tersedia, karena perintah ke perangkat harus melalui autentikasi, izin, dan konfirmasi." })}</Note>
       )}
-      {o.type === "sensor_climate" && <Readings title="Sample readings" items={GROW_ROOM_READINGS} />}
-      {o.type === "sensor_nutrient" && <Readings title="Sample readings" items={RESERVOIR_READINGS} />}
+      {o.type === "sensor_climate" && <Readings title={sample} items={localizeReadings(GROW_ROOM_READINGS, lang)} />}
+      {o.type === "sensor_nutrient" && <Readings title={sample} items={localizeReadings(RESERVOIR_READINGS, lang)} />}
       {o.type === "tank" && (
         <>
-          <Readings title="Nutrient solution (sample)" items={RESERVOIR_READINGS} />
+          <Readings title={t({ en: "Nutrient solution (sample)", id: "Larutan nutrisi (contoh)" })} items={localizeReadings(RESERVOIR_READINGS, lang)} />
           <div>
-            <div className="mb-1 flex justify-between text-[13px]"><span className="text-[#4F6B73]">Tank level</span><span className="font-medium">74%</span></div>
+            <div className="mb-1 flex justify-between text-[13px]"><span className="text-[#4F6B73]">{t({ en: "Tank level", id: "Level tangki" })}</span><span className="font-medium">74%</span></div>
             <Bar value={74} max={100} color="#0AD1C8" />
           </div>
         </>
       )}
-      {o.type === "cctv" && (cctvFeed(o.id) ? <CctvViewer feed={cctvFeed(o.id)!} /> : <Note>No camera feed connected yet.</Note>)}
+      {o.type === "cctv" && (cctvFeed(o.id) ? <CctvViewer feed={cctvFeed(o.id)!} /> : <Note>{t({ en: "No camera feed connected yet.", id: "Belum ada siaran kamera yang terhubung." })}</Note>)}
     </div>
   );
 }
 
 function RackPanel({ rack, store, onTier }: { rack: number; store: ErpStore; onTier: (tier: number) => void }) {
   const holes = store.pf.holesOfRack(rack);
+  const t = useT();
   return (
     <div className="space-y-4">
-      <PanelHeader eyebrow={`${FACILITY_CODE} · R${rack}`} title={`Rack ${rack}`} sub="3 tiers · 4 gullies · 20 holes per gully" />
+      <PanelHeader eyebrow={`${FACILITY_CODE} · R${rack}`} title={`Rack ${rack}`} sub={t({ en: "3 tiers · 4 gullies · 20 holes per gully", id: "3 tingkat · 4 gully · 20 lubang per gully" })} />
       <StateBreakdown counts={countByState(holes)} total={holes.length} />
       <div className="space-y-2.5">
-        {[...TIER_NUMBERS].reverse().map((t) => {
-          const ts = holes.filter((h) => h.tier === t);
+        {[...TIER_NUMBERS].reverse().map((n) => {
+          const ts = holes.filter((h) => h.tier === n);
           const b = store.batch(ts.find((h) => h.batch)?.batch);
           return (
-            <button key={t} type="button" onClick={() => onTier(t)} className="block w-full rounded-lg border border-[#E3ECED] px-3 py-2.5 text-left hover:border-[#14919B]">
+            <button key={n} type="button" onClick={() => onTier(n)} className="block w-full rounded-lg border border-[#E3ECED] px-3 py-2.5 text-left hover:border-[#14919B]">
               <div className="flex items-center justify-between text-[13px]">
-                <span className="font-medium text-[#0F2F36]">Tier {t}</span>
-                <span className="text-[#4F6B73]">{ts.filter((h) => isPlanted(h.state)).length}/{ts.length} filled</span>
+                <span className="font-medium text-[#0F2F36]">{t({ en: `Tier ${n}`, id: `Tingkat ${n}` })}</span>
+                <span className="text-[#4F6B73]">{ts.filter((h) => isPlanted(h.state)).length}/{ts.length} {t({ en: "filled", id: "terisi" })}</span>
               </div>
               {b ? (
                 <>
-                  <p className="mt-0.5 text-[12.5px] text-[#4F6B73]">{b.code} · {b.crop} · day {b.age}/{b.cycle}</p>
+                  <p className="mt-0.5 text-[12.5px] text-[#4F6B73]">{b.code} · {b.crop} · {t({ en: "day", id: "hari" })} {b.age}/{b.cycle}</p>
                   <div className="mt-1.5"><Bar value={Math.min(b.age, b.cycle)} max={b.cycle || 1} /></div>
                 </>
               ) : (
-                <p className="mt-0.5 text-[12.5px] text-[#4F6B73]">No active batch</p>
+                <p className="mt-0.5 text-[12.5px] text-[#4F6B73]">{t({ en: "No active batch", id: "Tidak ada batch aktif" })}</p>
               )}
             </button>
           );
@@ -169,14 +181,18 @@ function SeedlingSupply({ store }: { store: ErpStore }) {
   const ready = store.readyToMove();
   const seedlings = ready.reduce((n, r) => n + r.seedlings, 0);
   const germinating = store.batchesInChamber().filter((b) => !ready.some((r) => r.batch.code === b.code));
+  const t = useT();
   return (
     <Link to="/erp/seedlings" className="block rounded-lg border border-[#E3ECED] px-3 py-2.5 hover:border-[#14919B]">
       <span className="flex items-center justify-between text-[13px]">
-        <span className="font-medium text-[#0F2F36]">Supply from the seedling chamber · {CHAMBER_CODE}</span>
+        <span className="font-medium text-[#0F2F36]">{t({ en: "Supply from the seedling chamber", id: "Pasokan dari ruang bibit" })} · {CHAMBER_CODE}</span>
         <MoveRight className="h-4 w-4 text-[#0B6477]" />
       </span>
       <span className="mt-0.5 block text-[12.5px] text-[#4F6B73]">
-        {seedlings} seedlings ready to transplant · {germinating.length} batches still germinating · {store.freeCapacity()} holes ready to receive
+        {t({
+          en: `${seedlings} seedlings ready to transplant · ${germinating.length} batches still germinating · ${store.freeCapacity()} holes ready to receive`,
+          id: `${seedlings} bibit siap pindah tanam · ${germinating.length} batch masih berkecambah · ${store.freeCapacity()} lubang siap menerima`,
+        })}
       </span>
     </Link>
   );
@@ -184,18 +200,20 @@ function SeedlingSupply({ store }: { store: ErpStore }) {
 
 function FacilityPanel({ store, onRack }: { store: ErpStore; onRack: (rack: number) => void }) {
   const provider = store.pf;
+  const t = useT();
+  const lang = useLang();
   return (
     <div className="space-y-4">
-      <PanelHeader eyebrow={`Plant factory · ${FACILITY_CODE}`} title="Smart Agriculture Research Center" sub="Grow room (2 NFT racks) and control room" />
+      <PanelHeader eyebrow={`Plant factory · ${FACILITY_CODE}`} title="Smart Agriculture Research Center" sub={t({ en: "Grow room (2 NFT racks) and control room", id: "Ruang tanam (2 rack NFT) dan ruang kontrol" })} />
       <div className="flex items-center gap-2 text-[12.5px]">
-        <span className="text-[#4F6B73]">{store.batchesInFactory().length} active batches</span>
+        <span className="text-[#4F6B73]">{t({ en: `${store.batchesInFactory().length} active batches`, id: `${store.batchesInFactory().length} batch aktif` })}</span>
       </div>
       <StateBreakdown counts={countByState(provider.holes.values())} total={HOLES_TOTAL} />
       <SeedlingSupply store={store} />
       {store.monitoring?.latest.some((r) => r.location_code === FACILITY_CODE) ? (
-        <Link to="/erp/monitoring" className="block rounded-lg border border-[#E3ECED] px-3 py-2 text-[13.5px] font-medium text-[#0B6477] hover:border-[#14919B]">View grow room sensor readings</Link>
+        <Link to="/erp/monitoring" className="block rounded-lg border border-[#E3ECED] px-3 py-2 text-[13.5px] font-medium text-[#0B6477] hover:border-[#14919B]">{t({ en: "View grow room sensor readings", id: "Lihat pembacaan sensor ruang tanam" })}</Link>
       ) : (
-        <Readings title="Grow room (sample)" items={GROW_ROOM_READINGS} />
+        <Readings title={t({ en: "Grow room (sample)", id: "Ruang tanam (contoh)" })} items={localizeReadings(GROW_ROOM_READINGS, lang)} />
       )}
       <div className="space-y-2">
         {RACK_NUMBERS.map((r) => {
@@ -229,6 +247,8 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
   const [covers, setCovers] = useState(false);
   const [layout, setLayout] = useState<LayoutMode>("3d");
   const sceneBox = useRef<HTMLDivElement>(null);
+  const t = useT();
+  const lang = useLang();
   const { target: hovered, card: hoverCard, place: placeHover } = useSceneHover(engine, sceneBox);
 
   const onReady = useCallback((e: SceneEngine) => {
@@ -256,7 +276,7 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
     if (engine && active && focusHole) engine.focusHole(focusHole);
   }, [engine, active, focusHole]);
 
-  const hoverFacts = sceneFacts(store, engine, hovered);
+  const hoverFacts = sceneFacts(store, engine, hovered, lang);
 
   // A pick on the plan is a pick in the model too, so the two never disagree.
   const pickHole = (id: string) => {
@@ -297,12 +317,12 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
           {hoverFacts && hovered?.id !== selection?.id && <SceneHoverCard facts={hoverFacts} cardRef={hoverCard} place={placeHover} />}
 
           <Card className={`absolute flex flex-col p-1 ${layout === "2d" ? "hidden" : layout === "both" ? "right-[calc(50%+12px)] top-3 lg:top-[112px]" : "right-3 top-3 lg:top-4"}`}>
-            <button type="button" className={tool} onClick={() => engine && dolly(engine, 0.8)} aria-label="Zoom in"><Plus className="h-4 w-4" /></button>
-            <button type="button" className={tool} onClick={() => engine && dolly(engine, 1.25)} aria-label="Zoom out"><Minus className="h-4 w-4" /></button>
+            <button type="button" className={tool} onClick={() => engine && dolly(engine, 0.8)} aria-label={t({ en: "Zoom in", id: "Perbesar" })}><Plus className="h-4 w-4" /></button>
+            <button type="button" className={tool} onClick={() => engine && dolly(engine, 1.25)} aria-label={t({ en: "Zoom out", id: "Perkecil" })}><Minus className="h-4 w-4" /></button>
             <button
               type="button"
               className={tool}
-              aria-label="Initial view"
+              aria-label={t({ en: "Initial view", id: "Tampilan awal" })}
               onClick={() => {
                 engine?.setView("iso");
                 engine?.setFilter({ rack: 0, tier: 0 });
@@ -314,7 +334,7 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
             <button
               type="button"
               className={tool}
-              aria-label="Camera"
+              aria-label={t({ en: "Camera", id: "Kamera" })}
               aria-pressed={selection?.kind === "object" && selection.id === LIVE_FEED.id}
               onClick={() => {
                 const camera = { kind: "object", id: LIVE_FEED.id } as Selection;
@@ -336,17 +356,17 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
         {/* KPI cards */}
         <div className="flex gap-3 overflow-x-auto px-3 py-3 lg:pointer-events-none lg:absolute lg:left-4 lg:right-[404px] lg:top-4 lg:p-0 lg:pb-3">
           <div className="flex gap-3 lg:pointer-events-auto">
-            <Kpi label="Holes filled" value={store.hasData ? `${filled}` : "-"} sub={`of ${HOLES_TOTAL} holes · ${FACILITY_CODE}`} />
-            <Kpi label="Ready to harvest" value={store.hasData ? `${counts.siap_panen}` : "-"} sub="plants, by recipe" />
+            <Kpi label={t({ en: "Holes filled", id: "Lubang terisi" })} value={store.hasData ? `${filled}` : "-"} sub={t({ en: `of ${HOLES_TOTAL} holes · ${FACILITY_CODE}`, id: `dari ${HOLES_TOTAL} lubang · ${FACILITY_CODE}` })} />
+            <Kpi label={t({ en: "Ready to harvest", id: "Siap panen" })} value={store.hasData ? `${counts.siap_panen}` : "-"} sub={t({ en: "plants, by recipe", id: "tanaman, menurut resep" })} />
             {roomTemp !== null ? (
-              <Kpi label="Grow room temperature" value={formatWithUnit("suhu", roomTemp)} sub={roomRh !== null ? `RH ${formatWithUnit("rh", roomRh)}` : "from sensors"} />
+              <Kpi label={t({ en: "Grow room temperature", id: "Suhu ruang tanam" })} value={formatWithUnit("suhu", roomTemp, lang)} sub={roomRh !== null ? `RH ${formatWithUnit("rh", roomRh, lang)}` : t({ en: "from sensors", id: "dari sensor" })} />
             ) : (
-              <Kpi label="Grow room temperature" value="22.4 °C" sub="sample · RH 68% · CO₂ 812 ppm" />
+              <Kpi label={t({ en: "Grow room temperature", id: "Suhu ruang tanam" })} value={t({ en: "22.4 °C", id: "22,4 °C" })} sub={t({ en: "sample · RH 68% · CO₂ 812 ppm", id: "contoh · RH 68% · CO₂ 812 ppm" })} />
             )}
             {tankEc !== null ? (
-              <Kpi label="Tank" value={`EC ${formatValue("ec", tankEc)}`} sub={tankPh !== null ? `pH ${formatValue("ph", tankPh)}` : "from sensors"} />
+              <Kpi label={t({ en: "Tank", id: "Tangki" })} value={`EC ${formatValue("ec", tankEc, lang)}`} sub={tankPh !== null ? `pH ${formatValue("ph", tankPh, lang)}` : t({ en: "from sensors", id: "dari sensor" })} />
             ) : (
-              <Kpi label="Tank" value="EC 1.62" sub="sample · pH 6.48" />
+              <Kpi label={t({ en: "Tank", id: "Tangki" })} value={t({ en: "EC 1.62", id: "EC 1,62" })} sub={t({ en: "sample · pH 6.48", id: "contoh · pH 6,48" })} />
             )}
           </div>
         </div>
@@ -356,9 +376,9 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
           <Card className="space-y-2 px-3 py-2.5 lg:pointer-events-auto">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <LayoutSwitch value={layout} onChange={setLayout} />
-              <Segmented label="View" value={view} options={VIEWS} onChange={(v) => engine?.setView(v)} />
-              <Segmented label="Rack" value={filter.rack} options={[{ key: 0, label: "All" }, ...RACK_NUMBERS.map((r) => ({ key: r, label: `${r}` }))]} onChange={(rack) => engine?.setFilter({ rack })} />
-              <Segmented label="Tier" value={filter.tier} options={[{ key: 0, label: "All" }, ...TIER_NUMBERS.map((t) => ({ key: t, label: `${t}` }))]} onChange={(tier) => engine?.setFilter({ tier })} />
+              <Segmented label={t({ en: "View", id: "Tampilan" })} value={view} options={VIEWS.map((v) => ({ key: v.key, label: t(v.label) }))} onChange={(v) => engine?.setView(v)} />
+              <Segmented label="Rack" value={filter.rack} options={[{ key: 0, label: t({ en: "All", id: "Semua" }) }, ...RACK_NUMBERS.map((r) => ({ key: r, label: `${r}` }))]} onChange={(rack) => engine?.setFilter({ rack })} />
+              <Segmented label={t({ en: "Tier", id: "Tingkat" })} value={filter.tier} options={[{ key: 0, label: t({ en: "All", id: "Semua" }) }, ...TIER_NUMBERS.map((n) => ({ key: n, label: `${n}` }))]} onChange={(tier) => engine?.setFilter({ tier })} />
               <button
                 type="button"
                 className={toggle}
@@ -369,7 +389,7 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
                 }}
               >
                 {realLight ? <Lightbulb className="h-4 w-4 text-[#D63FB8]" /> : <LightbulbOff className="h-4 w-4" />}
-                Grow light
+                {t({ en: "Grow light", id: "Lampu tanam" })}
               </button>
               <button
                 type="button"
@@ -381,17 +401,17 @@ export default function PlantFactoryOverview({ active, preload, onSceneReady, fo
                 }}
               >
                 <span className={`h-3 w-3 rounded-sm border ${covers ? "border-[#14919B] bg-[#14919B]" : "border-[#9AAEB2]"}`} />
-                Rack covers
+                {t({ en: "Rack covers", id: "Penutup rack" })}
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               {HOLE_STATE_KEYS.map((s) => (
                 <span key={s} className="flex items-center gap-1 text-[12px] text-[#4F6B73]">
                   <span className="h-2 w-2 rounded-full" style={{ background: stateColor(s) }} />
-                  {HOLE_STATES[s].label}
+                  {holeStateLabel(s, lang)}
                 </span>
               ))}
-              <span className="text-[12px] text-[#4F6B73] lg:ml-auto">Click a plant or a hole to change it</span>
+              <span className="text-[12px] text-[#4F6B73] lg:ml-auto">{t({ en: "Click a plant or a hole to change it", id: "Klik tanaman atau lubang untuk mengubahnya" })}</span>
             </div>
           </Card>
         </div>

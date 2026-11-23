@@ -1,5 +1,6 @@
 import type { ChamberReading, SeedChamberProvider } from "plant-factory-3d";
 import { BATCHES, addDays } from "./facility";
+import type { Lang } from "../i18n-core";
 
 // Growth chamber CH1 (FAITHFUL FPG450), where every batch spends its germination
 // phase before moving to the plant factory. The model in the plant-factory-3d
@@ -21,6 +22,11 @@ export const SHELVES = [
   { shelf: 4, positions: 4, label: "Shelf 4 (bottom)" },
 ] as const;
 
+const SHELF_WHERE_ID: Record<number, string> = { 1: "atas", 2: "tengah", 3: "bawah", 4: "dasar" };
+
+export const shelfLabel = (shelf: number, lang: Lang = "en") =>
+  lang === "id" ? `Rak ${shelf} (${SHELF_WHERE_ID[shelf] ?? ""})` : (SHELVES.find((s) => s.shelf === shelf)?.label ?? `Shelf ${shelf}`);
+
 export const CHAMBER_LAMPS = SHELVES.map((s) => ({ id: `LAMP-${CHAMBER_CODE}-L${s.shelf}`, shelf: s.shelf as number }));
 
 export type SlotState = "kosong" | "disemai" | "berkecambah" | "siap_pindah" | "masalah";
@@ -39,6 +45,14 @@ export const SLOT_STATES: Record<SlotState, { label: string; color: number; plan
 };
 
 export const SLOT_STATE_KEYS = Object.keys(SLOT_STATES) as SlotState[];
+
+const SLOT_STATE_ID: Record<SlotState, string> = { disemai: "Baru disemai", berkecambah: "Berkecambah", siap_pindah: "Siap pindah tanam", masalah: "Bermasalah", kosong: "Kosong" };
+
+export const slotStateLabel = (s: SlotState, lang: Lang = "en") => (lang === "id" ? SLOT_STATE_ID[s] : SLOT_STATES[s].label);
+
+/** SLOT_STATES with labels in the chosen language, for the 3D engine. */
+export const slotStatesIn = (lang: Lang = "en"): typeof SLOT_STATES =>
+  lang === "id" ? (Object.fromEntries(SLOT_STATE_KEYS.map((k) => [k, { ...SLOT_STATES[k], label: SLOT_STATE_ID[k] }])) as typeof SLOT_STATES) : SLOT_STATES;
 
 export const slotColor = (s: SlotState) => `#${SLOT_STATES[s].color.toString(16).padStart(6, "0")}`;
 
@@ -170,6 +184,8 @@ export class ChamberProvider implements SeedChamberProvider {
   liveClimate = false;
   /** Which of the climate's values come from a sensor; the rest stay samples. */
   liveKeys = new Set<keyof Climate>();
+  /** Language of the labels on the model's screen. */
+  lang: Lang = "en";
   private tick = 0;
 
   getSlot(id: string) {
@@ -217,9 +233,9 @@ export class ChamberProvider implements SeedChamberProvider {
   /** Drives the screen on the 3D model; the engine shows the first three. */
   readings(): Record<string, ChamberReading> {
     return {
-      suhu: { label: "Temperature", value: this.climate.temp, unit: "°C", d: 1 },
-      rh: { label: "Humidity", value: this.climate.rh, unit: "% RH", d: 0 },
-      lux: { label: "Light", value: this.climate.lux, unit: "lux", d: 0 },
+      suhu: { label: this.lang === "id" ? "Suhu" : "Temperature", value: this.climate.temp, unit: "°C", d: 1 },
+      rh: { label: this.lang === "id" ? "Kelembapan" : "Humidity", value: this.climate.rh, unit: "% RH", d: 0 },
+      lux: { label: this.lang === "id" ? "Cahaya" : "Light", value: this.climate.lux, unit: "lux", d: 0 },
     };
   }
 

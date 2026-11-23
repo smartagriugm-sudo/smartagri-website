@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChamberSelection, Selection } from "plant-factory-3d";
 import { Box, Home, Minus, Plus } from "lucide-react";
-import { SHELVES, SLOT_STATES, type ChamberProvider } from "../../lib/pf/chamber";
+import { SHELVES, slotStatesIn, type ChamberProvider } from "../../lib/pf/chamber";
 import { HOLE_STATES } from "../../lib/pf/facility";
+import { useLang, useT, type Lang } from "../../lib/i18n";
 import { RACK_NUMBERS, TIER_NUMBERS, type PfProvider } from "../../lib/pf/provider";
 import { useErpStore } from "./ErpContext";
 import PlantFactoryScene, { type SceneEngine } from "./PlantFactoryScene";
@@ -25,14 +26,19 @@ export type Mark = "chosen" | "other" | null;
 const CHOSEN = 0x14919b;
 const OTHER = 0xc4ced0;
 
-const slotStates = {
-  pilih: { label: "Chosen", color: CHOSEN, plant: 0, plugs: true, lid: false },
-  ...Object.fromEntries(Object.entries(SLOT_STATES).map(([k, v]) => [`lain_${k}`, { ...v, label: "Another batch", color: OTHER }])),
-};
-const holeStates = {
-  pilih: { label: "Chosen", color: CHOSEN, plant: 0 },
-  ...Object.fromEntries(Object.entries(HOLE_STATES).map(([k, v]) => [`lain_${k}`, { ...v, label: "Another batch", color: OTHER }])),
-};
+const chosenWord = (lang: Lang) => (lang === "id" ? "Dipilih" : "Chosen");
+const otherWord = (lang: Lang) => (lang === "id" ? "Batch lain" : "Another batch");
+
+const slotStatesFor = (lang: Lang) => ({
+  pilih: { label: chosenWord(lang), color: CHOSEN, plant: 0, plugs: true, lid: false },
+  ...Object.fromEntries(Object.entries(slotStatesIn(lang)).map(([k, v]) => [`lain_${k}`, { ...v, label: otherWord(lang), color: OTHER }])),
+});
+const holeStatesFor = (lang: Lang) => ({
+  pilih: { label: chosenWord(lang), color: CHOSEN, plant: 0 },
+  ...Object.fromEntries(Object.entries(HOLE_STATES).map(([k, v]) => [`lain_${k}`, { ...v, label: otherWord(lang), color: OTHER }])),
+});
+
+const READING_ID: Record<string, string> = { suhu: "Suhu", rh: "Kelembapan", lux: "Cahaya" };
 
 const tool = "grid h-9 w-9 place-items-center rounded-lg text-[#36525A] hover:bg-[#EEF5F5] hover:text-[#0B6477]";
 
@@ -52,6 +58,12 @@ type Props = {
 
 export default function BatchPicker3D({ kind, mark, onPick, single = false, focus, hint, legend }: Props) {
   const store = useErpStore();
+  const t = useT();
+  const lang = useLang();
+  const slotStates = useMemo(() => slotStatesFor(lang), [lang]);
+  const holeStates = useMemo(() => holeStatesFor(lang), [lang]);
+  const langRef = useRef(lang);
+  langRef.current = lang;
   const [engine, setEngine] = useState<SceneEngine | ChamberEngine | null>(null);
   const [failed, setFailed] = useState(false);
   const [filter, setFilter] = useState({ rack: 0, tier: 0, shelf: 0 });
@@ -74,7 +86,11 @@ export default function BatchPicker3D({ kind, mark, onPick, single = false, focu
       const base = store.chamber;
       return {
         lamps: base.lamps,
-        readings: () => base.readings(),
+        readings: () => {
+          const r = base.readings();
+          if (langRef.current !== "id") return r;
+          return Object.fromEntries(Object.entries(r).map(([k, v]) => [k, { ...v, label: READING_ID[k] ?? v.label }]));
+        },
         getSlot: (id: string) => {
           const s = base.getSlot(id);
           const m = markRef.current(id);
@@ -134,7 +150,7 @@ export default function BatchPicker3D({ kind, mark, onPick, single = false, focu
     else engine.focusHole(focus);
   }, [engine, focus]);
 
-  const facts = sceneFacts(store, engine, hovered);
+  const facts = sceneFacts(store, engine, hovered, lang);
   const home = () => {
     if (!engine) return;
     engine.select(null);
@@ -150,7 +166,7 @@ export default function BatchPicker3D({ kind, mark, onPick, single = false, focu
   if (open === false) {
     return (
       <button type="button" onClick={() => setOpen(true)} className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-dashed border-[#C9D8DA] bg-[#F6F8F8] px-3 py-2.5 text-[14px] font-medium text-[#0B6477] hover:border-[#14919B]">
-        <Box className="h-4 w-4" aria-hidden /> Show the {kind === "chamber" ? "growth chamber" : "plant factory"} in 3D
+        <Box className="h-4 w-4" aria-hidden /> {kind === "chamber" ? t({ en: "Show the growth chamber in 3D", id: "Tampilkan growth chamber dalam 3D" }) : t({ en: "Show the plant factory in 3D", id: "Tampilkan plant factory dalam 3D" })}
       </button>
     );
   }
@@ -167,19 +183,19 @@ export default function BatchPicker3D({ kind, mark, onPick, single = false, focu
         {!engine && <SceneStatus failed={failed} facility={kind === "chamber" ? "chamber" : "plantFactory"} />}
         {facts && <SceneHoverCard facts={facts} cardRef={card} place={place} showCamera={false} />}
         <Card className="absolute right-3 top-3 flex flex-col p-1">
-          <button type="button" className={tool} onClick={() => engine && dolly(engine, 0.8)} aria-label="Zoom in"><Plus className="h-4 w-4" /></button>
-          <button type="button" className={tool} onClick={() => engine && dolly(engine, 1.25)} aria-label="Zoom out"><Minus className="h-4 w-4" /></button>
-          <button type="button" className={tool} onClick={home} aria-label="Initial view"><Home className="h-4 w-4" /></button>
+          <button type="button" className={tool} onClick={() => engine && dolly(engine, 0.8)} aria-label={t({ en: "Zoom in", id: "Perbesar" })}><Plus className="h-4 w-4" /></button>
+          <button type="button" className={tool} onClick={() => engine && dolly(engine, 1.25)} aria-label={t({ en: "Zoom out", id: "Perkecil" })}><Minus className="h-4 w-4" /></button>
+          <button type="button" className={tool} onClick={home} aria-label={t({ en: "Initial view", id: "Tampilan awal" })}><Home className="h-4 w-4" /></button>
         </Card>
       </div>
       <div className="space-y-2 border-t border-[#E3ECED] bg-white px-3 py-2.5">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           {kind === "chamber" ? (
-            <Segmented label="Shelf" value={filter.shelf} options={[{ key: 0, label: "All" }, ...SHELVES.map((s) => ({ key: s.shelf as number, label: `${s.shelf}` }))]} onChange={(shelf) => (engine as ChamberEngine | null)?.setFilter({ shelf })} />
+            <Segmented label={t({ en: "Shelf", id: "Rak" })} value={filter.shelf} options={[{ key: 0, label: t({ en: "All", id: "Semua" }) }, ...SHELVES.map((s) => ({ key: s.shelf as number, label: `${s.shelf}` }))]} onChange={(shelf) => (engine as ChamberEngine | null)?.setFilter({ shelf })} />
           ) : (
             <>
-              <Segmented label="Rack" value={filter.rack} options={[{ key: 0, label: "All" }, ...RACK_NUMBERS.map((r) => ({ key: r, label: `${r}` }))]} onChange={(rack) => (engine as SceneEngine | null)?.setFilter({ rack })} />
-              <Segmented label="Tier" value={filter.tier} options={[{ key: 0, label: "All" }, ...TIER_NUMBERS.map((t) => ({ key: t, label: `${t}` }))]} onChange={(tier) => (engine as SceneEngine | null)?.setFilter({ tier })} />
+              <Segmented label={t({ en: "Rack", id: "Rak" })} value={filter.rack} options={[{ key: 0, label: t({ en: "All", id: "Semua" }) }, ...RACK_NUMBERS.map((r) => ({ key: r, label: `${r}` }))]} onChange={(rack) => (engine as SceneEngine | null)?.setFilter({ rack })} />
+              <Segmented label="Tier" value={filter.tier} options={[{ key: 0, label: t({ en: "All", id: "Semua" }) }, ...TIER_NUMBERS.map((n) => ({ key: n, label: `${n}` }))]} onChange={(tier) => (engine as SceneEngine | null)?.setFilter({ tier })} />
             </>
           )}
         </div>

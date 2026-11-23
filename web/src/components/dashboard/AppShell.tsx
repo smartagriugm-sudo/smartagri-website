@@ -15,14 +15,18 @@ import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { A, indoorDashboardImage } from "../../lib/assets";
 import { body, display } from "../../lib/fonts";
-import { DASHBOARD_NAV, clockLabel } from "../../lib/indoor-dashboard";
+import { clockLabel, dashboardNavFor } from "../../lib/indoor-dashboard";
 import { useDashboard } from "../../lib/dashboard-state";
 import { useAuth } from "../../lib/auth/auth";
 import { GREENHOUSE_NAV } from "../greenhouse/nav";
+import { greenhouseNavCopy } from "../greenhouse/parts";
+import { useLang, useT } from "../../lib/i18n";
+import LanguageMenu from "../LanguageToggle";
 
 /** Which agrosphere dashboard this shell frames: the Indoor demo or the measured Greenhouse sites. */
 export type DashboardApp = "indoor" | "greenhouse";
 
+// Product names, the same in both languages.
 const APP_LABEL: Record<DashboardApp, string> = { indoor: "Indoor", greenhouse: "Greenhouse" };
 
 type NavItem = { label: string; icon: LucideIcon; to: string };
@@ -31,8 +35,11 @@ type NavItem = { label: string; icon: LucideIcon; to: string };
 // Greenhouse sections built on measured data (Manage sites for lab admins only).
 function useNav(app: DashboardApp): NavItem[] {
   const { account } = useAuth();
-  if (app === "greenhouse") return GREENHOUSE_NAV.filter((n) => !n.adminOnly || account?.isAdmin);
-  return DASHBOARD_NAV;
+  const lang = useLang();
+  if (app === "greenhouse") {
+    return GREENHOUSE_NAV.filter((n) => !n.adminOnly || account?.isAdmin).map((n) => ({ ...n, ...greenhouseNavCopy(n, lang) }));
+  }
+  return dashboardNavFor(lang);
 }
 
 // Chrome for the dashboard application: the sidebar and top bar that persist
@@ -54,6 +61,7 @@ export function DashboardSidebar({
   onToggle?: () => void;
 }) {
   const nav = useNav(app);
+  const t = useT();
   return (
     <aside
       className={`hidden lg:flex shrink-0 flex-col gap-1 border-r border-[#0B6477]/8 bg-[#FAFCFB] p-4 transition-[width] duration-200 ${
@@ -61,7 +69,7 @@ export function DashboardSidebar({
       }`}
     >
       <div className={`flex items-center mb-1 ${collapsed ? "flex-col gap-2" : "gap-2 px-2 py-2"}`}>
-        <Link to="/agrosphere" className="flex min-w-0 items-center gap-2" title="agrosphere dashboards">
+        <Link to="/agrosphere" className="flex min-w-0 items-center gap-2" title={t({ en: "agrosphere dashboards", id: "Dashboard agrosphere" })}>
           <img src={A.agrosphereIcon} alt="" className="h-7 w-7 shrink-0" />
           {!collapsed && (
             <span className="min-w-0 leading-tight">
@@ -81,8 +89,8 @@ export function DashboardSidebar({
           <button
             type="button"
             onClick={onToggle}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? t({ en: "Expand sidebar", id: "Buka sidebar" }) : t({ en: "Collapse sidebar", id: "Ciutkan sidebar" })}
+            title={collapsed ? t({ en: "Expand sidebar", id: "Buka sidebar" }) : t({ en: "Collapse sidebar", id: "Ciutkan sidebar" })}
             className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-neutral-400 hover:bg-[#0B6477]/8 hover:text-[#0B6477] transition-colors ${
               collapsed ? "" : "ml-auto"
             }`}
@@ -98,7 +106,7 @@ export function DashboardSidebar({
           style={body}
         >
           <ArrowLeft className="w-3 h-3" />
-          All dashboards
+          {t({ en: "All dashboards", id: "Semua dashboard" })}
         </Link>
       )}
 
@@ -107,7 +115,7 @@ export function DashboardSidebar({
           const active = item.to === activeTo;
           return (
             <Link
-              key={item.label}
+              key={item.to}
               to={item.to}
               title={collapsed ? item.label : undefined}
               className={`flex items-center rounded-xl py-2 text-[13px] font-medium transition-colors ${
@@ -128,7 +136,9 @@ export function DashboardSidebar({
 
       <div className="mt-auto w-full pt-4">
         {app === "greenhouse" ? (
-          <SidebarAccount collapsed={collapsed} />
+          <AccountRow collapsed={collapsed}>
+            <SidebarAccount collapsed={collapsed} />
+          </AccountRow>
         ) : (
         <>
         {!collapsed && (
@@ -145,16 +155,20 @@ export function DashboardSidebar({
           />
           <div className="p-3.5">
             <div className="text-[13px] font-medium text-white leading-snug" style={display}>
-              Built and tested at UGM
+              {t({ en: "Built and tested at UGM", id: "Dibangun dan diuji di UGM" })}
             </div>
             <p className="mt-1 text-[11px] text-white/60 leading-relaxed" style={body}>
-              Every sensor on this screen runs in our own greenhouses first.
+              {t({
+                en: "Every sensor on this screen runs in our own greenhouses first.",
+                id: "Setiap sensor di layar ini lebih dulu berjalan di greenhouse kami sendiri.",
+              })}
             </p>
           </div>
         </div>
         )}
 
-        <div className={`mt-3 flex items-center rounded-xl py-2 ${collapsed ? "justify-center" : "gap-2.5 px-2"}`}>
+        <AccountRow collapsed={collapsed} className="mt-3">
+        <div className={`flex items-center rounded-xl py-2 ${collapsed ? "justify-center" : "gap-2.5 px-2"}`}>
           <span
             className="flex h-8 w-8 items-center justify-center rounded-full bg-[#45DFB1] text-[12px] font-semibold text-[#0B2A22]"
             style={display}
@@ -165,16 +179,17 @@ export function DashboardSidebar({
             <>
               <div className="min-w-0 flex-1">
                 <div className="text-[12px] font-medium text-neutral-800 truncate" style={body}>
-                  Facility operator
+                  {t({ en: "Facility operator", id: "Operator fasilitas" })}
                 </div>
                 <div className="text-[10px] text-neutral-400" style={body}>
-                  Demo account
+                  {t({ en: "Demo account", id: "Akun demo" })}
                 </div>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-neutral-300" />
             </>
           )}
         </div>
+        </AccountRow>
         </>
         )}
       </div>
@@ -182,12 +197,24 @@ export function DashboardSidebar({
   );
 }
 
+// The account control with the language picker beside it (stacked when the
+// sidebar is collapsed to its icon rail).
+function AccountRow({ collapsed, className = "", children }: { collapsed: boolean; className?: string; children: ReactNode }) {
+  return (
+    <div className={`flex ${collapsed ? "flex-col items-center gap-1" : "items-center gap-1"} ${className}`}>
+      <div className={collapsed ? "" : "min-w-0 flex-1"}>{children}</div>
+      <LanguageMenu tone="light" align={collapsed ? "left" : "right"} />
+    </div>
+  );
+}
+
 // The signed-in account at the foot of the Greenhouse sidebar (the Indoor demo
 // keeps its demo operator). Opens the account page.
 function SidebarAccount({ collapsed }: { collapsed: boolean }) {
   const { user, account } = useAuth();
-  const name = account?.name || user?.email?.split("@")[0] || "Signed in";
-  const role = account?.isAdmin ? "Lab admin" : "Shared sites";
+  const t = useT();
+  const name = account?.name || user?.email?.split("@")[0] || t({ en: "Signed in", id: "Sudah masuk" });
+  const role = account?.isAdmin ? t({ en: "Lab admin", id: "Admin lab" }) : t({ en: "Shared sites", id: "Lokasi dibagikan" });
   const initials = name
     .split(/[\s._-]+/)
     .filter(Boolean)
@@ -198,7 +225,7 @@ function SidebarAccount({ collapsed }: { collapsed: boolean }) {
     <Link
       to="/account"
       className={`flex items-center rounded-xl py-2 hover:bg-[#0B6477]/5 transition-colors ${collapsed ? "justify-center" : "gap-2.5 px-2"}`}
-      title={collapsed ? name : "Your account"}
+      title={collapsed ? name : t({ en: "Your account", id: "Akun Anda" })}
     >
       {account?.avatarUrl ? (
         <img src={account.avatarUrl} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
@@ -226,12 +253,13 @@ function SidebarAccount({ collapsed }: { collapsed: boolean }) {
 
 export function DashboardTopBar() {
   const { playing, setPlaying, tick } = useDashboard();
+  const t = useT();
   return (
     <div className="flex items-center gap-3">
       <div className="hidden sm:flex min-w-0 flex-1 items-center gap-2 h-9 max-w-[280px] rounded-xl border border-[#0B6477]/10 bg-white px-3">
         <Search className="w-4 h-4 shrink-0 text-neutral-300" />
         <span className="truncate text-[13px] text-neutral-300" style={body}>
-          Search rooms, sensors
+          {t({ en: "Search rooms, sensors", id: "Cari ruang, sensor" })}
         </span>
       </div>
       <div className="flex flex-1 items-center justify-end gap-2">
@@ -248,7 +276,7 @@ export function DashboardTopBar() {
           style={body}
         >
           {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-          {playing ? "Pause" : "Play"}
+          {playing ? t({ en: "Pause", id: "Jeda" }) : t({ en: "Play", id: "Putar" })}
         </button>
         <span className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border border-[#0B6477]/10 bg-white">
           <Bell className="w-4 h-4 text-neutral-400" />
@@ -265,6 +293,7 @@ export function DashboardTopBar() {
 // screens would be unreachable on a phone.
 export function DashboardMobileNav({ app, activeTo }: { app: DashboardApp; activeTo: string }) {
   const nav = useNav(app);
+  const t = useT();
   return (
     <>
     <div className="lg:hidden flex items-center justify-between gap-3">
@@ -274,21 +303,24 @@ export function DashboardMobileNav({ app, activeTo }: { app: DashboardApp; activ
           agrosphere <span className="font-medium text-[#14919B]">{APP_LABEL[app]}</span>
         </span>
       </Link>
-      <Link
-        to="/agrosphere"
-        className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-neutral-500 hover:text-[#0B6477]"
-        style={body}
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        All dashboards
-      </Link>
+      <div className="flex shrink-0 items-center gap-1">
+        <Link
+          to="/agrosphere"
+          className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-neutral-500 hover:text-[#0B6477]"
+          style={body}
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          {t({ en: "All dashboards", id: "Semua dashboard" })}
+        </Link>
+        <LanguageMenu tone="light" align="right" />
+      </div>
     </div>
     <nav className="lg:hidden flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {nav.map((item) => {
         const active = item.to === activeTo;
         return (
           <Link
-            key={item.label}
+            key={item.to}
             to={item.to}
             className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors ${
               active

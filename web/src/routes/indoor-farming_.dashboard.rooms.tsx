@@ -4,20 +4,22 @@ import { CircleDot, Search, Sprout } from "lucide-react";
 import { body, display } from "../lib/fonts";
 import {
   AERIAL_KEYS,
-  DASHBOARD_NAV,
-  METRICS,
   PLANT_HEALTH_TONE,
-  GROW_SYSTEMS,
   ROOM_LAYOUTS,
+  dashboardScreen,
+  growSystemFor,
+  localizeSite,
+  metricsFor,
+  plantHealthLabel,
+  plantPositionLabel,
+  roomLocation,
   roomsAtSite,
-  rowLabelOf,
-  rowPluralOf,
-  slotPluralOf,
   siteOf,
-  slotLabelOf,
+  stageLabel,
+  statusLabel,
+  zonesFor,
   ROOT_KEYS,
   STATUS_TONE,
-  ZONES,
   formatValue,
   plantingSummary,
   plantsFor,
@@ -32,21 +34,21 @@ import { useDashboard } from "../lib/dashboard-state";
 import { Panel } from "../components/dashboard/parts";
 import { ScreenHeading } from "../components/dashboard/AppShell";
 import FacilityMap from "../components/dashboard/FacilityMap";
+import { num } from "../components/dashboard/parts";
+import { headLang, useLang, useT } from "../lib/i18n";
 
 export const Route = createFileRoute("/indoor-farming_/dashboard/rooms")({
   component: RoomsScreen,
-  head: () => ({ meta: [{ title: "Rooms · Dashboard | smartagri" }] }),
+  head: ({ matches }) => ({ meta: [{ title: headLang(matches) === "id" ? "Ruang · Dashboard | smartagri" : "Rooms · Dashboard | smartagri" }] }),
 });
-
-const NAV = DASHBOARD_NAV.find((n) => n.label === "Rooms")!;
 
 type Filter = "all" | "active" | "attention" | "offline";
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "active", label: "Active" },
-  { key: "attention", label: "Attention" },
-  { key: "offline", label: "Offline" },
+const FILTERS: { key: Filter; label: { en: string; id: string } }[] = [
+  { key: "all", label: { en: "All", id: "Semua" } },
+  { key: "active", label: { en: "Active", id: "Aktif" } },
+  { key: "attention", label: { en: "Attention", id: "Perlu cek" } },
+  { key: "offline", label: { en: "Offline", id: "Offline" } },
 ];
 
 // Metrics driven by a schedule rather than held at a setpoint, so they are not
@@ -80,10 +82,13 @@ export default function RoomsScreen() {
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [siteId, setSiteId] = useState<string | null>(null);
+  const lang = useLang();
+  const t = useT();
+  const NAV = dashboardScreen("/indoor-farming/dashboard/rooms", lang);
 
   const rooms = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return ZONES.filter((z) => {
+    return zonesFor(lang).filter((z) => {
       if (siteId && ROOM_LAYOUTS[z.id]?.siteId !== siteId) return false;
       if (q && !`${z.name} ${z.short} ${z.crop} ${z.stage}`.toLowerCase().includes(q)) {
         return false;
@@ -94,7 +99,7 @@ export default function RoomsScreen() {
       if (filter === "offline") return !z.online;
       return true;
     });
-  }, [query, filter, siteId, tick]);
+  }, [query, filter, siteId, tick, lang]);
 
   // Changing rooms must clear the open plant: the position it described belongs
   // to the room the operator just left.
@@ -117,7 +122,7 @@ export default function RoomsScreen() {
 
   return (
     <>
-      <ScreenHeading title="Rooms" blurb={NAV.blurb} />
+      <ScreenHeading title={NAV.label} blurb={NAV.blurb} />
 
       {/* The rail grows with the viewport instead of sitting at a fixed 300px,
           which left it stranded on a wide screen. The 30% ceiling is the point:
@@ -125,7 +130,7 @@ export default function RoomsScreen() {
           share at every width. */}
       <div className="grid gap-3 lg:grid-cols-[minmax(320px,30%)_minmax(0,1fr)] items-start">
         <div className="flex flex-col gap-3">
-          <Panel title="Facility sites">
+          <Panel title={t({ en: "Facility sites", id: "Lokasi fasilitas" })}>
             <FacilityMap
               selectedSiteId={siteId}
               onSelectSite={selectSite}
@@ -185,6 +190,9 @@ function RoomRail({
   setFilter: (f: Filter) => void;
   onSelect: (id: string) => void;
 }) {
+  const lang = useLang();
+  const t = useT();
+  const METRICS = metricsFor(lang);
   return (
     <div className="rounded-2xl border border-[#0B6477]/10 bg-white">
       <div className="border-b border-[#0B6477]/8 p-3">
@@ -193,7 +201,7 @@ function RoomRail({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search rooms or crops"
+            placeholder={t({ en: "Search rooms or crops", id: "Cari ruang atau tanaman" })}
             className="min-w-0 flex-1 bg-transparent text-[13px] text-neutral-700 placeholder:text-neutral-300 outline-none"
             style={body}
           />
@@ -212,7 +220,7 @@ function RoomRail({
               }`}
               style={body}
             >
-              {f.label}
+              {t(f.label)}
             </button>
           ))}
         </div>
@@ -221,7 +229,7 @@ function RoomRail({
       <div className="flex max-h-[520px] xl:max-h-[680px] flex-col gap-2 overflow-y-auto p-3">
         {rooms.length === 0 && (
           <p className="py-6 text-center text-[12px] text-neutral-400" style={body}>
-            No room matches that search.
+            {t({ en: "No room matches that search.", id: "Tidak ada ruang yang cocok dengan pencarian itu." })}
           </p>
         )}
 
@@ -230,7 +238,7 @@ function RoomRail({
           const status = zoneStatus(z);
           const layout = ROOM_LAYOUTS[z.id];
           const summary = plantingSummary(z);
-          const system = GROW_SYSTEMS[layout.system];
+          const system = growSystemFor(layout.system, lang);
           const selected = z.id === zoneId;
           return (
             <button
@@ -264,7 +272,7 @@ function RoomRail({
                     backgroundColor: z.online ? STATUS_TONE[status].bg : "rgba(156,163,175,0.16)",
                   }}
                 >
-                  {z.online ? STATUS_TONE[status].label : "Offline"}
+                  {z.online ? statusLabel(status, lang) : "Offline"}
                 </span>
               </div>
 
@@ -272,7 +280,7 @@ function RoomRail({
                 {z.crop}
               </div>
               <div className="mt-0.5 truncate text-[11px] text-neutral-400" style={body}>
-                {siteOf(z.id).city} · {layout?.location} · {z.area} m²
+                {localizeSite(siteOf(z.id), lang).city} · {roomLocation(z.id, lang)} · {z.area} m²
               </div>
 
               {z.online ? (
@@ -286,20 +294,24 @@ function RoomRail({
                         className="text-[13px] font-semibold tabular-nums"
                         style={{ ...display, color: STATUS_TONE[statusOf(k, r[k], z)].color }}
                       >
-                        {formatValue(k, r[k])}
+                        {formatValue(k, r[k], lang)}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="mt-2 rounded-lg bg-[#F3F7F6] px-2 py-1.5 text-[10px] text-neutral-400" style={body}>
-                  No readings, controller in maintenance
+                  {t({ en: "No readings, controller in maintenance", id: "Tidak ada bacaan, pengendali dalam pemeliharaan" })}
                 </div>
               )}
 
               <div className="mt-2 flex items-center gap-1.5 text-[10px] text-neutral-400" style={body}>
                 <Sprout className="w-3 h-3 shrink-0" />
-                {system.label} · {summary.planted} of {summary.total} planted
+                {system.label} ·{" "}
+                {t({
+                  en: `${summary.planted} of ${summary.total} planted`,
+                  id: `${summary.planted} dari ${summary.total} tertanam`,
+                })}
               </div>
             </button>
           );
@@ -323,12 +335,14 @@ function RoomLayoutPanel({
   const layout = ROOM_LAYOUTS[zone.id];
   const plants = useMemo(() => plantsFor(zone), [zone]);
   const summary = plantingSummary(zone);
+  const lang = useLang();
+  const t = useT();
 
   // One drawing per system. A polybag bed, a Dutch bucket line, a trapezoid
   // gully and a vertical rack tier do not look alike on the floor, and an
   // operator matching the screen to the room in front of them needs the screen
   // to look like the room.
-  const system = GROW_SYSTEMS[layout.system];
+  const system = growSystemFor(layout.system, lang);
   const shape = SLOT_SHAPE[layout.system];
 
   const rows = Array.from({ length: layout.rows }, (_, r) =>
@@ -337,11 +351,13 @@ function RoomLayoutPanel({
 
   return (
     <Panel
-      title={`${zone.name} · planting layout`}
+      title={`${zone.name} · ${t({ en: "planting layout", id: "layout tanam" })}`}
       action={
         <span className="text-[11px] text-neutral-400" style={body}>
-          {system.label} · {layout.rows} {rowPluralOf(layout).toLowerCase()} ·{" "}
-          {layout.perRow} {slotPluralOf(layout).toLowerCase()} each
+          {system.label} · {layout.rows} {system.rowPlural.toLowerCase()} ·{" "}
+          {lang === "id"
+            ? `masing-masing ${layout.perRow} ${system.slotPlural.toLowerCase()}`
+            : `${layout.perRow} ${system.slotPlural.toLowerCase()} each`}
         </span>
       }
     >
@@ -352,11 +368,14 @@ function RoomLayoutPanel({
               className={`h-2.5 w-2.5 ${shape}`}
               style={{ backgroundColor: PLANT_HEALTH_TONE[h].color }}
             />
-            {PLANT_HEALTH_TONE[h].label}
+            {plantHealthLabel(h, lang)}
           </span>
         ))}
         <span className="ml-auto text-[11px] text-neutral-400 tabular-nums" style={body}>
-          {Math.round(summary.occupancy * 100)}% occupied · {summary.ready} ready
+          {t({
+            en: `${Math.round(summary.occupancy * 100)}% occupied · ${summary.ready} ready`,
+            id: `${Math.round(summary.occupancy * 100)}% terisi · ${summary.ready} siap`,
+          })}
         </span>
       </div>
 
@@ -368,7 +387,7 @@ function RoomLayoutPanel({
                 className="w-16 shrink-0 truncate text-[10px] text-neutral-400"
                 style={body}
               >
-                {rowLabelOf(layout)} {r + 1}
+                {system.rowLabel} {r + 1}
               </span>
               <div
                 className={`flex min-w-0 flex-1 items-center rounded-lg p-1.5 ${ROW_STYLE[layout.system]}`}
@@ -380,7 +399,7 @@ function RoomLayoutPanel({
                     <button
                       key={p.id}
                       type="button"
-                      title={`${p.id} · ${tone.label}`}
+                      title={`${plantPositionLabel(p, layout, lang)} · ${plantHealthLabel(p.health, lang)}`}
                       onClick={() => onSelect(isOpen ? null : p)}
                       className={`h-5 min-w-0 flex-1 ${shape} transition-transform hover:scale-110 ${
                         isOpen ? "ring-2 ring-[#0B6477] ring-offset-1" : ""
@@ -399,8 +418,10 @@ function RoomLayoutPanel({
       </div>
 
       <p className="mt-3 text-[11px] text-neutral-400" style={body}>
-        {system.note} Select any {slotLabelOf(layout).toLowerCase()} to trace its
-        batch, age, and harvest window.
+        {system.note}{" "}
+        {lang === "id"
+          ? `Pilih ${system.slotLabel.toLowerCase()} mana pun untuk menelusuri batch, umur, dan masa panennya.`
+          : `Select any ${system.slotLabel.toLowerCase()} to trace its batch, age, and harvest window.`}
       </p>
     </Panel>
   );
@@ -413,31 +434,36 @@ function PlantDetail({ zone, plant }: { zone: Zone; plant: Plant }) {
   const layout = ROOM_LAYOUTS[zone.id];
   const progress = Math.min(1, plant.age / plant.cycle);
   const remaining = Math.max(0, plant.cycle - plant.age);
+  const lang = useLang();
+  const t = useT();
 
   return (
     <Panel
-      title={`${slotLabelOf(layout)} ${plant.id}`}
+      title={`${growSystemFor(layout.system, lang).slotLabel} ${plantPositionLabel(plant, layout, lang)}`}
       action={
         <span
           className="rounded-full px-2 py-0.5 text-[11px] font-medium"
           style={{ ...body, color: tone.color, backgroundColor: tone.bg }}
         >
-          {tone.label}
+          {plantHealthLabel(plant.health, lang)}
         </span>
       }
     >
       {plant.health === "empty" ? (
         <p className="py-6 text-center text-[13px] text-neutral-400" style={body}>
-          This position is empty and available for the next transplant.
+          {t({
+            en: "This position is empty and available for the next transplant.",
+            id: "Posisi ini kosong dan siap untuk pindah tanam berikutnya.",
+          })}
         </p>
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { label: "Variety", value: plant.variety },
-              { label: "Batch", value: plant.batch },
-              { label: "Stage", value: plant.stage },
-              { label: "Age", value: `${plant.age} days` },
+              { label: t({ en: "Variety", id: "Varietas" }), value: plant.variety },
+              { label: t({ en: "Batch", id: "Batch" }), value: plant.batch },
+              { label: t({ en: "Stage", id: "Fase" }), value: stageLabel(plant.stage, lang) },
+              { label: t({ en: "Age", id: "Umur" }), value: t({ en: `${plant.age} days`, id: `${plant.age} hari` }) },
             ].map((f) => (
               <div key={f.label} className="rounded-xl bg-[#FAFCFB] border border-[#0B6477]/8 px-3 py-2.5">
                 <div className="text-[10px] text-neutral-400" style={body}>
@@ -455,9 +481,11 @@ function PlantDetail({ zone, plant }: { zone: Zone; plant: Plant }) {
               is the thing worth drawing rather than another table row. */}
           <div className="mt-4">
             <div className="flex items-baseline justify-between text-[11px] text-neutral-500" style={body}>
-              <span>Transplant</span>
+              <span>{t({ en: "Transplant", id: "Pindah tanam" })}</span>
               <span className="tabular-nums">
-                {remaining === 0 ? "Ready to harvest" : `${remaining} days to harvest`}
+                {remaining === 0
+                  ? t({ en: "Ready to harvest", id: "Siap panen" })
+                  : t({ en: `${remaining} days to harvest`, id: `${remaining} hari lagi panen` })}
               </span>
             </div>
             <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-[#F3F7F6]">
@@ -470,8 +498,10 @@ function PlantDetail({ zone, plant }: { zone: Zone; plant: Plant }) {
               />
             </div>
             <div className="mt-1 flex justify-between text-[10px] text-neutral-400 tabular-nums" style={body}>
-              <span>Day 0</span>
-              <span>Day {plant.cycle}</span>
+              <span>{t({ en: "Day 0", id: "Hari 0" })}</span>
+              <span>
+                {t({ en: "Day", id: "Hari" })} {plant.cycle}
+              </span>
             </div>
           </div>
         </>
@@ -485,10 +515,13 @@ function PlantDetail({ zone, plant }: { zone: Zone; plant: Plant }) {
 function RoomReadings({ zone, tick }: { zone: Zone; tick: number }) {
   const reading = readingAt(zone, tick);
   const keys = [...AERIAL_KEYS, ...ROOT_KEYS];
+  const lang = useLang();
+  const t = useT();
+  const METRICS = metricsFor(lang);
 
   return (
     <Panel
-      title={`All readings · ${zone.short}`}
+      title={`${t({ en: "All readings", id: "Semua bacaan" })} · ${zone.short}`}
       action={
         <span className="text-[11px] text-neutral-400" style={body}>
           {zone.crop}
@@ -497,7 +530,7 @@ function RoomReadings({ zone, tick }: { zone: Zone; tick: number }) {
     >
       {!zone.online ? (
         <p className="py-6 text-center text-[13px] text-neutral-400" style={body}>
-          This room is offline, so there is nothing to report.
+          {t({ en: "This room is offline, so there is nothing to report.", id: "Ruang ini offline, jadi tidak ada yang bisa dilaporkan." })}
         </p>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -524,16 +557,20 @@ function RoomReadings({ zone, tick }: { zone: Zone; tick: number }) {
                     {metric.label}
                   </div>
                   <div className="text-[10px] text-neutral-400" style={body}>
-                    {scheduled
-                      ? `On schedule · ${lo} to ${hi} ${metric.unit} when running`
-                      : `Target ${lo} to ${hi} ${metric.unit}`}
+                    {lang === "id"
+                      ? scheduled
+                        ? `Terjadwal · ${num(lo, lang)} sampai ${num(hi, lang)} ${metric.unit} saat berjalan`
+                        : `Target ${num(lo, lang)} sampai ${num(hi, lang)} ${metric.unit}`
+                      : scheduled
+                        ? `On schedule · ${lo} to ${hi} ${metric.unit} when running`
+                        : `Target ${lo} to ${hi} ${metric.unit}`}
                   </div>
                 </div>
                 <span
                   className="text-[15px] font-semibold tabular-nums shrink-0"
                   style={{ ...display, color: tint }}
                 >
-                  {formatValue(k, value)}
+                  {formatValue(k, value, lang)}
                 </span>
               </div>
             );

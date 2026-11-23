@@ -96,7 +96,9 @@ Ringkasan naratif semua fitur yang sudah dibangun ada di `docs/STATUS-PENGEMBANG
   WAJIB ditulis dua bahasa: `const t = useT(); t({ en: "...", id: "..." })`; data di `src/lib`
   tetap berbentuk Inggris dengan overlay Indonesia (`localize`, mis. `researchAreasFor(lang)`);
   judul `head()` pakai `headLang(matches)`. Istilah teknis yang lazim (IoT, AI, indoor farming,
-  plant factory, dashboard) dan tagline tetap bahasa Inggris. Dashboard agrosphere belum diterjemahkan.
+  plant factory, dashboard) dan tagline tetap bahasa Inggris. Dashboard agrosphere (ERP, Indoor,
+  Greenhouse, hub) ikut aturan yang sama; fungsi di `src/lib/pf/` yang mengembalikan teks tampilan
+  menerima `lang` opsional (default `"en"`) dan mengimpor dari `i18n-core.ts`, bukan `i18n.tsx`.
 - Inject font Google Fonts lewat `head()` route root; pastikan `src/styles.css` meng-`@import "tailwindcss";`
   dan berisi keyframes `marquee` + class `.animate-marquee`.
 
