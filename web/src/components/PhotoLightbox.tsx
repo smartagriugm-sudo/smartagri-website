@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { body } from "../lib/fonts";
+import { useT } from "../lib/i18n";
 
 // Full-screen photo slideshow. Navigate with the on-screen arrows, the
 // keyboard (left/right, Escape to close), or a swipe on touch.
@@ -17,6 +18,11 @@ export default function PhotoLightbox({
   onClose: () => void;
 }) {
   const total = photos.length;
+  const t = useT();
+  const photoOf = t({
+    en: `Photo ${index + 1} of ${total}`,
+    id: `Foto ${index + 1} dari ${total}`,
+  });
   const go = (dir: number) => onIndex((index + dir + total) % total);
   const touchX = useRef<number | null>(null);
 
@@ -45,11 +51,11 @@ export default function PhotoLightbox({
       className="fixed inset-0 z-[70] flex items-center justify-center bg-[#04191E]/95 backdrop-blur-sm select-none"
       role="dialog"
       aria-modal="true"
-      aria-label={`Photo ${index + 1} of ${total}`}
+      aria-label={photoOf}
     >
       <button
         onClick={onClose}
-        aria-label="Close"
+        aria-label={t({ en: "Close", id: "Tutup" })}
         className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
       >
         <X className="w-6 h-6" />
@@ -69,7 +75,7 @@ export default function PhotoLightbox({
               e.stopPropagation();
               go(-1);
             }}
-            aria-label="Previous photo"
+            aria-label={t({ en: "Previous photo", id: "Foto sebelumnya" })}
             className="absolute left-3 md:left-6 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
           >
             <ChevronLeft className="w-7 h-7" />
@@ -79,7 +85,7 @@ export default function PhotoLightbox({
               e.stopPropagation();
               go(1);
             }}
-            aria-label="Next photo"
+            aria-label={t({ en: "Next photo", id: "Foto berikutnya" })}
             className="absolute right-3 md:right-6 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
           >
             <ChevronRight className="w-7 h-7" />
@@ -104,7 +110,7 @@ export default function PhotoLightbox({
           <motion.img
             key={index}
             src={photos[index]}
-            alt={`Photo ${index + 1} of ${total}`}
+            alt={photoOf}
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}

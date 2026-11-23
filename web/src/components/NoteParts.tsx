@@ -4,7 +4,8 @@ import { ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { A } from "../lib/assets";
 import { body, display } from "../lib/fonts";
-import { covers, type Note } from "../lib/notes";
+import { useLang, useT } from "../lib/i18n";
+import { covers, noteCategoryLabel, type Note } from "../lib/notes";
 
 // Pieces shared by the landing Field Notes section and the note reading page
 // (Quayside journal style): photo, category chip, byline, note card and the
@@ -72,6 +73,7 @@ export function CategoryChip({ children }: { children: string }) {
 }
 
 export function Byline({ note }: { note: Note }) {
+  const t = useT();
   const minutes = readMinutes(note);
   return (
     <div className="flex items-center gap-3">
@@ -93,7 +95,7 @@ export function Byline({ note }: { note: Note }) {
         </span>
         <span className="block text-[13px] text-neutral-500">
           {note.date}
-          {minutes && ` · ${minutes} min read`}
+          {minutes && ` · ${minutes} ${t({ en: "min read", id: "menit baca" })}`}
         </span>
       </span>
     </div>
@@ -101,6 +103,9 @@ export function Byline({ note }: { note: Note }) {
 }
 
 export function NoteCard({ note, index }: { note: Note; index: number }) {
+  const lang = useLang();
+  const t = useT();
+  const category = noteCategoryLabel(note.category, lang);
   const minutes = readMinutes(note);
   return (
     <Link
@@ -114,12 +119,12 @@ export function NoteCard({ note, index }: { note: Note; index: number }) {
           className={`absolute bottom-4 left-5 text-white/85 ${META}`}
           style={body}
         >
-          {note.category}
+          {category}
         </span>
       </div>
       <div className="flex flex-1 flex-col gap-3 p-6">
         <div>
-          <CategoryChip>{note.category}</CategoryChip>
+          <CategoryChip>{category}</CategoryChip>
         </div>
         <h3
           className="line-clamp-3 text-lg font-medium leading-snug tracking-[-0.02em] text-neutral-900 transition-colors duration-300 group-hover:text-[#0B6477] md:text-xl"
@@ -139,7 +144,7 @@ export function NoteCard({ note, index }: { note: Note; index: number }) {
         >
           <span>{note.date}</span>
           <span className="inline-flex items-center gap-1.5">
-            {minutes && `${minutes} min read`}
+            {minutes && `${minutes} ${t({ en: "min read", id: "menit baca" })}`}
             <ArrowUpRight className="h-3.5 w-3.5 text-[#0B6477] transition-[rotate] duration-300 group-hover:rotate-45" />
           </span>
         </div>

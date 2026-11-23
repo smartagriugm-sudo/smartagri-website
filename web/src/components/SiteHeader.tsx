@@ -19,30 +19,32 @@ import { body } from "../lib/fonts";
 import { useAuth } from "../lib/auth/auth";
 import { EXHIBITION_LIVE } from "../lib/exhibition";
 import { AI_ASSISTANT_ENABLED } from "../lib/features";
+import { useT, type Bi } from "../lib/i18n";
+import LanguageMenu from "./LanguageToggle";
 
-type NavLink = { label: string; to: string; highlight?: boolean };
+type NavLink = { label: Bi; to: string; highlight?: boolean };
 type Theme = "dark" | "light";
 
 const leadLinks: NavLink[] = [
-  { label: "Research", to: "/research" },
-  { label: "Technology", to: "/technology" },
+  { label: { en: "Research", id: "Riset" }, to: "/research" },
+  { label: { en: "Technology", id: "Teknologi" }, to: "/technology" },
 ];
 // Always grouped under the "Media" dropdown to keep the bar compact.
 const mediaLinks: NavLink[] = [
-  { label: "Publications", to: "/publications" },
-  { label: "Field Notes", to: "/field-notes" },
-  { label: "Gallery", to: "/gallery" },
+  { label: { en: "Publications", id: "Publikasi" }, to: "/publications" },
+  { label: { en: "Field Notes", id: "Catatan Lapangan" }, to: "/field-notes" },
+  { label: { en: "Gallery", id: "Galeri" }, to: "/gallery" },
 ];
-const tailLinks: NavLink[] = [{ label: "About Us", to: "/about-us" }];
+const tailLinks: NavLink[] = [{ label: { en: "About Us", id: "Tentang Kami" }, to: "/about-us" }];
 // Highlighted: Exhibition is a time-bound annual event, not a permanent page.
 const eventLink: NavLink = {
-  label: "INAGRITECH 26",
+  label: { en: "INAGRITECH 26", id: "INAGRITECH 26" },
   to: "/exhibition",
   highlight: true,
 };
 
 // Shown only to signed-in research assistants (or when auth is disabled).
-const AI_LINK: NavLink = { label: "AI Assistant", to: "/ai" };
+const AI_LINK: NavLink = { label: { en: "AI Assistant", id: "AI Assistant" }, to: "/ai" };
 
 // Colours for the floating bar on a dark or a light backdrop.
 const THEMES = {
@@ -205,6 +207,7 @@ function RollLabel({
 const NAV_TEXT = "text-[13px] font-medium uppercase tracking-[0.08em] whitespace-nowrap";
 
 function DesktopNavLink({ link, t }: { link: NavLink; t: ThemeTokens }) {
+  const tr = useT();
   if (link.highlight) {
     return (
       <Link
@@ -212,7 +215,7 @@ function DesktopNavLink({ link, t }: { link: NavLink; t: ThemeTokens }) {
         className={`group inline-flex items-center gap-1.5 ${NAV_TEXT} text-[#45DFB1] hover:text-[#80ED99] transition-colors`}
         style={body}
       >
-        <RollLabel label={link.label} active={false} t={t} />
+        <RollLabel label={tr(link.label)} active={false} t={t} />
         <LiveDot />
       </Link>
     );
@@ -221,7 +224,7 @@ function DesktopNavLink({ link, t }: { link: NavLink; t: ThemeTokens }) {
     <Link to={link.to} className={`group ${NAV_TEXT}`} style={body}>
       {({ isActive }) => (
         <span className={`transition-colors ${isActive ? t.active : `${t.text} ${t.textHover}`}`}>
-          <RollLabel label={link.label} active={isActive} t={t} />
+          <RollLabel label={tr(link.label)} active={isActive} t={t} />
         </span>
       )}
     </Link>
@@ -233,6 +236,7 @@ function Separator({ t }: { t: ThemeTokens }) {
 }
 
 function MediaDropdown({ t, pathname }: { t: ThemeTokens; pathname: string }) {
+  const tr = useT();
   const active = mediaLinks.some((l) => pathname.startsWith(l.to));
   return (
     <div className="relative group">
@@ -256,7 +260,7 @@ function MediaDropdown({ t, pathname }: { t: ThemeTokens; pathname: string }) {
               className={`rounded-lg px-3 py-2 text-[15px] transition-colors ${t.item}`}
               style={body}
             >
-              {link.label}
+              {tr(link.label)}
             </Link>
           ))}
         </div>
@@ -282,6 +286,7 @@ function AccountMenu({
   onSignOut: () => void;
   t: ThemeTokens;
 }) {
+  const tr = useT();
   const parts = (name || email).trim().split(/[\s@]+/).filter(Boolean);
   const initial = name
     ? ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase()
@@ -294,7 +299,7 @@ function AccountMenu({
         className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[#45DFB1] text-[#0B2A22] text-sm font-semibold transition-colors hover:bg-[#80ED99]"
         style={body}
         aria-haspopup="true"
-        aria-label={name ? `Account menu: ${name}` : "Account menu"}
+        aria-label={name ? `${tr({ en: "Account menu", id: "Menu akun" })}: ${name}` : tr({ en: "Account menu", id: "Menu akun" })}
       >
         {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initial}
       </button>
@@ -302,7 +307,7 @@ function AccountMenu({
         <div className={`min-w-[220px] rounded-xl border shadow-xl p-2 ${t.panel}`}>
           <div className="px-3 py-2">
             <div className={`text-[11px] uppercase tracking-[0.12em] ${t.muted}`} style={body}>
-              Signed in as
+              {tr({ en: "Signed in as", id: "Masuk sebagai" })}
             </div>
             {name && (
               <div className={`mt-0.5 truncate text-sm font-medium ${t.strong}`} style={body}>
@@ -317,11 +322,11 @@ function AccountMenu({
           {/* The dashboards live in agrosphere; on its own host once that is live. */}
           <Link to="/agrosphere" className={row} style={body}>
             <LayoutGrid className="h-4 w-4" />
-            agrosphere dashboards
+            {tr({ en: "agrosphere dashboards", id: "Dashboard agrosphere" })}
           </Link>
           <Link to="/inventory" className={row} style={body}>
             <Boxes className="h-4 w-4" />
-            Instrument inventory
+            {tr({ en: "Instrument inventory", id: "Inventaris instrumen" })}
           </Link>
           <Link to="/kanban" className={row} style={body}>
             <SquareKanban className="h-4 w-4" />
@@ -330,22 +335,22 @@ function AccountMenu({
           {AI_ASSISTANT_ENABLED && (
             <Link to="/ai/knowledge" className={row} style={body}>
               <BookOpen className="h-4 w-4" />
-              Knowledge base
+              {tr({ en: "Knowledge base", id: "Basis pengetahuan" })}
             </Link>
           )}
           <Link to="/account" className={row} style={body}>
             <Settings className="h-4 w-4" />
-            Profile &amp; settings
+            {tr({ en: "Profile & settings", id: "Profil & pengaturan" })}
           </Link>
           {isAdmin && (
             <a href="/account#members" className={row} style={body}>
               <Users className="h-4 w-4" />
-              Lab members
+              {tr({ en: "Lab members", id: "Anggota lab" })}
             </a>
           )}
           <button type="button" onClick={onSignOut} className={row} style={body}>
             <LogOut className="h-4 w-4" />
-            Sign out
+            {tr({ en: "Sign out", id: "Keluar" })}
           </button>
         </div>
       </div>
@@ -355,6 +360,7 @@ function AccountMenu({
 
 // Primary header CTA: mint button, uppercase label, arrow nudging on hover.
 function ContactButton({ onClick, full = false }: { onClick?: () => void; full?: boolean }) {
+  const tr = useT();
   return (
     <Link
       to="/contact-us"
@@ -364,7 +370,7 @@ function ContactButton({ onClick, full = false }: { onClick?: () => void; full?:
       }`}
       style={body}
     >
-      Contact us
+      {tr({ en: "Contact us", id: "Hubungi kami" })}
       <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
     </Link>
   );
@@ -381,6 +387,7 @@ export default function SiteHeader({
   subnav?: ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const tr = useT();
   const { user, isConfigured, signOut, account } = useAuth();
   const barRef = useRef<HTMLDivElement | null>(null);
   const theme = useBackdropTheme(barRef, overlay ? "dark" : "light");
@@ -415,17 +422,18 @@ export default function SiteHeader({
         ref={barRef}
         className={`max-w-[1360px] mx-auto h-16 pl-5 pr-3 md:pl-6 rounded-xl border backdrop-blur-lg flex items-center justify-between relative z-10 transition-colors duration-300 ${t.bar}`}
       >
-        <Link to="/" aria-label="smartagri home">
+        <Link to="/" aria-label={tr({ en: "smartagri home", id: "Beranda smartagri" })}>
           <img src={t.logo} alt="smartagri" className="h-7 w-auto" />
         </Link>
 
-        <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-6 xl:gap-8">
+        <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-5 xl:gap-8">
           {navItems.flatMap((item, i) =>
             i === 0 ? [item] : [<Separator key={`sep-${i}`} t={t} />, item],
           )}
         </nav>
 
         <div className="hidden lg:flex items-center gap-3">
+          <LanguageMenu tone={theme} />
           <ContactButton />
           {signedIn && user && (
             <AccountMenu
@@ -439,11 +447,12 @@ export default function SiteHeader({
           )}
         </div>
 
-        <div className="lg:hidden">
+        <div className="lg:hidden flex items-center gap-1">
+          <LanguageMenu tone={theme} />
           <button
             onClick={() => setMenuOpen((open) => !open)}
             className={`w-11 h-11 rounded-lg flex items-center justify-center ${t.toggle}`}
-            aria-label="Toggle menu"
+            aria-label={tr({ en: "Toggle menu", id: "Buka/tutup menu" })}
             aria-expanded={menuOpen}
           >
             {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -458,7 +467,7 @@ export default function SiteHeader({
               >
                 {mobileLinks.map((link) => (
                   <Link
-                    key={link.label}
+                    key={link.to}
                     to={link.to}
                     onClick={() => setMenuOpen(false)}
                     className={`rounded-lg px-3 py-2 ${NAV_TEXT} ${
@@ -468,7 +477,7 @@ export default function SiteHeader({
                     }`}
                     style={body}
                   >
-                    {link.label}
+                    {tr(link.label)}
                     {link.highlight && <LiveDot />}
                   </Link>
                 ))}
@@ -482,7 +491,7 @@ export default function SiteHeader({
                     className={`rounded-lg px-3 py-2 text-left ${NAV_TEXT} transition-colors ${t.item}`}
                     style={body}
                   >
-                    Sign out
+                    {tr({ en: "Sign out", id: "Keluar" })}
                   </button>
                 )}
                 <div className="pt-2">

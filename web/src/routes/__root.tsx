@@ -3,11 +3,19 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import { AuthProvider } from '../lib/auth/auth'
+import { LangProvider, readLang } from '../lib/i18n'
 import PageCurtain from '../components/PageCurtain'
 import appCss from '../styles.css?url'
 
+const SITE_DESC = {
+  en: 'Smart Agriculture Research Center unites AI, IoT sensing, and agronomy to help farmers monitor crops, predict yields, and grow more sustainably.',
+  id: 'Smart Agriculture Research Center UGM memadukan AI, sensor IoT, dan agronomi untuk membantu petani memantau tanaman, memprediksi hasil panen, dan bertani lebih berkelanjutan.',
+}
+
 export const Route = createRootRoute({
-  head: () => ({
+  // The visitor's language (cookie, else Accept-Language); see lib/i18n.tsx.
+  loader: () => ({ lang: readLang() }),
+  head: ({ loaderData }) => ({
     meta: [
       {
         charSet: 'utf-8',
@@ -21,8 +29,7 @@ export const Route = createRootRoute({
       },
       {
         name: 'description',
-        content:
-          'Smart Agriculture Research Center unites AI, IoT sensing, and agronomy to help farmers monitor crops, predict yields, and grow more sustainably.',
+        content: SITE_DESC[loaderData?.lang ?? 'en'],
       },
       {
         property: 'og:title',
@@ -30,8 +37,7 @@ export const Route = createRootRoute({
       },
       {
         property: 'og:description',
-        content:
-          'Smart Agriculture Research Center unites AI, IoT sensing, and agronomy to help farmers monitor crops, predict yields, and grow more sustainably.',
+        content: SITE_DESC[loaderData?.lang ?? 'en'],
       },
     ],
     links: [
@@ -73,13 +79,16 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const lang = Route.useLoaderData()?.lang ?? 'en'
   return (
-    <html lang="en">
+    <html lang={lang}>
       <head>
         <HeadContent />
       </head>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <LangProvider initial={lang}>
+          <AuthProvider>{children}</AuthProvider>
+        </LangProvider>
         <PageCurtain />
         <TanStackDevtools
           config={{

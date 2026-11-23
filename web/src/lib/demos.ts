@@ -1,5 +1,6 @@
 import { Droplets, Plane, RadioTower, Sprout, Warehouse } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { localize, localizeAll, type Lang } from "./i18n-core";
 
 export type WorkflowDemo = {
   slug: string;
@@ -60,4 +61,38 @@ export const DEMOS: WorkflowDemo[] = [
 
 export function findDemo(slug: string): WorkflowDemo | undefined {
   return DEMOS.find((demo) => demo.slug === slug);
+}
+
+// Indonesian overlay, keyed by slug. Only display copy; slugs, icons, and
+// embed paths stay as in DEMOS.
+const DEMOS_ID: Record<string, Partial<WorkflowDemo>> = {
+  "smart-greenhouse": {
+    title: "Smart Greenhouse",
+    desc: "Cara agen greenhouse membaca sensor, mengambil keputusan, lalu mengendalikan pendinginan, pemanasan, pencahayaan, CO₂, dan fertigasi dalam delapan skenario nyata.",
+  },
+  "irrigation-modernization": {
+    title: "Modernisasi Irigasi",
+    desc: "Telemetri saluran dan penjadwalan berbasis kebutuhan air, dari pembacaan tinggi muka air dan debit, melalui kebijakan alokasi, hingga pengoperasian pintu air di jaringan primer, sekunder, dan tersier.",
+  },
+  "uav-crop-mapping": {
+    title: "Pemetaan Tanaman dengan UAV",
+    desc: "Alur dari drone hingga peta: rencana terbang, akuisisi citra multispektral, penggabungan citra (stitching), dan peta kesehatan tanaman per petak.",
+  },
+  "iot-field-monitoring": {
+    title: "Pemantauan Lahan berbasis IoT",
+    desc: "Data jaringan sensor mengalir dari lahan melalui edge node, gateway, dan cloud, lalu divalidasi dan dievaluasi menjadi dashboard dan peringatan secara langsung.",
+  },
+  "open-field-advisory": {
+    title: "Rekomendasi Budidaya Lahan Terbuka",
+    desc: "Cara data lahan, cuaca, satelit, dan model tanaman dipadukan menjadi rekomendasi tanam, irigasi, pemupukan, dan penanganan tanaman bagi petani.",
+  },
+};
+
+export function demosFor(lang: Lang): WorkflowDemo[] {
+  return localizeAll(DEMOS, DEMOS_ID, (demo) => demo.slug, lang);
+}
+
+export function findDemoFor(slug: string, lang: Lang): WorkflowDemo | undefined {
+  const demo = findDemo(slug);
+  return demo && localize(demo, DEMOS_ID[demo.slug], lang);
 }

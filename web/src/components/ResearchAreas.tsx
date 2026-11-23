@@ -2,7 +2,8 @@ import { createLink } from "@tanstack/react-router";
 import { MotionConfig, motion, type Variants } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
-import { RESEARCH_AREAS } from "../lib/research";
+import { researchAreasFor } from "../lib/research";
+import { useLang, useT } from "../lib/i18n";
 
 // Router-typed Link that also accepts framer-motion animation props.
 const MotionLink = createLink(motion.a);
@@ -119,6 +120,8 @@ export const ping: Variants = {
 };
 
 export default function ResearchAreas() {
+  const lang = useLang();
+  const t = useT();
   return (
     <MotionConfig reducedMotion="user">
       <section id="research" className="relative">
@@ -127,14 +130,27 @@ export default function ResearchAreas() {
             className="text-center text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.03em] leading-[1.1] mb-12 text-neutral-900"
             style={display}
           >
-            <span style={accent}>Smart research</span> for the
-            <br />
-            fields of tomorrow
+            {t({
+              en: (
+                <>
+                  <span style={accent}>Smart research</span> for the
+                  <br />
+                  fields of tomorrow
+                </>
+              ),
+              id: (
+                <>
+                  <span style={accent}>Riset cerdas</span> untuk
+                  <br />
+                  lahan masa depan
+                </>
+              ),
+            })}
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {RESEARCH_AREAS.map((area, i) => (
+            {researchAreasFor(lang).map((area, i) => (
               <MotionLink
-                key={area.label}
+                key={area.slug}
                 to="/research/$slug"
                 params={{ slug: area.slug }}
                 variants={card}

@@ -2,8 +2,11 @@ import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { body, display } from "../lib/fonts";
+import { useLang, useT } from "../lib/i18n";
 import {
+  localizeMember,
   memberGradients,
+  teamCategoryLabel,
   memberInitials,
   type TeamMember,
 } from "../lib/team";
@@ -53,6 +56,9 @@ export function TeamCard({
   member: TeamMember;
   index: number;
 }) {
+  const lang = useLang();
+  const t = useT();
+  const local = localizeMember(member, lang);
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -75,14 +81,14 @@ export function TeamCard({
             className="pointer-events-none absolute bottom-3 left-4 translate-y-2 text-[11px] font-medium uppercase tracking-[0.1em] text-white/90 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100"
             style={body}
           >
-            {member.category}
+            {teamCategoryLabel(member.category, lang)}
           </span>
           {member.coordinator && (
             <span
               className="absolute left-3 top-3 rounded-full bg-[#45DFB1] px-3 py-1 text-[11px] font-semibold text-[#0B2A22]"
               style={body}
             >
-              Coordinator
+              {t({ en: "Coordinator", id: "Koordinator" })}
             </span>
           )}
         </div>
@@ -95,7 +101,7 @@ export function TeamCard({
               {member.name}
             </div>
             <div className="mt-1 text-sm text-neutral-500" style={body}>
-              {member.role}
+              {local.role}
             </div>
           </div>
           <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-[#0B6477] transition-[rotate] duration-300 group-hover:rotate-45" />

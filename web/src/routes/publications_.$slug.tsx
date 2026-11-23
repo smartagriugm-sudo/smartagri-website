@@ -15,13 +15,14 @@ import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import AmbientWash from "../components/AmbientWash";
 import { CategoryChip, EASE, META } from "../components/NoteParts";
+import { headLang, localeOf, useLang, useT, type Lang } from "../lib/i18n";
 
 export const Route = createFileRoute("/publications_/$slug")({
   component: PublicationDetailPage,
   loader: ({ params }) => findPublication(params.slug),
-  head: ({ loaderData }) => ({
+  head: ({ loaderData, matches }) => ({
     meta: [
-      { title: `${loaderData?.title ?? "Publications"} | smartagri` },
+      { title: `${loaderData?.title ?? (headLang(matches) === "id" ? "Publikasi" : "Publications")} | smartagri` },
       ...(loaderData?.abstract
         ? [{ name: "description", content: loaderData.abstract.slice(0, 160) }]
         : []),
@@ -30,7 +31,8 @@ export const Route = createFileRoute("/publications_/$slug")({
 });
 
 type CrossrefMeta = {
-  publishedDate?: string;
+  /** Crossref date parts [year, month?, day?]; formatted per language at render. */
+  publishedParts?: number[];
   journal?: string;
   volume?: string;
   issue?: string;
@@ -46,13 +48,17 @@ function extractDoi(link?: string): string | null {
   return match ? match[0] : null;
 }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS: Record<Lang, string[]> = {
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  id: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"],
+};
 
-function formatDate(parts?: number[]) {
+function formatDate(parts: number[] | undefined, lang: Lang) {
   if (!parts?.length) return undefined;
   const [y, m, d] = parts;
   if (!m) return String(y);
-  return d ? `${d} ${MONTHS[m - 1]} ${y}` : `${MONTHS[m - 1]} ${y}`;
+  const month = MONTHS[lang][m - 1];
+  return d ? `${d} ${month} ${y}` : `${month} ${y}`;
 }
 
 // Bibliographic data and citation count are fetched live from the Crossref
@@ -71,7 +77,7 @@ function useCrossref(doi: string | null) {
         if (cancelled) return;
         const m = data.message ?? {};
         setMeta({
-          publishedDate: formatDate(m.published?.["date-parts"]?.[0]),
+          publishedParts: m.published?.["date-parts"]?.[0],
           journal: m["container-title"]?.[0],
           volume: m.volume,
           issue: m.issue,
@@ -101,6 +107,7 @@ function useCrossref(doi: string | null) {
 
 // Counts up to the value once it is known and in view.
 function CountUp({ value }: { value: number }) {
+  const lang = useLang();
   const ref = useRef<HTMLSpanElement>(null);
   const [shown, setShown] = useState(0);
   useEffect(() => {
@@ -130,17 +137,18 @@ function CountUp({ value }: { value: number }) {
   }, [value]);
   return (
     <span ref={ref} className="tabular-nums">
-      {shown.toLocaleString("en-US")}
+      {shown.toLocaleString(localeOf(lang))}
     </span>
   );
 }
 
 // Placeholder bar while Crossref answers.
 function Shimmer({ w = "w-24" }: { w?: string }) {
+  const t = useT();
   return (
     <span
       className={`inline-block h-4 ${w} animate-pulse rounded bg-[#0B6477]/10 align-middle`}
-      aria-label="Loading"
+      aria-label={t({ en: "Loading", id: "Memuat" })}
     />
   );
 }
@@ -181,6 +189,8 @@ const rise = (delay: number) => ({
 
 function PublicationDetailPage() {
   const pub = Route.useLoaderData();
+  const lang = useLang();
+  const t = useT();
   const doi = extractDoi(pub?.link);
   const { meta, status } = useCrossref(doi);
 
@@ -191,14 +201,14 @@ function PublicationDetailPage() {
         <section className="bg-[#F3F7F6]">
           <div className="max-w-[760px] mx-auto px-6 py-24 text-center flex flex-col items-center gap-4">
             <h1 className="text-3xl md:text-4xl font-semibold text-neutral-900" style={display}>
-              Publication not found
+              {t({ en: "Publication not found", id: "Publikasi tidak ditemukan" })}
             </h1>
             <Link
               to="/publications"
               className="px-7 py-3 rounded-2xl border border-[#0B6477] text-[#0B6477] font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
               style={body}
             >
-              Back to Publications
+              {t({ en: "Back to Publications", id: "Kembali ke Publikasi" })}
             </Link>
           </div>
         </section>
@@ -230,12 +240,13 @@ function PublicationDetailPage() {
     .filter((s) => s && s !== ".")
     .join(" ");
 
+  const publishedDate = formatDate(meta?.publishedParts, lang);
   const facts: { label: string; value?: string; pending?: boolean }[] = [
-    { label: "Journal", value: journal },
-    { label: "Publisher", value: publisher, pending: loading && !publisher },
-    { label: "Published", value: meta?.publishedDate ?? (loading ? undefined : pub.year), pending: loading && !meta?.publishedDate },
-    { label: "Volume", value: volumeLine || undefined, pending: loading },
-    { label: "Pages", value: meta?.pages, pending: loading },
+    { label: t({ en: "Journal", id: "Jurnal" }), value: journal },
+    { label: t({ en: "Publisher", id: "Penerbit" }), value: publisher, pending: loading && !publisher },
+    { label: t({ en: "Published", id: "Terbit" }), value: publishedDate ?? (loading ? undefined : pub.year), pending: loading && !publishedDate },
+    { label: t({ en: "Volume", id: "Volume" }), value: volumeLine || undefined, pending: loading },
+    { label: t({ en: "Pages", id: "Halaman" }), value: meta?.pages, pending: loading },
     { label: "DOI", value: doi ?? undefined },
   ];
 
@@ -254,7 +265,7 @@ function PublicationDetailPage() {
                 style={body}
               >
                 <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-                Publications
+                {t({ en: "Publications", id: "Publikasi" })}
               </Link>
             </motion.div>
             <motion.div {...rise(0.08)} className="mt-6 flex flex-wrap gap-2">
@@ -278,7 +289,7 @@ function PublicationDetailPage() {
               animate="show"
               variants={{ show: { transition: { staggerChildren: 0.04, delayChildren: 0.35 } } }}
               className="mt-6 flex max-w-[980px] flex-wrap gap-2"
-              aria-label="Authors"
+              aria-label={t({ en: "Authors", id: "Penulis" })}
             >
               {authors.map((a) => (
                 <motion.li
@@ -308,14 +319,17 @@ function PublicationDetailPage() {
                     {loading && meta?.citations === undefined ? <Shimmer w="w-16" /> : <CountUp value={citations} />}
                   </span>
                   <span className="mt-2 block text-sm text-white/70">
-                    {citations === 1 ? "citation" : "citations"} recorded by Crossref
+                    {t({
+                      en: `${citations === 1 ? "citation" : "citations"} recorded by Crossref`,
+                      id: "sitasi tercatat di Crossref",
+                    })}
                   </span>
                 </span>
               </motion.div>
 
               <motion.section {...rise(0.55)} className="mt-10">
                 <h2 className={`mb-4 text-neutral-400 ${META}`} style={body}>
-                  Abstract
+                  {t({ en: "Abstract", id: "Abstrak" })}
                 </h2>
                 {abstract ? (
                   <p className="text-[17px] leading-[1.75] text-neutral-700" style={body}>
@@ -329,8 +343,8 @@ function PublicationDetailPage() {
                   </div>
                 ) : (
                   <p className="text-[15px] text-neutral-500" style={body}>
-                    No abstract is available for this paper yet.
-                    {pub.link && " The full text is on the publisher's site."}
+                    {t({ en: "No abstract is available for this paper yet.", id: "Abstrak untuk makalah ini belum tersedia." })}
+                    {pub.link && t({ en: " The full text is on the publisher's site.", id: " Teks lengkapnya tersedia di situs penerbit." })}
                   </p>
                 )}
               </motion.section>
@@ -349,7 +363,7 @@ function PublicationDetailPage() {
                 className="lg:sticky lg:top-28 rounded-[24px] border border-[#0B6477]/10 bg-white/85 p-6 shadow-[0_24px_60px_-40px_rgba(8,49,58,0.45)] backdrop-blur"
               >
                 <p className={`mb-3 text-neutral-400 ${META}`} style={body}>
-                  Paper details
+                  {t({ en: "Paper details", id: "Detail makalah" })}
                 </p>
                 <motion.dl
                   initial="hidden"
@@ -383,16 +397,19 @@ function PublicationDetailPage() {
                       className="group inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#45DFB1] text-sm font-medium uppercase tracking-[0.06em] text-[#0B2A22] transition-colors hover:bg-[#80ED99]"
                       style={body}
                     >
-                      View at publisher
+                      {t({ en: "View at publisher", id: "Lihat di penerbit" })}
                       <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                     </a>
                   )}
-                  {doi && <CopyButton text={`https://doi.org/${doi}`} label="Copy DOI" done="DOI copied" />}
-                  <CopyButton text={citation} label="Copy citation" done="Citation copied" />
+                  {doi && <CopyButton text={`https://doi.org/${doi}`} label={t({ en: "Copy DOI", id: "Salin DOI" })} done={t({ en: "DOI copied", id: "DOI disalin" })} />}
+                  <CopyButton text={citation} label={t({ en: "Copy citation", id: "Salin sitasi" })} done={t({ en: "Citation copied", id: "Sitasi disalin" })} />
                 </div>
                 {doi && (
                   <p className="mt-4 text-[12px] leading-relaxed text-neutral-400" style={body}>
-                    Details and citation count are retrieved live from Crossref via the DOI.
+                    {t({
+                      en: "Details and citation count are retrieved live from Crossref via the DOI.",
+                      id: "Detail dan jumlah sitasi diambil langsung dari Crossref melalui DOI.",
+                    })}
                   </p>
                 )}
               </motion.div>
@@ -408,16 +425,16 @@ function PublicationDetailPage() {
                   className="text-4xl font-semibold leading-[1.02] tracking-[-0.035em] text-neutral-900 md:text-5xl"
                   style={display}
                 >
-                  More
+                  {t({ en: "More", id: "Publikasi" })}
                   <br />
-                  <span style={accent}>publications.</span>
+                  <span style={accent}>{t({ en: "publications.", id: "lainnya." })}</span>
                 </h2>
                 <Link
                   to="/publications"
                   className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                   style={body}
                 >
-                  All publications
+                  {t({ en: "All publications", id: "Semua publikasi" })}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>

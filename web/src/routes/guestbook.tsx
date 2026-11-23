@@ -5,8 +5,10 @@ import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { A } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
 import { EXHIBITION_LIVE } from "../lib/exhibition";
+import { headLang, useLang, useT } from "../lib/i18n";
 import {
   GUEST_ROLES,
+  guestRoleLabel,
   guestbookEnabled,
   submitGuestbook,
   type GuestbookInput,
@@ -17,16 +19,21 @@ export const Route = createFileRoute("/guestbook")({
     if (!EXHIBITION_LIVE) throw redirect({ to: "/" });
   },
   component: GuestbookPage,
-  head: () => ({
-    meta: [
-      { title: "Guest book | smartagri" },
-      {
-        name: "description",
-        content:
-          "Sign the smartagri guest book at INAGRITECH 2026. Leave your details and we will keep in touch.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        { title: l === "id" ? "Buku tamu | smartagri" : "Guest book | smartagri" },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Isi buku tamu smartagri di INAGRITECH 2026. Tinggalkan data Anda dan kami akan tetap terhubung dengan Anda."
+              : "Sign the smartagri guest book at INAGRITECH 2026. Leave your details and we will keep in touch.",
+        },
+      ],
+    };
+  },
 });
 
 const EMPTY: GuestbookInput = {
@@ -42,6 +49,8 @@ const inputClass =
 const labelClass = "text-sm font-medium text-neutral-700";
 
 function GuestbookPage() {
+  const lang = useLang();
+  const t = useT();
   const [form, setForm] = useState<GuestbookInput>(EMPTY);
   const [status, setStatus] = useState<"idle" | "saving" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -57,12 +66,12 @@ function GuestbookPage() {
     setError(null);
 
     if (!form.name.trim()) {
-      setError("Please enter your name.");
+      setError(t({ en: "Please enter your name.", id: "Silakan isi nama Anda." }));
       return;
     }
 
     setStatus("saving");
-    const res = await submitGuestbook(form);
+    const res = await submitGuestbook(form, lang);
     if (res.ok) {
       setStatus("done");
     } else {
@@ -86,7 +95,7 @@ function GuestbookPage() {
           className="mb-6 inline-flex items-center gap-1.5 self-start text-sm text-white/70 hover:text-white transition-colors"
           style={body}
         >
-          <ArrowLeft size={15} /> Back to INAGRITECH
+          <ArrowLeft size={15} /> {t({ en: "Back to INAGRITECH", id: "Kembali ke INAGRITECH" })}
         </a>
 
         <div className="flex items-center gap-3">
@@ -105,7 +114,15 @@ function GuestbookPage() {
           style={display}
           className="mt-6 text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[34px]"
         >
-          Sign our <span style={{ ...accent, color: "#80ED99" }}>guest book</span>
+          {lang === "id" ? (
+            <>
+              Isi <span style={{ ...accent, color: "#80ED99" }}>buku tamu</span> kami
+            </>
+          ) : (
+            <>
+              Sign our <span style={{ ...accent, color: "#80ED99" }}>guest book</span>
+            </>
+          )}
         </h1>
 
         <div className="mt-7 rounded-3xl bg-white p-6 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.5)] sm:p-7">
@@ -123,11 +140,13 @@ function GuestbookPage() {
                   className="text-2xl font-semibold text-neutral-900"
                   style={display}
                 >
-                  Thank you for visiting!
+                  {t({ en: "Thank you for visiting!", id: "Terima kasih atas kunjungan Anda!" })}
                 </div>
                 <p className="mt-2 text-sm leading-relaxed text-neutral-500" style={body}>
-                  Your visit has been recorded and our team will keep in touch.
-                  We hope you enjoy INAGRITECH 2026.
+                  {t({
+                    en: "Your visit has been recorded and our team will keep in touch. We hope you enjoy INAGRITECH 2026.",
+                    id: "Kunjungan Anda sudah tercatat dan tim kami akan tetap menjalin komunikasi dengan Anda. Selamat menikmati INAGRITECH 2026.",
+                  })}
                 </p>
               </div>
             </motion.div>
@@ -135,7 +154,7 @@ function GuestbookPage() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className={labelClass} style={body} htmlFor="gb-name">
-                  Name <span className="text-[#14919B]">*</span>
+                  {t({ en: "Name", id: "Nama" })} <span className="text-[#14919B]">*</span>
                 </label>
                 <input
                   id="gb-name"
@@ -143,7 +162,7 @@ function GuestbookPage() {
                   style={body}
                   value={form.name}
                   onChange={(e) => set("name")(e.target.value)}
-                  placeholder="Your full name"
+                  placeholder={t({ en: "Your full name", id: "Nama lengkap Anda" })}
                   autoComplete="name"
                   required
                 />
@@ -151,7 +170,7 @@ function GuestbookPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label className={labelClass} style={body} htmlFor="gb-inst">
-                  Institution / Company
+                  {t({ en: "Institution / Company", id: "Instansi / Perusahaan" })}
                 </label>
                 <input
                   id="gb-inst"
@@ -159,14 +178,14 @@ function GuestbookPage() {
                   style={body}
                   value={form.institution}
                   onChange={(e) => set("institution")(e.target.value)}
-                  placeholder="University, company, or organization"
+                  placeholder={t({ en: "University, company, or organization", id: "Universitas, perusahaan, atau organisasi" })}
                   autoComplete="organization"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className={labelClass} style={body} htmlFor="gb-role">
-                  Role
+                  {t({ en: "Role", id: "Peran" })}
                 </label>
                 <select
                   id="gb-role"
@@ -175,10 +194,10 @@ function GuestbookPage() {
                   value={form.role}
                   onChange={(e) => set("role")(e.target.value)}
                 >
-                  <option value="">Select one</option>
+                  <option value="">{t({ en: "Select one", id: "Pilih salah satu" })}</option>
                   {GUEST_ROLES.map((r) => (
                     <option key={r} value={r}>
-                      {r}
+                      {guestRoleLabel(r, lang)}
                     </option>
                   ))}
                 </select>
@@ -196,7 +215,7 @@ function GuestbookPage() {
                     style={body}
                     value={form.email}
                     onChange={(e) => set("email")(e.target.value)}
-                    placeholder="you@email.com"
+                    placeholder={t({ en: "you@email.com", id: "anda@email.com" })}
                     autoComplete="email"
                   />
                 </div>
@@ -224,7 +243,10 @@ function GuestbookPage() {
               )}
               {!configured && (
                 <p className="text-sm text-amber-600" style={body}>
-                  Guest book storage is not configured yet.
+                  {t({
+                    en: "Guest book storage is not configured yet.",
+                    id: "Penyimpanan buku tamu belum dikonfigurasi.",
+                  })}
                 </p>
               )}
 
@@ -236,10 +258,10 @@ function GuestbookPage() {
               >
                 {status === "saving" ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Saving...
+                    <Loader2 className="h-4 w-4 animate-spin" /> {t({ en: "Saving...", id: "Menyimpan..." })}
                   </>
                 ) : (
-                  "Sign the guest book"
+                  t({ en: "Sign the guest book", id: "Isi buku tamu" })
                 )}
               </button>
             </form>

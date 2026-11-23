@@ -2,22 +2,28 @@ import { createFileRoute } from "@tanstack/react-router";
 import { body, display } from "../lib/fonts";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
+import { headLang, useLang, useT } from "../lib/i18n";
 
 export const Route = createFileRoute("/terms-of-use")({
   component: TermsOfUsePage,
-  head: () => ({
-    meta: [
-      { title: "Terms of Use | smartagri" },
-      {
-        name: "description",
-        content:
-          "The terms that govern your use of the Smart Agriculture Research Center (smartagri) website.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        { title: l === "id" ? "Ketentuan Penggunaan | smartagri" : "Terms of Use | smartagri" },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Ketentuan yang mengatur penggunaan Anda atas situs web Smart Agriculture Research Center (smartagri)."
+              : "The terms that govern your use of the Smart Agriculture Research Center (smartagri) website.",
+        },
+      ],
+    };
+  },
 });
 
-const LAST_UPDATED = "24 July 2026";
+const LAST_UPDATED = { en: "24 July 2026", id: "24 Juli 2026" };
 
 function H2({ children }: { children: React.ReactNode }) {
   return (
@@ -60,6 +66,8 @@ function List({ items }: { items: React.ReactNode[] }) {
 }
 
 function TermsOfUsePage() {
+  const t = useT();
+  const lang = useLang();
   return (
     <main>
       <SiteHeader />
@@ -69,12 +77,15 @@ function TermsOfUsePage() {
             className="text-4xl md:text-5xl font-semibold tracking-[-0.035em] leading-[1.1] text-neutral-900"
             style={display}
           >
-            Terms of Use
+            {t({ en: "Terms of Use", id: "Ketentuan Penggunaan" })}
           </h1>
           <p className="mt-3 text-sm text-neutral-400" style={body}>
-            Last updated: {LAST_UPDATED}
+            {t({ en: "Last updated", id: "Terakhir diperbarui" })}: {t(LAST_UPDATED)}
           </p>
 
+          {lang === "id" ? (
+            <ContentId />
+          ) : (
           <div className="mt-8">
             <P>
               These Terms of Use govern your access to and use of the website of
@@ -178,9 +189,111 @@ function TermsOfUsePage() {
               .
             </P>
           </div>
+          )}
         </div>
       </section>
       <Footer />
     </main>
+  );
+}
+
+// Bahasa Indonesia version of the terms, kept section for section parallel
+// to the English text above.
+function ContentId() {
+  return (
+    <div className="mt-8">
+      <P>
+        Ketentuan Penggunaan ini mengatur akses dan penggunaan Anda atas situs web
+        Smart Agriculture Research Center (smartagri), Departemen Teknik Pertanian
+        dan Biosistem, Universitas Gadjah Mada, di smart-agri.id. Dengan menggunakan
+        situs web ini, Anda menyetujui ketentuan ini. Jika Anda tidak setuju, mohon
+        untuk tidak menggunakan situs ini.
+      </P>
+
+      <H2>Penggunaan situs web</H2>
+      <P>
+        Anda dapat menjelajahi situs web ini dan menggunakan fiturnya untuk tujuan
+        yang sah, informasional, akademik, dan kolaborasi. Anda setuju untuk tidak:
+      </P>
+      <List
+        items={[
+          "Menggunakan situs dengan cara apa pun yang melanggar hukum atau hak pihak lain.",
+          "Berupaya mengganggu, merusak, atau memperoleh akses tanpa izin ke situs, datanya, maupun sistem yang mendasarinya.",
+          "Mengirimkan informasi yang palsu, menyesatkan, atau merugikan melalui formulir atau buku tamu kami.",
+          "Menyalin, melakukan scraping, atau menggunakan ulang konten dalam skala besar tanpa izin kami.",
+        ]}
+      />
+
+      <H2>Kekayaan intelektual</H2>
+      <P>
+        Konten di situs web ini, termasuk teks, grafis, nama dan logo smartagri,
+        ringkasan riset, dan publikasi, dimiliki oleh Smart Agriculture Research
+        Center dan Universitas Gadjah Mada, atau digunakan dengan izin, serta
+        dilindungi oleh peraturan perundang-undangan kekayaan intelektual yang
+        berlaku. Publikasi akademik tetap tunduk pada hak penerbit dan penulisnya
+        masing-masing. Anda boleh membagikan tautan dan mengutip cuplikan singkat
+        dengan mencantumkan sumbernya, tetapi tidak boleh memperbanyak bagian yang
+        substansial tanpa izin.
+      </P>
+
+      <H2>Informasi disediakan apa adanya</H2>
+      <P>
+        Ringkasan riset, panduan, dan informasi lain di situs ini disediakan untuk
+        tujuan umum dan edukasi. Meskipun kami berupaya menjaganya tetap akurat dan
+        mutakhir, kami tidak memberikan jaminan apa pun atas kelengkapannya atau
+        kesesuaiannya untuk tujuan tertentu. Tidak ada isi situs ini yang dapat
+        menggantikan nasihat profesional di bidang agronomi, teknik, atau keuangan
+        untuk kondisi spesifik Anda.
+      </P>
+
+      <H2>Kiriman</H2>
+      <P>
+        Saat Anda mengirimkan pesan kepada kami, mengisi buku tamu, atau
+        menyampaikan informasi dengan cara lain, Anda menyatakan bahwa informasi
+        tersebut akurat dan bahwa Anda berhak membagikannya. Pengelolaan informasi
+        yang Anda kirimkan dijelaskan dalam{" "}
+        <a href="/privacy-policy" className="text-[#0B6477] hover:underline">
+          Kebijakan Privasi
+        </a>{" "}
+        kami.
+      </P>
+
+      <H2>Tautan dan layanan pihak ketiga</H2>
+      <P>
+        Situs web ini dapat memuat tautan ke situs eksternal (misalnya halaman mitra
+        dan penerbit) dan menggunakan layanan pihak ketiga untuk menjalankan fitur
+        seperti formulir dan buku tamu. Kami tidak bertanggung jawab atas konten
+        atau praktik situs eksternal. Penggunaan Anda atas layanan tersebut dapat
+        tunduk pada ketentuan masing-masing layanan.
+      </P>
+
+      <H2>Batasan tanggung jawab</H2>
+      <P>
+        Sejauh diizinkan oleh hukum, Smart Agriculture Research Center dan
+        Universitas Gadjah Mada tidak bertanggung jawab atas kerugian atau kerusakan
+        apa pun yang timbul dari penggunaan Anda, atau ketidakmampuan Anda untuk
+        menggunakan, situs web ini maupun kontennya.
+      </P>
+
+      <H2>Perubahan ketentuan ini</H2>
+      <P>
+        Kami dapat memperbarui ketentuan ini dari waktu ke waktu. Dengan tetap
+        menggunakan situs web setelah perubahan berlaku, Anda dianggap menerima
+        ketentuan yang telah diperbarui. Tanggal di bagian atas halaman ini
+        menunjukkan kapan ketentuan ini terakhir direvisi.
+      </P>
+
+      <H2>Hukum yang berlaku</H2>
+      <P>Ketentuan ini diatur oleh hukum Negara Republik Indonesia.</P>
+
+      <H2>Kontak</H2>
+      <P>
+        Pertanyaan mengenai ketentuan ini dapat dikirimkan ke{" "}
+        <a href="mailto:hello@smart-agri.id" className="text-[#0B6477] hover:underline">
+          hello@smart-agri.id
+        </a>
+        .
+      </P>
+    </div>
   );
 }

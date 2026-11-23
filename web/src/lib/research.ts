@@ -7,6 +7,7 @@ import {
   Warehouse,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { localize, localizeAll, type Lang } from "./i18n-core";
 
 export type ResearchArea = {
   slug: string;
@@ -195,3 +196,127 @@ export const RESEARCH_KEYWORDS: Record<string, string[]> = {
   "indoor-farming-technology": ["indoor", "plant factory", "greenhouse", "hydroponic", "hidroponik", "vertical farm", "microgreen", "controlled environment"],
   "agro-informatics": ["machine learning", "deep learning", "neural network", "jaringan saraf", "artificial intelligence", "decision support", "sistem pendukung keputusan", "computer vision", "dashboard", "internet of things", "iot"],
 };
+
+// ---- Bahasa Indonesia (see lib/i18n.tsx) ----
+// Indonesian copy per area slug. `label` stays the English key used by
+// technology.ts `areas`; translate the display name through `areaLabel`.
+const RESEARCH_AREAS_ID: Record<string, Partial<ResearchArea>> = {
+  "open-field-technology": {
+    label: "Teknologi Lahan Terbuka",
+    desc: "Penginderaan, kendali, dan mekanisasi untuk lahan terbuka: sprinkler otomatis di lahan pasir pantai, traktor terpandu, pengusir hama, serta penilaian tanaman dan buah tanpa merusak.",
+    overview:
+      "Teknologi Lahan Terbuka membawa pertanian presisi ke lahan yang benar-benar digarap petani. Satu arsitektur, yaitu sensor dan pengendali di lapangan yang didukung analisis cloud dan aplikasi, menjadi benang merah riset kami tentang irigasi lahan pasir pantai, pemandu traktor, pengendalian hama burung, serta penilaian tanaman dan buah.",
+    capabilities: [
+      "Kendali sprinkler berbasis IoT dan data cuaca untuk tanah pasir pantai",
+      "Pelacakan GPS dan auto-steering untuk pengolahan tanah",
+      "Deteksi dan pengusiran hama burung dengan computer vision",
+      "Penilaian daun dan buah tanpa merusak",
+    ],
+    outcomes: [
+      "Hemat air 16,9% dibanding penyiraman petani dalam uji tiga hari di tanah pasir",
+      "Keseragaman sprinkler naik dari 77,9% menjadi 92,8% lewat koreksi tekanan dan tata letak",
+      "Kadar gula salak terbaca tanpa membelah buah (R² 0,946)",
+    ],
+  },
+  "irrigation-modernization": {
+    label: "Modernisasi Irigasi",
+    desc: "Memodernkan jaringan irigasi dengan sistem informasi, prakiraan debit, otomasi pintu air, dan pengetahuan para pengelolanya.",
+    overview:
+      "Kinerja irigasi tidak pulih hanya dengan rehabilitasi. Melalui SIPASI dan riset kami di DI Sapon, Kulon Progo, kami membawa operasi irigasi ke ranah data: memprakirakan debit saluran, memodelkan pengaruh bukaan pintu terhadap aliran air, dan mendokumentasikan pengetahuan para operator berpengalaman.",
+    capabilities: [
+      "Sistem pendukung keputusan SIPASI untuk operasi dan pemeliharaan",
+      "Prakiraan debit saluran berbasis deep learning",
+      "Pemodelan hidrodinamika dan kendali pintu air otomatis",
+      "Manajemen pengetahuan untuk operator irigasi",
+    ],
+    outcomes: [
+      "SIPASI digunakan di Daerah Irigasi Wadaslintang, Mrican, dan Way Sekampung",
+      "Prakiraan debit saluran primer dengan R² 0,974 untuk perencanaan pola tanam",
+      "Keputusan pintu air yang selama ini hanya diketahui operator kini terangkum dalam dashboard yang bisa dibagikan",
+    ],
+  },
+  "smart-estate-technology": {
+    label: "Teknologi Perkebunan Cerdas",
+    desc: "Pengelolaan presisi untuk perkebunan kelapa sawit: pendukung keputusan pemupukan, pemantauan lengas tanah, uji cepat pupuk, dan prediksi cekaman berbasis AI.",
+    overview:
+      "Di perkebunan, kesalahan kecil dalam pupuk atau air berulang di ribuan pohon sawit. Riset perkebunan kami mengolah catatan historis, sensor lapangan, dan citra udara menjadi keputusan: apa yang diberikan, di mana, dan kapan cekaman akan datang.",
+    capabilities: [
+      "Model dosis pupuk dari data historis perkebunan",
+      "Pemantauan lengas tanah real-time pada tanah suboptimal",
+      "Uji cepat berbasis AI untuk pupuk yang tidak sesuai spesifikasi",
+      "Prediksi cekaman lingkungan dari citra multispektral VTOL",
+    ],
+    outcomes: [
+      "Rekomendasi pupuk untuk enam unsur hara dari catatan perkebunan sendiri",
+      "Defisit air terdeteksi sebelum tampak pada tanaman sawit",
+      "Pupuk diperiksa kesesuaiannya dengan spesifikasi sebelum ditabur",
+    ],
+  },
+  "smart-uav-technology": {
+    label: "Teknologi UAV Cerdas",
+    desc: "Drone VTOL dengan kamera RGB dan multispektral serta machine learning untuk penghitungan pohon, kesehatan tanaman, fisiologi tanaman, dan zonasi pemupukan.",
+    overview:
+      "Riset UAV kami telah bergerak dari sekadar citra menuju fisiologi. Penerbangan VTOL Trinity Pro dengan kamera multispektral, dipadukan dengan pengukuran di lapangan, menghasilkan peta jumlah pohon, kesehatan tanaman, konduktansi stomata, dan lokasi yang membutuhkan pupuk.",
+    capabilities: [
+      "Penghitungan pohon otomatis dari ortomosaik VTOL",
+      "Pemetaan kesehatan dan fisiologi tanaman dari citra multispektral",
+      "Penilaian pengelolaan lahan per petak",
+      "Zonasi grid untuk pemupukan variable-rate",
+    ],
+    outcomes: [
+      "Konduktansi stomata padi dipetakan dari udara (R² 0,69)",
+      "93 petak sawah dinilai pengelolaan lahannya (F1 0,79)",
+      "Peta kebutuhan pupuk yang siap untuk aplikasi variable-rate",
+    ],
+  },
+  "indoor-farming-technology": {
+    label: "Teknologi Indoor Farming",
+    desc: "Smart greenhouse dan plant factory, serta penginderaan langsung pada tanaman: pertukaran gas, impedansi, spektroskopi, dan sinyal listrik.",
+    overview:
+      "Indoor farming adalah bidang riset kami yang paling aktif. Riset ini berawal dari lingkungan tumbuh, yaitu kendali greenhouse berbasis VPD, edge computing, pencahayaan, dan aeroponik, lalu bergerak ke arah membaca kondisi tanaman secara langsung melalui pertukaran gas, impedansi, spektrum, dan sinyal listriknya.",
+    capabilities: [
+      "Pemantauan dan kendali iklim berbasis VPD",
+      "Sistem produksi plant factory dan aeroponik",
+      "Penginderaan berbasis tanaman: impedansi, spektroskopi berbiaya rendah, sinyal listrik",
+      "Machine learning dan computer vision untuk fisiologi dan gangguan tanaman",
+    ],
+    outcomes: [
+      "Fotosintesis selada diprediksi dari data pemantauan (R² 0,985)",
+      "Sensor spektral berbiaya rendah yang setara spektrometer acuan (R² hingga 0,974)",
+      "Smart greenhouse berbiaya rendah beroperasi bersama Kelompok Tani Taruna Tani di Sriharjo",
+    ],
+  },
+  "agro-informatics": {
+    label: "Agroinformatika",
+    desc: "Sistem informasi, manajemen pengetahuan, dan teknologi data untuk agribisnis: ERP, ketertelusuran berbasis blockchain, dan peringatan dini IoT.",
+    overview:
+      "Agroinformatika menghubungkan seluruh riset kami dengan para penggunanya: sistem enterprise dan pengetahuan untuk koperasi dan komunitas, ERP untuk plant factory, ketertelusuran beras berbasis blockchain, dan peringatan dini IoT untuk industri desa.",
+    capabilities: [
+      "Sistem enterprise dan pendukung keputusan untuk koperasi",
+      "Sistem manajemen pengetahuan",
+      "Ketertelusuran rantai pasok berbasis blockchain",
+      "Dashboard peringatan dini dan pemantauan IoT",
+    ],
+    outcomes: [
+      "Beras tertelusur dari petani hingga konsumen melalui blockchain (SUS 87,8, A+)",
+      "Operasional plant factory dijalankan dari satu ERP",
+      "Peringatan dini kualitas udara untuk perajin tahu di desa",
+    ],
+  },
+};
+
+export function researchAreasFor(lang: Lang): ResearchArea[] {
+  return localizeAll(RESEARCH_AREAS, RESEARCH_AREAS_ID, (a) => a.slug, lang);
+}
+
+export function findResearchAreaFor(slug: string, lang: Lang): ResearchArea | undefined {
+  const area = findResearchArea(slug);
+  return area && localize(area, RESEARCH_AREAS_ID[area.slug], lang);
+}
+
+/** Display name of a research area given its English label (the key in technology.ts). */
+export function areaLabel(label: string, lang: Lang): string {
+  if (lang === "en") return label;
+  const area = RESEARCH_AREAS.find((a) => a.label === label);
+  return (area && RESEARCH_AREAS_ID[area.slug]?.label) || label;
+}

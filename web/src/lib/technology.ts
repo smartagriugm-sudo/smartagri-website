@@ -13,6 +13,7 @@ import {
   ThermometerSun,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { localizeAll, type Lang } from "./i18n-core";
 
 export type Technology = {
   id: string;
@@ -263,3 +264,163 @@ export const TECHNOLOGIES: Technology[] = [
     ],
   },
 ];
+
+// ---- Bahasa Indonesia (see lib/i18n.tsx) ----
+// Indonesian copy per technology id. Keep `related` and `areas` untouched (keys).
+const TECHNOLOGIES_ID: Record<string, Partial<Technology>> = {
+  iot: {
+    label: "Jaringan Sensor IoT",
+    tagline: "Sensor murah dan hemat daya yang mengalirkan data lapangan secara langsung, jam demi jam.",
+    description:
+      "Probe lengas tanah, stasiun cuaca, dan sensor muka air yang terhubung lewat LoRa dan jaringan seluler. Dirancang tahan terhadap kondisi lapangan dengan biaya yang terjangkau petani kecil, sensor ini menjadi tulang punggung data setiap sistem smartagri.",
+    benefits: [
+      "Pemantauan lapangan berkelanjutan secara real-time",
+      "Perangkat keras terbuka yang terjangkau",
+      "Daya baterai berbulan-bulan di lapangan",
+    ],
+    applications: ["Pemantauan tanah", "Stasiun iklim mikro", "Pengelolaan air"],
+  },
+  uav: {
+    label: "Platform UAV",
+    tagline: "Drone yang memetakan, memantau, dan merawat lahan dari udara.",
+    description:
+      "Wahana fixed-wing dan VTOL yang menjalankan misi terprogram di atas lahan dan perkebunan. Penerbangan dua puluh menit menghasilkan citra yang butuh berhari-hari bila dikumpulkan dengan berjalan kaki. Inilah mata bagi riset pertanian presisi kami.",
+    benefits: [
+      "Cakupan seluruh lahan dalam hitungan menit",
+      "Citra beresolusi skala sentimeter",
+      "Misi terprogram yang dapat diulang",
+    ],
+    applications: ["Pemetaan lahan", "Pemantauan tanaman", "Penyemprotan presisi"],
+  },
+  multispectral: {
+    label: "Pencitraan Multispektral",
+    tagline: "Melihat cekaman tanaman berhari-hari sebelum tampak oleh mata manusia.",
+    description:
+      "Kamera yang merekam kanal inframerah dekat dan red-edge di samping cahaya tampak. Vegetasi sehat memantulkan kanal ini dengan kuat, sehingga cekaman, penyakit, dan masalah hara terlihat pada data jauh sebelum gejalanya tampak.",
+    benefits: [
+      "Deteksi dini cekaman",
+      "Indeks vegetasi yang objektif (NDVI, NDRE)",
+      "Peta kesehatan per petak",
+    ],
+    applications: ["Peta kesehatan tanaman", "Estimasi hasil panen", "Input variable-rate"],
+  },
+  hyperspectral: {
+    label: "Penginderaan Hyperspectral",
+    tagline: "Ratusan kanal spektral untuk analisis tanaman setara laboratorium.",
+    description:
+      "Bila multispektral melihat segelintir kanal, hyperspectral melihat ratusan, cukup untuk mengestimasi klorofil, status hara, dan respons fisiologis tanpa merusak tanaman, dari plant factory hingga sampel lapangan.",
+    benefits: [
+      "Pengukuran tanpa merusak",
+      "Wawasan fisiologis yang rinci",
+      "Berpadu alami dengan machine learning",
+    ],
+    applications: ["Pemantauan microgreens", "Estimasi hara", "Penentuan mutu"],
+  },
+  vision: {
+    label: "Computer Vision",
+    tagline: "Model yang membaca daun, menghitung buah, dan menandai penyakit.",
+    description:
+      "Model visi deep learning yang dilatih dengan citra lapangan untuk mendeteksi hawar, karat, dan kerusakan akibat hama, menghitung tanaman dan buah, serta menilai mutu hasil panen, mengubah kamera biasa menjadi pengamat ahli yang tak kenal lelah.",
+    benefits: [
+      "Deteksi dini penyakit",
+      "Penilaian yang konsisten dan objektif",
+      "Berjalan di perangkat edge yang terjangkau",
+    ],
+    applications: ["Deteksi penyakit", "Penghitungan buah", "Penentuan mutu hasil panen"],
+  },
+  ml: {
+    label: "Machine Learning & AI",
+    tagline: "Mengubah data lapangan bermusim-musim menjadi prediksi yang bisa ditindaklanjuti petani.",
+    description:
+      "Dari prakiraan hasil panen hingga penjadwalan irigasi, model machine learning menjadi inti smartagri. Model ini memadukan aliran data sensor, citra, dan cuaca menjadi peringatan dini dan rekomendasi yang disesuaikan dengan kondisi setempat.",
+    benefits: [
+      "Prakiraan hasil panen satu musim ke depan",
+      "Mempelajari perilaku lahan setempat",
+      "Makin akurat seiring bertambahnya data tiap musim",
+    ],
+    applications: ["Prediksi hasil panen", "Deteksi anomali", "Mesin rekomendasi"],
+  },
+  eis: {
+    label: "Penginderaan Tanaman EIS",
+    tagline: "Membaca fisiologi tanaman melalui impedansi listrik.",
+    description:
+      "Electrical impedance spectroscopy mengalirkan sinyal sangat kecil melalui jaringan tanaman untuk mengestimasi klorofil dan status fisiologis tanpa melukai tanaman, sebuah kekhasan riset smartagri yang telah terbit di jurnal internasional.",
+    benefits: [
+      "Penginderaan fisiologis tanpa merusak",
+      "Instrumentasi berbiaya rendah",
+      "Melengkapi metode optik",
+    ],
+    applications: ["Estimasi klorofil", "Pemeriksaan kesehatan tanaman", "Fenotiping"],
+  },
+  "climate-control": {
+    label: "Sistem Kendali Iklim",
+    tagline: "Kendali umpan balik yang menjaga lingkungan tumbuh tetap ideal.",
+    description:
+      "Pengendali yang mengatur suhu, kelembapan, dan vapor pressure deficit (VPD) di greenhouse dan plant factory. Riset kendali VPD kami menunjukkan bagaimana lingkungan yang dikelola ketat berdampak langsung pada pertumbuhan dan hasil panen.",
+    benefits: [
+      "Kondisi tumbuh optimal yang stabil",
+      "Laju pertumbuhan dan hasil panen lebih tinggi",
+      "Penggunaan energi dan air yang efisien",
+    ],
+    applications: ["Plant factory", "Smart greenhouse", "Kendali VPD"],
+  },
+  irrigation: {
+    label: "Kendali Irigasi Cerdas",
+    tagline: "Air diberikan tepat kapan dan di mana tanaman membutuhkannya.",
+    description:
+      "Katup dan pompa berbasis sensor yang mengairi sesuai kebutuhan tanaman, bukan berdasarkan timer tetap (dari irigasi tetes dan sprinkler hingga jaringan saluran yang dimodernkan), sehingga menghemat air sambil menjaga hasil panen.",
+    benefits: [
+      "Penghematan air yang signifikan",
+      "Limpasan dan pencucian hara berkurang",
+      "Berlaku dari irigasi tetes hingga saluran",
+    ],
+    applications: ["Penjadwalan otomatis", "Telemetri saluran", "Kendali sprinkler"],
+  },
+  geospatial: {
+    label: "Analitik Geospasial",
+    tagline: "Setiap pengukuran di peta, setiap keputusan per petak.",
+    description:
+      "Menyatukan ortomosaik drone, citra satelit, dan lokasi sensor menjadi peta per petak. Analisis geospasial mengubah pengukuran yang tersebar menjadi peta zona yang memandu pemantauan, perlakuan, dan perencanaan.",
+    benefits: [
+      "Zona pengelolaan per petak",
+      "Pemetaan batas lahan",
+      "Tampilan berlapis lintas musim",
+    ],
+    applications: ["Pemetaan ortomosaik", "Pengelolaan zona", "Perencanaan perkebunan"],
+  },
+  weather: {
+    label: "Pemodelan Cuaca & Iklim",
+    tagline: "Prakiraan musiman yang disesuaikan dengan keputusan petani kecil.",
+    description:
+      "Prakiraan hasil downscaling dan prospek iklim musiman yang dibangun bersama mitra seperti BMKG, untuk menjawab pertanyaan yang benar-benar diajukan petani: apa yang ditanam, kapan menanam, dan bagaimana mengantisipasi musim hujan yang terlambat.",
+    benefits: [
+      "Prakiraan yang dikalibrasi secara lokal",
+      "Sinyal perencanaan satu musim ke depan",
+      "Indikator risiko iklim",
+    ],
+    applications: ["Kalender tanam", "Peringatan dini kekeringan", "Imbauan risiko"],
+  },
+  dss: {
+    label: "Sistem Pendukung Keputusan",
+    tagline: "Dashboard yang berujung pada keputusan, bukan sekadar kumpulan data.",
+    description:
+      "Lapisan yang benar-benar disentuh petani dan koperasi: dashboard dan imbauan yang memadukan semua teknologi di atas menjadi rekomendasi sederhana, seperti petak mana yang dipantau lebih dulu, kapan mengairi, dan apa yang bisa diharapkan saat panen.",
+    benefits: [
+      "Rekomendasi dalam bahasa sehari-hari",
+      "Dirancang bersama koperasi petani",
+      "Berjalan di ponsel biasa",
+    ],
+    applications: ["Dashboard pertanian", "Pesan imbauan", "Pelaporan koperasi"],
+  },
+};
+
+export function technologiesFor(lang: Lang): Technology[] {
+  return localizeAll(TECHNOLOGIES, TECHNOLOGIES_ID, (t) => t.id, lang);
+}
+
+/** Display name of a technology given its English label (the key in research.ts). */
+export function techLabel(label: string, lang: Lang): string {
+  if (lang === "en") return label;
+  const tech = TECHNOLOGIES.find((t) => t.label === label);
+  return (tech && TECHNOLOGIES_ID[tech.id]?.label) || label;
+}

@@ -9,7 +9,8 @@ import {
   Search,
 } from "lucide-react";
 import { body, display } from "../lib/fonts";
-import { STUDENTS, type Student, type StudentLevel } from "../lib/students";
+import { STUDENTS, studentLevelLabel, type Student, type StudentLevel } from "../lib/students";
+import { useLang, useT, type Bi } from "../lib/i18n";
 import { EASE } from "./NoteParts";
 
 // Students who worked with the center, as a searchable, sortable, paged table
@@ -24,10 +25,10 @@ const PAGE_SIZES = [10, 25, 50];
 type SortKey = "name" | "level" | "year";
 type Sort = { key: SortKey; dir: "asc" | "desc" };
 
-const COLUMNS: { key: SortKey; label: string; align?: "right"; first: "asc" | "desc" }[] = [
-  { key: "name", label: "Student", first: "asc" },
-  { key: "level", label: "Level", first: "asc" },
-  { key: "year", label: "Year", align: "right", first: "desc" },
+const COLUMNS: { key: SortKey; label: Bi; align?: "right"; first: "asc" | "desc" }[] = [
+  { key: "name", label: { en: "Student", id: "Mahasiswa" }, first: "asc" },
+  { key: "level", label: { en: "Level", id: "Jenjang" }, first: "asc" },
+  { key: "year", label: { en: "Year", id: "Angkatan" }, align: "right", first: "desc" },
 ];
 
 const GRID = "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_80px]";
@@ -70,6 +71,8 @@ const controlClass =
   "h-10 rounded-lg border border-[#0B6477]/15 bg-white px-3 text-sm text-neutral-700 outline-none transition-colors focus:border-[#14919B] focus:ring-2 focus:ring-[#14919B]/20";
 
 export default function StudentsTable() {
+  const lang = useLang();
+  const t = useT();
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState<"all" | StudentLevel>("all");
   const [year, setYear] = useState<"all" | number>("all");
@@ -115,10 +118,13 @@ export default function StudentsTable() {
           </span>
           <span style={body}>
             <span className="block text-lg font-semibold tracking-[-0.02em] text-neutral-900" style={display}>
-              Students
+              {t({ en: "Students", id: "Mahasiswa" })}
             </span>
             <span className="block text-[13px] text-neutral-500">
-              {STUDENTS.length} students across {YEARS.length} years
+              {t({
+                en: `${STUDENTS.length} students across ${YEARS.length} years`,
+                id: `${STUDENTS.length} mahasiswa dari ${YEARS.length} angkatan`,
+              })}
             </span>
           </span>
         </div>
@@ -129,8 +135,8 @@ export default function StudentsTable() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search students..."
-              aria-label="Search students"
+              placeholder={t({ en: "Search students...", id: "Cari mahasiswa..." })}
+              aria-label={t({ en: "Search students", id: "Cari mahasiswa" })}
               className={`${controlClass} w-full pl-9`}
               style={body}
             />
@@ -139,25 +145,25 @@ export default function StudentsTable() {
             <select
               value={level}
               onChange={(e) => setLevel(e.target.value as "all" | StudentLevel)}
-              aria-label="Filter by level"
+              aria-label={t({ en: "Filter by level", id: "Saring menurut jenjang" })}
               className={`${controlClass} w-full min-w-0 px-2 md:w-auto md:px-3`}
               style={body}
             >
-              <option value="all">All levels</option>
+              <option value="all">{t({ en: "All levels", id: "Semua jenjang" })}</option>
               {LEVELS.map((l) => (
                 <option key={l} value={l}>
-                  {l}
+                  {studentLevelLabel(l, lang)}
                 </option>
               ))}
             </select>
             <select
               value={year}
               onChange={(e) => setYear(e.target.value === "all" ? "all" : Number(e.target.value))}
-              aria-label="Filter by year"
+              aria-label={t({ en: "Filter by year", id: "Saring menurut angkatan" })}
               className={`${controlClass} w-full min-w-0 px-2 md:w-auto md:px-3`}
               style={body}
             >
-              <option value="all">All years</option>
+              <option value="all">{t({ en: "All years", id: "Semua angkatan" })}</option>
               {YEARS.map((y) => (
                 <option key={y} value={y}>
                   {y}
@@ -167,13 +173,13 @@ export default function StudentsTable() {
             <select
               value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
-              aria-label="Students per page"
+              aria-label={t({ en: "Students per page", id: "Mahasiswa per halaman" })}
               className={`${controlClass} w-full min-w-0 px-2 md:w-auto md:px-3`}
               style={body}
             >
               {PAGE_SIZES.map((n) => (
                 <option key={n} value={n}>
-                  Show {n}
+                  {t({ en: `Show ${n}`, id: `Tampilkan ${n}` })}
                 </option>
               ))}
             </select>
@@ -198,7 +204,7 @@ export default function StudentsTable() {
               }`}
               style={body}
             >
-              {c.label}
+              {t(c.label)}
               {active ? (
                 <motion.span animate={{ rotate: sort.dir === "asc" ? 180 : 0 }} transition={{ duration: 0.3, ease: EASE }} className="inline-flex text-[#14919B]">
                   <ArrowDown className="h-3.5 w-3.5" />
@@ -215,7 +221,7 @@ export default function StudentsTable() {
       <div onMouseLeave={() => setHovered(null)}>
         {view.length === 0 ? (
           <p className="px-6 py-14 text-center text-neutral-500" style={body}>
-            No students match your search.
+            {t({ en: "No students match your search.", id: "Tidak ada mahasiswa yang cocok dengan pencarian Anda." })}
           </p>
         ) : (
           <AnimatePresence mode="wait" initial={false}>
@@ -258,12 +264,12 @@ export default function StudentsTable() {
                         <span className="block truncate text-[15px] font-medium text-neutral-900">
                           <Highlight text={s.name} query={query} />
                         </span>
-                        <span className="block text-[12px] text-neutral-500 md:hidden">{s.level}</span>
+                        <span className="block text-[12px] text-neutral-500 md:hidden">{studentLevelLabel(s.level, lang)}</span>
                       </span>
                     </span>
                     <span className="hidden md:block">
                       <span className={`inline-flex rounded-full px-2.5 py-1 text-[12px] font-semibold ${levelPill[s.level]}`} style={body}>
-                        {s.level}
+                        {studentLevelLabel(s.level, lang)}
                       </span>
                     </span>
                     <span className="justify-self-end text-[14px] tabular-nums text-neutral-500" style={body}>
@@ -280,30 +286,30 @@ export default function StudentsTable() {
       {/* Footer */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#0B6477]/10 bg-[#F3F7F6]/60 px-5 py-4 md:px-6" style={body}>
         <span className="text-[13px] text-neutral-500">
-          <span className="font-semibold text-neutral-900 tabular-nums">{rows.length}</span> results
+          <span className="font-semibold text-neutral-900 tabular-nums">{rows.length}</span> {t({ en: "results", id: "hasil" })}
         </span>
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setPage(current - 1)}
             disabled={current === 0}
-            aria-label="Previous page"
+            aria-label={t({ en: "Previous page", id: "Halaman sebelumnya" })}
             className="grid h-9 w-9 place-items-center rounded-lg border border-[#0B6477]/15 bg-white text-neutral-700 transition-colors hover:border-[#08313A] hover:bg-[#08313A] hover:text-[#45DFB1] disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="min-w-[96px] text-center text-[13px] tabular-nums text-neutral-600">
-            Page{" "}
+            {t({ en: "Page", id: "Halaman" })}{" "}
             <motion.span key={current} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="inline-block font-semibold text-neutral-900">
               {current + 1}
             </motion.span>{" "}
-            of {pages}
+            {t({ en: "of", id: "dari" })} {pages}
           </span>
           <button
             type="button"
             onClick={() => setPage(current + 1)}
             disabled={current >= pages - 1}
-            aria-label="Next page"
+            aria-label={t({ en: "Next page", id: "Halaman berikutnya" })}
             className="grid h-9 w-9 place-items-center rounded-lg border border-[#0B6477]/15 bg-white text-neutral-700 transition-colors hover:border-[#08313A] hover:bg-[#08313A] hover:text-[#45DFB1] disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronRight className="h-4 w-4" />

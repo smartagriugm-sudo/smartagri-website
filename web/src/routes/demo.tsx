@@ -3,7 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Maximize2 } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
-import { DEMOS, type WorkflowDemo } from "../lib/demos";
+import { demosFor } from "../lib/demos";
+import { headLang, useLang, useT } from "../lib/i18n";
 import PageHero from "../components/PageHero";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
@@ -12,20 +13,28 @@ import WorkflowEmbed from "../components/WorkflowEmbed";
 
 export const Route = createFileRoute("/demo")({
   component: DemoPage,
-  head: () => ({
-    meta: [
-      { title: "Interactive Demo | smartagri" },
-      {
-        name: "description",
-        content:
-          "Interactive workflow simulations of smartagri systems, from the smart greenhouse agent to irrigation, UAV mapping, and field monitoring.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        { title: l === "id" ? "Demo Interaktif | smartagri" : "Interactive Demo | smartagri" },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Simulasi alur kerja interaktif sistem smartagri, dari agen smart greenhouse hingga irigasi, pemetaan UAV, dan pemantauan lahan."
+              : "Interactive workflow simulations of smartagri systems, from the smart greenhouse agent to irrigation, UAV mapping, and field monitoring.",
+        },
+      ],
+    };
+  },
 });
 
 function DemoPage() {
-  const [active, setActive] = useState<WorkflowDemo>(DEMOS[0]);
+  const t = useT();
+  const demos = demosFor(useLang());
+  const [activeSlug, setActiveSlug] = useState(demos[0].slug);
+  const active = demos.find((demo) => demo.slug === activeSlug) ?? demos[0];
 
   return (
     <main>
@@ -33,24 +42,34 @@ function DemoPage() {
       <section className="bg-[#F3F7F6]">
         <div className="max-w-[1360px] mx-auto px-6 md:px-12 pt-14 md:pt-20 pb-16 md:pb-20">
           <PageHero
-            eyebrow="Interactive Demo"
-            title={
-              <>
-                Workflow simulations of <span style={accent}>our systems</span>
-              </>
-            }
-            subtitle="Pick a system to watch how it senses, decides, and acts, the same demos we run live at our booth. More systems are on the way."
+            eyebrow={t({ en: "Interactive Demo", id: "Demo Interaktif" })}
+            title={t({
+              en: (
+                <>
+                  Workflow simulations of <span style={accent}>our systems</span>
+                </>
+              ),
+              id: (
+                <>
+                  Simulasi alur kerja <span style={accent}>sistem kami</span>
+                </>
+              ),
+            })}
+            subtitle={t({
+              en: "Pick a system to watch how it senses, decides, and acts, the same demos we run live at our booth. More systems are on the way.",
+              id: "Pilih sebuah sistem untuk melihat cara ia membaca kondisi, mengambil keputusan, dan bertindak, sama seperti demo yang kami jalankan langsung di booth kami. Sistem lainnya segera menyusul.",
+            })}
           />
 
           {/* System selector */}
           <div className="flex flex-wrap gap-3 mb-8">
-            {DEMOS.map((demo) => {
+            {demos.map((demo) => {
               const isActive = demo.slug === active.slug;
               const available = Boolean(demo.src);
               return (
                 <button
                   key={demo.slug}
-                  onClick={() => setActive(demo)}
+                  onClick={() => setActiveSlug(demo.slug)}
                   className={
                     isActive
                       ? "inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium bg-[#0B6477] text-white transition-colors"
@@ -68,7 +87,7 @@ function DemoPage() {
                           : "rounded-full bg-[#0B6477]/10 text-[#0B6477] text-[10px] font-semibold px-2 py-0.5"
                       }
                     >
-                      Soon
+                      {t({ en: "Soon", id: "Segera" })}
                     </span>
                   )}
                 </button>
@@ -112,7 +131,7 @@ function DemoPage() {
                   style={body}
                 >
                   <Maximize2 className="w-4 h-4" />
-                  Open full screen
+                  {t({ en: "Open full screen", id: "Buka layar penuh" })}
                 </a>
               )}
             </div>
@@ -120,7 +139,7 @@ function DemoPage() {
             {active.src ? (
               <WorkflowEmbed
                 src={active.src}
-                title={`${active.title} workflow`}
+                title={t({ en: `${active.title} workflow`, id: `Alur kerja ${active.title}` })}
                 height={active.height ?? 720}
               />
             ) : (
@@ -132,14 +151,16 @@ function DemoPage() {
                   className="text-xl md:text-2xl font-semibold text-neutral-900"
                   style={display}
                 >
-                  Workflow simulation coming soon
+                  {t({ en: "Workflow simulation coming soon", id: "Simulasi alur kerja segera hadir" })}
                 </h3>
                 <p
                   className="text-sm md:text-base font-normal text-neutral-500 max-w-[480px] mx-auto mt-3"
                   style={body}
                 >
-                  We're building an interactive walkthrough of the {active.title}{" "}
-                  system. In the meantime, come see it live at our booth.
+                  {t({
+                    en: `We're building an interactive walkthrough of the ${active.title} system. In the meantime, come see it live at our booth.`,
+                    id: `Kami sedang menyiapkan panduan interaktif untuk sistem ${active.title}. Sementara itu, kunjungi booth kami untuk melihatnya secara langsung.`,
+                  })}
                 </p>
               </div>
             )}
@@ -149,8 +170,10 @@ function DemoPage() {
             className="text-xs font-normal text-neutral-400 mt-4"
             style={body}
           >
-            Tip: each simulation runs on its own, with play/pause, scenario
-            navigation, and a speed control inside the panel.
+            {t({
+              en: "Tip: each simulation runs on its own, with play/pause, scenario navigation, and a speed control inside the panel.",
+              id: "Tips: setiap simulasi berjalan sendiri, dengan tombol putar/jeda, navigasi skenario, dan pengatur kecepatan di dalam panel.",
+            })}
           </p>
         </div>
       </section>

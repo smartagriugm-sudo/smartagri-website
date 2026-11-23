@@ -6,6 +6,7 @@ import { A } from "../lib/assets";
 import GrowthPrism from "./GrowthPrism";
 import AgrosphereMark from "./AgrosphereMark";
 import { accent, body, display } from "../lib/fonts";
+import { useT } from "../lib/i18n";
 
 // Split layout for sign in and sign up: a calm brand panel on the left, the form
 // on the right. Below lg the brand panel is hidden and the logo sits above the
@@ -19,20 +20,25 @@ const BRANDS = {
   smartagri: {
     logo: A.logoColor,
     name: "smartagri",
-    home: { label: "Home" },
-    eyebrow: "Smart Agriculture Research Center UGM",
+    home: { label: { en: "Home", id: "Beranda" } },
+    eyebrow: { en: "Smart Agriculture Research Center UGM", id: "Smart Agriculture Research Center UGM" },
+    // Brand taglines stay in English in both languages.
     tagline: ["Sense.", "Analyze.", "Grow."],
-    statement:
-      "We sense the field with IoT and imaging, analyze it with AI and data, and turn readings into decisions for healthier, more sustainable harvests.",
+    statement: {
+      en: "We sense the field with IoT and imaging, analyze it with AI and data, and turn readings into decisions for healthier, more sustainable harvests.",
+      id: "Kami memantau lahan dengan IoT dan pencitraan, menganalisisnya dengan AI dan data, lalu mengubah hasil pengukuran menjadi keputusan untuk panen yang lebih sehat dan berkelanjutan.",
+    },
   },
   agrosphere: {
     logo: A.agrosphereLogo,
     name: "agrosphere",
-    home: { label: "smartagri" },
-    eyebrow: "by smartagri",
+    home: { label: { en: "smartagri", id: "smartagri" } },
+    eyebrow: { en: "by smartagri", id: "oleh smartagri" },
     tagline: ["Monitor.", "Manage.", "Grow."],
-    statement:
-      "One place for the plant factory and the greenhouse sites: live readings, daily operations and the people who run them, each opened to the accounts given access.",
+    statement: {
+      en: "One place for the plant factory and the greenhouse sites: live readings, daily operations and the people who run them, each opened to the accounts given access.",
+      id: "Satu tempat untuk plant factory dan lokasi greenhouse: pembacaan langsung, operasional harian, dan orang-orang yang menjalankannya, masing-masing terbuka bagi akun yang diberi akses.",
+    },
   },
 } as const;
 
@@ -53,6 +59,7 @@ export default function AuthShell({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const t = useT();
   return (
     <main className="min-h-[100dvh] bg-[#E9F0EE] lg:p-3" style={body}>
       <div className="grid min-h-[100dvh] bg-white lg:min-h-[calc(100dvh-1.5rem)] lg:grid-cols-2 lg:overflow-hidden lg:rounded-[28px] lg:shadow-[0_1px_2px_rgba(8,49,58,0.06),0_24px_60px_-30px_rgba(8,49,58,0.25)]">
@@ -68,7 +75,7 @@ export default function AuthShell({
               className="inline-flex items-center gap-1 rounded-lg py-1.5 pr-2 text-sm font-medium text-neutral-800 transition-colors hover:text-[#0B6477]"
             >
               <ChevronLeft className="h-4 w-4" />
-              {BRANDS[brand].home.label}
+              {t(BRANDS[brand].home.label)}
             </Link>
             <img src={BRANDS[brand].logo} alt={BRANDS[brand].name} className="h-6 w-auto lg:hidden" />
           </div>
@@ -93,6 +100,7 @@ export default function AuthShell({
 }
 
 function BrandPanel({ brand }: { brand: AuthBrand }) {
+  const t = useT();
   const b = BRANDS[brand];
   return (
     <aside className="relative hidden overflow-hidden border-r border-[#0B6477]/8 bg-[#F7FAF9] lg:flex lg:flex-col lg:justify-between lg:p-12">
@@ -103,7 +111,7 @@ function BrandPanel({ brand }: { brand: AuthBrand }) {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,#F7FAF9_0%,rgba(247,250,249,0)_14%,rgba(247,250,249,0)_62%,#F7FAF9_90%)]"
       />
-      <Link to="/" aria-label={`${b.name} home`} className="relative z-10 w-fit">
+      <Link to="/" aria-label={t({ en: `${b.name} home`, id: `Beranda ${b.name}` })} className="relative z-10 w-fit">
         <img src={b.logo} alt={b.name} className="h-7 w-auto" />
       </Link>
       <div className="relative z-10 max-w-[480px]">
@@ -113,7 +121,7 @@ function BrandPanel({ brand }: { brand: AuthBrand }) {
           transition={{ delay: 0.3, duration: 0.5 }}
           className="text-[13px] font-medium tracking-[0.03em] text-[#14919B]"
         >
-          {b.eyebrow}
+          {t(b.eyebrow)}
         </motion.p>
         <h2 className="mt-3 text-[44px] font-semibold leading-[1.02] tracking-[-0.04em] text-neutral-900" style={display}>
           {b.tagline.map((w, i) => (
@@ -135,7 +143,7 @@ function BrandPanel({ brand }: { brand: AuthBrand }) {
           transition={{ delay: 0.9, duration: 0.55, ease: EASE }}
           className="mt-4 text-[17px] leading-relaxed text-neutral-600"
         >
-          {b.statement}
+          {t(b.statement)}
         </motion.p>
       </div>
     </aside>

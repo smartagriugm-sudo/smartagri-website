@@ -213,6 +213,11 @@ collections:
       - name: title
         label: Title
         widget: string
+      - name: titleId
+        label: Title (Bahasa Indonesia)
+        widget: string
+        required: false
+        hint: "Opsional: judul album dalam Bahasa Indonesia. Kosong berarti situs versi ID memakai judul bahasa Inggris."
       - name: date
         label: Date
         widget: datetime
@@ -238,6 +243,11 @@ collections:
         label: Excerpt
         widget: text
         hint: "Ringkasan 1–2 kalimat tentang kegiatan ini, tampil di kartu album."
+      - name: excerptId
+        label: Excerpt (Bahasa Indonesia)
+        widget: text
+        required: false
+        hint: "Opsional: ringkasan dalam Bahasa Indonesia untuk situs versi ID."
       - name: cover
         label: Cover image
         widget: image

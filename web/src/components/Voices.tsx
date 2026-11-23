@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { A } from "../lib/assets";
 import { accent, body, display, serif } from "../lib/fonts";
+import { useT, type Bi } from "../lib/i18n";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -9,6 +10,7 @@ const fadeUp = {
 };
 
 function FarmerImage() {
+  const t = useT();
   const ref = useRef<HTMLImageElement>(null);
   const [failed, setFailed] = useState(false);
 
@@ -24,17 +26,20 @@ function FarmerImage() {
     <img
       ref={ref}
       src={A.farmerPhoto}
-      alt="Farmer in the field"
+      alt={t({ en: "Farmer in the field", id: "Petani di lahan" })}
       className="absolute inset-0 object-cover w-full h-full"
       onError={() => setFailed(true)}
     />
   );
 }
 
-const quote =
-  "smartagri completely changed how our cooperative manages its fields. Instead of guessing when to irrigate or treat crops, we now act on real data, like having an agronomist watching every plot, day and night.";
+const quote: Bi = {
+  en: "smartagri completely changed how our cooperative manages its fields. Instead of guessing when to irrigate or treat crops, we now act on real data, like having an agronomist watching every plot, day and night.",
+  id: "smartagri benar-benar mengubah cara koperasi kami mengelola lahan. Dulu kami menebak kapan harus mengairi atau merawat tanaman, sekarang kami bertindak berdasarkan data nyata, seperti punya ahli agronomi yang mengawasi setiap petak siang dan malam.",
+};
 
 export default function Voices() {
+  const t = useT();
   return (
     <section className="bg-white">
       <div className="max-w-[1360px] mx-auto px-6 md:px-10 py-20">
@@ -57,7 +62,7 @@ export default function Voices() {
                   style={display}
                 >
                   <span style={{ ...display, fontWeight: 500 }}>smartagri</span>{" "}
-                  <span style={accent}>changed how we farm</span>
+                  <span style={accent}>{t({ en: "changed how we farm", id: "mengubah cara kami bertani" })}</span>
                 </h2>
                 <div className="hidden lg:flex items-center gap-2">
                   <div className="w-8 h-2 bg-[#0B6477] rounded-full" />
@@ -73,7 +78,7 @@ export default function Voices() {
                 className="self-start bg-[#0B6477] text-white px-7 py-3 rounded-2xl text-xl font-medium hover:bg-[#14919B] transition-colors whitespace-nowrap"
                 style={body}
               >
-                Read More
+                {t({ en: "Read More", id: "Selengkapnya" })}
               </motion.button>
             </motion.div>
             <motion.div
@@ -116,7 +121,7 @@ export default function Voices() {
               className="text-2xl md:text-3xl font-normal leading-snug md:leading-10 text-black"
               style={serif}
             >
-              {quote.split(" ").map((word, i) => (
+              {t(quote).split(" ").map((word, i) => (
                 <motion.span
                   key={i}
                   initial={{ opacity: 0, y: 6 }}
@@ -151,7 +156,7 @@ export default function Voices() {
                 className="text-base md:text-lg font-normal text-black/50"
                 style={body}
               >
-                Farm Cooperative Lead, Sleman
+                {t({ en: "Farm Cooperative Lead, Sleman", id: "Ketua Koperasi Tani, Sleman" })}
               </span>
             </motion.div>
           </motion.div>

@@ -1,5 +1,6 @@
 import { PUBLICATIONS, type Publication } from "./publications";
 import { teamPhoto } from "./assets";
+import { localize, type Lang } from "./i18n-core";
 
 export type TeamCategory = "Lecturer" | "Researcher" | "Student" | "Past Member";
 
@@ -356,4 +357,171 @@ export function memberInitials(name: string) {
     .slice(0, 2)
     .map((part) => part[0])
     .join("");
+}
+
+// ---- Bahasa Indonesia (see lib/i18n.tsx) ----
+// Indonesian copy per member slug (role, bio, expertise, projects).
+const TEAM_ID: Record<string, Partial<TeamMember>> = {
+  "andri-prima-nugroho": {
+    role: "Koordinator Kelompok Riset · Dosen",
+    bio: "Koordinator Smart Agriculture Research Center dan dosen di Departemen Teknik Pertanian dan Biosistem, UGM. Fokus kerjanya adalah informatika pertanian dan pertanian presisi, mulai dari precision livestock farming dan smart greenhouse hingga estimasi kebutuhan air tanaman berbasis IoT dan big data.",
+    expertise: [
+      "Informatika pertanian",
+      "Pertanian presisi",
+      "Penginderaan berbasis IoT",
+      "Sistem smart farming",
+    ],
+    projects: [
+      "Precision livestock farming dan sistem pendukung keputusan",
+      "Estimasi kebutuhan air tanaman berbasis IoT dan big data",
+      "Teknologi smart estate untuk pengelolaan lahan kelapa sawit",
+    ],
+  },
+  "lilik-sutiarso": {
+    role: "Dosen",
+    bio: "Guru Besar teknik pertanian dan biosistem di UGM. Fokus kerjanya adalah sistem pertanian, pertanian presisi, dan sistem kendali cerdas, mulai dari sistem smart farming terpadu hingga teknologi pertanian presisi untuk produksi yang berkelanjutan.",
+    expertise: [
+      "Sistem pertanian",
+      "Pertanian presisi",
+      "Sistem kendali cerdas",
+    ],
+    projects: [
+      "Sistem smart farming terpadu",
+      "Teknologi pertanian presisi untuk hortikultura",
+    ],
+  },
+  murtiningrum: {
+    role: "Dosen",
+    bio: "Dosen di Departemen Teknik Pertanian dan Biosistem, UGM, dengan keahlian teknik irigasi dan pengelolaan irigasi. Kerjanya meliputi pengelolaan air irigasi cerdas, irigasi tetes dan kabut untuk sayuran, modernisasi irigasi, serta pemantauan kelembapan tanah dan muka air yang terintegrasi dengan cloud.",
+    expertise: [
+      "Teknik irigasi",
+      "Pengelolaan irigasi",
+      "Pengelolaan air cerdas",
+    ],
+    projects: [
+      "Pengelolaan air irigasi cerdas di Daerah Irigasi Kedung Putri",
+      "Irigasi tetes dan kabut untuk tanaman sayuran",
+      "Pemantauan kelembapan tanah dan muka air terintegrasi cloud",
+    ],
+  },
+  "mohammad-affan-fajar-falah": {
+    role: "Dosen",
+    bio: "Guru Besar dengan fokus pada pertanian lingkungan terkendali dan teknologi pascapanen, mulai dari sistem produksi plant factory hingga mutu produk segar setelah panen.",
+    expertise: [
+      "Pertanian lingkungan terkendali",
+      "Teknologi pascapanen",
+      "Mutu produk",
+    ],
+    projects: [
+      "Pengendalian vapor pressure deficit (VPD) di micro plant factory",
+      "Sistem produksi mini plant factory perkotaan",
+    ],
+  },
+  "prieskarinda-lestari": {
+    role: "Dosen",
+    bio: "Dosen di Departemen Teknik Pertanian dan Biosistem, UGM, yang menekuni teknik lingkungan, pengelolaan limbah padat dan limbah pertanian, serta valorisasi limbah agroindustri, termasuk pencemaran mikroplastik dan pemantauan kualitas air.",
+    expertise: [
+      "Teknik lingkungan",
+      "Pengelolaan limbah pertanian",
+      "Pencemaran plastik",
+    ],
+    projects: [
+      "Produk biodegradable dari limbah agroindustri tropis",
+      "Pencemaran mikroplastik dan pemantauan kualitas air",
+    ],
+  },
+  "ardan-wiratmoko": {
+    role: "Dosen",
+    bio: "Dosen dan peneliti di UGM yang menekuni energi dan mesin pertanian, teknologi smart estate, dan sistem smart farming. Ia memanfaatkan platform UAV untuk pemetaan multispektral, pemantauan tanaman, dan penyemprotan presisi di lahan dan perkebunan, serta pemantauan plant factory, pengelolaan lahan terpadu, dan pengelolaan air cerdas.",
+    expertise: [
+      "Pemetaan UAV & penginderaan jauh",
+      "Pemantauan tanaman multispektral",
+      "Energi & mesin pertanian",
+      "Teknologi smart estate",
+      "Sistem smart farming",
+    ],
+    projects: [
+      "Pemetaan multispektral UAV untuk pemantauan tanaman",
+      "Teknologi smart estate untuk pengelolaan lahan kelapa sawit",
+      "Pengelolaan air cerdas di daerah irigasi",
+    ],
+  },
+  "muhammad-athala-fawwaz-dzaky": {
+    role: "Peneliti",
+    bio: "Peneliti di bidang pertanian lingkungan terkendali. Penulis pertama makalah pusat riset di Scientia Horticulturae tentang pengendalian vapor pressure deficit (VPD) di micro plant factory untuk produksi microgreens bayam.",
+    expertise: ["Manajemen Indoor Farming"],
+    projects: [
+      "Pengendalian VPD di micro plant factory",
+      "Sistem iklim smart greenhouse",
+    ],
+  },
+  "fadel-arya-pradana": {
+    role: "Peneliti",
+    bio: "Peneliti di bidang penginderaan jauh dan analisis data untuk pertanian presisi, termasuk pemantauan kinerja fisiologis tanaman dengan UAV multispektral.",
+    expertise: ["Rekayasa Sistem Pertanian Presisi"],
+    projects: ["Pemantauan multispektral UAV-VTOL untuk pertanian presisi"],
+  },
+  "samuel-gatot-marseno": {
+    role: "Peneliti",
+    bio: "Peneliti di Smart Agriculture Research Center yang menekuni otomasi pertanian dan sistem smart farming.",
+    expertise: ["Sistem Lingkungan Cerdas"],
+    projects: ["Penerapan smart farming di lapangan"],
+  },
+  "saifuddin-afif": {
+    role: "Peneliti",
+    bio: "Peneliti dengan fokus pada pengembangan sensor dan instrumentasi, termasuk pendekatan electrical impedance spectroscopy (EIS) untuk pengukuran fisiologis tanaman secara nondestruktif.",
+    expertise: ["Elektrofisiologi & Spektroskopi Elektrik Tanaman"],
+    projects: ["Estimasi klorofil berbasis EIS pada sayuran daun"],
+  },
+  "fathuzaky-setyawan": {
+    role: "Peneliti",
+    bio: "Peneliti di Smart Agriculture Research Center yang menekuni rekayasa sistem data pertanian.",
+    expertise: ["Rekayasa Sistem Data Pertanian"],
+    projects: ["Program riset smart farming"],
+  },
+  "diena-itaul-mufida": {
+    role: "Peneliti",
+    bio: "Peneliti di Smart Agriculture Research Center yang menekuni sistem pertanian cerdas dan program riset lapangan.",
+    expertise: ["Penginderaan & Fenotiping Tanaman"],
+    projects: ["Program riset smart farming"],
+  },
+  "fahmi-arsyad": {
+    role: "Peneliti",
+    bio: "Peneliti di bidang pemantauan multispektral berbasis UAV dan operasi lapangan, sekaligus aktif dalam komunikasi riset pusat ini.",
+    expertise: ["Teknologi UAV Cerdas"],
+    projects: ["Pemantauan multispektral UAV-VTOL untuk pertanian presisi"],
+  },
+  "mutiara-alifia-ramadhanty": {
+    role: "Peneliti",
+    bio: "Peneliti di bidang analisis data multispektral untuk pemantauan tanaman dalam program pertanian presisi pusat ini.",
+    expertise: ["Teknologi UAV Cerdas"],
+    projects: ["Pemantauan multispektral UAV-VTOL untuk pertanian presisi"],
+  },
+  "muhammad-fajar-ridho-ilham": {
+    role: "Peneliti",
+    bio: "Peneliti di Smart Agriculture Research Center yang menekuni analitik data spektral untuk pertanian presisi.",
+    expertise: ["Analitik Data Spektral"],
+    projects: ["Program riset smart farming"],
+  },
+  "ardan-desta-vaunendra": {
+    role: "Peneliti",
+    bio: "Peneliti di bidang irigasi presisi untuk lahan pasir pantai. Skripsinya membangun pengendali sprinkler IoT yang menggabungkan evapotranspirasi acuan dari stasiun cuaca otomatis dengan data kelembapan tanah dalam model logika fuzzy Mamdani untuk menentukan durasi irigasi, dan diuji di lapangan di Kulon Progo.",
+    expertise: ["Irigasi Presisi & Kendali IoT"],
+    projects: ["Irigasi sprinkler berbasis logika fuzzy untuk lahan pasir pantai"],
+  },
+};
+
+export function localizeMember(member: TeamMember, lang: Lang): TeamMember {
+  return localize(member, TEAM_ID[member.slug], lang);
+}
+
+const TEAM_CATEGORY_ID: Record<TeamCategory, string> = {
+  Lecturer: "Dosen",
+  Researcher: "Peneliti",
+  Student: "Mahasiswa",
+  "Past Member": "Alumni",
+};
+
+export function teamCategoryLabel(category: TeamCategory, lang: Lang): string {
+  return lang === "id" ? TEAM_CATEGORY_ID[category] : category;
 }

@@ -3,7 +3,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
-import { NOTE_FILTERS, notes, type Note } from "../lib/notes";
+import { useLang, useT } from "../lib/i18n";
+import {
+  NOTE_FILTERS,
+  localizeNote,
+  noteCategoryLabel,
+  notes,
+  type Note,
+} from "../lib/notes";
 import {
   Byline,
   CategoryChip,
@@ -24,6 +31,9 @@ import {
 const PAGE = 9;
 
 function Featured({ note }: { note: Note }) {
+  const lang = useLang();
+  const t = useT();
+  const category = noteCategoryLabel(note.category, lang);
   return (
     <Link
       to="/field-notes/$slug"
@@ -40,13 +50,13 @@ function Featured({ note }: { note: Note }) {
           className={`absolute bottom-5 left-6 text-white/85 ${META}`}
           style={body}
         >
-          {note.category}
+          {category}
         </span>
       </div>
 
       <div className="flex flex-col gap-5 p-7 md:p-10">
         <div>
-          <CategoryChip>{note.category}</CategoryChip>
+          <CategoryChip>{category}</CategoryChip>
         </div>
         <h3
           className="line-clamp-3 text-[26px] font-semibold leading-[1.15] tracking-[-0.03em] text-neutral-900 transition-colors duration-300 group-hover:text-[#0B6477] md:text-[32px]"
@@ -66,7 +76,7 @@ function Featured({ note }: { note: Note }) {
             className="inline-flex items-center gap-1.5 text-[15px] font-medium text-[#0B6477]"
             style={body}
           >
-            Read the note
+            {t({ en: "Read the note", id: "Baca catatan" })}
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
           </span>
         </div>
@@ -83,10 +93,13 @@ const fadeUp = (delay: number) => ({
 });
 
 export default function FieldNotes({ archive = false }: { archive?: boolean }) {
+  const lang = useLang();
+  const t = useT();
   const [filter, setFilter] = useState("All");
   const [shown, setShown] = useState(PAGE);
-  const list =
+  const filtered =
     filter === "All" ? notes : notes.filter((n) => n.category === filter);
+  const list = lang === "id" ? filtered.map((n) => localizeNote(n, lang)) : filtered;
   const [featured, ...rest] = list;
   const cards = archive ? rest.slice(0, shown) : rest.slice(0, 3);
   const Heading = archive ? motion.h1 : motion.h2;
@@ -109,16 +122,18 @@ export default function FieldNotes({ archive = false }: { archive?: boolean }) {
             >
               {archive ? (
                 <>
-                  <MaskLine delay={0}>Notes from the</MaskLine>
+                  <MaskLine delay={0}>{t({ en: "Notes from the", id: "Catatan dari" })}</MaskLine>
                   <MaskLine delay={0.12}>
-                    <span style={accent}>lab and field.</span>
+                    <span style={accent}>
+                      {t({ en: "lab and field.", id: "lab dan lapangan." })}
+                    </span>
                   </MaskLine>
                 </>
               ) : (
                 <>
-                  <MaskLine delay={0}>Fresh notes</MaskLine>
+                  <MaskLine delay={0}>{t({ en: "Fresh notes", id: "Kabar terbaru" })}</MaskLine>
                   <MaskLine delay={0.12}>
-                    <span style={accent}>from the field.</span>
+                    <span style={accent}>{t({ en: "from the field.", id: "dari lapangan." })}</span>
                   </MaskLine>
                 </>
               )}
@@ -129,15 +144,26 @@ export default function FieldNotes({ archive = false }: { archive?: boolean }) {
               style={body}
             >
               {archive
-                ? "Everything we publish outside of journals: news from the center, research updates, practical guides for farmers, and recaps of the events we host."
-                : "News, research updates, practical guides and stories from the farms and labs we work in."}
+                ? t({
+                    en: "Everything we publish outside of journals: news from the center, research updates, practical guides for farmers, and recaps of the events we host.",
+                    id: "Semua yang kami terbitkan di luar jurnal: berita dari pusat riset, kabar riset terbaru, panduan praktis bagi petani, dan rangkuman acara yang kami selenggarakan.",
+                  })
+                : t({
+                    en: "News, research updates, practical guides and stories from the farms and labs we work in.",
+                    id: "Berita, kabar riset, panduan praktis, dan cerita dari lahan serta laboratorium tempat kami bekerja.",
+                  })}
             </motion.p>
           </div>
           <motion.div {...fadeUp(0.4)}>
             {archive ? (
               <span className={`text-neutral-400 ${META}`} style={body}>
-                {list.length} {list.length === 1 ? "note" : "notes"}
-                {filter !== "All" && ` in ${filter}`}
+                {list.length}{" "}
+                {t({ en: list.length === 1 ? "note" : "notes", id: "catatan" })}
+                {filter !== "All" &&
+                  t({
+                    en: ` in ${filter}`,
+                    id: ` dalam ${noteCategoryLabel(filter, lang)}`,
+                  })}
               </span>
             ) : (
               <Link
@@ -145,7 +171,7 @@ export default function FieldNotes({ archive = false }: { archive?: boolean }) {
                 className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                 style={body}
               >
-                All field notes
+                {t({ en: "All field notes", id: "Semua catatan lapangan" })}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             )}
@@ -157,7 +183,10 @@ export default function FieldNotes({ archive = false }: { archive?: boolean }) {
           {...fadeUp(0.5)}
           className="mt-10 flex flex-wrap gap-2"
           role="tablist"
-          aria-label="Filter field notes by category"
+          aria-label={t({
+            en: "Filter field notes by category",
+            id: "Saring catatan lapangan menurut kategori",
+          })}
         >
           {NOTE_FILTERS.map((f) => {
             const active = f === filter;
@@ -185,7 +214,7 @@ export default function FieldNotes({ archive = false }: { archive?: boolean }) {
                     transition={{ duration: 0.45, ease: EASE }}
                   />
                 )}
-                <span className="relative">{f}</span>
+                <span className="relative">{noteCategoryLabel(f, lang)}</span>
               </button>
             );
           })}
@@ -239,11 +268,14 @@ export default function FieldNotes({ archive = false }: { archive?: boolean }) {
               className="group inline-flex h-12 items-center gap-3 rounded-lg bg-[#45DFB1] px-6 text-sm font-medium uppercase tracking-[0.08em] text-[#0B2A22] transition-colors hover:bg-[#80ED99]"
               style={body}
             >
-              Load more notes
+              {t({ en: "Load more notes", id: "Muat catatan lainnya" })}
               <ArrowRight className="h-4 w-4 rotate-90 transition-transform group-hover:translate-y-0.5" />
             </button>
             <span className="text-[13px] text-neutral-400" style={body}>
-              Showing {shown + 1} of {list.length}
+              {t({
+                en: `Showing ${shown + 1} of ${list.length}`,
+                id: `Menampilkan ${shown + 1} dari ${list.length}`,
+              })}
             </span>
           </div>
         )}

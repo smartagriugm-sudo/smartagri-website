@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Expand } from "lucide-react";
 import { body } from "../lib/fonts";
+import { useT } from "../lib/i18n";
 import PhotoLightbox from "./PhotoLightbox";
 
 // Bento photo grid for one album (after the 21st.dev "Interactive Image Bento
@@ -32,12 +33,20 @@ export default function BentoGallery({
   caption?: string;
 }) {
   const [open, setOpen] = useState<number | null>(null);
+  const t = useT();
 
   return (
     <div className="mx-auto max-w-[1360px] px-6 md:px-12">
       <p className="text-sm text-neutral-500" style={body}>
-        <span className="font-medium text-neutral-800">{photos.length} photos</span>
-        <span> · Click any photo to expand</span>
+        <span className="font-medium text-neutral-800">
+          {photos.length} {t({ en: "photos", id: "foto" })}
+        </span>
+        <span>
+          {t({
+            en: " · Click any photo to expand",
+            id: " · Klik foto mana pun untuk memperbesar",
+          })}
+        </span>
       </p>
 
       <div className="mt-6 grid grid-flow-row-dense grid-cols-2 auto-rows-[10rem] gap-3 sm:auto-rows-[13rem] md:grid-cols-4 md:auto-rows-[15rem] md:gap-4">
@@ -50,7 +59,10 @@ export default function BentoGallery({
             viewport={{ once: true, margin: "0px 0px -8% 0px" }}
             transition={{ delay: (i % 4) * 0.06, duration: 0.6, ease: EASE }}
             onClick={() => setOpen(i)}
-            aria-label={`Open photo ${i + 1} of ${photos.length}`}
+            aria-label={t({
+              en: `Open photo ${i + 1} of ${photos.length}`,
+              id: `Buka foto ${i + 1} dari ${photos.length}`,
+            })}
             className={`group relative flex items-end overflow-hidden rounded-2xl border border-[#0B6477]/10 bg-[#0B6477] p-4 text-left shadow-[0_14px_40px_-28px_rgba(8,49,58,0.45)] transition-shadow duration-500 hover:shadow-[0_24px_50px_-24px_rgba(8,49,58,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14919B] focus-visible:ring-offset-2 ${SPANS[i % SPANS.length]}`}
           >
             <img
@@ -64,7 +76,7 @@ export default function BentoGallery({
             <div className="pointer-events-none relative z-10 flex w-full translate-y-3 items-end justify-between gap-3 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
               <span style={body}>
                 <span className="block text-base font-semibold text-white tabular-nums">
-                  Photo {String(i + 1).padStart(2, "0")}
+                  {t({ en: "Photo", id: "Foto" })} {String(i + 1).padStart(2, "0")}
                 </span>
                 {caption && (
                   <span className="mt-0.5 hidden text-[13px] text-white/75 sm:block">

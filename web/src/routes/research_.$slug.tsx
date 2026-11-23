@@ -3,10 +3,12 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check } from "lucide-react";
 import { researchPhoto, researchPhotoAlt } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
-import { RESEARCH_AREAS, RESEARCH_KEYWORDS, findResearchArea } from "../lib/research";
-import { notes } from "../lib/notes";
+import { RESEARCH_KEYWORDS, findResearchAreaFor, researchAreasFor } from "../lib/research";
+import { techLabel } from "../lib/technology";
+import { localizeNote, notes } from "../lib/notes";
 import { PUBLICATIONS } from "../lib/publications";
-import { STUDY_KIND, evidenceFor } from "../lib/research-evidence";
+import { evidenceForLang, studyKind } from "../lib/research-evidence";
+import { headLang, useLang, useT } from "../lib/i18n";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import AmbientWash from "../components/AmbientWash";
@@ -21,11 +23,12 @@ export const Route = createFileRoute("/research_/$slug")({
   // component (a function), which can't be serialized to the client, so we
   // resolve the full area from the slug inside the component/head instead.
   loader: ({ params }) => ({ slug: params.slug }),
-  head: ({ loaderData }) => {
-    const area = loaderData ? findResearchArea(loaderData.slug) : undefined;
+  head: ({ loaderData, matches }) => {
+    const l = headLang(matches);
+    const area = loaderData ? findResearchAreaFor(loaderData.slug, l) : undefined;
     return {
       meta: [
-        { title: `${area?.label ?? "Research"} | smartagri` },
+        { title: `${area?.label ?? (l === "id" ? "Riset" : "Research")} | smartagri` },
         ...(area ? [{ name: "description", content: area.overview.slice(0, 160) }] : []),
       ],
     };
@@ -68,7 +71,10 @@ function SectionLabel({ children, tone = "light" }: { children: string; tone?: "
 
 function ResearchDetailPage() {
   const { slug } = Route.useLoaderData();
-  const area = findResearchArea(slug);
+  const lang = useLang();
+  const t = useT();
+  const area = findResearchAreaFor(slug, lang);
+  const areas = researchAreasFor(lang);
 
   if (!area) {
     return (
@@ -77,14 +83,14 @@ function ResearchDetailPage() {
         <section className="bg-[#F3F7F6]">
           <div className="max-w-[760px] mx-auto px-6 py-24 text-center flex flex-col items-center gap-4">
             <h1 className="text-3xl md:text-4xl font-semibold text-neutral-900" style={display}>
-              Research area not found
+              {t({ en: "Research area not found", id: "Bidang riset tidak ditemukan" })}
             </h1>
             <Link
               to="/research"
               className="px-7 py-3 rounded-2xl border border-[#0B6477] text-[#0B6477] font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
               style={body}
             >
-              Back to Research
+              {t({ en: "Back to Research", id: "Kembali ke Riset" })}
             </Link>
           </div>
         </section>
@@ -93,13 +99,16 @@ function ResearchDetailPage() {
     );
   }
 
-  const index = RESEARCH_AREAS.findIndex((a) => a.slug === area.slug);
-  const next = RESEARCH_AREAS[(index + 1) % RESEARCH_AREAS.length];
-  const others = RESEARCH_AREAS.filter((a) => a.slug !== area.slug);
+  const index = areas.findIndex((a) => a.slug === area.slug);
+  const next = areas[(index + 1) % areas.length];
+  const others = areas.filter((a) => a.slug !== area.slug);
   const matches = matcher(area.slug);
-  const relatedNotes = notes.filter((n) => matches(`${n.title} ${n.excerpt}`)).slice(0, 3);
+  const relatedNotes = notes
+    .filter((n) => matches(`${n.title} ${n.excerpt}`))
+    .slice(0, 3)
+    .map((n) => localizeNote(n, lang));
   const relatedPapers = PUBLICATIONS.filter((p) => matches(p.title)).slice(0, 4);
-  const evidence = evidenceFor(area.slug);
+  const evidence = evidenceForLang(area.slug, lang);
   const levels = (["Undergraduate", "Master's", "Doctoral"] as const)
     .map((l) => ({ l, n: evidence.studies.filter((s) => s.level === l).length }))
     .filter((x) => x.n > 0);
@@ -118,7 +127,7 @@ function ResearchDetailPage() {
               style={body}
             >
               <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
-              All research
+              {t({ en: "All research", id: "Semua riset" })}
             </Link>
             <Link
               to="/research/$slug"
@@ -127,7 +136,7 @@ function ResearchDetailPage() {
               style={body}
             >
               <span>
-                <span className="hidden sm:inline">Next: </span>
+                <span className="hidden sm:inline">{t({ en: "Next: ", id: "Berikutnya: " })}</span>
                 {next.label}
               </span>
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -140,7 +149,7 @@ function ResearchDetailPage() {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 <p className={`flex items-center gap-2 text-[#14919B] ${META}`} style={body}>
                   <area.icon className="h-3.5 w-3.5" aria-hidden="true" />
-                  Research area
+                  {t({ en: "Research area", id: "Bidang riset" })}
                 </p>
               </motion.div>
               <motion.h1
@@ -166,9 +175,9 @@ function ResearchDetailPage() {
                 variants={{ show: { transition: { staggerChildren: 0.05, delayChildren: 0.35 } } }}
                 className="mt-7 flex flex-wrap gap-2"
               >
-                {area.technologies.map((t) => (
+                {area.technologies.map((tech) => (
                   <motion.li
-                    key={t}
+                    key={tech}
                     variants={{ hidden: { opacity: 0, scale: 0.9 }, show: { opacity: 1, scale: 1 } }}
                   >
                     <Link
@@ -176,7 +185,7 @@ function ResearchDetailPage() {
                       className="inline-flex rounded-full border border-[#0B6477]/15 bg-white/80 px-3 py-1.5 text-[13px] text-[#0B6477] transition-colors hover:border-[#14919B] hover:bg-[#F3F7F6]"
                       style={body}
                     >
-                      {t}
+                      {techLabel(tech, lang)}
                     </Link>
                   </motion.li>
                 ))}
@@ -193,7 +202,7 @@ function ResearchDetailPage() {
                   className="group inline-flex h-12 items-center gap-3 rounded-lg bg-[#45DFB1] px-6 text-sm font-medium uppercase tracking-[0.08em] text-[#0B2A22] transition-colors hover:bg-[#80ED99]"
                   style={body}
                 >
-                  Start a project
+                  {t({ en: "Start a project", id: "Mulai proyek" })}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <a
@@ -201,7 +210,7 @@ function ResearchDetailPage() {
                   className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                   style={body}
                 >
-                  See what we do
+                  {t({ en: "See what we do", id: "Lihat kiprah kami" })}
                   <ArrowRight className="h-4 w-4 rotate-90 transition-transform group-hover:translate-y-0.5" />
                 </a>
                 {area.slug === "indoor-farming-technology" && (
@@ -210,7 +219,7 @@ function ResearchDetailPage() {
                     className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                     style={body}
                   >
-                    Indoor Farming section
+                    {t({ en: "Indoor Farming section", id: "Halaman Indoor Farming" })}
                     <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                   </Link>
                 )}
@@ -235,18 +244,20 @@ function ResearchDetailPage() {
             >
               <div className="pointer-events-none absolute -left-24 -top-24 h-[360px] w-[360px] rounded-full bg-[#14919B]/30 blur-3xl animate-wash-b" />
               <div className="relative lg:col-span-7">
-                <SectionLabel tone="dark">Overview</SectionLabel>
+                <SectionLabel tone="dark">{t({ en: "Overview", id: "Ikhtisar" })}</SectionLabel>
                 <p className="mt-6 text-2xl font-medium leading-snug tracking-[-0.02em] md:text-[32px]" style={display}>
                   {area.overview}
                 </p>
               </div>
               <div className="relative border-t border-white/15 pt-6 lg:col-span-4 lg:col-start-9 lg:self-end">
                 <p className={`text-[#45DFB1] ${META}`} style={body}>
-                  Our approach
+                  {t({ en: "Our approach", id: "Pendekatan kami" })}
                 </p>
                 <p className="mt-3 text-[15px] leading-relaxed text-white/75" style={body}>
-                  Every project starts in the field: we sense what is happening, model what it
-                  means, and turn the result into decisions farmers and operators can act on.
+                  {t({
+                    en: "Every project starts in the field: we sense what is happening, model what it means, and turn the result into decisions farmers and operators can act on.",
+                    id: "Setiap proyek berawal dari lapangan: kami mengindera apa yang terjadi, memodelkan maknanya, lalu mengubah hasilnya menjadi keputusan yang dapat dijalankan petani dan operator.",
+                  })}
                 </p>
               </div>
             </motion.div>
@@ -256,7 +267,7 @@ function ResearchDetailPage() {
           <section className="mx-auto max-w-[1360px] px-6 py-20 md:px-12 md:py-28">
             <div className="grid gap-10 lg:grid-cols-12">
               <div className="lg:col-span-4">
-                <SectionLabel>Why it matters</SectionLabel>
+                <SectionLabel>{t({ en: "Why it matters", id: "Mengapa penting" })}</SectionLabel>
                 <motion.h2
                   initial="hidden"
                   whileInView="show"
@@ -264,9 +275,9 @@ function ResearchDetailPage() {
                   className="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 md:text-5xl"
                   style={display}
                 >
-                  <MaskLine delay={0}>What changes</MaskLine>
+                  <MaskLine delay={0}>{t({ en: "What changes", id: "Apa yang berubah" })}</MaskLine>
                   <MaskLine delay={0.1}>
-                    <span style={accent}>in the field.</span>
+                    <span style={accent}>{t({ en: "in the field.", id: "di lapangan." })}</span>
                   </MaskLine>
                 </motion.h2>
               </div>
@@ -304,7 +315,7 @@ function ResearchDetailPage() {
           {/* What we do */}
           <section id="what-we-do" className="scroll-mt-24 border-t border-[#0B6477]/10 bg-[#F3F7F6]/70">
             <div className="mx-auto max-w-[1360px] px-6 py-20 md:px-12 md:py-28">
-              <SectionLabel>What we do</SectionLabel>
+              <SectionLabel>{t({ en: "What we do", id: "Kiprah kami" })}</SectionLabel>
               <motion.h2
                 initial="hidden"
                 whileInView="show"
@@ -313,7 +324,15 @@ function ResearchDetailPage() {
                 style={display}
               >
                 <MaskLine delay={0}>
-                  Our work in <span style={accent}>{area.label.toLowerCase()}.</span>
+                  {lang === "id" ? (
+                    <>
+                      Riset kami di bidang <span style={accent}>{area.label}.</span>
+                    </>
+                  ) : (
+                    <>
+                      Our work in <span style={accent}>{area.label.toLowerCase()}.</span>
+                    </>
+                  )}
                 </MaskLine>
               </motion.h2>
               <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -340,16 +359,21 @@ function ResearchDetailPage() {
             <section id="evidence" className="scroll-mt-24 mx-auto max-w-[1360px] px-6 py-20 md:px-12 md:py-28">
               <div className="mb-12 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                  <SectionLabel>Center projects</SectionLabel>
-                  <EvidenceHeading first="What we have" second="built and tested." />
+                  <SectionLabel>{t({ en: "Center projects", id: "Proyek pusat riset" })}</SectionLabel>
+                  <EvidenceHeading
+                    first={t({ en: "What we have", id: "Yang telah kami" })}
+                    second={t({ en: "built and tested.", id: "bangun dan uji." })}
+                  />
                 </div>
                 <motion.p
                   {...fadeUp(0.2)}
                   className="max-w-[440px] text-base leading-relaxed text-neutral-500 md:text-lg"
                   style={body}
                 >
-                  {evidence.projects.length} {evidence.projects.length === 1 ? "project" : "projects"} from the
-                  center&apos;s research portfolio. Open a slide to see the system, the setup and the results.
+                  {t({
+                    en: `${evidence.projects.length} ${evidence.projects.length === 1 ? "project" : "projects"} from the center's research portfolio. Open a slide to see the system, the setup and the results.`,
+                    id: `${evidence.projects.length} proyek dari portofolio riset pusat kami. Buka slide untuk melihat sistem, susunan perangkat, dan hasilnya.`,
+                  })}
                 </motion.p>
               </div>
               <ProjectGrid projects={evidence.projects} />
@@ -362,8 +386,11 @@ function ResearchDetailPage() {
               <div className="mx-auto max-w-[1360px] px-6 py-20 md:px-12 md:py-28">
                 <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                   <div>
-                    <SectionLabel>Student research</SectionLabel>
-                    <EvidenceHeading first="Theses that" second="moved it forward." />
+                    <SectionLabel>{t({ en: "Student research", id: "Riset mahasiswa" })}</SectionLabel>
+                    <EvidenceHeading
+                      first={t({ en: "Theses that", id: "Tugas akhir yang" })}
+                      second={t({ en: "moved it forward.", id: "mendorongnya maju." })}
+                    />
                   </div>
                   <motion.p
                     {...fadeUp(0.2)}
@@ -372,11 +399,14 @@ function ResearchDetailPage() {
                   >
                     {levels
                       .map((x) => {
-                        const kind = STUDY_KIND[x.l].toLowerCase();
-                        return `${x.n} ${x.n > 1 ? kind.replace("thesis", "theses") : kind}`;
+                        const kind = studyKind(x.l, lang).toLowerCase();
+                        return `${x.n} ${lang === "en" && x.n > 1 ? kind.replace("thesis", "theses") : kind}`;
                       })
                       .join(", ")}{" "}
-                    supervised at the center, with their methods, key results and research framework.
+                    {t({
+                      en: "supervised at the center, with their methods, key results and research framework.",
+                      id: "yang dibimbing di pusat riset, lengkap dengan metode, hasil utama, dan kerangka risetnya.",
+                    })}
                   </motion.p>
                 </div>
                 <StudyList studies={evidence.studies} />
@@ -388,7 +418,7 @@ function ResearchDetailPage() {
           {(relatedNotes.length > 0 || relatedPapers.length > 0) && (
             <section className="border-t border-[#0B6477]/10">
               <div className="mx-auto max-w-[1360px] px-6 py-20 md:px-12 md:py-28">
-                <SectionLabel>In practice</SectionLabel>
+                <SectionLabel>{t({ en: "In practice", id: "Dalam praktik" })}</SectionLabel>
                 <motion.h2
                   initial="hidden"
                   whileInView="show"
@@ -397,7 +427,7 @@ function ResearchDetailPage() {
                   style={display}
                 >
                   <MaskLine delay={0}>
-                    {area.label} <span style={accent}>in practice.</span>
+                    {area.label} <span style={accent}>{t({ en: "in practice.", id: "dalam praktik." })}</span>
                   </MaskLine>
                 </motion.h2>
 
@@ -414,7 +444,7 @@ function ResearchDetailPage() {
                 {relatedPapers.length > 0 && (
                   <div className="mt-12">
                     <p className={`mb-3 text-neutral-400 ${META}`} style={body}>
-                      Related publications
+                      {t({ en: "Related publications", id: "Publikasi terkait" })}
                     </p>
                     <ol>
                       {relatedPapers.map((p, i) => (
@@ -456,9 +486,10 @@ function ResearchDetailPage() {
             <div className="mx-auto max-w-[1360px] px-6 py-20 md:px-12 md:py-24">
               <div className="mb-8 flex items-end justify-between gap-6">
                 <div>
-                  <SectionLabel>Other research</SectionLabel>
+                  <SectionLabel>{t({ en: "Other research", id: "Riset lainnya" })}</SectionLabel>
                   <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-neutral-900 md:text-4xl" style={display}>
-                    Explore the <span style={accent}>other areas.</span>
+                    {t({ en: "Explore the ", id: "Jelajahi " })}
+                    <span style={accent}>{t({ en: "other areas.", id: "bidang lainnya." })}</span>
                   </h2>
                 </div>
                 <Link
@@ -466,7 +497,7 @@ function ResearchDetailPage() {
                   className="group hidden items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477] sm:inline-flex"
                   style={body}
                 >
-                  All research
+                  {t({ en: "All research", id: "Semua riset" })}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>

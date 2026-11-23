@@ -8,6 +8,8 @@
 // show. Slide images: lib/assets `researchSlide`, thesis framework figures:
 // `researchFramework`.
 
+import type { Lang } from "./i18n-core";
+
 export type EvidenceStat = { value: string; label: string };
 
 export type CenterProject = {
@@ -745,6 +747,614 @@ export const ROADMAP: {
     phase: "future",
   },
 ];
+
+// ---- Bahasa Indonesia (see lib/i18n.tsx) ----
+// Indonesian copy laid over the English evidence. Projects follow the English
+// order per area; studies are keyed by code. Thesis titles, author names and
+// slide numbers stay as they are. Stat values get Indonesian decimal marks
+// automatically unless the overlay gives its own value (for units such as
+// "min" or "days").
+
+type StatId = { value?: string; label: string };
+type ProjectId = { title: string; summary: string; points: string[]; partners?: string[]; people?: string[] };
+type StudyId = { tags: string[]; summary: string; results: StatId[]; points: string[]; status?: string };
+type AreaEvidenceId = { highlights: StatId[]; projects: ProjectId[]; studies: Record<string, StudyId> };
+
+const PU = "Kementerian Pekerjaan Umum dan Perumahan Rakyat";
+
+const RESEARCH_EVIDENCE_ID: Record<string, AreaEvidenceId> = {
+  "open-field-technology": {
+    highlights: [
+      { label: "lebih hemat air dibanding penyiraman petani, sprinkler otomatis di lahan pasir pantai" },
+      { label: "keseragaman Christiansen setelah tekanan sprinkler dinaikkan, dari semula 77,9%" },
+      { label: "R² kadar gula salak kupas secara non-destruktif dengan VIS/NIR portabel" },
+    ],
+    projects: [
+      {
+        title: "Kerangka subsistem lokal dan global untuk smart farming di lahan terbuka",
+        summary:
+          "Arsitektur dasar kami untuk lapangan: subsistem pengelolaan lokal berupa sensor, pengendali, dan aktuator di lokasi, serta subsistem global berupa basis data daring, konfigurasi sistem, analisis komputasi, dan aplikasi web serta mobile.",
+        points: [
+          "Pemantauan dan kendali lingkungan yang sederhana dan fleksibel melalui perangkat cerdas",
+          "Dipakai ulang di riset berikutnya: sprinkler pesisir, lengas tanah perkebunan, smart greenhouse, dan sinyal listrik tanaman",
+        ],
+        partners: [PU, "Kyushu University", "Maejo University, Thailand"],
+        people: ["Andri Prima Nugroho, Ph.D. (peneliti utama)"],
+      },
+      {
+        title: "Deteksi dan pengusir hama burung cerdas",
+        summary:
+          "Computer vision (YOLO) mendeteksi burung hama di atas tanaman dan memicu pengusir akustik ultrasonik harmonik, dengan simulasi ANSYS untuk mendukung struktur dan perambatan suaranya.",
+        points: [
+          "Pengumpulan video, anotasi dan augmentasi, pelatihan model, lalu penerapan di lapangan",
+          "Bagian dari pengendalian hama terpadu, bukan sekadar pengusir yang berdiri sendiri",
+        ],
+      },
+      {
+        title: "Pelacakan GPS untuk evaluasi pengolahan tanah",
+        summary:
+          "Pelacakan GPS dengan cycling computer, ponsel, dan pencatatan di cloud mengevaluasi seberapa baik traktor roda empat mengikuti jalur olahnya, termasuk estimasi posisi terhadap lintasan acuan.",
+        points: ["Mutu pengolahan tanah yang objektif dari jejak traktor itu sendiri"],
+      },
+      {
+        title: "Traktor dengan kemudi roda otomatis",
+        summary:
+          "Demonstrasi traktor auto-steering tanpa pengemudi (sistem navigasi FJD LandMaster) untuk pertanian presisi, diperlihatkan kepada mahasiswa dan petani.",
+        points: ["Mekanisasi yang menjaga jalur tanpa pengemudi memegang kemudi"],
+      },
+    ],
+    studies: {
+      "S1-04": {
+        tags: ["Irigasi presisi", "Tanah pasir pantai", "QGISRed"],
+        summary:
+          "Pasir pantai hanya sedikit menahan air, sehingga kemerataan sebaran air dari sprinkler menentukan efisiensi irigasi. Uji laboratorium (catch can, flowmeter, manometer), simulasi hidraulika di QGIS/QGISRed, analisis keseragaman, dan heatmap sebaran air mengevaluasi sistem milik petani dan merekomendasikan tata letak yang lebih baik.",
+        results: [
+          { label: "keseragaman saat tekanan naik dari 2,11 ke 3,52 m" },
+          { label: "sprinkler per lateral, tata letak paling stabil" },
+        ],
+        points: [
+          "Banyak titik di hilir berada di bawah tekanan minimum 2,109 m akibat kehilangan tinggi tekan sepanjang lateral",
+          "Keseragaman 94–95% di awal lateral dan turun menjadi 79,8% di hilir",
+          "Disarankan memasok air dari tengah lateral; menjadi dasar bagi sistem IoT yang menyusul",
+        ],
+      },
+      "S1-08": {
+        tags: ["Irigasi presisi", "IoT", "Kendali umpan balik"],
+        summary:
+          "Menerapkan arsitektur lokal dan global kami di lahan pasir pantai Kulon Progo: sensor lengas tanah RS485, panel ESP32-S3 bertenaga surya dengan GSM, cloud Agrieye, serta pompa dan katup solenoid yang dinyalakan dan dimatikan berdasarkan ambang histeresis.",
+        results: [
+          { label: "air dihemat, 790 L dibanding 951 L selama tiga hari" },
+          { label: "R² dari tiga sensor yang telah dikalibrasi" },
+        ],
+        points: [
+          "Galat sensor setelah kalibrasi: MAPE 1,00–1,82%, RMSE 0,29–0,47",
+          "Menyiram sesuai lengas tanah aktual, dipantau secara real-time",
+        ],
+      },
+      "S1-13": {
+        tags: ["Irigasi presisi", "IoT", "Logika fuzzy"],
+        summary:
+          "Membuat pengendali sprinkler tanggap terhadap cuaca. Data stasiun cuaca Campbell (suhu, kelembapan, angin, radiasi) diolah menjadi evapotranspirasi acuan FAO-56 Penman-Monteith, lalu model fuzzy Mamdani memadukannya dengan lengas tanah untuk menentukan lama penyiraman.",
+        results: [
+          { value: "≈33 menit", label: "waktu irigasi fuzzy yang menaikkan lengas tanah hingga kapasitas lapang" },
+          { label: "lengas tanah sebelum dan sesudah penyiraman" },
+        ],
+        points: [
+          "Kalibrasi sensor secara gravimetri: R² 0,9382 dan 0,9652",
+          "Stasiun cuaca, sensor, cloud (HTTP), dan aktuator terpadu dalam satu siklus real-time",
+        ],
+      },
+      "S1-02": {
+        tags: ["Pepaya", "Machine learning", "Explainable AI"],
+        summary:
+          "Data mentah porometer dan fluorometer LI-COR LI-600 serta nilai SPAD daun pepaya melatih random forest yang memprediksi SPAD dan memilah daun ke kelas sehat, sedang, dan tidak sehat, dengan penjelasan melalui SHAP.",
+        results: [
+          { label: "akurasi klasifikasi kesehatan" },
+          { label: "R² prediksi SPAD (RMSE 9,32)" },
+        ],
+        points: [
+          "Fitur paling berpengaruh: laju transpor elektron, konduktansi stomata, dan efisiensi PSII",
+          "Melengkapi riset kesehatan pepaya berbasis drone dari sisi daun",
+        ],
+      },
+      "S1-09": {
+        tags: ["Pascapanen", "Spektroskopi", "Kemometrika"],
+        summary:
+          "Spektrum salak pada empat tingkat kematangan, diukur dengan kulit dan tanpa kulit, diolah dan dimodelkan dengan regresi PLS, PLS-DA, dan jaringan saraf tiruan untuk menggantikan penilaian visual dan pengukuran refraktometer yang merusak buah.",
+        results: [
+          { label: "R² kadar gula, buah kupas (RPD 4,32)" },
+          { label: "akurasi klasifikasi kematangan, buah kupas (80% dengan kulit)" },
+        ],
+        points: ["Model buah utuh tetap layak untuk sortasi di lapangan (RPD di atas 3)"],
+      },
+    },
+  },
+
+  "irrigation-modernization": {
+    highlights: [
+      { label: "daerah irigasi yang menjalankan SIPASI: Wadaslintang, Mrican, dan Way Sekampung" },
+      { label: "R² model LSTM untuk prakiraan debit saluran primer di DI Sapon" },
+      { label: "galat model pintu air aliran tak tunak terhadap data lapangan" },
+    ],
+    projects: [
+      {
+        title: "Sistem informasi manajemen irigasi SIPASI",
+        summary:
+          "Sistem pendukung keputusan untuk operasi dan pemeliharaan irigasi, dibangun karena rehabilitasi konvensional saja tidak memulihkan kinerja irigasi.",
+        points: [
+          "Prediksi ketersediaan air, kebutuhan air tanaman, dan skenario pola tanam if-then",
+          "Prosedur operasi dan pemeliharaan berpindah dari kertas ke sistem informasi, dengan instrumen SmartAWS, SmartAWLMS, dan SmartGateController",
+          "Terdaftar sebagai kekayaan intelektual sejak 2021",
+        ],
+        partners: ["Direktorat Jenderal Sumber Daya Air, Kementerian Pekerjaan Umum"],
+        people: ["Prof. Sigit Supadmo Arif", "Dr. Murtiningrum", "Andri Prima Nugroho, Ph.D."],
+      },
+      {
+        title: "Irrigation Knowledge Management Center",
+        summary:
+          "Platform untuk menjaga keberlanjutan pengetahuan irigasi: kursus daring, manajemen konten, forum diskusi, pusat pengetahuan, dan chatbot AI.",
+        points: ["Merekam pengetahuan operator berpengalaman agar tetap ada meski terjadi pergantian staf"],
+      },
+    ],
+    studies: {
+      "S1-01": {
+        tags: ["Manajemen pengetahuan", "Operasi irigasi"],
+        summary:
+          "Operator pintu air mengambil keputusan berdasarkan pengalaman. Teori Kuantifikasi I mengukur bagaimana permintaan petani, curah hujan hari sebelumnya, dan kondisi Sungai Progo memengaruhi debit yang dioperasikan di enam pintu selama satu musim, lalu mengubah polanya menjadi dashboard pengetahuan eksplisit.",
+        results: [
+          { label: "korelasi antara debit terukur dan debit prediksi" },
+          { label: "R² di Primer Bothokan (MAPE 9,98%)" },
+        ],
+        points: [
+          "Keputusan operator mengikuti pola yang konsisten, bukan kebetulan",
+          "Permintaan petani dan kondisi sungai paling dominan; akurasi menurun di saluran sekunder dengan kondisi hilir yang lebih kompleks",
+          "Dashboard mendukung pertimbangan operator, bukan menggantikannya",
+        ],
+      },
+      "S1-07": {
+        tags: ["Pendukung keputusan", "Deep learning", "Hidrologi"],
+        summary:
+          "Dua puluh fitur hidrologi dan iklim periode 2018–2025 menjadi masukan bagi LSTM, GRU, dan model hibrida paralel dengan sliding window 30 hari, dilatih pada data 2018–2023, divalidasi pada 2024, dan diuji pada 2025.",
+        results: [
+          { label: "R² model terbaik, LSTM (NSE 0,900)" },
+          { label: "rata-rata galat persentase absolut" },
+        ],
+        points: [
+          "Masukan hidrologi lebih berpengaruh dibanding masukan iklim",
+          "Prakiraan 2026 menunjukkan air cukup untuk pola tanam yang direncanakan, menjadi masukan bagi sistem pendukung keputusan",
+        ],
+      },
+      "S2-04": {
+        tags: ["Hidrodinamika", "Kendali otomatis"],
+        summary:
+          "Pengoperasian pintu secara manual menimbulkan aliran tak tunak dan muka air yang tidak stabil. Model Saint-Venant 1D yang diselesaikan dengan metode karakteristik divalidasi dengan uji buka dan tutup pintu di lapangan, lalu disimulasikan dengan kendali proporsional-integral terdesentralisasi sebagai dasar pintu otomatis.",
+        results: [
+          { label: "RMSE model terhadap pengukuran lapangan" },
+          { value: "300–360 detik", label: "waktu stabil untuk kenaikan muka air 5 cm" },
+        ],
+        points: [
+          "Pembukaan mendadak memicu lonjakan debit; penutupan bertahap menghasilkan profil yang lebih halus",
+          "Penguatan pengendali hasil penalaan: Kp 0,3, Ki 0,005 untuk kenaikan 5 cm; Kp 0,15, Ki 0,005 untuk penurunan 20 cm",
+        ],
+      },
+    },
+  },
+
+  "smart-estate-technology": {
+    highlights: [
+      { label: "proyek perkebunan, dari perencanaan pupuk hingga prediksi cekaman" },
+      { label: "unsur hara yang dimodelkan untuk dosis pupuk: N, P, K, Mg, Ca, dan B" },
+      { label: "sumber NDVI yang dibandingkan: UAV, WorldView-2, dan Sentinel-2" },
+    ],
+    projects: [
+      {
+        title: "Pendukung keputusan pemupukan dari data historis perkebunan",
+        summary:
+          "Menggali catatan perkebunan (luas, jenis tanah, hara, curah hujan, produksi) untuk memodelkan dosis N, P, K, Mg, Ca, dan B dengan jaringan saraf tiruan, lalu menyajikan rekomendasinya dalam sistem pendukung keputusan.",
+        points: ["Rekomendasi yang berpijak pada riwayat perkebunan itu sendiri"],
+      },
+      {
+        title: "Pemantauan lengas tanah di tanah suboptimal",
+        summary:
+          "Lengas tanah real-time di tanah sawit suboptimal melalui cloud Agrieye dan dashboard pendukung keputusan, untuk melihat defisit air sebelum terjadi.",
+        points: ["Peringatan dini defisit air di seluruh blok"],
+      },
+      {
+        title: "Uji cepat berbasis AI untuk pupuk tidak sesuai spesifikasi",
+        summary:
+          "Unit uji lapangan dengan sensor NPK, pengaduk, layar HMI, printer, dan kartu SD, terhubung ke subsistem global, menandai pupuk yang tidak memenuhi spesifikasinya.",
+        points: ["Menjaga pemupukan presisi tetap presisi dengan memeriksa apa yang masuk ke alat tabur"],
+      },
+      {
+        title: "Prediksi cekaman lingkungan pada kelapa sawit berbasis AI",
+        summary:
+          "Citra multispektral VTOL (Sony RX1R II, MicaSense RedEdge-P) dan stasiun cuaca otomatis menjadi masukan jaringan saraf tiruan, disajikan melalui sistem pendukung keputusan SmartGrow Tropics.",
+        points: ["Membandingkan NDVI dari UAV, WorldView-2, dan Sentinel-2"],
+      },
+    ],
+    studies: {},
+  },
+
+  "smart-uav-technology": {
+    highlights: [
+      { label: "R² pemetaan konduktansi stomata padi dari citra multispektral VTOL" },
+      { label: "skor F1 penilaian pengelolaan lahan di 93 petak sawah" },
+      { label: "sel grid yang dizonasi untuk pemupukan variable-rate" },
+    ],
+    projects: [
+      {
+        title: "Penghitungan pohon pepaya otomatis dari citra VTOL",
+        summary:
+          "Menghitung pohon pepaya secara otomatis dari ortomosaik RGB hasil Trinity Pro VTOL, dengan memecah mosaik menjadi petak dan mendeteksi pohon menggunakan convolutional neural network.",
+        points: ["Dievaluasi dengan confusion matrix dan kurva pelatihan"],
+      },
+      {
+        title: "Evaluasi presisi kesehatan pepaya",
+        summary:
+          "Menilai pepaya sebagai normal, setengah normal, atau abnormal dari data multispektral VTOL yang dipadukan dengan pengukuran SPAD dan LI-COR di lapangan dalam jaringan saraf tiruan.",
+        points: ["R² yang dilaporkan 0,39 (MSE 66,31, MAE 6,12); menjadi dasar riset tingkat daun berikutnya"],
+      },
+    ],
+    studies: {
+      "S1-05": {
+        tags: ["Padi", "UAV VTOL", "Machine learning"],
+        summary:
+          "Konduktansi stomata adalah indikator cekaman yang peka, tetapi diukur manual, daun demi daun. Citra VTOL hibrida lima kanal dan 37 indeks vegetasi, dipadankan dengan pengukuran lapangan, memetakannya ke seluruh lahan dengan model yang dioptimasi, divalidasi dengan five-fold cross-validation, dan dijelaskan dengan SHAP.",
+        results: [
+          { label: "R² pada data uji, KNN yang dioptimasi dengan Optuna" },
+          { label: "selisih R² cross-validation dan uji, tanpa tanda overfitting" },
+        ],
+        points: ["Variasi spasial spektrum kanopi lebih informatif daripada rata-rata reflektansinya"],
+      },
+      "S1-15": {
+        tags: ["Padi", "UAV VTOL", "Machine learning"],
+        summary:
+          "Peta NDVI, NDRE, GNDVI, OSAVI, dan CIRE dari 93 petak sawah dipadankan dengan indeks pengelolaan lahan dan diklasifikasikan dengan random forest, XGBoost, LightGBM, dan SVM.",
+        results: [
+          { label: "skor F1 model terbaik, LightGBM" },
+          { label: "petak sawah yang dinilai dari udara" },
+        ],
+        points: ["Menghasilkan peta spasial tentang seberapa baik setiap petak dikelola"],
+      },
+      "S2-02": {
+        tags: ["Padi", "UAV VTOL", "Aplikasi variable-rate"],
+        summary:
+          "Citra MicaSense RedEdge-P dari Trinity Pro VTOL di Minggir, Sleman, dengan SPAD dan konduktansi stomata sebagai ground truth. K-means menentukan zona kebutuhan pupuk dan sebelas model mempelajarinya, lalu memetakan fase tanam, anakan, dan bunting.",
+        results: [
+          { label: "akurasi untuk dua zona, HistGradientBoosting (AUC hingga 0,976)" },
+          { label: "sel grid yang dipetakan di tiga fase pertumbuhan" },
+        ],
+        points: [
+          "Indeks red-edge (RDVI dan variannya) paling berpengaruh",
+          "Porsi sel yang membutuhkan pupuk meningkat dari fase tanam hingga bunting, seiring kebutuhan nitrogen",
+        ],
+      },
+    },
+  },
+
+  "indoor-farming-technology": {
+    highlights: [
+      { label: "R² model random forest untuk fotosintesis selada" },
+      { label: "R² sensor spektral 14 kanal berbiaya rendah terhadap spektrometer acuan" },
+      { label: "sinyal listrik tanaman, diteliti berlanjut dari jenjang magister ke doktoral" },
+    ],
+    projects: [
+      {
+        title: "Arsitektur smart greenhouse",
+        summary:
+          "Smart greenhouse tropis dengan penginderaan suhu, kelembapan, radiasi, CO2, dan lengas tanah; cooler, humidifier, microsprayer, pompa, dan exhaust fan; server lokal dan node edge melalui MQTT; cloud; serta dashboard multiplatform.",
+        points: ["Kendali dioptimalkan berdasarkan vapour pressure deficit", "Prediksi pertumbuhan, prakiraan lingkungan, dan prediksi hasil panen sepanjang waktu"],
+      },
+      {
+        title: "Edge computing untuk pemantauan lingkungan",
+        summary:
+          "Node-RED, broker MQTT, dan basis data lokal menjaga perekaman data dan kendali tetap berjalan real-time saat koneksi internet terbatas.",
+        points: ["Greenhouse tetap bekerja saat koneksi terputus"],
+      },
+      {
+        title: "Pemantauan dan kendali berbasis VPD",
+        summary:
+          "Perangkat keras dan lunak pemantauan multi-node yang menggerakkan evaporative air cooler untuk menjaga greenhouse di zona vapour pressure deficit yang ideal.",
+        points: ["Penggunaan air dan energi yang efisien di greenhouse"],
+      },
+      {
+        title: "UI/UX aplikasi mobile smart greenhouse",
+        summary:
+          "Aplikasi mobile untuk suhu, kelembapan, tampilan kamera, dan forum, dirancang dengan design thinking: empathise, define, ideate, prototype, dan test.",
+        points: ["Dirancang bersama para pembudidaya yang menggunakannya"],
+      },
+      {
+        title: "Plant factory milik pusat riset",
+        summary:
+          "Rak lampu tumbuh LED, tangki nutrisi, pompa dosis, dan sensor air pada subsistem lokal dan global dengan dashboard jarak jauh. Fasilitas utama bagi banyak riset dari jenjang sarjana hingga doktoral.",
+        points: ["Tempat riset fisiologi selada, impedansi, spektral, ERP, dan sinyal tanaman di bawah ini"],
+      },
+      {
+        title: "Akuisisi elektrofisiologi tanaman",
+        summary:
+          "Sistem yang merekam sinyal bioelektrik tanaman untuk menilai kesehatan fisiologisnya di indoor farming.",
+        points: ["Dikembangkan secara mendalam dalam riset magister dan doktoral Saifuddin Afif"],
+      },
+      {
+        title: "Kendali pencahayaan sinusoidal bertahap",
+        summary:
+          "Intensitas cahaya yang mengikuti pola sinusoidal, dibandingkan dengan profil kotak, parabola, dan fluktuatif, untuk mengurangi cekaman tanaman di plant factory.",
+        points: ["Perancangan sistem, simulasi, dan implementasi"],
+      },
+      {
+        title: "Model random forest fotosintesis selada",
+        summary:
+          "Data pemantauan lingkungan serta pengukuran LI-6800 dan SPAD melatih random forest yang memprediksi laju fotosintesis selada.",
+        points: ["R² 0,9847, RMSE 2,134, dengan analisis feature importance dan galat"],
+      },
+      {
+        title: "Deteksi dini tipburn pada selada",
+        summary:
+          "YOLO mendeteksi tipburn dari 0 hingga 100% pada citra daun di plant factory, mulai dari pengondisian tanaman dan pengumpulan dataset hingga anotasi, pelatihan, dan penerapan.",
+        points: ["Menangkap gangguan fisiologis sebelum menyebar ke seluruh baki"],
+      },
+      {
+        title: "Deteksi posisi tanaman dan pemantauan pertumbuhan",
+        summary:
+          "Kamera pada mekanisme CNC menemukan setiap tanaman hidroponik dan melacak luas kanopinya dari waktu ke waktu, lalu menampilkannya di situs web pusat riset.",
+        points: ["Kurva pertumbuhan per tanaman tanpa menyentuh tanaman"],
+      },
+      {
+        title: "Aeroponik cerdas dengan atomiser ultrasonik",
+        summary:
+          "Sistem aeroponik dengan pompa, nozzle, mist maker ultrasonik, penginderaan suhu dan kelembapan zona akar, serta cloud Agrarise.",
+        points: ["Atomiser ultrasonik memakai lebih sedikit air dibanding nozzle kabut, dengan efisiensi penggunaan air yang lebih tinggi"],
+      },
+      {
+        title: "CFD sebaran kabut aeroponik",
+        summary:
+          "CFD ANSYS (VOF ke DPM) memvisualkan fraksi volume dan ukuran droplet kabut untuk memperbaiki cakupan pengabutan.",
+        points: ["Peneliti: Naufal Helmi Yumnanda"],
+      },
+      {
+        title: "VPD dan dinamika stomata untuk optimasi aeroponik",
+        summary:
+          "Pengukuran fisiologis (LI-600, SPAD-502, Elitech GSP-6), korelasi Pearson di Python, dan kerangka kinerja switch-case mengoptimalkan aeroponik berdasarkan vapour pressure deficit.",
+        points: ["Mengaitkan jadwal pengabutan dengan respons tanaman yang sebenarnya"],
+      },
+      {
+        title: "Smart greenhouse berbiaya rendah untuk Desa Sriharjo",
+        summary:
+          "Smart greenhouse berbiaya rendah berbasis komunitas di greenhouse produksi Taruna Tani, Sriharjo, dengan pemantauan dan kendali otomatis serta efisiensi air dan nutrisi yang lebih baik.",
+        points: [
+          "Panel pengendali berbiaya rendah, pompa dosis, serta dashboard web dan mobile",
+          "Mendukung penjualan sayuran hidroponik kelompok tani",
+        ],
+        partners: ["Taruna Tani, Sriharjo"],
+      },
+    ],
+    studies: {
+      "S1-10": {
+        tags: ["Plant factory", "Fisiologi tanaman"],
+        summary:
+          "Pertukaran gas (LI-6800) setiap sepuluh menit dari pukul 07.00 hingga 17.00 selama tiga hari, disertai pencatatan iklim mikro, untuk memprediksi konduktansi stomata tanpa instrumen LI-COR.",
+        results: [
+          { label: "R² model sederhana dari suhu, kelembapan, dan CO2" },
+          { label: "keterkaitan antara konduktansi stomata dan transpirasi" },
+        ],
+        points: [
+          "Tidak terjadi midday depression, karena plant factory menjaga VPD tetap stabil",
+          "Konduktansi dapat diestimasi dari sensor iklim mikro yang murah",
+        ],
+      },
+      "S1-06": {
+        tags: ["Plant factory", "Fisiologi tanaman", "Machine learning"],
+        summary:
+          "Konduktansi stomata malam hari, jarang diteliti padahal menjadi sumber kehilangan air, diukur setiap sepuluh menit dari pukul 21.00 hingga 05.00 dan dimodelkan dengan ridge, random forest, dan XGBoost menggunakan fisiologi siang hari sebagai fitur memori, divalidasi secara leave-one-day-out.",
+        results: [
+          { label: "R² model random forest terpilih" },
+          { label: "sebaran R² antartanaman" },
+        ],
+        points: [
+          "Konduktansi tetap terukur dan berfluktuasi dalam gelap total; stomata membuka menjelang fajar terlihat pada dua dari tiga tanaman",
+          "VPD daun dan kelembapan menjadi pendorong utama; fitur siang hari membawa efek memori",
+        ],
+      },
+      "S1-12": {
+        tags: ["Plant factory", "Biosensing", "EIS"],
+        summary:
+          "Spektrum impedansi selada hidroponik (AD5933, 1–101 kHz) pada nutrisi normal, kekurangan nutrisi, dan cekaman air, dicocokkan dengan rangkaian ekuivalen dan diuji dengan mixed model, PERMANOVA, serta klasifikasi bebas kebocoran data terhadap SPAD.",
+        results: [
+          { label: "median R² rangkaian terbaik, double Cole (MAPE 3,04%)" },
+          { label: "tanaman per perlakuan yang dibutuhkan untuk signifikansi, dari power analysis" },
+        ],
+        points: [
+          "Parameter tertentu merespons cekaman air (pada 4 kHz) dan cekaman nutrisi (pada 1 kHz)",
+          "Belum signifikan dengan sampel saat ini; menjadi dataset impedansi acuan untuk selada tropis",
+        ],
+      },
+      "S2-03": {
+        tags: ["Lingkungan terkendali", "Spektroskopi berbiaya rendah"],
+        summary:
+          "Sensor AS7265X 14 kanal berbiaya rendah (410–760 nm) dengan ESP32, jam, microSD, dan dashboard Agrarise, dikalibrasi terhadap spektrometer LI-COR LI-180 dan dijalankan selama 14 hari di growth chamber pada selada dengan nutrisi normal dan tercekam.",
+        results: [
+          { label: "R² kalibrasi terhadap spektrometer acuan" },
+          { label: "R² pada dua perlakuan nutrisi" },
+        ],
+        points: [
+          "Fitur reflektansi yang konsisten pada 460 nm, 535–560 nm, dan 705–730 nm",
+          "Sensor berbiaya rendah dapat menggantikan spektrometer mahal untuk pemantauan berkelanjutan",
+        ],
+      },
+      "S2-01": {
+        tags: ["Plant factory", "Biosensing", "Elektrofisiologi"],
+        summary:
+          "Memanfaatkan sinyal listrik tanaman sebagai indikator fisiologis yang real-time dan tidak merusak. Perangkat akuisisinya memakai Raspberry Pi Pico W, ADC ADS1263 32-bit, penguat instrumentasi INA129, dan penyaringan, diuji pada pakcoy di bawah cahaya yang berubah-ubah.",
+        results: [
+          { label: "resolusi untuk sinyal tanaman berorde mikrovolt" },
+          { label: "R² linearitas penguatan amplifier pada empat tingkat penguatan" },
+        ],
+        points: [
+          "Filter low-pass meredam interferensi di atas 30 Hz dari listrik PLN, wifi, dan radio",
+          "Portabel dan berbiaya rendah dibanding DAQ komersial 12–16 bit yang dipakai sebelumnya",
+        ],
+      },
+      "S3-01": {
+        tags: ["CEA", "Biosensing", "Deteksi dini"],
+        status: "Proposal",
+        summary:
+          "Melanjutkan riset magister dan mengusulkan sinyal listrik tanaman sebagai pembaca utama kondisi fisiologis tanaman. Empat siklus 12 hari pada selada dengan lima tingkat konsentrasi nutrisi, dengan sinyal listrik kontinu, impedansi per jam, dan pencitraan hyperspectral dua kali sehari, dibandingkan terhadap konduktansi stomata, Fv/Fm, SPAD, dan biomassa.",
+        results: [
+          { value: "4 × 12 hari", label: "siklus tanam yang direncanakan" },
+          { label: "tingkat konsentrasi nutrisi, 0,4 hingga 3,2 mS/cm (1,6 optimal)" },
+        ],
+        points: [
+          "Menguji empat klaim: penyimpangan, koherensi, prioritas temporal, dan kecukupan sinyal",
+          "Bertujuan menunjukkan seberapa dini, dan seberapa andal secara mandiri, sinyal ini menandai masalah",
+        ],
+      },
+    },
+  },
+
+  "agro-informatics": {
+    highlights: [
+      { label: "skor usability (SUS, grade A+) sistem ketertelusuran beras" },
+      { label: "dari 82 skenario uji lolos di platform blockchain" },
+      { label: "R² sensor PM2.5 pada sistem peringatan dini kualitas udara" },
+    ],
+    projects: [
+      {
+        title: "Sistem pendukung usaha kopi cerdas, Badung, Bali",
+        summary:
+          "Basis data terpadu yang berpusat pada petani untuk koperasi kopi rakyat, dengan piramida sistem pendukung dari transaksi hingga keputusan eksekutif, dashboard koperasi, dan arsitektur berbagi pengetahuan.",
+        points: ["Aktivitas tertelusur dari kebun hingga koperasi"],
+      },
+      {
+        title: "Sistem manajemen pengetahuan, Agrotechno Edu Park Sriharjo",
+        summary:
+          "Mengubah data menjadi pengetahuan melalui taksonomi pengetahuan dan pengukuran kesenjangan pengetahuan, diujicobakan pada modernisasi irigasi.",
+        points: ["Dibangun bersama komunitas yang dilayaninya"],
+        partners: ["Yanmar", PU],
+      },
+    ],
+    studies: {
+      "S1-03": {
+        tags: ["Plant factory", "ERP", "Pendukung keputusan"],
+        summary:
+          "Catatan plant factory tersebar di buku catatan, spreadsheet, dan chat. ERP berbasis Google Sheets dan Apps Script dengan basis data terpusat menghubungkan delapan modul: aktivitas, pesanan, pelanggan, kunjungan, pengunjung, sumber daya manusia, ringkasan keuangan, dan dashboard.",
+        results: [
+          { label: "tingkat kelulusan uji black-box di kedelapan modul" },
+          { label: "modul terintegrasi" },
+        ],
+        points: ["Berikutnya: integrasi sensor melalui API dan prakiraan panen"],
+      },
+      "S1-14": {
+        tags: ["Rantai pasok", "Blockchain"],
+        summary:
+          "Sistem Ambapari mencatat transaksi tujuh pelaku rantai pasok, dari petani hingga konsumen, di jaringan permissioned Hyperledger Fabric. Smart contract memeriksa mutu beras SNI 6128:2020 di penggilingan, dan setiap batch ditelusuri melalui ID dan kode QR.",
+        results: [
+          { label: "skor System Usability Scale, best imaginable (A+)" },
+          { label: "skenario uji black-box yang lolos" },
+        ],
+        points: ["Mewujudkan target roadmap 2027, yaitu ketertelusuran berbasis blockchain untuk pertanian"],
+      },
+      "S1-11": {
+        tags: ["Pemantauan lingkungan", "IoT", "Komunitas"],
+        summary:
+          "Mendukung program iklim desa dengan sensor kelas industri (PM2.5, PM10, CO, SO2, NO2, O3, suhu, kelembapan), ESP32, HMI, basis data cloud, dashboard real-time smartagri, dan lampu peringatan tiga warna, dijalankan selama tujuh hari pada Maret 2026.",
+        results: [
+          { label: "R² sensor PM2.5 terhadap instrumen acuan" },
+          { label: "rata-rata indeks kualitas udara PM2.5, kategori tidak sehat" },
+        ],
+        points: [
+          "Polusi mengikuti waktu penyalaan tungku dan perebusan tahu",
+          "Alat peringatan dini sekaligus upaya keselamatan dan kesehatan kerja bagi pekerja",
+        ],
+      },
+    },
+  },
+};
+
+/** "0.946" → "0,946" and "1,600" → "1.600": Indonesian decimal and thousands marks. */
+function idNumber(value: string): string {
+  return value.replace(/(\d)([.,])(?=\d)/g, (_, d: string, sep: string) => d + (sep === "." ? "," : "."));
+}
+
+function statsFor(base: EvidenceStat[], overlay: StatId[] | undefined): EvidenceStat[] {
+  return base.map((s, i) => {
+    const o = overlay?.[i];
+    return { value: o?.value ?? idNumber(s.value), label: o?.label ?? s.label };
+  });
+}
+
+/** Evidence for an area in the given language. */
+export function evidenceForLang(slug: string, lang: Lang): AreaEvidence {
+  const ev = evidenceFor(slug);
+  const id = RESEARCH_EVIDENCE_ID[slug];
+  if (lang === "en" || !id) return ev;
+  return {
+    highlights: statsFor(ev.highlights, id.highlights),
+    projects: ev.projects.map((p, i) => {
+      const o = id.projects[i];
+      return o ? { ...p, ...o } : p;
+    }),
+    studies: ev.studies.map((s) => {
+      const o = id.studies[s.code];
+      return o
+        ? { ...s, tags: o.tags, summary: o.summary, points: o.points, status: o.status ?? s.status, results: statsFor(s.results, o.results) }
+        : { ...s, results: statsFor(s.results, undefined) };
+    }),
+  };
+}
+
+const STUDY_KIND_ID: Record<StudyLevel, string> = {
+  Undergraduate: "Skripsi",
+  "Master's": "Tesis",
+  Doctoral: "Riset doktoral",
+};
+
+const STUDY_LEVEL_ID: Record<StudyLevel, string> = {
+  Undergraduate: "Sarjana",
+  "Master's": "Magister",
+  Doctoral: "Doktoral",
+};
+
+/** "Undergraduate thesis" / "Skripsi". */
+export function studyKind(level: StudyLevel, lang: Lang): string {
+  return lang === "id" ? STUDY_KIND_ID[level] : STUDY_KIND[level];
+}
+
+/** Display name of a study level ("Undergraduate" / "Sarjana"). */
+export function studyLevelLabel(level: StudyLevel, lang: Lang): string {
+  return lang === "id" ? STUDY_LEVEL_ID[level] : level;
+}
+
+const ROADMAP_ID: { title: string; items: string[] }[] = [
+  {
+    title: "Fondasi sistem pertanian cerdas",
+    items: ["IoT dalam pertanian cerdas", "Pemantauan VPD untuk pertumbuhan tanaman", "Analitik edge computing"],
+  },
+  {
+    title: "Optimasi kendali dan otomasi",
+    items: ["Sistem lampu tumbuh cerdas", "Indoor farming berbasis CFD", "Model pertumbuhan tanaman berbasis machine learning"],
+  },
+  {
+    title: "Robotika dan penginderaan lanjut",
+    items: ["Robotika berbasis AI", "Rekayasa biosensing", "Manajemen perkebunan presisi"],
+  },
+  {
+    title: "AI dan big data untuk pendukung keputusan",
+    items: ["Pendukung keputusan berbasis AI", "Ketertelusuran blockchain untuk pertanian", "Analitik big data"],
+  },
+  {
+    title: "Sistem otonom yang mengoptimasi diri",
+    items: ["Produksi pangan berbasis AI", "Jaringan irigasi yang adaptif", "Pengendalian hama dan penyakit berbasis AI"],
+  },
+  {
+    title: "Ekosistem pertanian cerdas skala penuh",
+    items: ["Pertanian cerdas yang sepenuhnya otomatis", "Pertanian tangguh iklim dengan AI", "Prediksi hasil panen berbasis AI"],
+  },
+];
+
+/** The roadmap in the given language. */
+export function roadmapFor(lang: Lang): typeof ROADMAP {
+  return lang === "id" ? ROADMAP.map((r, i) => ({ ...r, ...ROADMAP_ID[i] })) : ROADMAP;
+}
 
 export const EVIDENCE_TOTALS = (() => {
   const all = Object.values(RESEARCH_EVIDENCE);

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { body } from "../lib/fonts";
-import { ACTIVE_PARTNERS, type Partner } from "../lib/partners";
+import { ACTIVE_PARTNERS, partnerGroupLabel, partnerNote, type Partner } from "../lib/partners";
+import { useLang, useT, type Lang } from "../lib/i18n";
 
 // Partner logos as a framed grid of six cells per page, separated by thin
 // rules (after a "tech stack" grid reference): each cell is labelled
@@ -14,7 +15,8 @@ import { ACTIVE_PARTNERS, type Partner } from "../lib/partners";
 const PER_PAGE = 6;
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-// Short labels for the cell headers.
+// Short labels for the cell headers (English); Indonesian uses the group
+// names from lib/partners.ts, with the longest one shortened to fit.
 const GROUP_LABEL: Record<Partner["group"], string> = {
   University: "University",
   Ministry: "Ministry",
@@ -24,6 +26,13 @@ const GROUP_LABEL: Record<Partner["group"], string> = {
   "Research Center & Organization": "Research & Org",
   "Farmer Group": "Farmer group",
 };
+
+function groupLabel(group: Partner["group"], lang: Lang): string {
+  if (lang === "en") return GROUP_LABEL[group];
+  if (group === "Research Center & Organization") return "Riset & Organisasi";
+  if (group === "Government Institution") return "Pemerintah";
+  return partnerGroupLabel(group, lang);
+}
 
 type Rgb = [number, number, number];
 const FALLBACK: Rgb = [20, 145, 155]; // teal600
@@ -106,6 +115,8 @@ const ink = ([r, g, b]: Rgb, k = 0.35): string =>
   `rgb(${Math.round(r * (1 - k) + 11 * k)}, ${Math.round(g * (1 - k) + 42 * k)}, ${Math.round(b * (1 - k) + 34 * k)})`;
 
 function Cell({ partner, number }: { partner: Partner; number: number }) {
+  const lang = useLang();
+  const note = partnerNote(partner, lang);
   const rgb = useLogoColour(partner.logo);
   const [active, setActive] = useState(false); // tap toggle on touch screens
   const colour = `rgb(${rgb.join(", ")})`;
@@ -117,7 +128,7 @@ function Cell({ partner, number }: { partner: Partner; number: number }) {
       onMouseLeave={() => setActive(false)}
       data-active={active || undefined}
       className="group relative flex h-full min-h-[150px] w-full flex-col overflow-hidden px-5 pb-4 pt-4 text-left outline-none md:min-h-[190px] md:px-6"
-      aria-label={`${partner.name}${partner.note ? `, ${partner.note}` : ""}`}
+      aria-label={`${partner.name}${note ? `, ${note}` : ""}`}
     >
       {/* Glow in the logo's dominant colour. */}
       <span
@@ -131,7 +142,7 @@ function Cell({ partner, number }: { partner: Partner; number: number }) {
         className="relative text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-400 transition-colors duration-300 md:text-[11px] group-hover:text-[var(--c)] group-focus-visible:text-[var(--c)] group-data-[active]:text-[var(--c)]"
         style={{ ...body, ["--c" as string]: text }}
       >
-        {String(number).padStart(2, "0")} // {GROUP_LABEL[partner.group]}
+        {String(number).padStart(2, "0")} // {groupLabel(partner.group, lang)}
       </span>
 
       <span className="relative flex flex-1 items-center justify-center py-3">
@@ -156,9 +167,7 @@ function Cell({ partner, number }: { partner: Partner; number: number }) {
         style={{ ...body, color: text }}
       >
         <span className="block font-medium">{partner.name}</span>
-        {partner.note && (
-          <span className="block opacity-80">{partner.note}</span>
-        )}
+        {note && <span className="block opacity-80">{note}</span>}
       </span>
 
       {/* Hover accent: a small cross in the logo colour at the cell corner. */}
@@ -175,6 +184,7 @@ function Cell({ partner, number }: { partner: Partner; number: number }) {
 }
 
 export default function PartnerGrid() {
+  const t = useT();
   const pages = Math.ceil(ACTIVE_PARTNERS.length / PER_PAGE);
   const [page, setPage] = useState(0);
   const [dir, setDir] = useState(1);
@@ -242,7 +252,10 @@ export default function PartnerGrid() {
         >
           {String(first).padStart(2, "0")}–{String(last).padStart(2, "0")}{" "}
           <span className="text-neutral-400">
-            of {ACTIVE_PARTNERS.length} partners
+            {t({
+              en: `of ${ACTIVE_PARTNERS.length} partners`,
+              id: `dari ${ACTIVE_PARTNERS.length} mitra`,
+            })}
           </span>
         </span>
         <div className="hidden items-center gap-1.5 sm:flex" aria-hidden="true">
@@ -261,7 +274,11 @@ export default function PartnerGrid() {
               key={d}
               type="button"
               onClick={() => go(d)}
-              aria-label={d < 0 ? "Previous partners" : "Next partners"}
+              aria-label={
+                d < 0
+                  ? t({ en: "Previous partners", id: "Mitra sebelumnya" })
+                  : t({ en: "Next partners", id: "Mitra berikutnya" })
+              }
               className="grid h-11 w-11 place-items-center rounded-full border border-[#0B6477]/20 bg-white/80 text-[#0B6477] transition-colors hover:border-[#08313A] hover:bg-[#08313A] hover:text-[#45DFB1]"
             >
               {d < 0 ? (

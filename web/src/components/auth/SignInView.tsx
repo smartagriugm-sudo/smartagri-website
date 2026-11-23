@@ -6,28 +6,38 @@ import { useAuth } from '../../lib/auth/auth'
 import { DEFAULT_SIGNED_IN_PATH } from '../../lib/features'
 import AuthShell, { AUTH_BUTTON, AuthInput, type AuthBrand } from '../AuthShell'
 import { AGROSPHERE_HOME } from '../../lib/agrosphere'
+import { useLang, useT } from '../../lib/i18n'
+import { authErrorText } from './authErrors'
 
 // The sign-in form for both brands: /sign-in (smartagri) and /agrosphere/sign-in.
 // Same account and the same Supabase call; only the words and where it goes next differ.
 const COPY = {
   smartagri: {
-    subtitle: 'Sign in to the SmartAgri internal tools: Kanban, instrument inventory and more.',
-    newPrompt: 'New to the lab?',
-    newLink: 'Create an account',
-    audience: 'For SmartAgri lab members.',
+    subtitle: {
+      en: 'Sign in to the SmartAgri internal tools: Kanban, instrument inventory and more.',
+      id: 'Masuk ke fitur internal SmartAgri: Kanban, inventaris instrumen, dan lainnya.',
+    },
+    newPrompt: { en: 'New to the lab?', id: 'Baru di lab?' },
+    newLink: { en: 'Create an account', id: 'Buat akun' },
+    audience: { en: 'For SmartAgri lab members.', id: 'Untuk anggota lab SmartAgri.' },
     home: DEFAULT_SIGNED_IN_PATH,
   },
   agrosphere: {
-    subtitle: 'Sign in to open the dashboards your account was given. smartagri researchers use their smartagri account.',
-    newPrompt: 'New partner?',
-    newLink: 'Request access',
-    audience: 'For smartagri researchers and partners.',
+    subtitle: {
+      en: 'Sign in to open the dashboards your account was given. smartagri researchers use their smartagri account.',
+      id: 'Masuk untuk membuka dashboard yang diberikan ke akun Anda. Peneliti smartagri memakai akun smartagri mereka.',
+    },
+    newPrompt: { en: 'New partner?', id: 'Mitra baru?' },
+    newLink: { en: 'Request access', id: 'Ajukan akses' },
+    audience: { en: 'For smartagri researchers and partners.', id: 'Untuk peneliti dan mitra smartagri.' },
     home: AGROSPHERE_HOME,
   },
 } as const
 
 export default function SignInView({ brand, redirect }: { brand: AuthBrand; redirect?: string }) {
   const copy = COPY[brand]
+  const lang = useLang()
+  const t = useT()
   const { user, loading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -43,7 +53,7 @@ export default function SignInView({ brand, redirect }: { brand: AuthBrand; redi
 
   const handleSubmit = async () => {
     if (!supabase) {
-      setError('Authentication is not configured yet.')
+      setError(t({ en: 'Authentication is not configured yet.', id: 'Autentikasi belum dikonfigurasi.' }))
       return
     }
     setSubmitting(true)
@@ -54,7 +64,7 @@ export default function SignInView({ brand, redirect }: { brand: AuthBrand; redi
     })
     if (signInError) {
       setSubmitting(false)
-      setError(signInError.message)
+      setError(authErrorText(signInError.message, lang))
       return
     }
     window.location.assign(target)
@@ -63,19 +73,19 @@ export default function SignInView({ brand, redirect }: { brand: AuthBrand; redi
   return (
     <AuthShell
       brand={brand}
-      title="Welcome"
-      accentWord="back"
-      subtitle={copy.subtitle}
+      title={t({ en: 'Welcome', id: 'Selamat datang' })}
+      accentWord={t({ en: 'back', id: 'kembali' })}
+      subtitle={t(copy.subtitle)}
       footer={
         isAuthConfigured && (
           <p>
-            {copy.newPrompt}{' '}
+            {t(copy.newPrompt)}{' '}
             <Link
               to={brand === 'agrosphere' ? '/agrosphere/sign-up' : '/sign-up'}
               search={{ redirect }}
               className="font-medium text-[#0B6477] hover:underline"
             >
-              {copy.newLink}
+              {t(copy.newLink)}
             </Link>
           </p>
         )
@@ -83,7 +93,10 @@ export default function SignInView({ brand, redirect }: { brand: AuthBrand; redi
     >
       {!isAuthConfigured ? (
         <p className="rounded-xl bg-[#F3F7F6] px-4 py-3 text-sm text-neutral-500">
-          Sign-in is not configured yet. Please contact the SmartAgri team.
+          {t({
+            en: 'Sign-in is not configured yet. Please contact the SmartAgri team.',
+            id: 'Fitur masuk belum dikonfigurasi. Silakan hubungi tim SmartAgri.',
+          })}
         </p>
       ) : (
         <form
@@ -101,17 +114,21 @@ export default function SignInView({ brand, redirect }: { brand: AuthBrand; redi
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder={brand === 'agrosphere' ? 'you@company.com' : 'you@ugm.ac.id'}
+            placeholder={
+              brand === 'agrosphere'
+                ? t({ en: 'you@company.com', id: 'anda@perusahaan.com' })
+                : t({ en: 'you@ugm.ac.id', id: 'anda@ugm.ac.id' })
+            }
           />
           <AuthInput
             icon={KeyRound}
-            label="Password"
+            label={t({ en: 'Password', id: 'Kata sandi' })}
             type="password"
             required
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Your password"
+            placeholder={t({ en: 'Your password', id: 'Kata sandi Anda' })}
           />
 
           {error && (
@@ -124,22 +141,22 @@ export default function SignInView({ brand, redirect }: { brand: AuthBrand; redi
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Signing in...
+                {t({ en: 'Signing in...', id: 'Sedang masuk...' })}
               </>
             ) : (
-              'Sign in'
+              t({ en: 'Sign in', id: 'Masuk' })
             )}
           </button>
           <p className="text-xs leading-relaxed text-neutral-400">
-            {copy.audience} By signing in you agree to our{' '}
+            {t(copy.audience)} {t({ en: 'By signing in you agree to our', id: 'Dengan masuk, Anda menyetujui' })}{' '}
             <Link to="/terms-of-use" className="underline underline-offset-2 hover:text-[#0B6477]">
-              Terms of Use
+              {t({ en: 'Terms of Use', id: 'Ketentuan Penggunaan' })}
             </Link>{' '}
-            and{' '}
+            {t({ en: 'and', id: 'dan' })}{' '}
             <Link to="/privacy-policy" className="underline underline-offset-2 hover:text-[#0B6477]">
-              Privacy Policy
+              {t({ en: 'Privacy Policy', id: 'Kebijakan Privasi' })}
             </Link>
-            .
+            {t({ en: '.', id: ' kami.' })}
           </p>
         </form>
       )}

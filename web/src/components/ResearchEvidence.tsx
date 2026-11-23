@@ -4,9 +4,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, Expand, Minus, Plus } from "lucide-react";
 import { researchFramework, researchSlide } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
+import { useT, useLang } from "../lib/i18n";
 import {
-  ROADMAP,
-  STUDY_KIND,
+  roadmapFor,
+  studyKind,
+  studyLevelLabel,
   type CenterProject,
   type EvidenceStat,
   type StudentStudy,
@@ -78,6 +80,7 @@ function Lightbox({
 const PROJECTS_SHOWN = 6;
 
 export function ProjectGrid({ projects }: { projects: CenterProject[] }) {
+  const t = useT();
   const slides = projects.flatMap((p) => p.slides);
   const [open, setOpen] = useState<number | null>(null);
   const [all, setAll] = useState(false);
@@ -99,7 +102,7 @@ export function ProjectGrid({ projects }: { projects: CenterProject[] }) {
                 type="button"
                 onClick={() => setOpen(first)}
                 className="relative block aspect-[16/9] w-full overflow-hidden bg-[#F3F7F6] text-left"
-                aria-label={`View the slide for ${p.title}`}
+                aria-label={t({ en: `View the slide for ${p.title}`, id: `Lihat slide ${p.title}` })}
               >
                 <img
                   src={researchSlide(p.slides[0]!)}
@@ -114,7 +117,9 @@ export function ProjectGrid({ projects }: { projects: CenterProject[] }) {
                   style={body}
                 >
                   <Expand className="h-3.5 w-3.5" />
-                  {p.slides.length > 1 ? `${p.slides.length} slides` : "View slide"}
+                  {p.slides.length > 1
+                    ? t({ en: `${p.slides.length} slides`, id: `${p.slides.length} slide` })
+                    : t({ en: "View slide", id: "Lihat slide" })}
                 </span>
               </button>
               <div className="flex flex-1 flex-col gap-4 p-6 md:p-7">
@@ -139,14 +144,14 @@ export function ProjectGrid({ projects }: { projects: CenterProject[] }) {
                   <div className="mt-auto flex flex-col gap-2 border-t border-[#0B6477]/10 pt-4">
                     {p.people?.length ? (
                       <p className="text-[13px] leading-relaxed text-neutral-500" style={body}>
-                        <span className={`mr-2 text-neutral-400 ${META}`}>Team</span>
+                        <span className={`mr-2 text-neutral-400 ${META}`}>{t({ en: "Team", id: "Tim" })}</span>
                         {p.people.join(" · ")}
                       </p>
                     ) : null}
                     {p.partners?.length ? (
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className={`mr-1 text-neutral-400 ${META}`} style={body}>
-                          With
+                          {t({ en: "With", id: "Bersama" })}
                         </span>
                         {p.partners.map((x) => (
                           <span
@@ -174,7 +179,9 @@ export function ProjectGrid({ projects }: { projects: CenterProject[] }) {
             className="group inline-flex h-12 items-center gap-3 rounded-lg bg-[#08313A] px-6 text-sm font-medium uppercase tracking-[0.08em] text-white transition-colors hover:bg-[#0B6477]"
             style={body}
           >
-            {all ? "Show fewer" : `Show all ${projects.length} projects`}
+            {all
+              ? t({ en: "Show fewer", id: "Tampilkan lebih sedikit" })
+              : t({ en: `Show all ${projects.length} projects`, id: `Lihat semua ${projects.length} proyek` })}
             {all ? (
               <Minus className="h-4 w-4 text-[#45DFB1]" />
             ) : (
@@ -205,6 +212,8 @@ function StudyRow({
   onToggle: () => void;
   onFigure: () => void;
 }) {
+  const t = useT();
+  const lang = useLang();
   return (
     <li className="border-t border-[#0B6477]/12 last:border-b">
       <button
@@ -218,7 +227,7 @@ function StudyRow({
             className={`inline-flex rounded-full border px-2.5 py-1 ${META} ${LEVEL_TONE[study.level]}`}
             style={body}
           >
-            {study.level}
+            {studyLevelLabel(study.level, lang)}
           </span>
           <span className="text-sm tabular-nums text-neutral-400" style={body}>
             {study.year}
@@ -232,7 +241,7 @@ function StudyRow({
             {study.title}
           </span>
           <span className="mt-1.5 block text-sm text-neutral-500" style={body}>
-            {study.author} · {STUDY_KIND[study.level]}
+            {study.author} · {studyKind(study.level, lang)}
             {study.status ? ` (${study.status.toLowerCase()})` : ""}
           </span>
         </span>
@@ -260,13 +269,13 @@ function StudyRow({
               <div className="hidden md:block" />
               <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap gap-1.5">
-                  {study.tags.map((t) => (
+                  {study.tags.map((tag) => (
                     <span
-                      key={t}
+                      key={tag}
                       className="rounded-full border border-[#0B6477]/15 bg-white px-2.5 py-1 text-[12px] text-[#0B6477]"
                       style={body}
                     >
-                      {t}
+                      {tag}
                     </span>
                   ))}
                 </div>
@@ -303,7 +312,7 @@ function StudyRow({
                     className={`group/link inline-flex w-fit items-center gap-1.5 border-b border-[#0B6477]/30 pb-1 text-[#0B6477] transition-colors hover:border-[#0B6477] ${META}`}
                     style={body}
                   >
-                    {study.author.split(" ")[0]}'s profile
+                    {t({ en: `${study.author.split(" ")[0]}'s profile`, id: `Profil ${study.author.split(" ")[0]}` })}
                     <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
                   </Link>
                 )}
@@ -312,11 +321,11 @@ function StudyRow({
                 type="button"
                 onClick={onFigure}
                 className="group/fig relative block self-start overflow-hidden rounded-2xl border border-[#0B6477]/12 bg-white text-left md:col-start-2 lg:col-start-auto"
-                aria-label={`View the research framework of ${study.title}`}
+                aria-label={t({ en: `View the research framework of ${study.title}`, id: `Lihat kerangka riset ${study.title}` })}
               >
                 <img
                   src={researchFramework(study.code)}
-                  alt={`Research framework: ${study.title}`}
+                  alt={t({ en: `Research framework: ${study.title}`, id: `Kerangka riset: ${study.title}` })}
                   loading="lazy"
                   decoding="async"
                   className="w-full transition-transform duration-700 group-hover/fig:scale-[1.03]"
@@ -325,7 +334,7 @@ function StudyRow({
                   className={`flex items-center justify-between gap-2 border-t border-[#0B6477]/10 px-4 py-3 text-neutral-500 ${META}`}
                   style={body}
                 >
-                  Research framework
+                  {t({ en: "Research framework", id: "Kerangka riset" })}
                   <Expand className="h-3.5 w-3.5 text-[#0B6477]" />
                 </span>
               </button>
@@ -339,6 +348,8 @@ function StudyRow({
 
 // Student theses in an area, filterable by level, one open at a time.
 export function StudyList({ studies }: { studies: StudentStudy[] }) {
+  const t = useT();
+  const lang = useLang();
   const levels = (["Undergraduate", "Master's", "Doctoral"] as StudyLevel[]).filter((l) =>
     studies.some((s) => s.level === l),
   );
@@ -350,7 +361,7 @@ export function StudyList({ studies }: { studies: StudentStudy[] }) {
   return (
     <>
       {levels.length > 1 && (
-        <div className="mb-8 flex flex-wrap gap-2" role="tablist" aria-label="Filter by level">
+        <div className="mb-8 flex flex-wrap gap-2" role="tablist" aria-label={t({ en: "Filter by level", id: "Saring menurut jenjang" })}>
           {(["All", ...levels] as const).map((l) => {
             const on = l === level;
             const count = l === "All" ? studies.length : studies.filter((s) => s.level === l).length;
@@ -376,7 +387,7 @@ export function StudyList({ studies }: { studies: StudentStudy[] }) {
                   />
                 )}
                 <span className="relative">
-                  {l}
+                  {l === "All" ? t({ en: "All", id: "Semua" }) : studyLevelLabel(l, lang)}
                   <span className={on ? "text-white/60" : "text-neutral-400"}> {count}</span>
                 </span>
               </button>
@@ -402,10 +413,12 @@ export function StudyList({ studies }: { studies: StudentStudy[] }) {
 
 // The center's roadmap, 2012 to 2030, as a horizontal track.
 export function Roadmap() {
+  const t = useT();
+  const roadmap = roadmapFor(useLang());
   return (
     <div className="relative">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:gap-3">
-        {ROADMAP.map((r, i) => {
+        {roadmap.map((r, i) => {
           const now = r.phase === "now";
           const future = r.phase === "future";
           return (
@@ -427,7 +440,11 @@ export function Roadmap() {
                   }`}
                   style={body}
                 >
-                  {now ? "Now" : future ? "Next" : "Done"}
+                  {now
+                    ? t({ en: "Now", id: "Kini" })
+                    : future
+                      ? t({ en: "Next", id: "Berikutnya" })
+                      : t({ en: "Done", id: "Selesai" })}
                 </span>
                 <span
                   className={`whitespace-nowrap text-xl font-semibold tabular-nums tracking-[-0.02em] ${now ? "text-[#45DFB1]" : "text-[#0B6477]"}`}

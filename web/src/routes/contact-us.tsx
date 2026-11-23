@@ -17,8 +17,9 @@ import {
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { accent, body, display } from "../lib/fonts";
-import { RESEARCH_AREAS } from "../lib/research";
-import { TECHNOLOGIES } from "../lib/technology";
+import { RESEARCH_AREAS, areaLabel } from "../lib/research";
+import { TECHNOLOGIES, techLabel } from "../lib/technology";
+import { headLang, localeOf, useLang, useT, type Bi, type Lang } from "../lib/i18n";
 import AmbientWash from "../components/AmbientWash";
 import { EASE, MaskLine, META } from "../components/NoteParts";
 import SiteHeader from "../components/SiteHeader";
@@ -26,18 +27,23 @@ import Footer from "../components/Footer";
 
 export const Route = createFileRoute("/contact-us")({
   component: ContactUsPage,
-  head: () => ({
-    meta: [
-      {
-        title: "Contact Us | smartagri",
-      },
-      {
-        name: "description",
-        content:
-          "Get in touch with the Smart Agriculture Research Center: ask a question, explore a collaboration, or visit us in Sleman, Yogyakarta.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        {
+          title: l === "id" ? "Hubungi Kami | smartagri" : "Contact Us | smartagri",
+        },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Hubungi Smart Agriculture Research Center: ajukan pertanyaan, jajaki kolaborasi, atau kunjungi kami di Sleman, Yogyakarta."
+              : "Get in touch with the Smart Agriculture Research Center: ask a question, explore a collaboration, or visit us in Sleman, Yogyakarta.",
+        },
+      ],
+    };
+  },
 });
 
 const CONTACT_EMAIL = "hello@smart-agri.id";
@@ -51,8 +57,8 @@ const MAPS_URL = "https://www.google.com/maps/search/?api=1&query=-7.7687041%2C1
 
 type Channel = {
   icon: typeof Mail;
-  label: string;
-  value: string;
+  label: Bi;
+  value: string | Bi;
   href?: string;
   external?: boolean;
   /** Text the copy button puts on the clipboard */
@@ -64,7 +70,7 @@ type Channel = {
 const channels: Channel[] = [
   {
     icon: Mail,
-    label: "Email",
+    label: { en: "Email", id: "Email" },
     value: CONTACT_EMAIL,
     href: `mailto:${CONTACT_EMAIL}`,
     copy: CONTACT_EMAIL,
@@ -73,7 +79,7 @@ const channels: Channel[] = [
   },
   {
     icon: Phone,
-    label: "WhatsApp",
+    label: { en: "WhatsApp", id: "WhatsApp" },
     value: "+62 851-1122-0365",
     href: "https://wa.me/6285111220365",
     external: true,
@@ -83,7 +89,7 @@ const channels: Channel[] = [
   },
   {
     icon: MapPin,
-    label: "Address",
+    label: { en: "Address", id: "Alamat" },
     value:
       "Jl. Flora Bulaksumur No.1, Kocoran, Caturtunggal, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281",
     href: MAPS_URL,
@@ -93,22 +99,52 @@ const channels: Channel[] = [
   },
   {
     icon: Clock,
-    label: "Office hours",
-    value: "Monday–Friday, 08.00–16.00 WIB",
+    label: { en: "Office hours", id: "Jam kerja" },
+    value: { en: "Monday–Friday, 08.00–16.00 WIB", id: "Senin–Jumat, 08.00–16.00 WIB" },
     // Clock hand going round.
     move: { rotate: [0, 360], transition: { duration: 0.9, ease: "easeInOut" } },
   },
 ];
 
 // The inquiry flow, as the form below actually runs it.
-const flow = [
-  { icon: Pencil, title: "Fill in the form", desc: "Tell us who you are and what you need. Only the starred fields are required." },
-  { icon: ClipboardCheck, title: "Review it", desc: "Check every answer on one screen and edit anything before it goes." },
-  { icon: Send, title: "Send it", desc: "Your inquiry goes straight to the smartagri team." },
-  { icon: FileText, title: "Keep your ID", desc: "You get an inquiry ID and can download a PDF summary for follow-up." },
+const flow: { icon: typeof Mail; title: Bi; desc: Bi }[] = [
+  {
+    icon: Pencil,
+    title: { en: "Fill in the form", id: "Isi formulir" },
+    desc: {
+      en: "Tell us who you are and what you need. Only the starred fields are required.",
+      id: "Ceritakan siapa Anda dan apa yang Anda butuhkan. Hanya kolom bertanda bintang yang wajib diisi.",
+    },
+  },
+  {
+    icon: ClipboardCheck,
+    title: { en: "Review it", id: "Periksa kembali" },
+    desc: {
+      en: "Check every answer on one screen and edit anything before it goes.",
+      id: "Tinjau semua jawaban dalam satu layar dan ubah apa pun sebelum dikirim.",
+    },
+  },
+  {
+    icon: Send,
+    title: { en: "Send it", id: "Kirim" },
+    desc: {
+      en: "Your inquiry goes straight to the smartagri team.",
+      id: "Pesan Anda langsung diterima tim smartagri.",
+    },
+  },
+  {
+    icon: FileText,
+    title: { en: "Keep your ID", id: "Simpan ID Anda" },
+    desc: {
+      en: "You get an inquiry ID and can download a PDF summary for follow-up.",
+      id: "Anda mendapat ID pesan dan dapat mengunduh ringkasan PDF untuk tindak lanjut.",
+    },
+  },
 ];
 
 function ChannelCard({ c, index }: { c: Channel; index: number }) {
+  const t = useT();
+  const label = t(c.label);
   const [hover, setHover] = useState(false);
   const [copied, setCopied] = useState(false);
   const Body = c.href ? "a" : "div";
@@ -137,10 +173,10 @@ function ChannelCard({ c, index }: { c: Channel; index: number }) {
           )}
         </span>
         <span className={`text-neutral-400 transition-colors duration-300 group-hover:text-[#45DFB1] ${META}`} style={body}>
-          {c.label}
+          {label}
         </span>
         <span className="text-[15px] leading-relaxed text-neutral-800 transition-colors duration-300 group-hover:text-white" style={body}>
-          {c.value}
+          {typeof c.value === "string" ? c.value : t(c.value)}
         </span>
       </Body>
       {c.copy && (
@@ -154,10 +190,10 @@ function ChannelCard({ c, index }: { c: Channel; index: number }) {
           }}
           className={`mx-6 mb-6 inline-flex items-center gap-1.5 self-start rounded-full border border-[#0B6477]/15 px-3 py-1 text-[12px] text-[#0B6477] transition-colors group-hover:border-white/20 group-hover:text-white/80 hover:!bg-white/10`}
           style={body}
-          aria-label={`Copy ${c.label.toLowerCase()}`}
+          aria-label={t({ en: `Copy ${label.toLowerCase()}`, id: `Salin ${label.toLowerCase()}` })}
         >
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-          {copied ? "Copied" : "Copy"}
+          {copied ? t({ en: "Copied", id: "Tersalin" }) : t({ en: "Copy", id: "Salin" })}
         </button>
       )}
     </motion.div>
@@ -170,63 +206,140 @@ const inputClass =
 const labelClass = "text-sm font-medium text-neutral-700";
 
 // Optional follow-up questions per research area, shown only after the
-// visitor picks an area, and all of them optional.
+// visitor picks an area, and all of them optional. `key` and the English
+// option text are what gets stored and sent to the team's sheet; `name` is
+// the row label shown in the review, PDF, and email draft.
 type ExtraField = {
   key: string;
-  label: string;
+  name: Bi;
+  label: Bi;
   type: "text" | "select";
-  options?: string[];
-  placeholder?: string;
+  options?: Bi[];
+  placeholder?: Bi;
 };
+
+const NOT_SURE: Bi = { en: "Not sure yet", id: "Belum yakin" };
 
 const AREA_EXTRAS: Record<string, ExtraField[]> = {
   "Open Field Technology": [
-    { key: "Crop type", label: "What crop do you grow?", type: "text", placeholder: "e.g. rice, maize, shallots" },
-    { key: "Land size", label: "Roughly how large is the land?", type: "text", placeholder: "e.g. 2 ha" },
+    {
+      key: "Crop type",
+      name: { en: "Crop type", id: "Jenis tanaman" },
+      label: { en: "What crop do you grow?", id: "Tanaman apa yang Anda budidayakan?" },
+      type: "text",
+      placeholder: { en: "e.g. rice, maize, shallots", id: "mis. padi, jagung, bawang merah" },
+    },
+    {
+      key: "Land size",
+      name: { en: "Land size", id: "Luas lahan" },
+      label: { en: "Roughly how large is the land?", id: "Kira-kira berapa luas lahannya?" },
+      type: "text",
+      placeholder: { en: "e.g. 2 ha", id: "mis. 2 ha" },
+    },
   ],
   "Irrigation Modernization": [
     {
       key: "Irrigation type",
-      label: "What kind of irrigation system?",
+      name: { en: "Irrigation type", id: "Jenis irigasi" },
+      label: { en: "What kind of irrigation system?", id: "Sistem irigasi seperti apa?" },
       type: "select",
-      options: ["Canal network", "Pump-based", "Drip", "Sprinkler", "Not sure yet"],
+      options: [
+        { en: "Canal network", id: "Jaringan saluran" },
+        { en: "Pump-based", id: "Berbasis pompa" },
+        { en: "Drip", id: "Irigasi tetes" },
+        { en: "Sprinkler", id: "Sprinkler" },
+        NOT_SURE,
+      ],
     },
-    { key: "Area served", label: "Roughly how large is the area served?", type: "text", placeholder: "e.g. 150 ha" },
+    {
+      key: "Area served",
+      name: { en: "Area served", id: "Luas layanan" },
+      label: { en: "Roughly how large is the area served?", id: "Kira-kira berapa luas area yang dilayani?" },
+      type: "text",
+      placeholder: { en: "e.g. 150 ha", id: "mis. 150 ha" },
+    },
   ],
   "Smart Estate Technology": [
     {
       key: "Commodity",
-      label: "What commodity does the estate grow?",
+      name: { en: "Commodity", id: "Komoditas" },
+      label: { en: "What commodity does the estate grow?", id: "Komoditas apa yang dibudidayakan di perkebunan?" },
       type: "select",
-      options: ["Oil palm", "Sugarcane", "Coffee", "Tea", "Other"],
+      options: [
+        { en: "Oil palm", id: "Kelapa sawit" },
+        { en: "Sugarcane", id: "Tebu" },
+        { en: "Coffee", id: "Kopi" },
+        { en: "Tea", id: "Teh" },
+        { en: "Other", id: "Lainnya" },
+      ],
     },
-    { key: "Estate size", label: "Roughly how large is the estate?", type: "text", placeholder: "e.g. 500 ha" },
+    {
+      key: "Estate size",
+      name: { en: "Estate size", id: "Luas perkebunan" },
+      label: { en: "Roughly how large is the estate?", id: "Kira-kira berapa luas perkebunannya?" },
+      type: "text",
+      placeholder: { en: "e.g. 500 ha", id: "mis. 500 ha" },
+    },
   ],
   "Smart UAV Technology": [
     {
       key: "Service needed",
-      label: "What do you need the UAV for?",
+      name: { en: "Service needed", id: "Layanan yang dibutuhkan" },
+      label: { en: "What do you need the UAV for?", id: "Untuk apa Anda membutuhkan UAV?" },
       type: "select",
-      options: ["Field mapping", "Crop monitoring", "Spraying", "Training", "Not sure yet"],
+      options: [
+        { en: "Field mapping", id: "Pemetaan lahan" },
+        { en: "Crop monitoring", id: "Pemantauan tanaman" },
+        { en: "Spraying", id: "Penyemprotan" },
+        { en: "Training", id: "Pelatihan" },
+        NOT_SURE,
+      ],
     },
   ],
   "Indoor Farming Technology": [
     {
       key: "Facility type",
-      label: "What kind of facility?",
+      name: { en: "Facility type", id: "Jenis fasilitas" },
+      label: { en: "What kind of facility?", id: "Fasilitas seperti apa?" },
       type: "select",
-      options: ["Greenhouse", "Plant factory", "Vertical farm", "Planning a new one"],
+      options: [
+        { en: "Greenhouse", id: "Greenhouse" },
+        { en: "Plant factory", id: "Plant factory" },
+        { en: "Vertical farm", id: "Vertical farm" },
+        { en: "Planning a new one", id: "Sedang merencanakan yang baru" },
+      ],
     },
   ],
   "Agro-Informatics": [
     {
       key: "Data available",
-      label: "What data do you already have?",
+      name: { en: "Data available", id: "Data yang tersedia" },
+      label: { en: "What data do you already have?", id: "Data apa yang sudah Anda miliki?" },
       type: "select",
-      options: ["Sensor data", "Drone/satellite imagery", "Farm records", "None yet"],
+      options: [
+        { en: "Sensor data", id: "Data sensor" },
+        { en: "Drone/satellite imagery", id: "Citra drone/satelit" },
+        { en: "Farm records", id: "Catatan usaha tani" },
+        { en: "None yet", id: "Belum ada" },
+      ],
     },
   ],
 };
+
+const EXTRA_FIELDS: Record<string, ExtraField> = Object.fromEntries(
+  Object.values(AREA_EXTRAS)
+    .flat()
+    .map((field) => [field.key, field]),
+);
+
+// Extras are stored with English keys and option values (sent to the sheet as
+// is); the review, PDF, and email draft show them in the visitor's language.
+function extraRow(key: string, value: string, lang: Lang): { label: string; value: string } {
+  const field = EXTRA_FIELDS[key];
+  if (!field) return { label: key, value };
+  const option = field.options?.find((o) => o.en === value);
+  return { label: field.name[lang], value: option ? option[lang] : value };
+}
 
 type InquiryData = {
   name: string;
@@ -255,17 +368,21 @@ function makeInquiryId() {
   return `SA-${ymd}-${rand}`;
 }
 
-function reviewRows(data: InquiryData): { label: string; value: string }[] {
+function reviewRows(data: InquiryData, lang: Lang): { label: string; value: string }[] {
+  const id = lang === "id";
   const rows = [
-    { label: "Name", value: data.name },
+    { label: id ? "Nama" : "Name", value: data.name },
     { label: "Email", value: data.email },
-    { label: "Organization", value: data.organization },
-    { label: "Research area", value: data.area },
+    { label: id ? "Organisasi" : "Organization", value: data.organization },
+    { label: id ? "Bidang riset" : "Research area", value: data.area ? areaLabel(data.area, lang) : "" },
     ...Object.entries(data.extras)
       .filter(([, value]) => value)
-      .map(([key, value]) => ({ label: key, value })),
-    { label: "Technologies of interest", value: data.techs.join(", ") },
-    { label: "Question", value: data.question },
+      .map(([key, value]) => extraRow(key, value, lang)),
+    {
+      label: id ? "Teknologi yang diminati" : "Technologies of interest",
+      value: data.techs.map((tech) => techLabel(tech, lang)).join(", "),
+    },
+    { label: id ? "Pertanyaan" : "Question", value: data.question },
   ];
   return rows.filter((row) => row.value);
 }
@@ -290,9 +407,10 @@ async function loadDataUrl(url: string): Promise<string | null> {
   }
 }
 
-async function downloadInquiryPdf(id: string, data: InquiryData) {
+async function downloadInquiryPdf(id: string, data: InquiryData, lang: Lang) {
   const doc = new jsPDF(); // portrait A4, mm units: 210 x 297
-  const rows = reviewRows(data);
+  const rows = reviewRows(data, lang);
+  const isId = lang === "id";
 
   // Load the letterhead and paint it as a full-page background; if it fails to
   // load, the PDF still generates on a plain white page.
@@ -312,16 +430,16 @@ async function downloadInquiryPdf(id: string, data: InquiryData) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.setTextColor(11, 100, 119);
-  doc.text("Inquiry Summary", LEFT, y);
+  doc.text(isId ? "Ringkasan Pesan" : "Inquiry Summary", LEFT, y);
   y += 8;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10.5);
   doc.setTextColor(90, 90, 90);
-  doc.text(`Inquiry ID: ${id}`, LEFT, y);
+  doc.text(`${isId ? "ID pesan" : "Inquiry ID"}: ${id}`, LEFT, y);
   y += 5.5;
   doc.text(
-    `Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
+    `${isId ? "Tanggal" : "Date"}: ${new Date().toLocaleDateString(localeOf(lang), { year: "numeric", month: "long", day: "numeric" })}`,
     LEFT,
     y,
   );
@@ -354,12 +472,18 @@ async function downloadInquiryPdf(id: string, data: InquiryData) {
   }
   doc.setFontSize(9);
   doc.setTextColor(130, 130, 130);
-  doc.text("Please keep this Inquiry ID for follow-up.", LEFT, y);
+  doc.text(
+    isId ? "Simpan ID pesan ini untuk keperluan tindak lanjut." : "Please keep this Inquiry ID for follow-up.",
+    LEFT,
+    y,
+  );
 
-  doc.save(`smartagri-inquiry-${id}.pdf`);
+  doc.save(`smartagri-${isId ? "pesan" : "inquiry"}-${id}.pdf`);
 }
 
 function InquiryForm() {
+  const t = useT();
+  const lang = useLang();
   const [step, setStep] = useState<"form" | "review" | "sent">("form");
   const [data, setData] = useState<InquiryData>(EMPTY_INQUIRY);
   const [id, setId] = useState("");
@@ -383,7 +507,7 @@ function InquiryForm() {
   }
 
   function send() {
-    const rows = reviewRows(data);
+    const rows = reviewRows(data, lang);
     if (INQUIRY_ENDPOINT) {
       // Fire-and-forget POST to the Google Apps Script inbox (see
       // docs/setup/SETUP-INQUIRIES.md); no-cors because Apps Script doesn't set CORS.
@@ -406,9 +530,12 @@ function InquiryForm() {
         }),
       }).catch(() => {});
     } else {
-      const subject = `[${id}] Inquiry from ${data.name}`;
+      const subject = t({
+        en: `[${id}] Inquiry from ${data.name}`,
+        id: `[${id}] Pesan dari ${data.name}`,
+      });
       const bodyText = [
-        `Inquiry ID: ${id}`,
+        `${t({ en: "Inquiry ID", id: "ID pesan" })}: ${id}`,
         "",
         ...rows.map((row) => `${row.label}: ${row.value}`),
       ].join("\n");
@@ -428,23 +555,48 @@ function InquiryForm() {
             style={display}
           >
             {step === "review" ? (
-              <>
-                Review your <span style={accent}>inquiry</span>
-              </>
+              t({
+                en: (
+                  <>
+                    Review your <span style={accent}>inquiry</span>
+                  </>
+                ),
+                id: (
+                  <>
+                    Tinjau <span style={accent}>pesan</span> Anda
+                  </>
+                ),
+              })
             ) : (
-              <>
-                Thank <span style={accent}>you!</span>
-              </>
+              t({
+                en: (
+                  <>
+                    Thank <span style={accent}>you!</span>
+                  </>
+                ),
+                id: (
+                  <>
+                    Terima <span style={accent}>kasih!</span>
+                  </>
+                ),
+              })
             )}
           </h2>
           <p className="text-sm font-normal text-neutral-500 mt-2" style={body}>
             {step === "review"
-              ? "Check your answers below, then send, or download a copy first."
+              ? t({
+                  en: "Check your answers below, then send, or download a copy first.",
+                  id: "Periksa jawaban Anda di bawah, lalu kirim, atau unduh salinannya terlebih dahulu.",
+                })
               : INQUIRY_ENDPOINT
-                ? "Your inquiry has been delivered to the smartagri team."
-                : "Your email app should have opened with the inquiry ready to send. If it didn't, email us at " +
-                  CONTACT_EMAIL +
-                  "."}
+                ? t({
+                    en: "Your inquiry has been delivered to the smartagri team.",
+                    id: "Pesan Anda telah diterima tim smartagri.",
+                  })
+                : t({
+                    en: `Your email app should have opened with the inquiry ready to send. If it didn't, email us at ${CONTACT_EMAIL}.`,
+                    id: `Aplikasi email Anda seharusnya terbuka dengan pesan yang siap dikirim. Jika tidak, kirim email ke ${CONTACT_EMAIL}.`,
+                  })}
           </p>
         </div>
 
@@ -453,7 +605,10 @@ function InquiryForm() {
             className="text-[11px] font-medium tracking-[0.1em] uppercase text-white/60"
             style={body}
           >
-            Your inquiry ID, save it for follow-up
+            {t({
+              en: "Your inquiry ID, save it for follow-up",
+              id: "ID pesan Anda, simpan untuk tindak lanjut",
+            })}
           </div>
           <div
             className="text-xl sm:text-2xl font-semibold text-[#45DFB1] mt-1"
@@ -464,7 +619,7 @@ function InquiryForm() {
         </div>
 
         <dl className="border-t border-neutral-200">
-          {reviewRows(data).map((row) => (
+          {reviewRows(data, lang).map((row) => (
             <div
               key={row.label}
               className="grid grid-cols-[120px_1fr] sm:grid-cols-[140px_1fr] gap-3 py-2.5 border-b border-neutral-100"
@@ -491,15 +646,15 @@ function InquiryForm() {
                 style={body}
               >
                 <Send className="w-4 h-4" />
-                Send inquiry
+                {t({ en: "Send inquiry", id: "Kirim pesan" })}
               </button>
               <button
-                onClick={() => downloadInquiryPdf(id, data)}
+                onClick={() => downloadInquiryPdf(id, data, lang)}
                 className="inline-flex items-center gap-2 h-12 px-6 rounded-2xl border border-[#0B6477] text-[#0B6477] text-base font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
                 style={body}
               >
                 <Download className="w-4 h-4" />
-                Download PDF
+                {t({ en: "Download PDF", id: "Unduh PDF" })}
               </button>
               <button
                 onClick={() => setStep("form")}
@@ -507,18 +662,18 @@ function InquiryForm() {
                 style={body}
               >
                 <Pencil className="w-4 h-4" />
-                Edit answers
+                {t({ en: "Edit answers", id: "Ubah jawaban" })}
               </button>
             </>
           ) : (
             <>
               <button
-                onClick={() => downloadInquiryPdf(id, data)}
+                onClick={() => downloadInquiryPdf(id, data, lang)}
                 className="inline-flex items-center gap-2 h-12 px-6 rounded-2xl border border-[#0B6477] text-[#0B6477] text-base font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
                 style={body}
               >
                 <Download className="w-4 h-4" />
-                Download PDF copy
+                {t({ en: "Download PDF copy", id: "Unduh salinan PDF" })}
               </button>
               <button
                 onClick={() => {
@@ -529,7 +684,7 @@ function InquiryForm() {
                 className="inline-flex items-center gap-2 h-12 px-5 rounded-2xl text-neutral-500 text-base font-medium hover:text-neutral-800 transition-colors"
                 style={body}
               >
-                Send another inquiry
+                {t({ en: "Send another inquiry", id: "Kirim pesan lain" })}
               </button>
             </>
           )}
@@ -546,23 +701,35 @@ function InquiryForm() {
         className="text-2xl md:text-3xl font-semibold text-neutral-900"
         style={display}
       >
-        Let's keep <span style={accent}>in touch</span>
+        {t({
+          en: (
+            <>
+              Let's keep <span style={accent}>in touch</span>
+            </>
+          ),
+          id: (
+            <>
+              Mari tetap <span style={accent}>terhubung</span>
+            </>
+          ),
+        })}
       </h2>
       <p className="text-base font-normal text-neutral-500" style={body}>
-        Do you have a question about our research? Are you a cooperative,
-        business, or student with a project in mind? Write to us. Only the
-        starred fields are required.
+        {t({
+          en: "Do you have a question about our research? Are you a cooperative, business, or student with a project in mind? Write to us. Only the starred fields are required.",
+          id: "Punya pertanyaan tentang riset kami? Anda koperasi, pelaku usaha, atau mahasiswa dengan rencana proyek? Tulis kepada kami. Hanya kolom bertanda bintang yang wajib diisi.",
+        })}
       </p>
 
       <label className="flex flex-col gap-1.5">
         <span className={labelClass} style={body}>
-          Your name *
+          {t({ en: "Your name *", id: "Nama Anda *" })}
         </span>
         <input
           required
           value={data.name}
           onChange={(e) => set({ name: e.target.value })}
-          placeholder="Full name"
+          placeholder={t({ en: "Full name", id: "Nama lengkap" })}
           className={inputClass}
           style={body}
         />
@@ -570,14 +737,14 @@ function InquiryForm() {
 
       <label className="flex flex-col gap-1.5">
         <span className={labelClass} style={body}>
-          Your email address *
+          {t({ en: "Your email address *", id: "Alamat email Anda *" })}
         </span>
         <input
           type="email"
           required
           value={data.email}
           onChange={(e) => set({ email: e.target.value })}
-          placeholder="you@example.com"
+          placeholder={t({ en: "you@example.com", id: "anda@contoh.com" })}
           className={inputClass}
           style={body}
         />
@@ -585,12 +752,15 @@ function InquiryForm() {
 
       <label className="flex flex-col gap-1.5">
         <span className={labelClass} style={body}>
-          Organization
+          {t({ en: "Organization", id: "Organisasi" })}
         </span>
         <input
           value={data.organization}
           onChange={(e) => set({ organization: e.target.value })}
-          placeholder="Cooperative, company, or university (optional)"
+          placeholder={t({
+            en: "Cooperative, company, or university (optional)",
+            id: "Koperasi, perusahaan, atau universitas (opsional)",
+          })}
           className={inputClass}
           style={body}
         />
@@ -598,8 +768,8 @@ function InquiryForm() {
 
       <label className="flex flex-col gap-1.5">
         <span className={labelClass} style={body}>
-          Which research area fits your question?{" "}
-          <span className="font-normal text-neutral-400">(optional)</span>
+          {t({ en: "Which research area fits your question?", id: "Bidang riset mana yang sesuai dengan pertanyaan Anda?" })}{" "}
+          <span className="font-normal text-neutral-400">{t({ en: "(optional)", id: "(opsional)" })}</span>
         </span>
         <select
           value={data.area}
@@ -607,10 +777,10 @@ function InquiryForm() {
           className={inputClass}
           style={body}
         >
-          <option value="">Not sure yet, just ask away</option>
+          <option value="">{t({ en: "Not sure yet, just ask away", id: "Belum yakin, silakan tanyakan saja" })}</option>
           {RESEARCH_AREAS.map((area) => (
             <option key={area.label} value={area.label}>
-              {area.label}
+              {areaLabel(area.label, lang)}
             </option>
           ))}
         </select>
@@ -619,8 +789,8 @@ function InquiryForm() {
       {extras.map((field) => (
         <label key={field.key} className="flex flex-col gap-1.5">
           <span className={labelClass} style={body}>
-            {field.label}{" "}
-            <span className="font-normal text-neutral-400">(optional)</span>
+            {t(field.label)}{" "}
+            <span className="font-normal text-neutral-400">{t({ en: "(optional)", id: "(opsional)" })}</span>
           </span>
           {field.type === "select" ? (
             <select
@@ -631,10 +801,10 @@ function InquiryForm() {
               className={inputClass}
               style={body}
             >
-              <option value="">Choose…</option>
+              <option value="">{t({ en: "Choose…", id: "Pilih…" })}</option>
               {field.options!.map((option) => (
-                <option key={option} value={option}>
-                  {option}
+                <option key={option.en} value={option.en}>
+                  {t(option)}
                 </option>
               ))}
             </select>
@@ -644,7 +814,7 @@ function InquiryForm() {
               onChange={(e) =>
                 set({ extras: { ...data.extras, [field.key]: e.target.value } })
               }
-              placeholder={field.placeholder}
+              placeholder={field.placeholder && t(field.placeholder)}
               className={inputClass}
               style={body}
             />
@@ -654,8 +824,8 @@ function InquiryForm() {
 
       <div className="flex flex-col gap-1.5">
         <span className={labelClass} style={body}>
-          Technologies you're curious about{" "}
-          <span className="font-normal text-neutral-400">(optional)</span>
+          {t({ en: "Technologies you're curious about", id: "Teknologi yang ingin Anda ketahui" })}{" "}
+          <span className="font-normal text-neutral-400">{t({ en: "(optional)", id: "(opsional)" })}</span>
         </span>
         <div className="flex flex-wrap gap-2">
           {TECHNOLOGIES.map((tech) => {
@@ -672,7 +842,7 @@ function InquiryForm() {
                 }
                 style={body}
               >
-                {tech.label}
+                {techLabel(tech.label, lang)}
               </button>
             );
           })}
@@ -681,7 +851,7 @@ function InquiryForm() {
 
       <label className="flex flex-col gap-1.5">
         <span className={labelClass} style={body}>
-          Your question *
+          {t({ en: "Your question *", id: "Pertanyaan Anda *" })}
         </span>
         <textarea
           required
@@ -693,13 +863,18 @@ function InquiryForm() {
             e.target.style.height = "auto";
             e.target.style.height = `${e.target.scrollHeight}px`;
           }}
-          placeholder="Tell us what you'd like to know or build together"
+          placeholder={t({
+            en: "Tell us what you'd like to know or build together",
+            id: "Ceritakan apa yang ingin Anda ketahui atau bangun bersama kami",
+          })}
           className={`${inputClass} resize-none overflow-hidden min-h-[140px]`}
           style={body}
         />
         <span className="text-xs font-normal text-neutral-400" style={body}>
-          The box grows as you type, and you can use line breaks to organize
-          your question into paragraphs.
+          {t({
+            en: "The box grows as you type, and you can use line breaks to organize your question into paragraphs.",
+            id: "Kotak ini membesar saat Anda mengetik, dan Anda dapat menekan Enter untuk membagi pertanyaan menjadi beberapa paragraf.",
+          })}
         </span>
       </label>
 
@@ -710,8 +885,10 @@ function InquiryForm() {
           className="mt-1 w-4 h-4 accent-[#0B6477]"
         />
         <span className="text-sm font-normal text-neutral-500" style={body}>
-          I agree that smartagri may use the details above to respond to my
-          question.
+          {t({
+            en: "I agree that smartagri may use the details above to respond to my question.",
+            id: "Saya setuju smartagri menggunakan data di atas untuk menanggapi pertanyaan saya.",
+          })}
         </span>
       </label>
 
@@ -720,7 +897,7 @@ function InquiryForm() {
         className="self-start h-12 px-8 bg-[#45DFB1] rounded-2xl text-[#0B2A22] text-lg font-medium hover:bg-[#80ED99] transition-colors"
         style={body}
       >
-        Review & submit
+        {t({ en: "Review & submit", id: "Tinjau & kirim" })}
       </button>
     </form>
   );
@@ -729,6 +906,7 @@ function InquiryForm() {
 // Contact page: masthead, how an inquiry works with the map beside the
 // inquiry form (the form itself is unchanged), then the four direct channels.
 function ContactUsPage() {
+  const t = useT();
   return (
     <MotionConfig reducedMotion="user">
       <main>
@@ -745,9 +923,9 @@ function ContactUsPage() {
                   className="text-[44px] font-semibold leading-[1.0] tracking-[-0.04em] text-neutral-900 sm:text-6xl md:text-[80px]"
                   style={display}
                 >
-                  <MaskLine delay={0}>Come find us</MaskLine>
+                  <MaskLine delay={0}>{t({ en: "Come find us", id: "Temui kami" })}</MaskLine>
                   <MaskLine delay={0.12}>
-                    <span style={accent}>in the field.</span>
+                    <span style={accent}>{t({ en: "in the field.", id: "di lapangan." })}</span>
                   </MaskLine>
                 </motion.h1>
                 <motion.p
@@ -757,8 +935,10 @@ function ContactUsPage() {
                   className="max-w-[480px] text-base leading-relaxed text-neutral-600 md:text-lg"
                   style={body}
                 >
-                  Reach out to start a conversation, whether you're exploring a collaboration,
-                  piloting smartagri on your fields, or just curious about our work.
+                  {t({
+                    en: "Reach out to start a conversation, whether you're exploring a collaboration, piloting smartagri on your fields, or just curious about our work.",
+                    id: "Hubungi kami untuk memulai percakapan, baik untuk menjajaki kolaborasi, mengujicobakan smartagri di lahan Anda, maupun sekadar ingin tahu tentang karya kami.",
+                  })}
                 </motion.p>
               </div>
 
@@ -778,15 +958,16 @@ function ContactUsPage() {
                   <div className="pointer-events-none absolute -right-20 -top-20 h-[280px] w-[280px] rounded-full bg-[#14919B]/30 blur-3xl animate-wash-a" />
                   <p className={`relative flex items-center gap-2 text-[#45DFB1] ${META}`} style={body}>
                     <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
-                    How it works
+                    {t({ en: "How it works", id: "Cara kerjanya" })}
                   </p>
                   <h2 className="relative mt-4 text-3xl font-semibold leading-[1.05] tracking-[-0.03em] md:text-4xl" style={display}>
-                    From your message <span style={{ ...accent, color: "#80ED99" }}>to our team.</span>
+                    {t({ en: "From your message", id: "Dari pesan Anda" })}{" "}
+                    <span style={{ ...accent, color: "#80ED99" }}>{t({ en: "to our team.", id: "ke tim kami." })}</span>
                   </h2>
                   <ol className="relative mt-8 flex flex-col">
                     {flow.map((f, i) => (
                       <motion.li
-                        key={f.title}
+                        key={f.title.en}
                         initial={{ opacity: 0, x: -12 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true, amount: 0.6 }}
@@ -808,9 +989,9 @@ function ContactUsPage() {
                         </span>
                         <span style={body}>
                           <span className="block text-[17px] font-medium" style={display}>
-                            {f.title}
+                            {t(f.title)}
                           </span>
-                          <span className="mt-1 block text-[14px] leading-relaxed text-white/70">{f.desc}</span>
+                          <span className="mt-1 block text-[14px] leading-relaxed text-white/70">{t(f.desc)}</span>
                         </span>
                       </motion.li>
                     ))}
@@ -827,7 +1008,7 @@ function ContactUsPage() {
                   {/* Google Maps embed (keyless): Faculty of Agricultural
                       Technology UGM (-7.7687041, 110.3806344) */}
                   <iframe
-                    title="smartagri location map"
+                    title={t({ en: "smartagri location map", id: "Peta lokasi smartagri" })}
                     src="https://www.google.com/maps?q=-7.7687041,110.3806344&z=17&output=embed"
                     className="h-[300px] w-full border-0"
                     loading="lazy"
@@ -840,7 +1021,7 @@ function ContactUsPage() {
                     className="group absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-[#08313A]/85 px-4 py-2 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-[#08313A]"
                     style={body}
                   >
-                    Open in Google Maps
+                    {t({ en: "Open in Google Maps", id: "Buka di Google Maps" })}
                     <ArrowUpRight className="h-4 w-4 transition-[rotate] duration-300 group-hover:rotate-45" />
                   </a>
                 </motion.div>
@@ -869,18 +1050,21 @@ function ContactUsPage() {
                     className="text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 md:text-5xl"
                     style={display}
                   >
-                    <MaskLine delay={0}>Prefer to reach us</MaskLine>
+                    <MaskLine delay={0}>{t({ en: "Prefer to reach us", id: "Ingin menghubungi kami" })}</MaskLine>
                     <MaskLine delay={0.1}>
-                      <span style={accent}>directly?</span>
+                      <span style={accent}>{t({ en: "directly?", id: "secara langsung?" })}</span>
                     </MaskLine>
                   </motion.h2>
                   <p className="max-w-[440px] text-base leading-relaxed text-neutral-500 md:text-lg" style={body}>
-                    Email or message us, or drop by the faculty during office hours.
+                    {t({
+                      en: "Email or message us, or drop by the faculty during office hours.",
+                      id: "Kirim email atau pesan kepada kami, atau mampirlah ke fakultas pada jam kerja.",
+                    })}
                   </p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {channels.map((c, i) => (
-                    <ChannelCard key={c.label} c={c} index={i} />
+                    <ChannelCard key={c.label.en} c={c} index={i} />
                   ))}
                 </div>
               </div>
