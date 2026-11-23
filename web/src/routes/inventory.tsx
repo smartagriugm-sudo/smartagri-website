@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import {
   ArrowDown,
@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   Loader2,
   Microscope,
+  Plus,
   RotateCcw,
   Rows3,
   Search,
@@ -21,13 +22,52 @@ import AmbientWash from "../components/AmbientWash";
 import AuthGate from "../components/AuthGate";
 import { EASE, MaskLine, META } from "../components/NoteParts";
 import { supabase } from "../lib/auth/supabase";
+import { useAuth } from "../lib/auth/auth";
+import InstrumentForm from "../components/inventory/InstrumentForm";
+import Supporters from "../components/inventory/Supporters";
 import {
   INSTRUMENT_STATUSES,
   type Instrument,
   type InstrumentStatus,
+  type UsageLog,
   formatIDR,
+  overdueDays,
   statusMeta,
 } from "../lib/inventory";
+
+type OpenLog = Pick<UsageLog, "instrument_id" | "status" | "expected_return" | "checkout_at" | "borrower_name">;
+
+// Who has it and until when, or how many bookings are waiting, under the
+// status chip.
+function LoanNote({ logs, now }: { logs: OpenLog[] | undefined; now: Date }) {
+  if (!logs?.length) return null;
+  const out = logs.find((l) => l.status === "ongoing");
+  const booked = logs.filter((l) => l.status === "booked").length;
+  const late = out ? overdueDays(out, now) : 0;
+  const parts: ReactNode[] = [];
+  if (out) {
+    parts.push(
+      late ? (
+        <span key="out" className="font-medium text-[#B42318]">
+          {late} d overdue · {out.borrower_name}
+        </span>
+      ) : (
+        <span key="out">
+          {out.expected_return
+            ? `Due ${new Date(out.expected_return).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
+            : "Out"}{" "}
+          · {out.borrower_name}
+        </span>
+      ),
+    );
+  }
+  if (booked) parts.push(<span key="booked">{booked} booked</span>);
+  return (
+    <span className="mt-1 flex flex-col gap-0.5 text-[12px] leading-snug text-neutral-500" style={body}>
+      {parts}
+    </span>
+  );
+}
 
 export const Route = createFileRoute("/inventory")({
   component: InventoryPage,
@@ -205,6 +245,12 @@ function InventoryPage() {
 }
 
 function InventoryContent() {
+  const { account } = useAuth();
+  const isAdmin = !!account?.isAdmin;
+  const navigate = useNavigate();
+  const [adding, setAdding] = useState(false);
+  const [openLogs, setOpenLogs] = useState<Map<string, OpenLog[]>>(new Map());
+  const now = useMemo(() => new Date(), []);
   const [rows, setRows] = useState<Instrument[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -240,6 +286,19 @@ function InventoryContent() {
           setRows((data ?? []) as Instrument[]);
         }
         setLoading(false);
+      });
+    // Open loans and bookings, for the due dates on the list. A failure only
+    // hides those notes.
+    supabase
+      .from("usage_logs")
+      .select("instrument_id, status, expected_return, checkout_at, borrower_name")
+      .in("status", ["ongoing", "booked"])
+      .neq("log_type", "check")
+      .then(({ data }) => {
+        if (!active || !data) return;
+        const m = new Map<string, OpenLog[]>();
+        for (const l of data as OpenLog[]) m.set(l.instrument_id, [...(m.get(l.instrument_id) ?? []), l]);
+        setOpenLogs(m);
       });
     return () => {
       active = false;
@@ -330,6 +389,18 @@ function InventoryContent() {
 
   return (
     <>
+      {isAdmin && (
+        <InstrumentForm
+          open={adding}
+          instrument={null}
+          all={rows ?? []}
+          onClose={() => setAdding(false)}
+          onSaved={(slug) => {
+            setAdding(false);
+            navigate({ to: "/inventory/$slug", params: { slug } });
+          }}
+        />
+      )}
       {/* Masthead */}
       <section className="mx-auto max-w-[1360px] px-6 pt-12 md:px-12 md:pt-16">
         <div className="grid gap-10 lg:grid-cols-12 lg:items-end">
@@ -342,7 +413,7 @@ function InventoryContent() {
               style={body}
             >
               <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
-              PUAPT · WGFS
+              PUAPT UGM · WGFS 1.2
             </motion.p>
             <motion.h1
               initial="hidden"
@@ -364,15 +435,26 @@ function InventoryContent() {
               className="text-base leading-relaxed text-neutral-600 md:text-lg"
               style={body}
             >
-              Every PUAPT research instrument with its status and rates. Open one to see its details,
-              check it out, return it, or log an inspection.
+              Every PUAPT UGM research instrument run by WGFS 1.2 Precision Agriculture and Smart Farming,
+              with its status and rates. Open one to book it, check it out, return it, or log an inspection.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
-              className="mt-6"
+              className="mt-6 flex flex-wrap gap-3"
             >
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setAdding(true)}
+                  className="inline-flex h-12 items-center gap-2 rounded-lg bg-[#45DFB1] px-6 text-sm font-medium text-[#0B2A22] transition-colors hover:bg-[#80ED99]"
+                  style={body}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add instrument
+                </button>
+              )}
               <Link
                 to="/inventory/stats"
                 className="group inline-flex h-12 items-center gap-3 rounded-lg bg-[#08313A] px-6 text-sm font-medium uppercase tracking-[0.08em] text-white transition-colors hover:bg-[#0B6477]"
@@ -386,8 +468,17 @@ function InventoryContent() {
           </div>
         </div>
 
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.42, duration: 0.6, ease: EASE }}
+          className="mt-10"
+        >
+          <Supporters />
+        </motion.div>
+
         {/* Figures: click to filter */}
-        <div className="mt-12 grid grid-cols-2 gap-px overflow-clip rounded-[24px] border border-[#0B6477]/12 bg-[#0B6477]/12 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-px overflow-clip rounded-[24px] border border-[#0B6477]/12 bg-[#0B6477]/12 lg:grid-cols-4">
           {figures.map((f, i) => {
             const on = status === f.filter && (f.filter !== "All" || !filtersOn);
             return (
@@ -637,6 +728,7 @@ function InventoryContent() {
                         <span className="mt-auto flex items-end justify-between gap-3 pt-4">
                           <span className="text-[13px] text-neutral-500" style={body}>
                             {r.lab}
+                            <LoanNote logs={openLogs.get(r.id)} now={now} />
                           </span>
                           <span className="text-right text-sm font-medium text-neutral-900" style={body}>
                             {formatIDR(rateOf(r))}
@@ -728,6 +820,7 @@ function InventoryContent() {
                               {/* Phones: status and rate under the name. */}
                               <span className="mt-2 flex flex-wrap items-center gap-2 md:hidden">
                                 <StatusChip r={r} />
+                                <LoanNote logs={openLogs.get(r.id)} now={now} />
                                 <span className="text-[13px] text-neutral-700" style={body}>
                                   {formatIDR(rateOf(r))}
                                   {r.unit && <span className="text-neutral-400"> {r.unit}</span>}
@@ -740,6 +833,7 @@ function InventoryContent() {
                           </span>
                           <span className="hidden md:block">
                             <StatusChip r={r} />
+                            <LoanNote logs={openLogs.get(r.id)} now={now} />
                           </span>
                           <span className="hidden text-right text-sm text-neutral-800 md:block" style={body}>
                             {formatIDR(rateOf(r))}

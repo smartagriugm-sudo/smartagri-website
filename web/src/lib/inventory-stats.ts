@@ -93,9 +93,11 @@ export const isBorrow = (l: UsageLog) => l.log_type !== "check";
 
 export function computeInventoryStats(
   instruments: Instrument[],
-  logs: UsageLog[],
+  allLogs: UsageLog[],
   now: Date,
 ): InventoryStats {
+  // Bookings that have not started and cancelled ones are plans, not use.
+  const logs = allLogs.filter((l) => l.status !== "booked" && l.status !== "cancelled");
   const byId = new Map(instruments.map((i) => [i.id, i]));
   const nameOf = (id: string) => byId.get(id)?.name ?? "Unknown instrument";
   const slugOf = (id: string) => byId.get(id)?.slug ?? "";
