@@ -11,6 +11,7 @@ import {
 import { ArrowRight, ArrowUpRight, FlaskConical, Sprout, Users } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import { MaskLine } from "./NoteParts";
+import { useT, type Bi } from "../lib/i18n";
 
 // Closing call to action: a dark card with the invitation on the left and a
 // living field illustration on the right that tells "sense. analyze. grow.":
@@ -26,10 +27,10 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 
 type Focus = "research" | "pilot" | "team" | null;
 
-const PATHS: { key: Exclude<Focus, null>; icon: typeof Sprout; label: string; to: string; hash?: string }[] = [
-  { key: "research", icon: FlaskConical, label: "Partner on research", to: "/research" },
-  { key: "pilot", icon: Sprout, label: "Pilot on your fields", to: "/contact-us", hash: "inquiry" },
-  { key: "team", icon: Users, label: "Join the team", to: "/team" },
+const PATHS: { key: Exclude<Focus, null>; icon: typeof Sprout; label: Bi; to: string; hash?: string }[] = [
+  { key: "research", icon: FlaskConical, label: { en: "Partner on research", id: "Bermitra dalam riset" }, to: "/research" },
+  { key: "pilot", icon: Sprout, label: { en: "Pilot on your fields", id: "Uji coba di lahan Anda" }, to: "/contact-us", hash: "inquiry" },
+  { key: "team", icon: Users, label: { en: "Join the team", id: "Bergabung dengan tim" }, to: "/team" },
 ];
 
 // Field geometry: rows run from the horizon (y 262) to the front edge (y 420).
@@ -70,8 +71,12 @@ function Layer({
 
 function Illustration({ focus, mx, my }: { focus: Focus; mx: MotionValue<number>; my: MotionValue<number> }) {
   const dim = (part: Exclude<Focus, null>) => focus !== null && focus !== part;
+  const t = useT();
   return (
-    <svg viewBox="0 0 560 440" className="h-auto w-full" role="img" aria-label="A smart field: growing plants, a sensor station, a drone and a live dashboard">
+    <svg viewBox="0 0 560 440" className="h-auto w-full" role="img" aria-label={t({
+        en: "A smart field: growing plants, a sensor station, a drone and a live dashboard",
+        id: "Lahan cerdas: tanaman yang tumbuh, stasiun sensor, drone, dan dashboard langsung",
+      })}>
       <defs>
         <linearGradient id="cta-ground" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#14919B" stopOpacity="0.05" />
@@ -230,6 +235,7 @@ function Illustration({ focus, mx, my }: { focus: Focus; mx: MotionValue<number>
 
 export default function CallToAction() {
   const [focus, setFocus] = useState<Focus>(null);
+  const t = useT();
   // Pointer position over the card, -1..1 on each axis, eased.
   const rawX = useMotionValue(0);
   const rawY = useMotionValue(0);
@@ -272,9 +278,12 @@ export default function CallToAction() {
                 className="text-4xl font-semibold leading-[1.04] tracking-[-0.035em] text-white sm:text-5xl md:text-[58px]"
                 style={display}
               >
-                <MaskLine delay={0.1}>Let's grow the future</MaskLine>
+                <MaskLine delay={0.1}>
+                  {t({ en: "Let's grow the future", id: "Mari tumbuhkan masa depan" })}
+                </MaskLine>
                 <MaskLine delay={0.22}>
-                  of farming <span style={{ ...accent, color: GREEN }}>together.</span>
+                  {t({ en: "of farming", id: "pertanian" })}{" "}
+                  <span style={{ ...accent, color: GREEN }}>{t({ en: "together.", id: "bersama." })}</span>
                 </MaskLine>
               </motion.h2>
               <motion.p
@@ -285,8 +294,10 @@ export default function CallToAction() {
                 className="max-w-[520px] text-base leading-relaxed text-white/75 md:text-lg"
                 style={body}
               >
-                Partner with our researchers, pilot smartagri on your fields, or join the team
-                building data-driven agriculture.
+                {t({
+                  en: "Partner with our researchers, pilot smartagri on your fields, or join the team building data-driven agriculture.",
+                  id: "Bermitra dengan peneliti kami, uji coba smartagri di lahan Anda, atau bergabung dengan tim yang membangun pertanian berbasis data.",
+                })}
               </motion.p>
 
               {/* Three ways in; hovering one lights its part of the scene. */}
@@ -310,7 +321,7 @@ export default function CallToAction() {
                       style={body}
                     >
                       <p.icon className="h-4 w-4 text-[#45DFB1]" />
-                      {p.label}
+                      {t(p.label)}
                       <ArrowUpRight className="h-3.5 w-3.5 text-white/50 transition-[rotate,color] duration-300 group-hover:rotate-45 group-hover:text-[#45DFB1]" />
                     </Link>
                   </li>
@@ -330,7 +341,7 @@ export default function CallToAction() {
                   className="group inline-flex h-12 items-center gap-3 rounded-lg bg-[#45DFB1] px-6 text-sm font-medium uppercase tracking-[0.08em] text-[#0B2A22] shadow-lg transition-colors hover:bg-[#80ED99] md:h-14 md:px-7 md:text-[15px]"
                   style={body}
                 >
-                  Start a project
+                  {t({ en: "Start a project", id: "Mulai proyek" })}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <Link
@@ -338,7 +349,7 @@ export default function CallToAction() {
                   className="group inline-flex items-center gap-2 border-b border-white/40 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-white transition-colors hover:border-[#45DFB1] md:text-[15px]"
                   style={body}
                 >
-                  Explore partnerships
+                  {t({ en: "Explore partnerships", id: "Jelajahi kemitraan" })}
                   <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                 </Link>
               </motion.div>

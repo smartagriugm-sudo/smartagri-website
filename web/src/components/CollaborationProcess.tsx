@@ -18,6 +18,7 @@ import {
 import { accent, body, display } from "../lib/fonts";
 import { MaskLine } from "./NoteParts";
 import PartnerGrid from "./PartnerGrid";
+import { useT, type Bi } from "../lib/i18n";
 
 // "Our collaboration process": six steps from first contact to a working,
 // supported deployment, in smartagri's voice. TODO: team to review the copy.
@@ -36,14 +37,17 @@ const rest = { x: 0, y: 0, rotate: 0, scale: 1, transition: { duration: 0.3 } };
 
 const steps: {
   icon: typeof Search;
-  title: string;
-  desc: string;
+  title: Bi;
+  desc: Bi;
   motion: Variants;
 }[] = [
   {
     icon: Search,
-    title: "Inquiry & Assessment",
-    desc: "You reach out and tell us about your land, crop, or challenge. We review your goals and field conditions to see how we can help.",
+    title: { en: "Inquiry & Assessment", id: "Konsultasi & Asesmen" },
+    desc: {
+      en: "You reach out and tell us about your land, crop, or challenge. We review your goals and field conditions to see how we can help.",
+      id: "Anda menghubungi kami dan menceritakan lahan, komoditas, atau tantangan yang dihadapi. Kami meninjau tujuan dan kondisi lahan Anda untuk melihat bagaimana kami dapat membantu.",
+    },
     // Magnifier sweeping across, looking around.
     motion: {
       show: rest,
@@ -52,8 +56,11 @@ const steps: {
   },
   {
     icon: ClipboardList,
-    title: "Field Scoping & Blueprint",
-    desc: "Our researchers study your context, gather technical requirements, and shape an approach tailored to your crop, climate, and scale.",
+    title: { en: "Field Scoping & Blueprint", id: "Survei Lahan & Rancangan" },
+    desc: {
+      en: "Our researchers study your context, gather technical requirements, and shape an approach tailored to your crop, climate, and scale.",
+      id: "Peneliti kami mempelajari konteks Anda, menghimpun kebutuhan teknis, dan menyusun pendekatan yang sesuai dengan komoditas, iklim, dan skala usaha Anda.",
+    },
     // Clipboard being checked off: a small hop.
     motion: {
       show: rest,
@@ -62,8 +69,11 @@ const steps: {
   },
   {
     icon: FileText,
-    title: "Proposal & Agreement",
-    desc: "We share a clear plan covering timeline, technology, resources, and key milestones, so everyone knows what to expect.",
+    title: { en: "Proposal & Agreement", id: "Proposal & Kesepakatan" },
+    desc: {
+      en: "We share a clear plan covering timeline, technology, resources, and key milestones, so everyone knows what to expect.",
+      id: "Kami menyampaikan rencana yang jelas, mencakup jadwal, teknologi, sumber daya, dan tonggak capaian utama, sehingga semua pihak tahu apa yang akan dikerjakan.",
+    },
     // Page turning over.
     motion: {
       show: rest,
@@ -76,8 +86,11 @@ const steps: {
   },
   {
     icon: FlaskConical,
-    title: "Deployment & Trial",
-    desc: "Our team installs sensors, flies drones, or runs models on your plots, testing under real field conditions with open communication.",
+    title: { en: "Deployment & Trial", id: "Penerapan & Uji Coba" },
+    desc: {
+      en: "Our team installs sensors, flies drones, or runs models on your plots, testing under real field conditions with open communication.",
+      id: "Tim kami memasang sensor, menerbangkan drone, atau menjalankan model di petak lahan Anda, lalu mengujinya dalam kondisi lapangan nyata dengan komunikasi yang terbuka.",
+    },
     // Flask being swirled.
     motion: {
       show: rest,
@@ -86,8 +99,11 @@ const steps: {
   },
   {
     icon: GraduationCap,
-    title: "Handover & Training",
-    desc: "We hand over the working system with documentation and train your team to run it confidently, season after season.",
+    title: { en: "Handover & Training", id: "Serah Terima & Pelatihan" },
+    desc: {
+      en: "We hand over the working system with documentation and train your team to run it confidently, season after season.",
+      id: "Kami menyerahkan sistem yang siap pakai beserta dokumentasinya, dan melatih tim Anda agar dapat mengoperasikannya dengan percaya diri dari musim ke musim.",
+    },
     // Cap tossed in the air.
     motion: {
       show: rest,
@@ -96,8 +112,11 @@ const steps: {
   },
   {
     icon: LineChart,
-    title: "Review & Support",
-    desc: "We measure results against your goals and stay on to maintain, support, and keep improving the system over time.",
+    title: { en: "Review & Support", id: "Evaluasi & Pendampingan" },
+    desc: {
+      en: "We measure results against your goals and stay on to maintain, support, and keep improving the system over time.",
+      id: "Kami mengukur hasil terhadap tujuan Anda dan terus mendampingi untuk merawat, mendukung, serta menyempurnakan sistem dari waktu ke waktu.",
+    },
     // Chart climbing.
     motion: {
       show: rest,
@@ -178,6 +197,7 @@ function connectorPath(boxes: Box[]) {
 }
 
 export default function CollaborationProcess() {
+  const t = useT();
   const section = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLDivElement>(null);
   const cards = useRef<(HTMLDivElement | null)[]>([]);
@@ -288,9 +308,11 @@ export default function CollaborationProcess() {
               className="text-4xl font-semibold leading-[1.02] tracking-[-0.035em] text-neutral-900 sm:text-5xl md:text-[64px]"
               style={display}
             >
-              <MaskLine delay={0}>From first hello</MaskLine>
+              <MaskLine delay={0}>
+                {t({ en: "From first hello", id: "Dari sapaan pertama" })}
+              </MaskLine>
               <MaskLine delay={0.12}>
-                <span style={accent}>to field results.</span>
+                <span style={accent}>{t({ en: "to field results.", id: "hingga hasil di lahan." })}</span>
               </MaskLine>
             </motion.h2>
             <motion.p
@@ -301,8 +323,10 @@ export default function CollaborationProcess() {
               className="max-w-[460px] text-base leading-relaxed text-neutral-500 md:text-lg"
               style={body}
             >
-              How a collaboration with smartagri runs, in six steps, from your
-              first message to a system your team runs with confidence.
+              {t({
+                en: "How a collaboration with smartagri runs, in six steps, from your first message to a system your team runs with confidence.",
+                id: "Begini kolaborasi dengan smartagri berjalan, dalam enam langkah, dari pesan pertama Anda hingga sistem yang dijalankan tim Anda dengan percaya diri.",
+              })}
             </motion.p>
           </div>
 
@@ -351,7 +375,7 @@ export default function CollaborationProcess() {
               const on = i <= reached;
               return (
                 <motion.div
-                  key={step.title}
+                  key={step.title.en}
                   ref={(el) => {
                     cards.current[i] = el;
                   }}
@@ -402,19 +426,19 @@ export default function CollaborationProcess() {
                     className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#14919B] transition-colors duration-300 group-hover:text-[#45DFB1]"
                     style={body}
                   >
-                    Step {i + 1}
+                    {t({ en: "Step", id: "Langkah" })} {i + 1}
                   </div>
                   <h3
                     className="-mt-2 text-xl font-medium leading-snug text-neutral-900 transition-colors duration-300 group-hover:text-white md:text-2xl"
                     style={display}
                   >
-                    {step.title}
+                    {t(step.title)}
                   </h3>
                   <p
                     className="text-sm leading-relaxed text-neutral-500 transition-colors duration-300 group-hover:text-white/70 md:text-base"
                     style={body}
                   >
-                    {step.desc}
+                    {t(step.desc)}
                   </p>
                 </motion.div>
               );
@@ -459,9 +483,11 @@ export default function CollaborationProcess() {
                 className="text-4xl font-semibold leading-[1.02] tracking-[-0.035em] text-neutral-900 sm:text-5xl md:text-[64px]"
                 style={display}
               >
-                <MaskLine delay={0}>In collaboration</MaskLine>
+                <MaskLine delay={0}>
+                  {t({ en: "In collaboration", id: "Berkolaborasi" })}
+                </MaskLine>
                 <MaskLine delay={0.12}>
-                  <span style={accent}>with leading partners.</span>
+                  <span style={accent}>{t({ en: "with leading partners.", id: "dengan mitra terkemuka." })}</span>
                 </MaskLine>
               </motion.h3>
               <motion.p
@@ -472,8 +498,10 @@ export default function CollaborationProcess() {
                 className="max-w-[460px] text-base leading-relaxed text-neutral-500 md:text-lg"
                 style={body}
               >
-                Universities, ministries, government institutions, industry and farmer groups
-                we research, build and deploy with, at home and abroad.
+                {t({
+                  en: "Universities, ministries, government institutions, industry and farmer groups we research, build and deploy with, at home and abroad.",
+                  id: "Universitas, kementerian, lembaga pemerintah, industri, dan kelompok tani yang bersama kami meriset, membangun, dan menerapkan teknologi, di dalam maupun luar negeri.",
+                })}
               </motion.p>
             </div>
             <PartnerGrid />

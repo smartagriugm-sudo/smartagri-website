@@ -12,7 +12,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
-import { findMember, publicationsFor, TEAM } from "../lib/team";
+import { findMember, localizeMember, publicationsFor, TEAM, teamCategoryLabel } from "../lib/team";
+import { headLang, useLang, useT } from "../lib/i18n";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import AmbientWash from "../components/AmbientWash";
@@ -23,19 +24,23 @@ import { EASE, MaskLine, META } from "../components/NoteParts";
 export const Route = createFileRoute("/team_/$slug")({
   component: MemberPage,
   loader: ({ params }) => findMember(params.slug),
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.name ?? "Team"} | smartagri` },
-      ...(loaderData
-        ? [
-            {
-              name: "description",
-              content: `${loaderData.fullName}, ${loaderData.role}, Smart Agriculture Research Center UGM.`,
-            },
-          ]
-        : []),
-    ],
-  }),
+  head: ({ loaderData, matches }) => {
+    const l = headLang(matches);
+    const m = loaderData ? localizeMember(loaderData, l) : undefined;
+    return {
+      meta: [
+        { title: `${m?.name ?? (l === "id" ? "Tim" : "Team")} | smartagri` },
+        ...(m
+          ? [
+              {
+                name: "description",
+                content: `${m.fullName}, ${m.role}, Smart Agriculture Research Center UGM.`,
+              },
+            ]
+          : []),
+      ],
+    };
+  },
 });
 
 // One member: back / next links, a sticky portrait with the profile links,
@@ -61,7 +66,10 @@ function SectionLabel({ icon: Icon, children }: { icon: typeof Sparkles; childre
 }
 
 function MemberPage() {
-  const member = Route.useLoaderData();
+  const raw = Route.useLoaderData();
+  const lang = useLang();
+  const t = useT();
+  const member = raw ? localizeMember(raw, lang) : raw;
 
   if (!member) {
     return (
@@ -70,14 +78,14 @@ function MemberPage() {
         <section className="bg-[#F3F7F6]">
           <div className="max-w-[760px] mx-auto px-6 py-24 text-center flex flex-col items-center gap-4">
             <h1 className="text-3xl md:text-4xl font-semibold text-neutral-900" style={display}>
-              Member not found
+              {t({ en: "Member not found", id: "Anggota tidak ditemukan" })}
             </h1>
             <Link
               to="/team"
               className="px-7 py-3 rounded-2xl border border-[#0B6477] text-[#0B6477] font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
               style={body}
             >
-              Back to Team
+              {t({ en: "Back to Team", id: "Kembali ke Tim" })}
             </Link>
           </div>
         </section>
@@ -93,7 +101,7 @@ function MemberPage() {
 
   const links = [
     member.email && { href: `mailto:${member.email}`, label: "Email", icon: Mail, primary: true, external: false },
-    member.acadstaff && { href: member.acadstaff, label: "Academic Staff", icon: GraduationCap, external: true },
+    member.acadstaff && { href: member.acadstaff, label: t({ en: "Academic Staff", id: "Profil Dosen UGM" }), icon: GraduationCap, external: true },
     member.scholar && { href: member.scholar, label: "Google Scholar", icon: BookOpen, external: true },
     member.linkedin && { href: member.linkedin, label: "LinkedIn", icon: Linkedin, external: true },
   ].filter(Boolean) as { href: string; label: string; icon: typeof Mail; primary?: boolean; external: boolean }[];
@@ -113,7 +121,7 @@ function MemberPage() {
                 style={body}
               >
                 <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
-                All members
+                {t({ en: "All members", id: "Semua anggota" })}
               </Link>
               <Link
                 to="/team/$slug"
@@ -122,7 +130,7 @@ function MemberPage() {
                 style={body}
               >
                 <span>
-                  <span className="hidden sm:inline">Next: </span>
+                  <span className="hidden sm:inline">{t({ en: "Next: ", id: "Berikutnya: " })}</span>
                   {next.name}
                 </span>
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -199,11 +207,11 @@ function MemberPage() {
                   className="flex flex-wrap gap-2"
                 >
                   <span className={`rounded-full bg-[#08313A] px-3 py-1 text-[#45DFB1] ${META}`} style={body}>
-                    {member.category}
+                    {teamCategoryLabel(member.category, lang)}
                   </span>
                   {member.coordinator && (
                     <span className={`rounded-full bg-[#45DFB1] px-3 py-1 text-[#0B2A22] ${META}`} style={body}>
-                      Research group coordinator
+                      {t({ en: "Research group coordinator", id: "Koordinator kelompok riset" })}
                     </span>
                   )}
                 </motion.div>
@@ -239,7 +247,7 @@ function MemberPage() {
 
                 <div className="mt-12 grid gap-6 md:grid-cols-2">
                   <motion.div {...fadeUp()} className="rounded-[24px] border border-[#0B6477]/10 bg-white/90 p-6 md:p-7">
-                    <SectionLabel icon={Sparkles}>Expertise</SectionLabel>
+                    <SectionLabel icon={Sparkles}>{t({ en: "Expertise", id: "Keahlian" })}</SectionLabel>
                     <motion.ul
                       initial="hidden"
                       whileInView="show"
@@ -260,7 +268,7 @@ function MemberPage() {
                     </motion.ul>
                   </motion.div>
                   <motion.div {...fadeUp(0.1)} className="rounded-[24px] border border-[#0B6477]/10 bg-white/90 p-6 md:p-7">
-                    <SectionLabel icon={FlaskConical}>Current research & projects</SectionLabel>
+                    <SectionLabel icon={FlaskConical}>{t({ en: "Current research & projects", id: "Riset & proyek berjalan" })}</SectionLabel>
                     <motion.ul
                       initial="hidden"
                       whileInView="show"
@@ -286,9 +294,12 @@ function MemberPage() {
                 {papers.length > 0 && (
                   <div className="mt-12">
                     <div className="mb-3 flex items-end justify-between gap-4">
-                      <SectionLabel icon={BookOpen}>Selected publications</SectionLabel>
+                      <SectionLabel icon={BookOpen}>{t({ en: "Selected publications", id: "Publikasi pilihan" })}</SectionLabel>
                       <span className={`mb-4 text-neutral-400 ${META}`} style={body}>
-                        {Math.min(SHOWN_PAPERS, papers.length)} of {papers.length}, newest first
+                        {t({
+                          en: `${Math.min(SHOWN_PAPERS, papers.length)} of ${papers.length}, newest first`,
+                          id: `${Math.min(SHOWN_PAPERS, papers.length)} dari ${papers.length}, terbaru lebih dulu`,
+                        })}
                       </span>
                     </div>
                     <ol>
@@ -310,7 +321,7 @@ function MemberPage() {
                                 {pub.title}
                               </span>
                               <span className="mt-1 block truncate text-sm text-neutral-500" style={body}>
-                                {[pub.venue, pub.citations ? `Cited by ${pub.citations}` : ""].filter(Boolean).join(" · ")}
+                                {[pub.venue, pub.citations ? t({ en: `Cited by ${pub.citations}`, id: `Dikutip ${pub.citations} kali` }) : ""].filter(Boolean).join(" · ")}
                               </span>
                             </span>
                             <span className="hidden h-10 w-10 place-items-center justify-self-end rounded-lg border border-[#0B6477]/25 text-[#0B6477] transition-colors duration-300 group-hover:border-[#08313A] group-hover:bg-[#08313A] group-hover:text-[#45DFB1] md:grid">
@@ -326,7 +337,7 @@ function MemberPage() {
                         className="group mt-6 inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                         style={body}
                       >
-                        All publications
+                        {t({ en: "All publications", id: "Semua publikasi" })}
                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </Link>
                     )}
@@ -341,16 +352,16 @@ function MemberPage() {
                 <div className="mx-auto max-w-[1200px] px-6 py-20 md:px-12 md:py-24">
                   <div className="mb-10 flex items-end justify-between gap-6">
                     <h2 className="text-4xl font-semibold leading-[1.02] tracking-[-0.035em] text-neutral-900 md:text-5xl" style={display}>
-                      More from
+                      {t({ en: "More from", id: "Anggota tim" })}
                       <br />
-                      <span style={accent}>the team.</span>
+                      <span style={accent}>{t({ en: "the team.", id: "lainnya." })}</span>
                     </h2>
                     <Link
                       to="/team"
                       className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                       style={body}
                     >
-                      All members
+                      {t({ en: "All members", id: "Semua anggota" })}
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </div>

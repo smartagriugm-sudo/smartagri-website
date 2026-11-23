@@ -1,4 +1,5 @@
 import { supabase } from "./auth/supabase";
+import type { Lang } from "./i18n-core";
 
 // Exhibition guest book. Entries are written by anonymous booth visitors on
 // /guestbook (RLS allows anon INSERT) and read back only by signed-in team
@@ -22,6 +23,21 @@ export const GUEST_ROLES: GuestRole[] = [
   "Other",
 ];
 
+// Roles are stored in English (they are the values in the table); this is
+// only how a role reads on screen.
+const GUEST_ROLE_ID: Record<GuestRole, string> = {
+  Student: "Mahasiswa / Pelajar",
+  "Lecturer / Researcher": "Dosen / Peneliti",
+  "Farmer / Practitioner": "Petani / Praktisi",
+  "Industry / Private": "Industri / Swasta",
+  Government: "Pemerintah",
+  Other: "Lainnya",
+};
+
+export function guestRoleLabel(role: string, lang: Lang): string {
+  return lang === "id" ? (GUEST_ROLE_ID[role as GuestRole] ?? role) : role;
+}
+
 export interface GuestbookInput {
   name: string;
   institution?: string;
@@ -41,8 +57,15 @@ export const guestbookEnabled = () => supabase !== null;
 /** Insert one signed entry. Trims values and drops empties to null. */
 export async function submitGuestbook(
   input: GuestbookInput,
+  lang: Lang = "en",
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (!supabase) return { ok: false, error: "Guest book storage is not configured." };
+  const id = lang === "id";
+  if (!supabase) {
+    return {
+      ok: false,
+      error: id ? "Penyimpanan buku tamu belum dikonfigurasi." : "Guest book storage is not configured.",
+    };
+  }
 
   const clean = (v?: string) => {
     const t = (v ?? "").trim();
@@ -50,7 +73,7 @@ export async function submitGuestbook(
   };
 
   const name = clean(input.name);
-  if (!name) return { ok: false, error: "Name is required." };
+  if (!name) return { ok: false, error: id ? "Nama wajib diisi." : "Name is required." };
 
   const { error } = await supabase.from("guestbook_entries").insert({
     name,
@@ -60,7 +83,12 @@ export async function submitGuestbook(
     whatsapp: clean(input.whatsapp),
   });
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    return {
+      ok: false,
+      error: id ? `Data belum tersimpan. Silakan coba lagi (${error.message}).` : error.message,
+    };
+  }
   return { ok: true };
 }
 

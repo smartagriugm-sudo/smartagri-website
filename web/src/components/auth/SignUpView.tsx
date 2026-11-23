@@ -8,33 +8,49 @@ import { confirmRedirectUrl } from '../../lib/auth/redirects'
 import { AGROSPHERE_HOME, AGROSPHERE_SIGNUP } from '../../lib/agrosphere'
 import ResendConfirmation from '../ResendConfirmation'
 import AuthShell, { AUTH_BUTTON, AuthInput, type AuthBrand } from '../AuthShell'
+import { useLang, useT } from '../../lib/i18n'
+import { authErrorText } from './authErrors'
 
 // The sign-up form for both brands: /sign-up (smartagri, for lab members) and
 // /agrosphere/sign-up (for partners). Both create the same kind of account, which a
 // lab admin approves; an agrosphere account is marked so onboarding suggests Partner.
 const COPY = {
   smartagri: {
-    title: 'Join the',
-    accentWord: 'lab',
-    subtitle: 'Create a SmartAgri account. A lab admin approves new accounts before the internal tools open.',
-    namePlaceholder: 'As on your student or staff card',
-    emailPlaceholder: 'you@ugm.ac.id',
-    afterConfirm: 'After confirming you complete your profile, then a lab admin approves the account.',
+    title: { en: 'Join the', id: 'Bergabung dengan' },
+    accentWord: { en: 'lab', id: 'lab' },
+    subtitle: {
+      en: 'Create a SmartAgri account. A lab admin approves new accounts before the internal tools open.',
+      id: 'Buat akun SmartAgri. Admin lab menyetujui setiap akun baru sebelum fitur internal dapat dibuka.',
+    },
+    namePlaceholder: { en: 'As on your student or staff card', id: 'Sesuai kartu mahasiswa atau kartu pegawai' },
+    emailPlaceholder: { en: 'you@ugm.ac.id', id: 'anda@ugm.ac.id' },
+    afterConfirm: {
+      en: 'After confirming you complete your profile, then a lab admin approves the account.',
+      id: 'Setelah konfirmasi, Anda melengkapi profil, lalu admin lab menyetujui akun Anda.',
+    },
     home: DEFAULT_SIGNED_IN_PATH,
   },
   agrosphere: {
-    title: 'Request',
-    accentWord: 'access',
-    subtitle: 'Create a partner account. A smartagri admin approves it and chooses which dashboards it can open.',
-    namePlaceholder: 'Your full name',
-    emailPlaceholder: 'you@company.com',
-    afterConfirm: 'After confirming you complete your profile, then a smartagri admin approves the account and gives it access.',
+    title: { en: 'Request', id: 'Ajukan' },
+    accentWord: { en: 'access', id: 'akses' },
+    subtitle: {
+      en: 'Create a partner account. A smartagri admin approves it and chooses which dashboards it can open.',
+      id: 'Buat akun mitra. Admin smartagri akan menyetujuinya dan memilih dashboard yang dapat dibuka.',
+    },
+    namePlaceholder: { en: 'Your full name', id: 'Nama lengkap Anda' },
+    emailPlaceholder: { en: 'you@company.com', id: 'anda@perusahaan.com' },
+    afterConfirm: {
+      en: 'After confirming you complete your profile, then a smartagri admin approves the account and gives it access.',
+      id: 'Setelah konfirmasi, Anda melengkapi profil, lalu admin smartagri menyetujui akun Anda dan memberinya akses.',
+    },
     home: AGROSPHERE_HOME,
   },
 } as const
 
 export default function SignUpView({ brand, redirect }: { brand: AuthBrand; redirect?: string }) {
   const copy = COPY[brand]
+  const lang = useLang()
+  const t = useT()
   const { user, loading } = useAuth()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -53,23 +69,28 @@ export default function SignUpView({ brand, redirect }: { brand: AuthBrand; redi
 
   const handleSubmit = async () => {
     if (!supabase) {
-      setError('Authentication is not configured yet.')
+      setError(t({ en: 'Authentication is not configured yet.', id: 'Autentikasi belum dikonfigurasi.' }))
       return
     }
     if (fullName.trim().length < 3) {
-      setError('Enter your full name.')
+      setError(t({ en: 'Enter your full name.', id: 'Isi nama lengkap Anda.' }))
       return
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+      setError(t({ en: 'Password must be at least 8 characters.', id: 'Kata sandi minimal 8 karakter.' }))
       return
     }
     if (password !== confirm) {
-      setError('Passwords do not match.')
+      setError(t({ en: 'Passwords do not match.', id: 'Kata sandi tidak cocok.' }))
       return
     }
     if (!agreed) {
-      setError('Please accept the Terms of Use and Privacy Policy.')
+      setError(
+        t({
+          en: 'Please accept the Terms of Use and Privacy Policy.',
+          id: 'Silakan setujui Ketentuan Penggunaan dan Kebijakan Privasi.',
+        }),
+      )
       return
     }
     setSubmitting(true)
@@ -88,7 +109,7 @@ export default function SignUpView({ brand, redirect }: { brand: AuthBrand; redi
     })
     setSubmitting(false)
     if (signUpError) {
-      setError(signUpError.message)
+      setError(authErrorText(signUpError.message, lang))
       return
     }
     // If email confirmation is on, there is no session yet.
@@ -102,25 +123,28 @@ export default function SignUpView({ brand, redirect }: { brand: AuthBrand; redi
   return (
     <AuthShell
       brand={brand}
-      title={copy.title}
-      accentWord={copy.accentWord}
-      subtitle={copy.subtitle}
+      title={t(copy.title)}
+      accentWord={t(copy.accentWord)}
+      subtitle={t(copy.subtitle)}
       footer={
         <p>
-          Already have an account?{' '}
+          {t({ en: 'Already have an account?', id: 'Sudah punya akun?' })}{' '}
           <Link
             to={brand === 'agrosphere' ? '/agrosphere/sign-in' : '/sign-in'}
             search={{ redirect }}
             className="font-medium text-[#0B6477] hover:underline"
           >
-            Sign in
+            {t({ en: 'Sign in', id: 'Masuk' })}
           </Link>
         </p>
       }
     >
       {!isAuthConfigured ? (
         <p className="rounded-xl bg-[#F3F7F6] px-4 py-3 text-sm text-neutral-500">
-          Sign-up is not configured yet. Please contact the SmartAgri team.
+          {t({
+            en: 'Sign-up is not configured yet. Please contact the SmartAgri team.',
+            id: 'Fitur pendaftaran belum dikonfigurasi. Silakan hubungi tim SmartAgri.',
+          })}
         </p>
       ) : sentTo ? (
         <div className="flex flex-col gap-6" role="status">
@@ -129,17 +153,33 @@ export default function SignUpView({ brand, redirect }: { brand: AuthBrand; redi
               <MailOpen className="h-5 w-5" />
             </span>
             <div className="min-w-0 text-sm leading-relaxed">
-              <p className="font-medium text-neutral-900">Check your inbox</p>
+              <p className="font-medium text-neutral-900">{t({ en: 'Check your inbox', id: 'Periksa kotak masuk Anda' })}</p>
               <p className="text-neutral-600">
-                We sent a confirmation link to <span className="font-medium text-[#0B6477]">{sentTo}</span>. Open it on
-                this device to activate your account.
+                {t({ en: 'We sent a confirmation link to', id: 'Kami telah mengirim tautan konfirmasi ke' })}{' '}
+                <span className="font-medium text-[#0B6477]">{sentTo}</span>
+                {t({
+                  en: '. Open it on this device to activate your account.',
+                  id: '. Buka tautan tersebut di perangkat ini untuk mengaktifkan akun Anda.',
+                })}
               </p>
             </div>
           </div>
           <ul className="flex flex-col gap-2 text-sm text-neutral-500">
-            <li>· The link works once and expires after a while, so open it soon.</li>
-            <li>· Not there after a few minutes? Check the spam or promotions folder.</li>
-            <li>· {copy.afterConfirm}</li>
+            <li>
+              ·{' '}
+              {t({
+                en: 'The link works once and expires after a while, so open it soon.',
+                id: 'Tautan hanya berlaku sekali dan akan kedaluwarsa, jadi segera buka.',
+              })}
+            </li>
+            <li>
+              ·{' '}
+              {t({
+                en: 'Not there after a few minutes? Check the spam or promotions folder.',
+                id: 'Belum masuk setelah beberapa menit? Periksa folder spam atau promosi.',
+              })}
+            </li>
+            <li>· {t(copy.afterConfirm)}</li>
           </ul>
           <ResendConfirmation redirect={brand === 'agrosphere' ? target : redirect} initialEmail={sentTo} />
           <button
@@ -147,7 +187,7 @@ export default function SignUpView({ brand, redirect }: { brand: AuthBrand; redi
             onClick={() => setSentTo(null)}
             className="w-fit text-sm font-medium text-[#0B6477] hover:underline"
           >
-            Used the wrong email? Start over
+            {t({ en: 'Used the wrong email? Start over', id: 'Salah memasukkan email? Ulangi dari awal' })}
           </button>
         </div>
       ) : (
@@ -160,12 +200,12 @@ export default function SignUpView({ brand, redirect }: { brand: AuthBrand; redi
         >
           <AuthInput
             icon={UserRound}
-            label="Full name"
+            label={t({ en: 'Full name', id: 'Nama lengkap' })}
             required
             autoComplete="name"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder={copy.namePlaceholder}
+            placeholder={t(copy.namePlaceholder)}
           />
           <AuthInput
             icon={AtSign}
@@ -175,28 +215,28 @@ export default function SignUpView({ brand, redirect }: { brand: AuthBrand; redi
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder={copy.emailPlaceholder}
+            placeholder={t(copy.emailPlaceholder)}
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <AuthInput
               icon={KeyRound}
-              label="Password"
+              label={t({ en: 'Password', id: 'Kata sandi' })}
               type="password"
               required
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="8+ characters"
+              placeholder={t({ en: '8+ characters', id: 'Minimal 8 karakter' })}
             />
             <AuthInput
               icon={KeyRound}
-              label="Confirm password"
+              label={t({ en: 'Confirm password', id: 'Konfirmasi kata sandi' })}
               type="password"
               required
               autoComplete="new-password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              placeholder="Re-enter"
+              placeholder={t({ en: 'Re-enter', id: 'Ketik ulang' })}
             />
           </div>
 
@@ -208,13 +248,13 @@ export default function SignUpView({ brand, redirect }: { brand: AuthBrand; redi
               className="mt-0.5 h-4 w-4 shrink-0 accent-[#14919B]"
             />
             <span>
-              I agree to the{' '}
+              {t({ en: 'I agree to the', id: 'Saya menyetujui' })}{' '}
               <Link to="/terms-of-use" className="font-medium text-[#0B6477] hover:underline">
-                Terms of Use
+                {t({ en: 'Terms of Use', id: 'Ketentuan Penggunaan' })}
               </Link>{' '}
-              and{' '}
+              {t({ en: 'and', id: 'dan' })}{' '}
               <Link to="/privacy-policy" className="font-medium text-[#0B6477] hover:underline">
-                Privacy Policy
+                {t({ en: 'Privacy Policy', id: 'Kebijakan Privasi' })}
               </Link>
               .
             </span>
@@ -230,10 +270,10 @@ export default function SignUpView({ brand, redirect }: { brand: AuthBrand; redi
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Creating account...
+                {t({ en: 'Creating account...', id: 'Membuat akun...' })}
               </>
             ) : (
-              'Create account'
+              t({ en: 'Create account', id: 'Buat akun' })
             )}
           </button>
         </form>

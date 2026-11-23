@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, ArrowUpRight, Quote } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import { PUBLICATIONS } from "../lib/publications";
+import { localeOf, useLang, useT, type Bi } from "../lib/i18n";
 
 // Landing publications band, laid out after the Blitz stats + rows pattern:
 // a light band with three counting figures, then the newest papers as rows.
@@ -18,13 +19,22 @@ const LATEST = PUBLICATIONS.filter(
   (p) => p.title !== p.title.toUpperCase(),
 ).slice(0, 5);
 
-const FIGURES = [
-  { value: PUBLICATIONS.length, label: "Journal articles and proceedings" },
+const FIGURES: { value: number; label: Bi }[] = [
+  {
+    value: PUBLICATIONS.length,
+    label: { en: "Journal articles and proceedings", id: "Artikel jurnal dan prosiding" },
+  },
   {
     value: LATEST_YEAR - FIRST_YEAR + 1,
-    label: `Years of publishing, ${FIRST_YEAR}–${LATEST_YEAR}`,
+    label: {
+      en: `Years of publishing, ${FIRST_YEAR}–${LATEST_YEAR}`,
+      id: `Tahun berkarya, ${FIRST_YEAR}–${LATEST_YEAR}`,
+    },
   },
-  { value: CITATIONS, label: "Citations recorded by Crossref" },
+  {
+    value: CITATIONS,
+    label: { en: "Citations recorded by Crossref", id: "Sitasi tercatat di Crossref" },
+  },
 ];
 
 const reveal = (delay: number) => ({
@@ -41,6 +51,7 @@ function CountUp({ value, replay }: { value: number; replay: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [shown, setShown] = useState(value);
   const [run, setRun] = useState(0);
+  const locale = localeOf(useLang());
 
   useEffect(() => {
     const el = ref.current;
@@ -75,9 +86,9 @@ function CountUp({ value, replay }: { value: number; replay: number }) {
   return (
     <>
       <span ref={ref} aria-hidden="true" className="tabular-nums">
-        {shown.toLocaleString("en-US")}
+        {shown.toLocaleString(locale)}
       </span>
-      <span className="sr-only">{value.toLocaleString("en-US")}</span>
+      <span className="sr-only">{value.toLocaleString(locale)}</span>
     </>
   );
 }
@@ -124,6 +135,7 @@ function Figure({
 }
 
 export default function Publications() {
+  const t = useT();
   return (
     <section id="publications" className="relative text-neutral-900">
       <div className="max-w-[1360px] mx-auto px-6 md:px-12">
@@ -135,9 +147,22 @@ export default function Publications() {
                 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.03em] leading-[1.05]"
                 style={display}
               >
-                From the field
-                <br />
-                to <span style={accent}>peer review.</span>
+                {t({
+                  en: (
+                    <>
+                      From the field
+                      <br />
+                      to <span style={accent}>peer review.</span>
+                    </>
+                  ),
+                  id: (
+                    <>
+                      Dari lahan
+                      <br />
+                      ke <span style={accent}>peer review.</span>
+                    </>
+                  ),
+                })}
               </motion.h2>
             </div>
             <motion.p
@@ -145,15 +170,16 @@ export default function Publications() {
               className="lg:col-span-4 lg:col-start-9 text-base md:text-lg leading-relaxed text-neutral-500"
               style={body}
             >
-              Journal articles and proceedings on sensing, modelling and smart
-              farming, written with the farms, companies and universities we
-              work with.
+              {t({
+                en: "Journal articles and proceedings on sensing, modelling and smart farming, written with the farms, companies and universities we work with.",
+                id: "Artikel jurnal dan prosiding tentang penginderaan, pemodelan, dan pertanian cerdas, ditulis bersama petani, perusahaan, dan universitas mitra kami.",
+              })}
             </motion.p>
           </div>
 
           <dl className="mt-14 md:mt-16 grid sm:grid-cols-3">
             {FIGURES.map((f, i) => (
-              <Figure key={f.label} value={f.value} label={f.label} index={i} />
+              <Figure key={f.label.en} value={f.value} label={t(f.label)} index={i} />
             ))}
           </dl>
 
@@ -165,10 +191,10 @@ export default function Publications() {
               className="text-xl md:text-2xl font-medium tracking-[-0.02em]"
               style={display}
             >
-              Latest papers
+              {t({ en: "Latest papers", id: "Makalah terbaru" })}
             </h3>
             <span className="text-[13px] text-neutral-400" style={body}>
-              Newest first
+              {t({ en: "Newest first", id: "Terbaru lebih dulu" })}
             </span>
           </motion.div>
 
@@ -216,7 +242,10 @@ export default function Publications() {
                         <span className="inline-flex items-center gap-1.5 rounded-md bg-[#45DFB1]/20 px-2.5 py-1 text-[13px] text-[#0B6477]">
                           <Quote className="w-3 h-3" aria-hidden="true" />
                           {pub.citations}{" "}
-                          {pub.citations === 1 ? "citation" : "citations"}
+                          {t({
+                            en: pub.citations === 1 ? "citation" : "citations",
+                            id: "sitasi",
+                          })}
                         </span>
                       )}
                     </span>
@@ -235,7 +264,10 @@ export default function Publications() {
               className="group inline-flex h-12 items-center gap-3 rounded-lg bg-[#45DFB1] px-6 text-[13px] md:text-sm font-medium uppercase tracking-[0.08em] text-[#0B2A22] transition-colors hover:bg-[#80ED99]"
               style={body}
             >
-              View all {PUBLICATIONS.length} publications
+              {t({
+                en: `View all ${PUBLICATIONS.length} publications`,
+                id: `Lihat semua ${PUBLICATIONS.length} publikasi`,
+              })}
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </motion.div>

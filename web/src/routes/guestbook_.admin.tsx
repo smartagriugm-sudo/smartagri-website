@@ -5,8 +5,10 @@ import { accent, body, display } from "../lib/fonts";
 import { EXHIBITION_LIVE } from "../lib/exhibition";
 import SiteHeader from "../components/SiteHeader";
 import { useAuth } from "../lib/auth/auth";
+import { headLang, useLang, useT } from "../lib/i18n";
 import {
   fetchGuestbook,
+  guestRoleLabel,
   guestbookEnabled,
   toCsv,
   type GuestbookEntry,
@@ -14,15 +16,21 @@ import {
 
 export const Route = createFileRoute("/guestbook_/admin")({
   component: GuestbookAdminPage,
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Guest book entries | smartagri" },
+      {
+        title:
+          headLang(matches) === "id"
+            ? "Daftar buku tamu | smartagri"
+            : "Guest book entries | smartagri",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
 });
 
 function GuestbookAdminPage() {
+  const t = useT();
   const { user, loading: authLoading, isConfigured } = useAuth();
   const router = useRouter();
 
@@ -42,7 +50,9 @@ function GuestbookAdminPage() {
           <div className="flex flex-col items-center gap-3 text-neutral-500">
             <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
             <p className="text-sm" style={body}>
-              {authLoading ? "Checking access..." : "Redirecting to sign in..."}
+              {authLoading
+                ? t({ en: "Checking access...", id: "Memeriksa akses..." })
+                : t({ en: "Redirecting to sign in...", id: "Mengalihkan ke halaman masuk..." })}
             </p>
           </div>
         </section>
@@ -59,6 +69,8 @@ function GuestbookAdminPage() {
 }
 
 function AdminContent() {
+  const lang = useLang();
+  const t = useT();
   const [rows, setRows] = useState<GuestbookEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,7 +81,11 @@ function AdminContent() {
     setError(null);
 
     if (!guestbookEnabled()) {
-      setError("Guest book storage is not configured.");
+      setError(
+        lang === "id"
+          ? "Penyimpanan buku tamu belum dikonfigurasi."
+          : "Guest book storage is not configured.",
+      );
       setLoading(false);
       return;
     }
@@ -111,16 +127,29 @@ function AdminContent() {
               className="mb-3 inline-flex items-center gap-1.5 text-sm text-[#0B6477] hover:text-[#14919B]"
               style={body}
             >
-              <ArrowLeft size={15} /> {EXHIBITION_LIVE ? "Back to INAGRITECH" : "Back to home"}
+              <ArrowLeft size={15} /> {EXHIBITION_LIVE
+                ? t({ en: "Back to INAGRITECH", id: "Kembali ke INAGRITECH" })
+                : t({ en: "Back to home", id: "Kembali ke beranda" })}
             </a>
             <h1
               style={display}
               className="text-[30px] font-semibold tracking-[-0.03em] text-neutral-900 md:text-[38px]"
             >
-              Guest book <span style={accent}>entries</span>
+              {lang === "id" ? (
+                <>
+                  Daftar <span style={accent}>buku tamu</span>
+                </>
+              ) : (
+                <>
+                  Guest book <span style={accent}>entries</span>
+                </>
+              )}
             </h1>
             <p className="mt-1.5 text-[15px] text-neutral-500" style={body}>
-              Visitors who signed at the INAGRITECH 2026 booth.
+              {t({
+                en: "Visitors who signed at the INAGRITECH 2026 booth.",
+                id: "Pengunjung yang mengisi buku tamu di booth INAGRITECH 2026.",
+              })}
             </p>
           </div>
 
@@ -131,7 +160,7 @@ function AdminContent() {
             style={body}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#0B6477] px-5 text-sm font-medium text-white hover:bg-[#14919B] transition-colors disabled:opacity-50"
           >
-            <Download size={16} /> Export CSV
+            <Download size={16} /> {t({ en: "Export CSV", id: "Ekspor CSV" })}
           </button>
         </div>
 
@@ -142,10 +171,10 @@ function AdminContent() {
             className="text-[28px] font-semibold tabular-nums text-neutral-900"
             style={display}
           >
-            {rows ? rows.length.toLocaleString() : "-"}
+            {rows ? rows.length.toLocaleString(lang === "id" ? "id-ID" : undefined) : "-"}
           </span>
           <span className="text-sm text-neutral-500" style={body}>
-            total visitors
+            {t({ en: "total visitors", id: "total pengunjung" })}
           </span>
         </div>
 
@@ -154,7 +183,7 @@ function AdminContent() {
           <div className="mt-12 flex items-center justify-center gap-3 text-neutral-500">
             <Loader2 className="h-5 w-5 animate-spin text-[#0B6477]" />
             <span className="text-sm" style={body}>
-              Loading entries...
+              {t({ en: "Loading entries...", id: "Memuat data..." })}
             </span>
           </div>
         ) : error ? (
@@ -162,13 +191,13 @@ function AdminContent() {
             className="mt-10 rounded-2xl border border-amber-300/60 bg-amber-50 px-5 py-4 text-sm text-amber-800"
             style={body}
           >
-            Could not load entries: {error}
+            {t({ en: "Could not load entries:", id: "Gagal memuat data:" })} {error}
           </div>
         ) : rows && rows.length > 0 ? (
           <GuestTable rows={rows} />
         ) : (
           <p className="mt-10 text-sm text-neutral-400" style={body}>
-            No one has signed the guest book yet.
+            {t({ en: "No one has signed the guest book yet.", id: "Belum ada yang mengisi buku tamu." })}
           </p>
         )}
       </div>
@@ -177,13 +206,15 @@ function AdminContent() {
 }
 
 function GuestTable({ rows }: { rows: GuestbookEntry[] }) {
+  const lang = useLang();
+  const t = useT();
   const fmt = useMemo(
     () =>
-      new Intl.DateTimeFormat(undefined, {
+      new Intl.DateTimeFormat(lang === "id" ? "id-ID" : undefined, {
         dateStyle: "medium",
         timeStyle: "short",
       }),
-    [],
+    [lang],
   );
 
   return (
@@ -191,10 +222,10 @@ function GuestTable({ rows }: { rows: GuestbookEntry[] }) {
       <table className="w-full min-w-[720px] text-left text-sm" style={body}>
         <thead>
           <tr className="border-b border-[#0B6477]/10 text-[12px] uppercase tracking-[0.06em] text-neutral-500">
-            <th className="px-4 py-3 font-medium">Time</th>
-            <th className="px-4 py-3 font-medium">Name</th>
-            <th className="px-4 py-3 font-medium">Institution</th>
-            <th className="px-4 py-3 font-medium">Role</th>
+            <th className="px-4 py-3 font-medium">{t({ en: "Time", id: "Waktu" })}</th>
+            <th className="px-4 py-3 font-medium">{t({ en: "Name", id: "Nama" })}</th>
+            <th className="px-4 py-3 font-medium">{t({ en: "Institution", id: "Instansi" })}</th>
+            <th className="px-4 py-3 font-medium">{t({ en: "Role", id: "Peran" })}</th>
             <th className="px-4 py-3 font-medium">Email</th>
             <th className="px-4 py-3 font-medium">WhatsApp</th>
           </tr>
@@ -210,7 +241,7 @@ function GuestTable({ rows }: { rows: GuestbookEntry[] }) {
               </td>
               <td className="px-4 py-3 font-medium text-neutral-900">{r.name}</td>
               <td className="px-4 py-3 text-neutral-700">{r.institution || "-"}</td>
-              <td className="px-4 py-3 text-neutral-700">{r.role || "-"}</td>
+              <td className="px-4 py-3 text-neutral-700">{r.role ? guestRoleLabel(r.role, lang) : "-"}</td>
               <td className="px-4 py-3 text-neutral-700">
                 {r.email ? (
                   <a

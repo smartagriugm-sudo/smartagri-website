@@ -1,5 +1,6 @@
 import { Award, GraduationCap, Handshake, Mic2, Sprout, Store } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { localeOf, type Lang } from "./i18n-core";
 
 // Documentation of smartagri activities, grouped into albums. Content lives in
 // src/content/gallery/*.json (one file per album), managed through the /admin
@@ -44,6 +45,9 @@ export type GalleryAlbum = {
   photoCount: number;
   /** Real photo paths uploaded via the CMS; when present they replace placeholders */
   photos?: string[];
+  /** Optional Indonesian title and excerpt (CMS fields), used when lang is "id" */
+  titleId?: string;
+  excerptId?: string;
 };
 
 // Placeholder cover gradients, cycled when an album has no real cover yet.
@@ -62,6 +66,8 @@ type GalleryFile = {
   category: GalleryCategory;
   location: string;
   excerpt: string;
+  titleId?: string;
+  excerptId?: string;
   cover?: string;
   /** Placeholder tile count used until real photos are uploaded */
   photoCount?: number;
@@ -73,8 +79,8 @@ const albumFiles = import.meta.glob<GalleryFile>("../content/gallery/*.json", {
   import: "default",
 });
 
-function formatMonthYear(iso: string) {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", {
+function formatMonthYear(iso: string, lang: Lang = "en") {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(localeOf(lang), {
     month: "long",
     year: "numeric",
   });
@@ -100,3 +106,30 @@ export const GALLERY_FILTERS: string[] = [
     albums.some((album) => album.category === category),
   ),
 ];
+
+// ---- Bahasa Indonesia (see lib/i18n.tsx) ----
+// Albums without `titleId`/`excerptId` fall back to the English text.
+export function localizeAlbum(album: GalleryAlbum, lang: Lang): GalleryAlbum {
+  if (lang !== "id") return album;
+  return {
+    ...album,
+    title: album.titleId || album.title,
+    excerpt: album.excerptId || album.excerpt,
+    dateLabel: formatMonthYear(album.date, lang),
+  };
+}
+
+const GALLERY_CATEGORY_ID: Record<string, string> = {
+  All: "Semua",
+  Exhibition: "Pameran",
+  Conference: "Konferensi",
+  "Field Activity": "Kegiatan Lapangan",
+  "Workshop & Training": "Workshop dan Pelatihan",
+  Collaboration: "Kolaborasi",
+  Award: "Penghargaan",
+};
+
+/** Display label for a gallery category or filter ("All"). */
+export function galleryCategoryLabel(category: string, lang: Lang): string {
+  return lang === "id" ? (GALLERY_CATEGORY_ID[category] ?? category) : category;
+}

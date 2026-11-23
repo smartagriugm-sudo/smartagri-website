@@ -9,8 +9,9 @@ import {
 import { ArrowRight, ArrowUpRight, Check } from "lucide-react";
 import { A, researchPhoto } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
-import { TECHNOLOGIES, type Technology } from "../lib/technology";
-import { RESEARCH_AREAS } from "../lib/research";
+import { TECHNOLOGIES, technologiesFor, type Technology } from "../lib/technology";
+import { RESEARCH_AREAS, areaLabel } from "../lib/research";
+import { headLang, useLang, useT, type Bi, type Lang } from "../lib/i18n";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import AmbientWash from "../components/AmbientWash";
@@ -19,16 +20,21 @@ import { EASE, MaskLine, META } from "../components/NoteParts";
 
 export const Route = createFileRoute("/technology")({
   component: TechnologyPage,
-  head: () => ({
-    meta: [
-      { title: "Technology | smartagri" },
-      {
-        name: "description",
-        content:
-          "Explore the core technologies behind smartagri: from IoT sensor networks and UAV platforms to machine learning and decision support, and how they interconnect.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        { title: l === "id" ? "Teknologi | smartagri" : "Technology | smartagri" },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Jelajahi teknologi inti di balik smartagri: dari jaringan sensor IoT dan platform UAV hingga machine learning dan sistem pendukung keputusan, serta keterkaitan di antara semuanya."
+              : "Explore the core technologies behind smartagri: from IoT sensor networks and UAV platforms to machine learning and decision support, and how they interconnect.",
+        },
+      ],
+    };
+  },
 });
 
 // The technology stack as an interactive map (two rings: data & intelligence
@@ -36,9 +42,9 @@ export const Route = createFileRoute("/technology")({
 // technology as a card grouped by ring, then the landing CTA.
 
 const RING_RADIUS: Record<1 | 2, number> = { 1: 25, 2: 42 };
-const RING_NAME: Record<1 | 2, string> = {
-  1: "Data & intelligence",
-  2: "Field sensing & actuation",
+const RING_NAME: Record<1 | 2, Bi> = {
+  1: { en: "Data & intelligence", id: "Data & kecerdasan" },
+  2: { en: "Field sensing & actuation", id: "Penginderaan & aktuasi lapangan" },
 };
 
 // Node positions on two concentric rings, in percent of the map container.
@@ -62,7 +68,7 @@ const POSITIONS: Record<string, { x: number; y: number }> = (() => {
 
 const areaByLabel = (label: string) =>
   RESEARCH_AREAS.find((a) => a.label === label);
-const techById = (id: string) => TECHNOLOGIES.find((t) => t.id === id);
+const techById = (id: string, lang: Lang) => technologiesFor(lang).find((t) => t.id === id);
 
 // One small motion per technology, acting out what it does. Played in a loop
 // on the active map node and while a card or chip is hovered, and once when
@@ -180,6 +186,8 @@ function TechMap({
   active: Technology;
   onSelect: (tech: Technology) => void;
 }) {
+  const t = useT();
+  const techs = technologiesFor(useLang());
   const from = POSITIONS[active.id];
 
   return (
@@ -202,7 +210,7 @@ function TechMap({
           className={`hidden text-neutral-500 sm:block ${META}`}
           style={body}
         >
-          Core technology
+          {t({ en: "Core technology", id: "Teknologi inti" })}
         </span>
       </div>
 
@@ -259,7 +267,7 @@ function TechMap({
       </svg>
 
       {/* Technology nodes */}
-      {TECHNOLOGIES.map((tech, i) => {
+      {techs.map((tech, i) => {
         const { x, y } = POSITIONS[tech.id];
         const isActive = tech.id === active.id;
         const isRelated = active.related.includes(tech.id);
@@ -327,6 +335,8 @@ function DetailContent({
   /** false for the invisible sizers that only hold the panel height */
   live: boolean;
 }) {
+  const t = useT();
+  const lang = useLang();
   return (
     <>
       <div className="flex items-start gap-4">
@@ -339,7 +349,7 @@ function DetailContent({
         </span>
         <div>
           <p className={`text-[#14919B] ${META}`} style={body}>
-            {RING_NAME[tech.ring]}
+            {t(RING_NAME[tech.ring])}
           </p>
           <h2
             className="mt-1 text-2xl font-semibold leading-tight tracking-[-0.025em] text-neutral-900 md:text-[28px]"
@@ -363,7 +373,7 @@ function DetailContent({
       <div className="grid gap-6 sm:grid-cols-2">
         <div>
           <p className={`mb-3 text-neutral-400 ${META}`} style={body}>
-            Key benefits
+            {t({ en: "Key benefits", id: "Manfaat utama" })}
           </p>
           <motion.ul
             initial="hidden"
@@ -393,7 +403,7 @@ function DetailContent({
         </div>
         <div>
           <p className={`mb-3 text-neutral-400 ${META}`} style={body}>
-            Common applications
+            {t({ en: "Common applications", id: "Penerapan umum" })}
           </p>
           <div className="flex flex-wrap gap-2">
             {tech.applications.map((app) => (
@@ -412,14 +422,14 @@ function DetailContent({
       {tech.related.length > 0 && (
         <div>
           <p className={`mb-3 text-neutral-400 ${META}`} style={body}>
-            Connected technologies
+            {t({ en: "Connected technologies", id: "Teknologi terkait" })}
           </p>
           <div className="flex flex-wrap gap-2">
             {tech.related.map((id) => {
-              const t = techById(id);
-              if (!t) return null;
+              const rel = techById(id, lang);
+              if (!rel) return null;
               return (
-                <ChipButton key={id} tech={t} onClick={() => onSelect(t)} />
+                <ChipButton key={id} tech={rel} onClick={() => onSelect(rel)} />
               );
             })}
           </div>
@@ -428,7 +438,7 @@ function DetailContent({
 
       <div className="border-t border-[#0B6477]/10 pt-5">
         <p className={`mb-3 text-neutral-400 ${META}`} style={body}>
-          Powers these research areas
+          {t({ en: "Powers these research areas", id: "Mendukung bidang riset berikut" })}
         </p>
         <div className="flex flex-col gap-2">
           {tech.areas.map((label) => {
@@ -451,7 +461,7 @@ function DetailContent({
                   />
                 </span>
                 <span className="flex-1 text-[14px] font-medium text-neutral-800">
-                  {label}
+                  {areaLabel(label, lang)}
                 </span>
                 <ArrowUpRight className="h-4 w-4 text-[#0B6477] transition-[rotate] duration-300 group-hover:rotate-45" />
               </Link>
@@ -473,9 +483,10 @@ function TechDetail({
   tech: Technology;
   onSelect: (t: Technology) => void;
 }) {
+  const techs = technologiesFor(useLang());
   return (
     <div className="grid">
-      {TECHNOLOGIES.map((t) => (
+      {techs.map((t) => (
         <div
           key={t.id}
           aria-hidden="true"
@@ -536,6 +547,7 @@ function StackCard({
   onPick: (t: Technology) => void;
 }) {
   const [hover, setHover] = useState(false);
+  const t = useT();
   return (
     <motion.button
       type="button"
@@ -565,7 +577,7 @@ function StackCard({
             }`}
             style={body}
           >
-            {tech.ring === 1 ? "Data" : "Field"}
+            {tech.ring === 1 ? t({ en: "Data", id: "Data" }) : t({ en: "Field", id: "Lapangan" })}
           </span>
           <ArrowUpRight className="h-4 w-4 text-[#0B6477] transition-[rotate,color] duration-300 group-hover:rotate-45 group-hover:text-[#45DFB1]" />
         </span>
@@ -598,11 +610,16 @@ function StackCard({
 }
 
 function TechnologyPage() {
-  const [active, setActive] = useState<Technology>(TECHNOLOGIES[0]);
+  const t = useT();
+  const techs = technologiesFor(useLang());
+  // Keep the id, so the panel follows a language switch.
+  const [activeId, setActiveId] = useState<string>(TECHNOLOGIES[0].id);
+  const active = techs.find((x) => x.id === activeId) ?? techs[0];
+  const setActive = (x: Technology) => setActiveId(x.id);
   const explorer = useRef<HTMLDivElement>(null);
 
-  const pick = (t: Technology) => {
-    setActive(t);
+  const pick = (x: Technology) => {
+    setActive(x);
     const el = explorer.current;
     if (el)
       window.scrollTo({
@@ -627,9 +644,9 @@ function TechnologyPage() {
                   className="text-[44px] font-semibold leading-[1.0] tracking-[-0.04em] text-neutral-900 sm:text-6xl md:text-[80px]"
                   style={display}
                 >
-                  <MaskLine delay={0}>Explore our</MaskLine>
+                  <MaskLine delay={0}>{t({ en: "Explore our", id: "Jelajahi" })}</MaskLine>
                   <MaskLine delay={0.12}>
-                    <span style={accent}>core technologies.</span>
+                    <span style={accent}>{t({ en: "core technologies.", id: "teknologi inti kami." })}</span>
                   </MaskLine>
                 </motion.h1>
                 <motion.p
@@ -639,10 +656,10 @@ function TechnologyPage() {
                   className="max-w-[460px] text-base leading-relaxed text-neutral-600 md:text-lg"
                   style={body}
                 >
-                  {TECHNOLOGIES.length} technologies in two rings: field sensing
-                  and actuation on the outside, data and intelligence at the
-                  core. Hover or tap one to see what it does and what it
-                  connects to.
+                  {t({
+                    en: `${TECHNOLOGIES.length} technologies in two rings: field sensing and actuation on the outside, data and intelligence at the core. Hover or tap one to see what it does and what it connects to.`,
+                    id: `${TECHNOLOGIES.length} teknologi dalam dua lingkaran: penginderaan dan aktuasi lapangan di luar, data dan kecerdasan di inti. Arahkan kursor atau ketuk salah satunya untuk melihat fungsinya dan keterkaitannya.`,
+                  })}
                 </motion.p>
               </div>
             </section>
@@ -666,14 +683,16 @@ function TechnologyPage() {
                       style={body}
                     >
                       <span className="h-2.5 w-2.5 rounded-full bg-[#08313A]" />
-                      Inner ring: {RING_NAME[1].toLowerCase()}
+                      {t({ en: "Inner ring: ", id: "Lingkaran dalam: " })}
+                      {t(RING_NAME[1]).toLowerCase()}
                     </span>
                     <span
                       className="flex items-center gap-2 text-[13px] text-neutral-500"
                       style={body}
                     >
                       <span className="h-2.5 w-2.5 rounded-full border-2 border-[#14919B] bg-white" />
-                      Outer ring: {RING_NAME[2].toLowerCase()}
+                      {t({ en: "Outer ring: ", id: "Lingkaran luar: " })}
+                      {t(RING_NAME[2]).toLowerCase()}
                     </span>
                   </div>
                 </motion.div>
@@ -699,26 +718,27 @@ function TechnologyPage() {
                     className="text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 md:text-5xl"
                     style={display}
                   >
-                    <MaskLine delay={0}>The full</MaskLine>
+                    <MaskLine delay={0}>{t({ en: "The full", id: "Seluruh" })}</MaskLine>
                     <MaskLine delay={0.1}>
-                      <span style={accent}>stack.</span>
+                      <span style={accent}>{t({ en: "stack.", id: "teknologi kami." })}</span>
                     </MaskLine>
                   </motion.h2>
                   <p
                     className="max-w-[440px] text-base leading-relaxed text-neutral-500 md:text-lg"
                     style={body}
                   >
-                    Every technology we build with: field sensing and actuation,
-                    then the data and intelligence that turn readings into
-                    decisions. Pick one to open it on the map.
+                    {t({
+                      en: "Every technology we build with: field sensing and actuation, then the data and intelligence that turn readings into decisions. Pick one to open it on the map.",
+                      id: "Semua teknologi yang kami gunakan: penginderaan dan aktuasi lapangan, lalu data dan kecerdasan yang mengubah hasil pembacaan menjadi keputusan. Pilih salah satu untuk membukanya di peta.",
+                    })}
                   </p>
                 </div>
 
                 <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {[...TECHNOLOGIES]
+                  {[...techs]
                     .sort((a, b) => b.ring - a.ring)
-                    .map((t) => (
-                      <StackCard key={t.id} tech={t} onPick={pick} />
+                    .map((x) => (
+                      <StackCard key={x.id} tech={x} onPick={pick} />
                     ))}
                 </div>
 
@@ -728,7 +748,7 @@ function TechnologyPage() {
                     className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                     style={body}
                   >
-                    See where they are used
+                    {t({ en: "See where they are used", id: "Lihat penerapannya" })}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </div>

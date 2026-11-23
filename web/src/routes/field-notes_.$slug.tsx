@@ -6,7 +6,15 @@ import remarkGfm from "remark-gfm";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Link2 } from "lucide-react";
 import { A } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
-import { findNote, notes, type Note } from "../lib/notes";
+import { headLang, useLang, useT } from "../lib/i18n";
+import {
+  findNote,
+  hasIndonesian,
+  localizeNote,
+  noteCategoryLabel,
+  notes,
+  type Note,
+} from "../lib/notes";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import AmbientWash from "../components/AmbientWash";
@@ -15,14 +23,18 @@ import { CategoryChip, EASE, META, NoteCard, initials } from "../components/Note
 export const Route = createFileRoute("/field-notes_/$slug")({
   component: NoteDetailPage,
   loader: ({ params }) => findNote(params.slug),
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.title ?? "Field Notes"} | smartagri` },
-      ...(loaderData?.excerpt
-        ? [{ name: "description", content: loaderData.excerpt }]
-        : []),
-    ],
-  }),
+  head: ({ loaderData, matches }) => {
+    const l = headLang(matches);
+    const note = loaderData ? localizeNote(loaderData, l) : undefined;
+    return {
+      meta: [
+        {
+          title: `${note?.title ?? (l === "id" ? "Catatan Lapangan" : "Field Notes")} | smartagri`,
+        },
+        ...(note?.excerpt ? [{ name: "description", content: note.excerpt }] : []),
+      ],
+    };
+  },
 });
 
 // Natural sizes of article images, read up front (headers only) so portrait
@@ -375,6 +387,7 @@ function useActiveHeading(ids: string[]) {
 }
 
 function CopyLink() {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -389,7 +402,9 @@ function CopyLink() {
       style={body}
     >
       {copied ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-      {copied ? "Link copied" : "Copy link"}
+      {copied
+        ? t({ en: "Link copied", id: "Tautan disalin" })
+        : t({ en: "Copy link", id: "Salin tautan" })}
     </button>
   );
 }
@@ -414,14 +429,16 @@ function Avatar({ note, size = "h-10 w-10" }: { note: Note; size?: string }) {
 // Side column: "On this page" for notes with two or more sections, otherwise
 // the note's details. Sticky beside the article on large screens.
 function Aside({ note, minutes }: { note: Note; minutes: number }) {
+  const lang = useLang();
+  const t = useT();
   const toc = headingsOf(note.body);
   const active = useActiveHeading(toc.length >= 2 ? toc.map((h) => h.id) : []);
 
   if (toc.length >= 2) {
     return (
-      <nav aria-label="On this page">
+      <nav aria-label={t({ en: "On this page", id: "Di halaman ini" })}>
         <p className={`mb-4 text-neutral-400 ${META}`} style={body}>
-          On this page
+          {t({ en: "On this page", id: "Di halaman ini" })}
         </p>
         <ul className="flex flex-col border-l border-[#0B6477]/15" style={body}>
           {toc.map((h) => (
@@ -446,15 +463,17 @@ function Aside({ note, minutes }: { note: Note; minutes: number }) {
   }
 
   const rows: [string, string][] = [
-    ["Category", note.category],
-    ["Published", note.date],
-    ...(note.dateline ? ([["Location", note.dateline]] as [string, string][]) : []),
-    ["Reading time", `${minutes} min`],
+    [t({ en: "Category", id: "Kategori" }), noteCategoryLabel(note.category, lang)],
+    [t({ en: "Published", id: "Terbit" }), note.date],
+    ...(note.dateline
+      ? ([[t({ en: "Location", id: "Lokasi" }), note.dateline]] as [string, string][])
+      : []),
+    [t({ en: "Reading time", id: "Waktu baca" }), `${minutes} ${t({ en: "min", id: "menit" })}`],
   ];
   return (
     <div>
       <p className={`mb-4 text-neutral-400 ${META}`} style={body}>
-        In this note
+        {t({ en: "In this note", id: "Tentang catatan ini" })}
       </p>
       <dl className="flex flex-col border-l border-[#0B6477]/15" style={body}>
         {rows.map(([k, v]) => (
@@ -484,7 +503,10 @@ const rise = (delay: number) => ({
 });
 
 function NoteDetailPage() {
-  const note = Route.useLoaderData();
+  const lang = useLang();
+  const t = useT();
+  const loaded = Route.useLoaderData();
+  const note = loaded ? localizeNote(loaded, lang) : undefined;
 
   if (!note) {
     return (
@@ -496,17 +518,20 @@ function NoteDetailPage() {
               className="text-3xl md:text-4xl font-semibold text-neutral-900"
               style={display}
             >
-              Article not found
+              {t({ en: "Article not found", id: "Artikel tidak ditemukan" })}
             </h1>
             <p className="text-neutral-500" style={body}>
-              The note you're looking for doesn't exist or may have been moved.
+              {t({
+                en: "The note you're looking for doesn't exist or may have been moved.",
+                id: "Catatan yang Anda cari tidak ada atau mungkin telah dipindahkan.",
+              })}
             </p>
             <Link
               to="/field-notes"
               className="px-7 py-3 rounded-2xl border border-[#0B6477] text-[#0B6477] font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
               style={body}
             >
-              Back to Field Notes
+              {t({ en: "Back to Field Notes", id: "Kembali ke Catatan Lapangan" })}
             </Link>
           </div>
         </section>
@@ -516,7 +541,8 @@ function NoteDetailPage() {
   }
 
   const minutes = readingMinutes(note.body);
-  const related = relatedTo(note);
+  const related = relatedTo(note).map((n) => localizeNote(n, lang));
+  const category = noteCategoryLabel(note.category, lang);
 
   return (
     <main>
@@ -534,11 +560,11 @@ function NoteDetailPage() {
                 style={body}
               >
                 <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-                Field Notes
+                {t({ en: "Field Notes", id: "Catatan Lapangan" })}
               </Link>
             </motion.div>
             <motion.div {...rise(0.08)} className="mt-6">
-              <CategoryChip>{note.eyebrow || note.category}</CategoryChip>
+              <CategoryChip>{note.eyebrow || category}</CategoryChip>
             </motion.div>
             <div className="mt-5 overflow-hidden pb-[0.08em]">
               <motion.h1
@@ -578,7 +604,7 @@ function NoteDetailPage() {
                 </span>
               </div>
               <span className={`text-neutral-400 ${META}`} style={body}>
-                {note.date} · {minutes} min read
+                {note.date} · {minutes} {t({ en: "min read", id: "menit baca" })}
               </span>
             </motion.div>
           </header>
@@ -601,7 +627,7 @@ function NoteDetailPage() {
                   className={`absolute bottom-5 left-6 text-white/85 ${META}`}
                   style={body}
                 >
-                  {note.category}
+                  {category}
                 </span>
               </div>
             </motion.figure>
@@ -619,6 +645,11 @@ function NoteDetailPage() {
             </aside>
 
             <div className="min-w-0 max-w-[700px]">
+              {lang === "id" && !hasIndonesian(note) && (
+                <p className="mb-8 text-sm text-neutral-500" style={body}>
+                  Catatan ini baru tersedia dalam bahasa Inggris.
+                </p>
+              )}
               <div
                 className="prose prose-neutral prose-lg max-w-none prose-headings:font-semibold prose-headings:tracking-[-0.025em] prose-h2:mt-14 prose-a:text-[#0B6477] prose-blockquote:my-10 prose-blockquote:border-l-[3px] prose-blockquote:border-l-[#45DFB1] prose-blockquote:pl-6 prose-blockquote:not-italic prose-blockquote:text-xl md:prose-blockquote:text-2xl prose-blockquote:font-medium prose-blockquote:leading-snug prose-blockquote:tracking-[-0.015em] prose-blockquote:text-neutral-800 prose-li:marker:text-[#14919B] prose-strong:text-neutral-900 [&::after]:content-[''] [&::after]:block [&::after]:clear-both"
                 style={body}
@@ -662,7 +693,9 @@ function NoteDetailPage() {
                 <div className="flex items-center gap-3">
                   <Avatar note={note} size="h-11 w-11" />
                   <span style={body}>
-                    <span className="block text-[13px] text-neutral-400">Written by</span>
+                    <span className="block text-[13px] text-neutral-400">
+                      {t({ en: "Written by", id: "Ditulis oleh" })}
+                    </span>
                     <span className="block text-[15px] font-medium text-neutral-900">
                       {note.author ?? AUTHOR_FALLBACK}
                     </span>
@@ -672,14 +705,17 @@ function NoteDetailPage() {
               </div>
               {note.sourceUrl && (
                 <p className="mt-6 text-sm text-neutral-400" style={body}>
-                  Originally published on our previous site.{" "}
+                  {t({
+                    en: "Originally published on our previous site.",
+                    id: "Pertama kali terbit di situs lama kami.",
+                  })}{" "}
                   <a
                     href={note.sourceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 font-medium text-[#0B6477] hover:underline"
                   >
-                    Read the original
+                    {t({ en: "Read the original", id: "Baca artikel asli" })}
                     <ArrowUpRight className="h-3.5 w-3.5" />
                   </a>
                 </p>
@@ -697,16 +733,16 @@ function NoteDetailPage() {
                   className="text-4xl font-semibold leading-[1.02] tracking-[-0.035em] text-neutral-900 md:text-5xl"
                   style={display}
                 >
-                  Keep
+                  {t({ en: "Keep", id: "Baca" })}
                   <br />
-                  <span style={accent}>reading.</span>
+                  <span style={accent}>{t({ en: "reading.", id: "lainnya." })}</span>
                 </h2>
                 <Link
                   to="/field-notes"
                   className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                   style={body}
                 >
-                  All notes
+                  {t({ en: "All notes", id: "Semua catatan" })}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>

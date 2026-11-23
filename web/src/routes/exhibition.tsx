@@ -14,15 +14,17 @@ import {
 import { A } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
 import {
-  ARCHITECTURE,
   EXHIBITION_LIVE,
-  DOCUMENTS,
   EVENT,
   EVENT_TAG,
-  SHOWCASE,
   SPONSORS,
+  architectureFor,
+  documentsFor,
+  eventFor,
+  showcaseFor,
 } from "../lib/exhibition";
-import { categoryChip, covers, notes } from "../lib/notes";
+import { categoryChip, covers, localizeNote, noteCategoryLabel, notes } from "../lib/notes";
+import { headLang, useLang, useT, type Bi } from "../lib/i18n";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import CallToAction from "../components/CallToAction";
@@ -32,29 +34,44 @@ export const Route = createFileRoute("/exhibition")({
     if (!EXHIBITION_LIVE) throw redirect({ to: "/" });
   },
   component: ExhibitionPage,
-  head: () => ({
-    meta: [
-      { title: `${EVENT.name} | smartagri` },
-      {
-        name: "description",
-        content: `Meet smartagri at ${EVENT.name}. See our products and services, demo system architecture, sponsors, downloadable documents, and live event updates.`,
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        { title: `${EVENT.name} | smartagri` },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? `Temui smartagri di ${EVENT.name}. Lihat produk dan layanan kami, arsitektur sistem demo, sponsor, dokumen yang dapat diunduh, dan kabar terbaru selama acara.`
+              : `Meet smartagri at ${EVENT.name}. See our products and services, demo system architecture, sponsors, downloadable documents, and live event updates.`,
+        },
+      ],
+    };
+  },
 });
 
 type Detail = {
   icon: ComponentType<{ className?: string }>;
+  key: string;
   label: string;
   value: string;
   href?: string;
 };
 
-const detail: Detail[] = [
-  { icon: CalendarDays, label: "Date", value: EVENT.date },
-  { icon: MapPin, label: "Venue", value: EVENT.venue },
-  { icon: Store, label: "Find us at", value: EVENT.booth, href: EVENT.floorPlan },
-];
+function detailsFor(event: typeof EVENT, t: <T>(copy: Bi<T>) => T): Detail[] {
+  return [
+    { icon: CalendarDays, key: "date", label: t({ en: "Date", id: "Tanggal" }), value: event.date },
+    { icon: MapPin, key: "venue", label: t({ en: "Venue", id: "Lokasi" }), value: event.venue },
+    {
+      icon: Store,
+      key: "booth",
+      label: t({ en: "Find us at", id: "Temui kami di" }),
+      value: event.booth,
+      href: event.floorPlan,
+    },
+  ];
+}
 
 // Hide the Downloads section (and the hero "Get the leaflet" button) until the
 // documents are ready. Flip to true once files are in place.
@@ -135,9 +152,17 @@ function InstagramFeed({ urls }: { urls: string[] }) {
 }
 
 function ExhibitionPage() {
+  const lang = useLang();
+  const t = useT();
+  const event = eventFor(lang);
+  const detail = detailsFor(event, t);
+  const SHOWCASE = showcaseFor(lang);
+  const ARCHITECTURE = architectureFor(lang);
+  const DOCUMENTS = documentsFor(lang);
   const eventNotes = notes
     .filter((note) => note.tags?.includes(EVENT_TAG))
-    .slice(0, 6);
+    .slice(0, 6)
+    .map((note) => localizeNote(note, lang));
 
   // Featured layout: CPI larger on top, then PERTETA (left) and Hidronav (right).
   const sponsorCpi = SPONSORS.find((s) => s.name === "Cendekia Prima Inovasi");
@@ -174,21 +199,23 @@ function ExhibitionPage() {
               className="text-[13px] font-medium tracking-[0.03em] text-[#45DFB1] mb-4"
               style={body}
             >
-              Exhibition
+              {t({ en: "Exhibition", id: "Pameran" })}
             </div>
             <h1
               className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.035em] leading-[1.05]"
               style={display}
             >
-              Meet smartagri at <span style={{ ...accent, color: "#45DFB1" }}>{EVENT.name}</span>
+              {t({ en: "Meet smartagri at", id: "Temui smartagri di" })} <span style={{ ...accent, color: "#45DFB1" }}>{EVENT.name}</span>
             </h1>
             <p
               className="text-base md:text-lg font-normal text-white/75 leading-relaxed mt-6 max-w-[620px]"
               style={body}
             >
-              {EVENT.tagline} Come see our products and services, explore a live
-              demo of our field-to-farmer system, and talk with the researchers
-              behind smartagri.
+              {event.tagline}{" "}
+              {t({
+                en: "Come see our products and services, explore a live demo of our field-to-farmer system, and talk with the researchers behind smartagri.",
+                id: "Kunjungi kami untuk melihat produk dan layanan kami, mencoba demo langsung sistem kami dari lahan hingga ke petani, dan berbincang dengan para peneliti di balik smartagri.",
+              })}
             </p>
 
             <div className="grid sm:grid-cols-3 gap-4 mt-10">
@@ -214,7 +241,7 @@ function ExhibitionPage() {
                           className="mt-1 inline-flex items-center gap-1 text-[12px] font-medium text-[#45DFB1]"
                           style={body}
                         >
-                          View floor plan
+                          {t({ en: "View floor plan", id: "Lihat denah lokasi" })}
                           <ArrowUpRight className="w-3 h-3" />
                         </div>
                       )}
@@ -224,7 +251,7 @@ function ExhibitionPage() {
 
                 return d.href ? (
                   <a
-                    key={d.label}
+                    key={d.key}
                     href={d.href}
                     target="_blank"
                     rel="noreferrer"
@@ -234,7 +261,7 @@ function ExhibitionPage() {
                   </a>
                 ) : (
                   <div
-                    key={d.label}
+                    key={d.key}
                     className="rounded-2xl bg-white/5 border border-white/10 p-5 flex items-start gap-3"
                   >
                     {inner}
@@ -249,7 +276,7 @@ function ExhibitionPage() {
                 className="h-12 px-7 bg-[#45DFB1] rounded-2xl text-[#0B2A22] text-base font-medium hover:bg-[#80ED99] transition-colors flex items-center justify-center gap-2"
                 style={body}
               >
-                Contact us
+                {t({ en: "Contact us", id: "Hubungi kami" })}
                 <ArrowRight className="w-4 h-4" />
               </Link>
               {SHOW_DOWNLOADS && (
@@ -259,7 +286,7 @@ function ExhibitionPage() {
                   style={body}
                 >
                   <Download className="w-4 h-4" />
-                  Get the leaflet
+                  {t({ en: "Get the leaflet", id: "Unduh leaflet" })}
                 </a>
               )}
             </div>
@@ -275,13 +302,14 @@ function ExhibitionPage() {
               className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-3"
               style={body}
             >
-              What we're showcasing
+              {t({ en: "What we're showcasing", id: "Yang kami tampilkan" })}
             </div>
             <h2
               className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900 max-w-[760px]"
               style={display}
             >
-              The services we offer, <span style={accent}>live at our booth</span>
+              {t({ en: "The services we offer,", id: "Layanan yang kami tawarkan," })}{" "}
+              <span style={accent}>{t({ en: "live at our booth", id: "langsung di booth kami" })}</span>
             </h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -323,26 +351,29 @@ function ExhibitionPage() {
               className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-3"
               style={body}
             >
-              Live demo
+              {t({ en: "Live demo", id: "Demo langsung" })}
             </div>
             <h2
               className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900"
               style={display}
             >
-              How the system works, <span style={accent}>field to farmer</span>
+              {t({ en: "How the system works,", id: "Cara kerja sistem," })}{" "}
+              <span style={accent}>{t({ en: "field to farmer", id: "dari lahan ke petani" })}</span>
             </h2>
             <p
               className="text-base md:text-lg font-normal text-neutral-500 max-w-[620px] mx-auto mt-4"
               style={body}
             >
-              A walk-through of the smartagri stack on display, so you can follow
-              the data from the soil all the way to a decision on a phone.
+              {t({
+                en: "A walk-through of the smartagri stack on display, so you can follow the data from the soil all the way to a decision on a phone.",
+                id: "Penjelasan menyeluruh tentang sistem smartagri yang kami pamerkan, sehingga Anda dapat mengikuti perjalanan data dari tanah hingga menjadi keputusan di layar ponsel.",
+              })}
             </p>
           </div>
 
           <div className="flex flex-col lg:flex-row items-stretch gap-4">
             {ARCHITECTURE.map((stage, i) => (
-              <div key={stage.title} className="contents">
+              <div key={i} className="contents">
                 <motion.div
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -358,7 +389,7 @@ function ExhibitionPage() {
                       className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#14919B]"
                       style={body}
                     >
-                      Layer {i + 1}
+                      {t({ en: "Layer", id: "Lapisan" })} {i + 1}
                     </div>
                   </div>
                   <h3
@@ -396,7 +427,7 @@ function ExhibitionPage() {
               className="inline-flex items-center gap-2 h-12 px-7 bg-[#0B6477] rounded-2xl text-white text-base font-medium hover:bg-[#14919B] transition-colors"
               style={body}
             >
-              Explore the interactive workflow demos
+              {t({ en: "Explore the interactive workflow demos", id: "Jelajahi demo alur kerja interaktif" })}
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -411,13 +442,14 @@ function ExhibitionPage() {
               className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-3"
               style={body}
             >
-              Sponsors & supporters
+              {t({ en: "Sponsors & supporters", id: "Sponsor & pendukung" })}
             </div>
             <h2
               className="text-3xl sm:text-4xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900"
               style={display}
             >
-              Made possible <span style={accent}>together</span>
+              {t({ en: "Made possible", id: "Terwujud" })}{" "}
+              <span style={accent}>{t({ en: "together", id: "bersama" })}</span>
             </h2>
           </div>
           {SPONSORS.length > 0 ? (
@@ -427,7 +459,7 @@ function ExhibitionPage() {
                   className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]"
                   style={body}
                 >
-                  Funding partners
+                  {t({ en: "Funding partners", id: "Mitra pendanaan" })}
                 </div>
                 {sponsorCpi && (
                   <motion.div
@@ -487,13 +519,13 @@ function ExhibitionPage() {
                       className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]"
                       style={body}
                     >
-                      Research support
+                      {t({ en: "Research support", id: "Dukungan riset" })}
                     </div>
                     <div
                       className="text-sm font-normal text-neutral-400 mt-1"
                       style={body}
                     >
-                      Equipment and research materials
+                      {t({ en: "Equipment and research materials", id: "Peralatan dan bahan riset" })}
                     </div>
                   </div>
                   <motion.div
@@ -519,8 +551,10 @@ function ExhibitionPage() {
                 className="text-base md:text-lg font-normal text-neutral-500 max-w-[560px] mx-auto"
                 style={body}
               >
-                Sponsor and supporter logos will be announced here soon. Want to
-                support smartagri at {EVENT.name}? We would love to hear from you.
+                {t({
+                  en: `Sponsor and supporter logos will be announced here soon. Want to support smartagri at ${EVENT.name}? We would love to hear from you.`,
+                  id: `Logo sponsor dan pendukung akan segera diumumkan di sini. Ingin mendukung smartagri di ${EVENT.name}? Kami dengan senang hati menantikan kabar dari Anda.`,
+                })}
               </p>
             </div>
           )}
@@ -536,19 +570,20 @@ function ExhibitionPage() {
               className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-3"
               style={body}
             >
-              Downloads
+              {t({ en: "Downloads", id: "Unduhan" })}
             </div>
             <h2
               className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900 max-w-[760px]"
               style={display}
             >
-              Documents you can <span style={accent}>take with you</span>
+              {t({ en: "Documents you can", id: "Dokumen yang dapat" })}{" "}
+              <span style={accent}>{t({ en: "take with you", id: "Anda bawa pulang" })}</span>
             </h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {DOCUMENTS.map((doc, i) => (
               <motion.div
-                key={doc.title}
+                key={i}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
@@ -579,7 +614,7 @@ function ExhibitionPage() {
                     style={body}
                   >
                     <Download className="w-4 h-4" />
-                    Download{doc.meta ? ` (${doc.meta})` : ""}
+                    {t({ en: "Download", id: "Unduh" })}{doc.meta ? ` (${doc.meta})` : ""}
                   </a>
                 ) : (
                   <span
@@ -587,7 +622,7 @@ function ExhibitionPage() {
                     style={body}
                   >
                     <Download className="w-4 h-4" />
-                    Coming soon
+                    {t({ en: "Coming soon", id: "Segera hadir" })}
                   </span>
                 )}
               </motion.div>
@@ -606,13 +641,14 @@ function ExhibitionPage() {
                 className="text-[13px] font-medium tracking-[0.03em] text-[#14919B] mb-3"
                 style={body}
               >
-                News & reports
+                {t({ en: "News & reports", id: "Berita & laporan" })}
               </div>
               <h2
                 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1] text-neutral-900"
                 style={display}
               >
-                Updates from the <span style={accent}>show floor</span>
+                {t({ en: "Updates from the", id: "Kabar terbaru dari" })}{" "}
+                <span style={accent}>{t({ en: "show floor", id: "arena pameran" })}</span>
               </h2>
             </div>
             <Link
@@ -620,7 +656,7 @@ function ExhibitionPage() {
               className="text-[#0B6477] font-medium hover:underline inline-flex items-center gap-1.5"
               style={body}
             >
-              All field notes
+              {t({ en: "All field notes", id: "Semua Catatan Lapangan" })}
               <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
@@ -657,7 +693,7 @@ function ExhibitionPage() {
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${categoryChip(note.category)}`}
                         style={body}
                       >
-                        {note.category}
+                        {noteCategoryLabel(note.category, lang)}
                       </span>
                       <span
                         className="text-sm font-normal text-neutral-400"
@@ -688,9 +724,10 @@ function ExhibitionPage() {
                 className="text-base md:text-lg font-normal text-neutral-500 max-w-[560px] mx-auto"
                 style={body}
               >
-                News, daily reports, and the after-event report will appear here
-                during {EVENT.name}. Follow along as we post updates from the
-                show floor.
+                {t({
+                  en: `News, daily reports, and the after-event report will appear here during ${EVENT.name}. Follow along as we post updates from the show floor.`,
+                  id: `Berita, laporan harian, dan laporan pascaacara akan tampil di sini selama ${EVENT.name}. Ikuti terus kabar terbaru yang kami bagikan dari arena pameran.`,
+                })}
               </p>
             </div>
           )}
@@ -702,7 +739,15 @@ function ExhibitionPage() {
                   className="text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-neutral-900"
                   style={display}
                 >
-                  From our <span style={accent}>Instagram</span>
+                  {lang === "id" ? (
+                    <>
+                      Dari <span style={accent}>Instagram</span> kami
+                    </>
+                  ) : (
+                    <>
+                      From our <span style={accent}>Instagram</span>
+                    </>
+                  )}
                 </h3>
                 <a
                   href="https://www.instagram.com/smartagri.ugm/"

@@ -12,6 +12,7 @@ import GalleryPreview from "../components/GalleryPreview";
 import CollaborationProcess from "../components/CollaborationProcess";
 import CallToAction from "../components/CallToAction";
 import Footer from "../components/Footer";
+import { useT } from "../lib/i18n";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -38,6 +39,7 @@ function AnimatedWords({ text, baseDelay }: { text: string; baseDelay: number })
 }
 
 function Hero() {
+  const t = useT();
   return (
     <section
       data-header-theme="dark"
@@ -96,7 +98,10 @@ function Hero() {
           className="text-white/85 text-lg md:text-xl font-normal leading-relaxed max-w-[600px]"
           style={body}
         >
-          Turning field data into healthier, more sustainable harvests.
+          {t({
+            en: "Turning field data into healthier, more sustainable harvests.",
+            id: "Mengubah data lahan menjadi panen yang lebih sehat dan berkelanjutan.",
+          })}
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -110,7 +115,7 @@ function Hero() {
             className="group h-12 md:h-14 px-6 md:px-7 bg-[#45DFB1] rounded-lg inline-flex items-center gap-3 text-[#0B2A22] text-sm md:text-[15px] font-medium uppercase tracking-[0.08em] hover:bg-[#80ED99] transition-colors shadow-lg"
             style={body}
           >
-            Start a project
+            {t({ en: "Start a project", id: "Mulai proyek" })}
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
           <Link
@@ -118,7 +123,7 @@ function Hero() {
             className="group inline-flex items-center gap-2 pb-1.5 border-b border-white/40 hover:border-[#45DFB1] text-white text-sm md:text-[15px] font-medium uppercase tracking-[0.08em] transition-colors"
             style={body}
           >
-            Explore our research
+            {t({ en: "Explore our research", id: "Jelajahi riset kami" })}
             <ArrowUpRight className="w-4 h-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </Link>
         </motion.div>
@@ -131,7 +136,10 @@ function Hero() {
         >
           <AnimatedWords
             baseDelay={1.2}
-            text="We sense the field with IoT and imaging, analyze it with AI and data, and help farmers grow more sustainably. From precision irrigation to early disease detection, our research turns readings into decisions farmers can act on."
+            text={t({
+              en: "We sense the field with IoT and imaging, analyze it with AI and data, and help farmers grow more sustainably. From precision irrigation to early disease detection, our research turns readings into decisions farmers can act on.",
+              id: "Kami membaca kondisi lahan dengan IoT dan pencitraan, menganalisisnya dengan AI dan data, lalu membantu petani bertani secara lebih berkelanjutan. Dari irigasi presisi hingga deteksi dini penyakit tanaman, riset kami mengubah data menjadi keputusan yang dapat langsung dijalankan petani.",
+            })}
           />
         </div>
         <motion.div
@@ -144,7 +152,7 @@ function Hero() {
             className="h-12 md:h-[56px] px-4 md:px-5 rounded-2xl border border-white/40 text-white text-[15px] md:text-lg font-medium whitespace-nowrap flex items-center justify-center"
             style={body}
           >
-            Solutions for real-world fields
+            {t({ en: "Solutions for real-world fields", id: "Solusi untuk lahan nyata" })}
           </div>
           <div className="flex items-center gap-2">
             <div className="w-12 h-12 md:w-[56px] md:h-[56px] rounded-2xl border border-white/40 flex items-center justify-center">
@@ -154,7 +162,7 @@ function Hero() {
               className="h-12 md:h-[56px] px-4 md:px-5 rounded-2xl border border-white/40 text-white text-[15px] md:text-lg font-medium whitespace-nowrap flex items-center justify-center"
               style={body}
             >
-              Sensing &amp; intelligence
+              {t({ en: "Sensing & intelligence", id: "Penginderaan & kecerdasan" })}
             </div>
           </div>
         </motion.div>

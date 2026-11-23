@@ -7,6 +7,9 @@ import { DEFAULT_SIGNED_IN_PATH } from '../lib/features'
 import AuthShell, { AUTH_BUTTON } from '../components/AuthShell'
 import { AGROSPHERE_HOME } from '../lib/agrosphere'
 import ResendConfirmation from '../components/ResendConfirmation'
+import { headLang, readLang, useT } from '../lib/i18n'
+import type { Lang } from '../lib/i18n'
+import { authErrorText } from '../components/auth/authErrors'
 
 export const Route = createFileRoute('/auth/confirm')({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -16,9 +19,11 @@ export const Route = createFileRoute('/auth/confirm')({
         : undefined,
   }),
   component: ConfirmPage,
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: 'Confirm your email | smartagri' },
+      {
+        title: headLang(matches) === 'id' ? 'Konfirmasi email Anda | smartagri' : 'Confirm your email | smartagri',
+      },
       { name: 'robots', content: 'noindex, nofollow' },
     ],
   }),
@@ -39,15 +44,18 @@ const EASE = [0.22, 1, 0.36, 1] as const
 const REDIRECT_DELAY = 3000
 
 // Errors arrive in the hash (implicit flow) or the query (PKCE flow).
-function readUrlError(): string | null {
+function readUrlError(lang: Lang): string | null {
   const params = new URLSearchParams(window.location.hash.replace(/^#/, ''))
   const query = new URLSearchParams(window.location.search)
   const code = params.get('error_code') ?? query.get('error_code')
   const desc = params.get('error_description') ?? query.get('error_description')
   if (!code && !desc) return null
   if (code === 'otp_expired')
-    return 'This confirmation link has expired or has already been used. Request a new one below.'
-  return desc ? desc.replace(/\+/g, ' ') : 'The confirmation link is not valid.'
+    return lang === 'id'
+      ? 'Tautan konfirmasi ini sudah kedaluwarsa atau sudah pernah dipakai. Minta tautan baru di bawah.'
+      : 'This confirmation link has expired or has already been used. Request a new one below.'
+  if (desc) return authErrorText(desc.replace(/\+/g, ' '), lang)
+  return lang === 'id' ? 'Tautan konfirmasi tidak valid.' : 'The confirmation link is not valid.'
 }
 
 function ConfirmPage() {
@@ -56,14 +64,20 @@ function ConfirmPage() {
   const next = `/welcome?redirect=${encodeURIComponent(target)}`
   // An agrosphere sign-up comes back here on its way to the agrosphere launcher.
   const brand = target.startsWith(AGROSPHERE_HOME) ? 'agrosphere' : 'smartagri'
+  const t = useT()
   const [state, setState] = useState<State>({ kind: 'checking' })
 
   useEffect(() => {
+    // Read once here (not from context) so the effect keeps running only on redirect.
+    const lang = readLang()
     if (!supabase) {
-      setState({ kind: 'failed', reason: 'Sign-in is not configured on this environment.' })
+      setState({
+        kind: 'failed',
+        reason: lang === 'id' ? 'Fitur masuk belum dikonfigurasi di lingkungan ini.' : 'Sign-in is not configured on this environment.',
+      })
       return
     }
-    const urlError = readUrlError()
+    const urlError = readUrlError(lang)
     // Tokens must not stay in the address bar, history or a shared screenshot.
     const clean = () => window.history.replaceState(null, '', `/auth/confirm${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`)
     if (urlError) {
@@ -93,7 +107,13 @@ function ConfirmPage() {
       if (!active) return
       setState((s) =>
         s.kind === 'checking'
-          ? { kind: 'failed', reason: 'We could not confirm your email from this link. Request a new one below.' }
+          ? {
+              kind: 'failed',
+              reason:
+                lang === 'id'
+                  ? 'Kami tidak dapat mengonfirmasi email Anda dari tautan ini. Minta tautan baru di bawah.'
+                  : 'We could not confirm your email from this link. Request a new one below.',
+            }
           : s,
       )
     }, 6000)
@@ -113,7 +133,15 @@ function ConfirmPage() {
 
   if (state.kind === 'confirmed') {
     return (
-      <AuthShell brand={brand} title="Email" accentWord="confirmed" subtitle={`Your ${brand} account is ready. One more step: tell us about yourself.`}>
+      <AuthShell
+        brand={brand}
+        title={t({ en: 'Email', id: 'Email' })}
+        accentWord={t({ en: 'confirmed', id: 'terkonfirmasi' })}
+        subtitle={t({
+          en: `Your ${brand} account is ready. One more step: tell us about yourself.`,
+          id: `Akun ${brand} Anda sudah siap. Satu langkah lagi: ceritakan tentang diri Anda.`,
+        })}
+      >
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-4 rounded-2xl border border-[#14919B]/20 bg-[#45DFB1]/10 p-4">
             <motion.span
@@ -125,18 +153,18 @@ function ConfirmPage() {
               <Check className="h-5 w-5" strokeWidth={3} />
             </motion.span>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-neutral-900">Verified</p>
+              <p className="text-sm font-medium text-neutral-900">{t({ en: 'Verified', id: 'Terverifikasi' })}</p>
               <p className="truncate text-sm text-[#0B6477]">{state.email}</p>
             </div>
           </div>
           <ol className="flex flex-col gap-3 text-sm text-neutral-600">
             {[
-              { label: 'Create account', done: true },
-              { label: 'Confirm email', done: true },
-              { label: 'Complete your profile', done: false },
-              { label: 'Approval by a lab admin', done: false },
+              { label: t({ en: 'Create account', id: 'Buat akun' }), done: true },
+              { label: t({ en: 'Confirm email', id: 'Konfirmasi email' }), done: true },
+              { label: t({ en: 'Complete your profile', id: 'Lengkapi profil Anda' }), done: false },
+              { label: t({ en: 'Approval by a lab admin', id: 'Persetujuan oleh admin lab' }), done: false },
             ].map((s, i) => (
-              <li key={s.label} className="flex items-center gap-3">
+              <li key={i} className="flex items-center gap-3">
                 <span
                   className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-semibold ${
                     s.done ? 'bg-[#0B6477] text-white' : i === 2 ? 'border-2 border-[#14919B] text-[#0B6477]' : 'border border-[#0B6477]/20 text-neutral-400'
@@ -152,7 +180,7 @@ function ConfirmPage() {
           </ol>
           <div>
             <a href={next} className={AUTH_BUTTON}>
-              Continue to your profile
+              {t({ en: 'Continue to your profile', id: 'Lanjut ke profil Anda' })}
               <ArrowRight className="h-4 w-4" />
             </a>
             <div className="mt-3 h-1 overflow-hidden rounded-full bg-[#0B6477]/10">
@@ -163,7 +191,9 @@ function ConfirmPage() {
                 transition={{ duration: REDIRECT_DELAY / 1000, ease: 'linear' }}
               />
             </div>
-            <p className="mt-2 text-xs text-neutral-400">Taking you there automatically.</p>
+            <p className="mt-2 text-xs text-neutral-400">
+              {t({ en: 'Taking you there automatically.', id: 'Anda akan dialihkan secara otomatis.' })}
+            </p>
           </div>
         </div>
       </AuthShell>
@@ -172,7 +202,12 @@ function ConfirmPage() {
 
   if (state.kind === 'failed') {
     return (
-      <AuthShell brand={brand} title="Link" accentWord="not valid" subtitle="The confirmation could not be completed.">
+      <AuthShell
+        brand={brand}
+        title={t({ en: 'Link', id: 'Tautan' })}
+        accentWord={t({ en: 'not valid', id: 'tidak valid' })}
+        subtitle={t({ en: 'The confirmation could not be completed.', id: 'Konfirmasi tidak dapat diselesaikan.' })}
+      >
         <div className="flex flex-col gap-6">
           <p className="flex items-start gap-3 rounded-2xl border border-[#F59E0B]/25 bg-[#F59E0B]/[0.07] p-4 text-sm leading-relaxed text-[#8A5300]" role="alert">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -180,9 +215,9 @@ function ConfirmPage() {
           </p>
           {isAuthConfigured && <ResendConfirmation redirect={redirect} />}
           <p className="text-sm text-neutral-500">
-            Already confirmed?{' '}
+            {t({ en: 'Already confirmed?', id: 'Sudah dikonfirmasi?' })}{' '}
             <Link to="/sign-in" search={{ redirect }} className="font-medium text-[#0B6477] hover:underline">
-              Sign in
+              {t({ en: 'Sign in', id: 'Masuk' })}
             </Link>
           </p>
         </div>
@@ -191,7 +226,12 @@ function ConfirmPage() {
   }
 
   return (
-    <AuthShell brand={brand} title="Confirming your" accentWord="email" subtitle="This takes a moment.">
+    <AuthShell
+      brand={brand}
+      title={t({ en: 'Confirming your', id: 'Mengonfirmasi' })}
+      accentWord={t({ en: 'email', id: 'email Anda' })}
+      subtitle={t({ en: 'This takes a moment.', id: 'Mohon tunggu sebentar.' })}
+    >
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -199,7 +239,7 @@ function ConfirmPage() {
         className="flex items-center gap-3 text-sm text-neutral-500"
       >
         <Loader2 className="h-5 w-5 animate-spin text-[#0B6477]" />
-        Checking your confirmation link...
+        {t({ en: 'Checking your confirmation link...', id: 'Memeriksa tautan konfirmasi Anda...' })}
       </motion.div>
     </AuthShell>
   )

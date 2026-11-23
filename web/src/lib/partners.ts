@@ -1,4 +1,5 @@
 import { partnerLogo } from "./assets";
+import type { Lang } from "./i18n-core";
 
 export type PartnerGroup =
   | "University"
@@ -245,3 +246,40 @@ export const PARTNERS: Partner[] = [
 
 /** The roster as shown to visitors, with archived partners withheld. */
 export const ACTIVE_PARTNERS: Partner[] = PARTNERS.filter((p) => !p.archived);
+
+// ---- Bahasa Indonesia (see lib/i18n.tsx) ----
+const PARTNER_GROUP_ID: Record<PartnerGroup, string> = {
+  University: "Universitas",
+  Ministry: "Kementerian",
+  "Government Institution": "Lembaga Pemerintah",
+  "State-Owned Enterprise": "BUMN",
+  "Private Company": "Perusahaan Swasta",
+  "Research Center & Organization": "Pusat Riset & Organisasi",
+  "Farmer Group": "Kelompok Tani",
+};
+
+export function partnerGroupLabel(group: PartnerGroup, lang: Lang): string {
+  return lang === "id" ? PARTNER_GROUP_ID[group] : group;
+}
+
+/** Indonesian hover notes keyed by partner name; untranslated notes fall back to English. */
+const PARTNER_NOTE_ID: Record<string, string> = {
+  "Wageningen University & Research": "Belanda",
+  "Kyushu University": "Jepang",
+  "Ehime University": "Jepang",
+  "Kangwon National University": "Korea Selatan",
+  "Chungnam National University": "Korea Selatan",
+  "Seoul National University": "Korea Selatan",
+  "Maejo University": "Thailand",
+  "Kasetsart University": "Thailand",
+  "Universiti Putra Malaysia": "Malaysia",
+  "Kementerian Pekerjaan Umum": "Republik Indonesia",
+  "Kementerian Pertanian": "Republik Indonesia",
+  "Pertamina Patra Niaga": "Grup Pertamina",
+  "Quantum Systems": "Melalui PT Quatindo Widjaya Adhirajasa",
+  "WGFS 1.2 Precision Agriculture & Smart Farming": "Tim riset, FTP UGM",
+};
+
+export function partnerNote(partner: Partner, lang: Lang): string | undefined {
+  return lang === "id" ? (PARTNER_NOTE_ID[partner.name] ?? partner.note) : partner.note;
+}

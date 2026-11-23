@@ -16,6 +16,8 @@ import type { AccountProfile, LabRole, OnboardingFields } from '../lib/account'
 import { DEFAULT_SIGNED_IN_PATH } from '../lib/features'
 import { AGROSPHERE_SIGNUP } from '../lib/agrosphere'
 import { accent, body, display } from '../lib/fonts'
+import { headLang, useLang, useT } from '../lib/i18n'
+import type { Lang } from '../lib/i18n'
 import SiteHeader from '../components/SiteHeader'
 import AuthGate from '../components/AuthGate'
 
@@ -27,14 +29,46 @@ export const Route = createFileRoute('/welcome')({
         : undefined,
   }),
   component: WelcomePage,
-  head: () => ({
-    meta: [
-      { title: 'Welcome | smartagri' },
-      { name: 'robots', content: 'noindex, nofollow' },
-      { name: 'description', content: 'Set up your SmartAgri lab account.' },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches)
+    return {
+      meta: [
+        { title: l === 'id' ? 'Selamat datang | smartagri' : 'Welcome | smartagri' },
+        { name: 'robots', content: 'noindex, nofollow' },
+        {
+          name: 'description',
+          content: l === 'id' ? 'Siapkan akun lab SmartAgri Anda.' : 'Set up your SmartAgri lab account.',
+        },
+      ],
+    }
+  },
 })
+
+// Indonesian display for lib/account copy, keyed by its English text (the role
+// values and the English messages there stay as they are).
+const ROLE_LABEL_ID: Record<string, string> = {
+  Lecturer: 'Dosen',
+  Researcher: 'Peneliti',
+  Staff: 'Staf',
+  'Doctoral student (S3)': 'Mahasiswa doktoral (S3)',
+  'Master student (S2)': 'Mahasiswa magister (S2)',
+  'Undergraduate (S1)': 'Mahasiswa sarjana (S1)',
+  Alumni: 'Alumni',
+  Partner: 'Mitra',
+}
+
+const ONBOARDING_ERROR_ID: Record<string, string> = {
+  'Enter your full name.': 'Isi nama lengkap Anda.',
+  'Choose your role in the lab.': 'Pilih peran Anda di lab.',
+  'Enter your cohort as the year you started, for example 2024.': 'Isi angkatan Anda dengan tahun masuk, misalnya 2024.',
+  'Enter your student ID (NIM).': 'Isi NIM Anda.',
+  'Enter your research topic (a working title is fine).': 'Isi topik riset Anda (judul sementara pun tidak apa-apa).',
+}
+
+function roleLabel(role: string | null | undefined, lang: Lang): string {
+  const en = labRoleLabel(role)
+  return lang === 'id' ? (ROLE_LABEL_ID[en] ?? en) : en
+}
 
 // First stop after signing in: a short onboarding (who you are, and for
 // students their cohort, NIM, topic and supervisor), then a waiting room until
@@ -67,6 +101,7 @@ function WelcomePage() {
 }
 
 function WelcomeContent() {
+  const t = useT()
   const { redirect } = Route.useSearch()
   const { user, account, refreshAccount, signOut } = useAuth()
   const target = redirect ?? DEFAULT_SIGNED_IN_PATH
@@ -100,15 +135,25 @@ function WelcomeContent() {
   if (account.status === 'rejected' || account.status === 'suspended') {
     const rejected = account.status === 'rejected'
     return (
-      <Panel icon={<Ban className="h-6 w-6 text-[#45DFB1]" />} title={rejected ? 'Registration' : 'Account'} accentWord={rejected ? 'not approved' : 'deactivated'}>
+      <Panel
+        icon={<Ban className="h-6 w-6 text-[#45DFB1]" />}
+        title={rejected ? t({ en: 'Registration', id: 'Pendaftaran' }) : t({ en: 'Account', id: 'Akun' })}
+        accentWord={rejected ? t({ en: 'not approved', id: 'tidak disetujui' }) : t({ en: 'deactivated', id: 'dinonaktifkan' })}
+      >
         <p className="text-center text-[15px] leading-relaxed text-neutral-600" style={body}>
           {rejected
-            ? 'A lab admin did not approve this account. If you think this is a mistake, contact the SmartAgri team.'
-            : 'This account is no longer active. Your earlier work stays in place; contact a lab admin to reactivate it.'}
+            ? t({
+                en: 'A lab admin did not approve this account. If you think this is a mistake, contact the SmartAgri team.',
+                id: 'Admin lab tidak menyetujui akun ini. Jika menurut Anda ini keliru, silakan hubungi tim SmartAgri.',
+              })
+            : t({
+                en: 'This account is no longer active. Your earlier work stays in place; contact a lab admin to reactivate it.',
+                id: 'Akun ini sudah tidak aktif. Pekerjaan Anda sebelumnya tetap tersimpan; hubungi admin lab untuk mengaktifkannya kembali.',
+              })}
         </p>
         <div className="mt-6 flex justify-center">
           <SecondaryButton onClick={leave} icon={<LogOut className="h-4 w-4" />}>
-            Sign out
+            {t({ en: 'Sign out', id: 'Keluar' })}
           </SecondaryButton>
         </div>
       </Panel>
@@ -214,6 +259,8 @@ function OnboardingForm({
   onCancel: () => void
   onSaved: (saved: OnboardingFields) => Promise<void>
 }) {
+  const lang = useLang()
+  const t = useT()
   const [f, setF] = useState<OnboardingFields>(() => ({
     ...EMPTY,
     full_name: initial?.full_name ?? '',
@@ -242,7 +289,7 @@ function OnboardingForm({
     // Step 1 checks only the identity part; the full check runs on the last step.
     const problem = onboardingError(step === 1 && student ? { ...f, cohort: year, staff_id: '-', research_topic: '-' } : f, year)
     if (problem) {
-      setError(problem)
+      setError(lang === 'id' ? (ONBOARDING_ERROR_ID[problem] ?? problem) : problem)
       return
     }
     setError(null)
@@ -266,9 +313,16 @@ function OnboardingForm({
   return (
     <Panel
       icon={<Sprout className="h-6 w-6 text-[#45DFB1]" />}
-      title="Welcome to"
+      title={t({ en: 'Welcome to', id: 'Selamat datang di' })}
       accentWord="smartagri"
-      subtitle={steps > 1 ? `Step ${step} of ${steps} · tell the lab who you are` : 'Tell the lab who you are'}
+      subtitle={
+        steps > 1
+          ? t({
+              en: `Step ${step} of ${steps} · tell the lab who you are`,
+              id: `Langkah ${step} dari ${steps} · perkenalkan diri Anda kepada lab`,
+            })
+          : t({ en: 'Tell the lab who you are', id: 'Perkenalkan diri Anda kepada lab' })
+      }
     >
       {steps > 1 && (
         <div className="mb-6 grid grid-cols-2 gap-2" aria-hidden="true">
@@ -286,15 +340,34 @@ function OnboardingForm({
       >
         {step === 1 ? (
           <>
-            <Field label="Full name">
-              <input value={f.full_name} onChange={(e) => set('full_name', e.target.value)} autoComplete="name" placeholder="As on your student or staff card" className={inputClass} style={body} />
+            <Field label={t({ en: 'Full name', id: 'Nama lengkap' })}>
+              <input
+                value={f.full_name}
+                onChange={(e) => set('full_name', e.target.value)}
+                autoComplete="name"
+                placeholder={t({ en: 'As on your student or staff card', id: 'Sesuai kartu mahasiswa atau kartu pegawai' })}
+                className={inputClass}
+                style={body}
+              />
             </Field>
-            <Field label="Preferred name" hint="Shown on Kanban cards and comments. Leave empty to use your full name.">
-              <input value={f.preferred_name} onChange={(e) => set('preferred_name', e.target.value)} placeholder="e.g. Athala" className={inputClass} style={body} />
+            <Field
+              label={t({ en: 'Preferred name', id: 'Nama panggilan' })}
+              hint={t({
+                en: 'Shown on Kanban cards and comments. Leave empty to use your full name.',
+                id: 'Ditampilkan di kartu Kanban dan komentar. Kosongkan untuk memakai nama lengkap.',
+              })}
+            >
+              <input
+                value={f.preferred_name}
+                onChange={(e) => set('preferred_name', e.target.value)}
+                placeholder={t({ en: 'e.g. Athala', id: 'mis. Athala' })}
+                className={inputClass}
+                style={body}
+              />
             </Field>
             <fieldset className="flex flex-col gap-1.5">
               <legend className="mb-1.5 text-sm font-medium text-neutral-700" style={body}>
-                Role in the lab
+                {t({ en: 'Role in the lab', id: 'Peran di lab' })}
               </legend>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {LAB_ROLES.map((r) => {
@@ -310,7 +383,7 @@ function OnboardingForm({
                       }`}
                       style={body}
                     >
-                      {r.label}
+                      {lang === 'id' ? (ROLE_LABEL_ID[r.label] ?? r.label) : r.label}
                       {on && <Check className="h-4 w-4 shrink-0" />}
                     </button>
                   )
@@ -321,7 +394,7 @@ function OnboardingForm({
         ) : (
           <>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Cohort" hint="Year you started">
+              <Field label={t({ en: 'Cohort', id: 'Angkatan' })} hint={t({ en: 'Year you started', id: 'Tahun masuk' })}>
                 <input
                   type="number"
                   inputMode="numeric"
@@ -334,24 +407,45 @@ function OnboardingForm({
                   style={body}
                 />
               </Field>
-              <Field label="Student ID (NIM)" hint="Visible only to you and lab admins">
-                <input value={f.staff_id} onChange={(e) => set('staff_id', e.target.value)} placeholder="e.g. 23/123456/TP/12345" className={inputClass} style={body} />
+              <Field
+                label={t({ en: 'Student ID (NIM)', id: 'NIM' })}
+                hint={t({ en: 'Visible only to you and lab admins', id: 'Hanya terlihat oleh Anda dan admin lab' })}
+              >
+                <input
+                  value={f.staff_id}
+                  onChange={(e) => set('staff_id', e.target.value)}
+                  placeholder={t({ en: 'e.g. 23/123456/TP/12345', id: 'mis. 23/123456/TP/12345' })}
+                  className={inputClass}
+                  style={body}
+                />
               </Field>
             </div>
-            <Field label="Research topic" hint="A working title is fine; you can change it later">
-              <input value={f.research_topic} onChange={(e) => set('research_topic', e.target.value)} placeholder="e.g. PPFD monitoring in a plant factory" className={inputClass} style={body} />
+            <Field
+              label={t({ en: 'Research topic', id: 'Topik riset' })}
+              hint={t({
+                en: 'A working title is fine; you can change it later',
+                id: 'Judul sementara pun tidak apa-apa; Anda dapat mengubahnya nanti',
+              })}
+            >
+              <input
+                value={f.research_topic}
+                onChange={(e) => set('research_topic', e.target.value)}
+                placeholder={t({ en: 'e.g. PPFD monitoring in a plant factory', id: 'mis. Pemantauan PPFD di plant factory' })}
+                className={inputClass}
+                style={body}
+              />
             </Field>
-            <Field label="Supervisor">
+            <Field label={t({ en: 'Supervisor', id: 'Dosen pembimbing' })}>
               <select
                 value={f.supervisor_id ?? ''}
                 onChange={(e) => set('supervisor_id', e.target.value || null)}
                 className={inputClass}
                 style={body}
               >
-                <option value="">Not listed yet</option>
+                <option value="">{t({ en: 'Not listed yet', id: 'Belum ada di daftar' })}</option>
                 {supervisors.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.full_name} ({labRoleLabel(s.lab_role)})
+                    {s.full_name} ({roleLabel(s.lab_role, lang)})
                   </option>
                 ))}
               </select>
@@ -368,20 +462,20 @@ function OnboardingForm({
         <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
           {step > 1 ? (
             <SecondaryButton onClick={() => setStep(step - 1)} icon={<ArrowLeft className="h-4 w-4" />}>
-              Back
+              {t({ en: 'Back', id: 'Kembali' })}
             </SecondaryButton>
           ) : canCancel ? (
-            <SecondaryButton onClick={onCancel}>Cancel</SecondaryButton>
+            <SecondaryButton onClick={onCancel}>{t({ en: 'Cancel', id: 'Batal' })}</SecondaryButton>
           ) : (
             <span />
           )}
           <PrimaryButton type="submit" busy={saving}>
             {step < steps ? (
               <>
-                Next <ArrowRight className="h-4 w-4" />
+                {t({ en: 'Next', id: 'Lanjut' })} <ArrowRight className="h-4 w-4" />
               </>
             ) : (
-              'Save and continue'
+              t({ en: 'Save and continue', id: 'Simpan dan lanjutkan' })
             )}
           </PrimaryButton>
         </div>
@@ -401,22 +495,30 @@ function Waiting({
   onRefresh: () => Promise<void>
   onSignOut: () => void
 }) {
+  const lang = useLang()
+  const t = useT()
   const [checking, setChecking] = useState(false)
   const [stillPending, setStillPending] = useState(false)
   const rows: [string, string][] = [
-    ['Name', profile?.full_name ?? ''],
-    ['Role', labRoleLabel(profile?.lab_role)],
+    [t({ en: 'Name', id: 'Nama' }), profile?.full_name ?? ''],
+    [t({ en: 'Role', id: 'Peran' }), roleLabel(profile?.lab_role, lang)],
   ]
   if (isStudentRole(profile?.lab_role)) {
-    rows.push(['Cohort', profile?.cohort ? String(profile.cohort) : ''], ['Research topic', profile?.research_topic ?? ''])
+    rows.push(
+      [t({ en: 'Cohort', id: 'Angkatan' }), profile?.cohort ? String(profile.cohort) : ''],
+      [t({ en: 'Research topic', id: 'Topik riset' }), profile?.research_topic ?? ''],
+    )
   }
 
   return (
     <Panel
       icon={<Clock className="h-6 w-6 text-[#45DFB1]" />}
-      title="Waiting for"
-      accentWord="approval"
-      subtitle="A lab admin reviews new accounts. You can use Kanban, Inventory and the other tools once it is approved."
+      title={t({ en: 'Waiting for', id: 'Menunggu' })}
+      accentWord={t({ en: 'approval', id: 'persetujuan' })}
+      subtitle={t({
+        en: 'A lab admin reviews new accounts. You can use Kanban, Inventory and the other tools once it is approved.',
+        id: 'Admin lab meninjau setiap akun baru. Anda dapat memakai Kanban, Inventaris, dan fitur lainnya setelah akun disetujui.',
+      })}
     >
       <dl className="divide-y divide-[#0B6477]/8 rounded-2xl border border-[#0B6477]/10 bg-[#F7FAF9] px-4">
         {rows.map(([k, v]) => (
@@ -428,7 +530,7 @@ function Waiting({
       </dl>
       {stillPending && (
         <p className="mt-4 text-center text-sm text-neutral-500" style={body} role="status">
-          Not approved yet. Check again later.
+          {t({ en: 'Not approved yet. Check again later.', id: 'Belum disetujui. Silakan periksa lagi nanti.' })}
         </p>
       )}
       <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -444,17 +546,17 @@ function Waiting({
           }}
         >
           {!checking && <RefreshCw className="h-4 w-4" />}
-          Check again
+          {t({ en: 'Check again', id: 'Periksa lagi' })}
         </PrimaryButton>
-        <SecondaryButton onClick={onEdit}>Edit details</SecondaryButton>
+        <SecondaryButton onClick={onEdit}>{t({ en: 'Edit details', id: 'Ubah data' })}</SecondaryButton>
         <SecondaryButton onClick={onSignOut} icon={<LogOut className="h-4 w-4" />}>
-          Sign out
+          {t({ en: 'Sign out', id: 'Keluar' })}
         </SecondaryButton>
       </div>
       <p className="mt-6 text-center text-sm text-neutral-500" style={body}>
-        You can also add a photo in{' '}
+        {t({ en: 'You can also add a photo in', id: 'Anda juga dapat menambahkan foto di' })}{' '}
         <Link to="/account" className="font-medium text-[#0B6477] hover:underline">
-          Profile &amp; settings
+          {t({ en: 'Profile & settings', id: 'Profil & pengaturan' })}
         </Link>
         .
       </p>

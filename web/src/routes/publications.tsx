@@ -16,19 +16,25 @@ import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import AmbientWash from "../components/AmbientWash";
 import { EASE, MaskLine } from "../components/NoteParts";
+import { headLang, localeOf, useLang, useT, type Bi } from "../lib/i18n";
 
 export const Route = createFileRoute("/publications")({
   component: PublicationsPage,
-  head: () => ({
-    meta: [
-      { title: "Publications | smartagri" },
-      {
-        name: "description",
-        content:
-          "Peer-reviewed publications from the Smart Agriculture Research Center on AI, IoT sensing, and data-driven agriculture.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        { title: l === "id" ? "Publikasi | smartagri" : "Publications | smartagri" },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Publikasi ilmiah bereviu sejawat dari Smart Agriculture Research Center tentang AI, penginderaan berbasis IoT, dan pertanian berbasis data."
+              : "Peer-reviewed publications from the Smart Agriculture Research Center on AI, IoT sensing, and data-driven agriculture.",
+        },
+      ],
+    };
+  },
 });
 
 // Every publication as a sortable, searchable, paged table (after a "team
@@ -42,12 +48,12 @@ const PAGE_SIZES = [10, 30, 50, 100];
 type SortKey = "title" | "venue" | "publisher" | "citations" | "year";
 type Sort = { key: SortKey; dir: "asc" | "desc" };
 
-const COLUMNS: { key: SortKey; label: string; align?: "right" | "center"; first: "asc" | "desc" }[] = [
-  { key: "title", label: "Title", first: "asc" },
-  { key: "venue", label: "Journal", first: "asc" },
-  { key: "publisher", label: "Publisher", first: "asc" },
-  { key: "citations", label: "Cited by", align: "center", first: "desc" },
-  { key: "year", label: "Year", align: "right", first: "desc" },
+const COLUMNS: { key: SortKey; label: Bi; align?: "right" | "center"; first: "asc" | "desc" }[] = [
+  { key: "title", label: { en: "Title", id: "Judul" }, first: "asc" },
+  { key: "venue", label: { en: "Journal", id: "Jurnal" }, first: "asc" },
+  { key: "publisher", label: { en: "Publisher", id: "Penerbit" }, first: "asc" },
+  { key: "citations", label: { en: "Cited by", id: "Dikutip" }, align: "center", first: "desc" },
+  { key: "year", label: { en: "Year", id: "Tahun" }, align: "right", first: "desc" },
 ];
 
 // Title | Journal | Publisher | Cited by | Year | arrow
@@ -104,6 +110,8 @@ const controlClass =
   "h-10 rounded-lg border border-[#0B6477]/15 bg-white px-3 text-sm text-neutral-700 outline-none transition-colors focus:border-[#14919B] focus:ring-2 focus:ring-[#14919B]/20";
 
 function PublicationsPage() {
+  const lang = useLang();
+  const t = useT();
   const [query, setQuery] = useState("");
   const [year, setYear] = useState("all");
   const [sort, setSort] = useState<Sort>({ key: "year", dir: "desc" });
@@ -163,9 +171,9 @@ function PublicationsPage() {
               className="text-4xl font-semibold leading-[1.02] tracking-[-0.035em] text-neutral-900 sm:text-5xl md:text-[64px]"
               style={display}
             >
-              <MaskLine delay={0}>From the field</MaskLine>
+              <MaskLine delay={0}>{t({ en: "From the field", id: "Dari lapangan" })}</MaskLine>
               <MaskLine delay={0.12}>
-                <span style={accent}>to peer review.</span>
+                <span style={accent}>{t({ en: "to peer review.", id: "ke telaah sejawat." })}</span>
               </MaskLine>
             </motion.h1>
             <motion.p
@@ -175,8 +183,10 @@ function PublicationsPage() {
               className="max-w-[520px] text-base leading-relaxed text-neutral-500 md:text-lg"
               style={body}
             >
-              Our peer-reviewed work on sensing, modelling and the human side of data-driven
-              agriculture. Search, filter by year, and sort by any column.
+              {t({
+                en: "Our peer-reviewed work on sensing, modelling and the human side of data-driven agriculture. Search, filter by year, and sort by any column.",
+                id: "Karya kami yang telah melalui telaah sejawat tentang penginderaan, pemodelan, dan sisi manusia dari pertanian berbasis data. Cari, saring menurut tahun, dan urutkan kolom mana pun.",
+              })}
             </motion.p>
           </div>
 
@@ -196,10 +206,10 @@ function PublicationsPage() {
                 </span>
                 <span style={body}>
                   <span className="block text-lg font-semibold tracking-[-0.02em] text-neutral-900" style={display}>
-                    Publications
+                    {t({ en: "Publications", id: "Publikasi" })}
                   </span>
                   <span className="block text-[13px] text-neutral-500">
-                    {PUBLICATIONS.length} papers · {TOTAL_CITATIONS.toLocaleString("en-US")} citations · {YEARS[YEARS.length - 1]}–{YEARS[0]}
+                    {PUBLICATIONS.length} {t({ en: "papers", id: "makalah" })} · {TOTAL_CITATIONS.toLocaleString(localeOf(lang))} {t({ en: "citations", id: "sitasi" })} · {YEARS[YEARS.length - 1]}–{YEARS[0]}
                   </span>
                 </span>
               </div>
@@ -210,8 +220,8 @@ function PublicationsPage() {
                     type="search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search title, author, journal..."
-                    aria-label="Search publications"
+                    placeholder={t({ en: "Search title, author, journal...", id: "Cari judul, penulis, jurnal..." })}
+                    aria-label={t({ en: "Search publications", id: "Cari publikasi" })}
                     className={`${controlClass} w-full pl-9`}
                     style={body}
                   />
@@ -220,11 +230,11 @@ function PublicationsPage() {
                   <select
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
-                    aria-label="Filter by year"
+                    aria-label={t({ en: "Filter by year", id: "Saring menurut tahun" })}
                     className={`${controlClass} w-full min-w-0 px-2 md:w-auto md:px-3`}
                     style={body}
                   >
-                    <option value="all">All years</option>
+                    <option value="all">{t({ en: "All years", id: "Semua tahun" })}</option>
                     {YEARS.map((y) => (
                       <option key={y} value={y}>
                         {y}
@@ -238,27 +248,27 @@ function PublicationsPage() {
                       const [key, dir] = e.target.value.split(":") as [SortKey, "asc" | "desc"];
                       setSort({ key, dir });
                     }}
-                    aria-label="Sort publications"
+                    aria-label={t({ en: "Sort publications", id: "Urutkan publikasi" })}
                     className={`${controlClass} w-full min-w-0 px-2 md:hidden`}
                     style={body}
                   >
-                    <option value="year:desc">Newest</option>
-                    <option value="year:asc">Oldest</option>
-                    <option value="citations:desc">Most cited</option>
-                    <option value="title:asc">Title A–Z</option>
-                    <option value="venue:asc">Journal A–Z</option>
-                    <option value="publisher:asc">Publisher A–Z</option>
+                    <option value="year:desc">{t({ en: "Newest", id: "Terbaru" })}</option>
+                    <option value="year:asc">{t({ en: "Oldest", id: "Terlama" })}</option>
+                    <option value="citations:desc">{t({ en: "Most cited", id: "Paling banyak dikutip" })}</option>
+                    <option value="title:asc">{t({ en: "Title A–Z", id: "Judul A–Z" })}</option>
+                    <option value="venue:asc">{t({ en: "Journal A–Z", id: "Jurnal A–Z" })}</option>
+                    <option value="publisher:asc">{t({ en: "Publisher A–Z", id: "Penerbit A–Z" })}</option>
                   </select>
                   <select
                     value={pageSize}
                     onChange={(e) => setPageSize(Number(e.target.value))}
-                    aria-label="Publications per page"
+                    aria-label={t({ en: "Publications per page", id: "Publikasi per halaman" })}
                     className={`${controlClass} w-full min-w-0 px-2 md:w-auto md:px-3`}
                     style={body}
                   >
                     {PAGE_SIZES.map((n) => (
                       <option key={n} value={n}>
-                        Show {n}
+                        {t({ en: `Show ${n}`, id: `Tampilkan ${n}` })}
                       </option>
                     ))}
                   </select>
@@ -284,7 +294,7 @@ function PublicationsPage() {
                     } ${active ? "text-[#0B6477]" : "text-neutral-400 hover:text-neutral-700"}`}
                     style={body}
                   >
-                    {c.label}
+                    {t(c.label)}
                     <SortIcon active={active} dir={sort.dir} />
                   </button>
                 );
@@ -301,7 +311,7 @@ function PublicationsPage() {
                   className="px-6 py-16 text-center text-neutral-500"
                   style={body}
                 >
-                  No publications match your search.
+                  {t({ en: "No publications match your search.", id: "Tidak ada publikasi yang cocok dengan pencarian Anda." })}
                 </motion.p>
               ) : (
                 <AnimatePresence mode="wait" initial={false}>
@@ -351,14 +361,14 @@ function PublicationsPage() {
                             <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-neutral-500 md:hidden" style={body}>
                               {pub.venue && <span className="font-medium text-neutral-700">{pub.venue}</span>}
                               <span>{pub.year}</span>
-                              {!!pub.citations && <span>Cited by {pub.citations}</span>}
+                              {!!pub.citations && <span>{t({ en: `Cited by ${pub.citations}`, id: `Dikutip ${pub.citations} kali` })}</span>}
                             </span>
                           </span>
                           <span className="hidden min-w-0 text-[14px] leading-snug text-neutral-800 md:line-clamp-2" style={body}>
-                            {pub.venue ? <Highlight text={pub.venue} query={query} /> : <span className="text-neutral-400">Not listed</span>}
+                            {pub.venue ? <Highlight text={pub.venue} query={query} /> : <span className="text-neutral-400">{t({ en: "Not listed", id: "Tidak tercantum" })}</span>}
                           </span>
                           <span className="hidden min-w-0 text-[13px] leading-snug text-neutral-500 md:line-clamp-2" style={body}>
-                            {pub.publisher ? <Highlight text={pub.publisher} query={query} /> : <span className="text-neutral-400">Not listed</span>}
+                            {pub.publisher ? <Highlight text={pub.publisher} query={query} /> : <span className="text-neutral-400">{t({ en: "Not listed", id: "Tidak tercantum" })}</span>}
                           </span>
                           <span className="hidden justify-self-center md:block">
                             <span
@@ -387,11 +397,11 @@ function PublicationsPage() {
             {/* Footer: result count and pager. */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#0B6477]/10 bg-[#F3F7F6]/60 px-5 py-4 md:px-6" style={body}>
               <span className="text-[13px] text-neutral-500">
-                <span className="font-semibold text-neutral-900 tabular-nums">{results.length}</span> results
+                <span className="font-semibold text-neutral-900 tabular-nums">{results.length}</span> {t({ en: "results", id: "hasil" })}
                 {results.length > 0 && (
                   <span className="text-neutral-400">
                     {" "}
-                    · showing {current * pageSize + 1}–{current * pageSize + rows.length}
+                    · {t({ en: "showing", id: "menampilkan" })} {current * pageSize + 1}–{current * pageSize + rows.length}
                   </span>
                 )}
               </span>
@@ -400,13 +410,13 @@ function PublicationsPage() {
                   type="button"
                   onClick={() => goTo(current - 1)}
                   disabled={current === 0}
-                  aria-label="Previous page"
+                  aria-label={t({ en: "Previous page", id: "Halaman sebelumnya" })}
                   className="grid h-9 w-9 place-items-center rounded-lg border border-[#0B6477]/15 bg-white text-neutral-700 transition-colors hover:border-[#08313A] hover:bg-[#08313A] hover:text-[#45DFB1] disabled:pointer-events-none disabled:opacity-40"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <span className="min-w-[96px] text-center text-[13px] text-neutral-600 tabular-nums">
-                  Page{" "}
+                  {t({ en: "Page", id: "Halaman" })}{" "}
                   <motion.span
                     key={current}
                     initial={{ opacity: 0, y: -6 }}
@@ -415,13 +425,13 @@ function PublicationsPage() {
                   >
                     {current + 1}
                   </motion.span>{" "}
-                  of {pages}
+                  {t({ en: "of", id: "dari" })} {pages}
                 </span>
                 <button
                   type="button"
                   onClick={() => goTo(current + 1)}
                   disabled={current >= pages - 1}
-                  aria-label="Next page"
+                  aria-label={t({ en: "Next page", id: "Halaman berikutnya" })}
                   className="grid h-9 w-9 place-items-center rounded-lg border border-[#0B6477]/15 bg-white text-neutral-700 transition-colors hover:border-[#08313A] hover:bg-[#08313A] hover:text-[#45DFB1] disabled:pointer-events-none disabled:opacity-40"
                 >
                   <ChevronRight className="h-4 w-4" />

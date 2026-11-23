@@ -2,7 +2,14 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, CalendarDays, Camera, MapPin } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
-import { albums, findAlbum, type GalleryAlbum } from "../lib/gallery";
+import {
+  albums,
+  findAlbum,
+  galleryCategoryLabel,
+  localizeAlbum,
+  type GalleryAlbum,
+} from "../lib/gallery";
+import { headLang, useLang, useT } from "../lib/i18n";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import AmbientWash from "../components/AmbientWash";
@@ -13,14 +20,16 @@ import { CategoryChip, EASE } from "../components/NoteParts";
 export const Route = createFileRoute("/gallery_/$slug")({
   component: AlbumPage,
   loader: ({ params }) => findAlbum(params.slug),
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.title ?? "Gallery"} | smartagri` },
-      ...(loaderData?.excerpt
-        ? [{ name: "description", content: loaderData.excerpt }]
-        : []),
-    ],
-  }),
+  head: ({ loaderData, matches }) => {
+    const l = headLang(matches);
+    const album = loaderData ? localizeAlbum(loaderData, l) : undefined;
+    return {
+      meta: [
+        { title: `${album?.title ?? (l === "id" ? "Galeri" : "Gallery")} | smartagri` },
+        ...(album?.excerpt ? [{ name: "description", content: album.excerpt }] : []),
+      ],
+    };
+  },
 });
 
 const rise = (delay: number) => ({
@@ -41,7 +50,10 @@ function relatedTo(album: GalleryAlbum) {
 // One album (one activity): masthead in the Field Notes reading-page style,
 // then the draggable bento strip of its photos, then more albums.
 function AlbumPage() {
-  const album = Route.useLoaderData();
+  const lang = useLang();
+  const t = useT();
+  const loaded = Route.useLoaderData();
+  const album = loaded ? localizeAlbum(loaded, lang) : undefined;
 
   if (!album) {
     return (
@@ -50,17 +62,20 @@ function AlbumPage() {
         <section className="bg-[#F3F7F6]">
           <div className="max-w-[760px] mx-auto px-6 py-24 text-center flex flex-col items-center gap-4">
             <h1 className="text-3xl md:text-4xl font-semibold text-neutral-900" style={display}>
-              Album not found
+              {t({ en: "Album not found", id: "Album tidak ditemukan" })}
             </h1>
             <p className="text-neutral-500" style={body}>
-              The album you're looking for doesn't exist or may have been moved.
+              {t({
+                en: "The album you're looking for doesn't exist or may have been moved.",
+                id: "Album yang Anda cari tidak ada atau mungkin telah dipindahkan.",
+              })}
             </p>
             <Link
               to="/gallery"
               className="px-7 py-3 rounded-2xl border border-[#0B6477] text-[#0B6477] font-medium hover:bg-[#0B6477] hover:text-white transition-colors"
               style={body}
             >
-              Back to Gallery
+              {t({ en: "Back to Gallery", id: "Kembali ke Galeri" })}
             </Link>
           </div>
         </section>
@@ -70,7 +85,7 @@ function AlbumPage() {
   }
 
   const photos = photosOf(album);
-  const related = relatedTo(album);
+  const related = relatedTo(album).map((a) => localizeAlbum(a, lang));
   const caption = [album.dateLabel, album.location].filter(Boolean).join(" · ");
 
   return (
@@ -88,11 +103,11 @@ function AlbumPage() {
                 style={body}
               >
                 <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-                Gallery
+                {t({ en: "Gallery", id: "Galeri" })}
               </Link>
             </motion.div>
             <motion.div {...rise(0.08)} className="mt-6">
-              <CategoryChip>{album.category}</CategoryChip>
+              <CategoryChip>{galleryCategoryLabel(album.category, lang)}</CategoryChip>
             </motion.div>
             <div className="mt-5 overflow-hidden pb-[0.08em]">
               <motion.h1
@@ -131,7 +146,7 @@ function AlbumPage() {
               )}
               <span className="inline-flex items-center gap-1.5">
                 <Camera className="h-4 w-4 text-[#14919B]" />
-                {photos.length} photos
+                {photos.length} {t({ en: "photos", id: "foto" })}
               </span>
             </motion.div>
           </header>
@@ -149,16 +164,16 @@ function AlbumPage() {
                   className="text-4xl font-semibold leading-[1.02] tracking-[-0.035em] text-neutral-900 md:text-5xl"
                   style={display}
                 >
-                  More
+                  {t({ en: "More", id: "Album" })}
                   <br />
-                  <span style={accent}>albums.</span>
+                  <span style={accent}>{t({ en: "albums.", id: "lainnya." })}</span>
                 </h2>
                 <Link
                   to="/gallery"
                   className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                   style={body}
                 >
-                  Full gallery
+                  {t({ en: "Full gallery", id: "Seluruh galeri" })}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>

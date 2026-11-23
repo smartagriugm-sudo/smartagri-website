@@ -3,6 +3,7 @@ import SiteHeader from "../components/SiteHeader";
 import GalleryPreview from "../components/GalleryPreview";
 import AmbientWash from "../components/AmbientWash";
 import Footer from "../components/Footer";
+import { headLang } from "../lib/i18n";
 
 export const Route = createFileRoute("/gallery")({
   component: GalleryPage,
@@ -14,16 +15,21 @@ export const Route = createFileRoute("/gallery")({
       throw redirect({ to: "/gallery/$slug", params: { slug: search.album } });
     }
   },
-  head: () => ({
-    meta: [
-      { title: "Gallery | smartagri" },
-      {
-        name: "description",
-        content:
-          "Documentation of smartagri activities: exhibitions, conferences, field work, workshops, and collaborations from the Smart Agriculture Research Center.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        { title: l === "id" ? "Galeri | smartagri" : "Gallery | smartagri" },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Dokumentasi kegiatan smartagri: pameran, konferensi, kegiatan lapangan, workshop, dan kolaborasi Smart Agriculture Research Center."
+              : "Documentation of smartagri activities: exhibitions, conferences, field work, workshops, and collaborations from the Smart Agriculture Research Center.",
+        },
+      ],
+    };
+  },
 });
 
 // Same Quayside-style layout as the landing Gallery section, in archive mode

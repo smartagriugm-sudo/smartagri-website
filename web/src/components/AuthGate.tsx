@@ -3,6 +3,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "../lib/auth/auth";
 import { body } from "../lib/fonts";
+import { useT } from "../lib/i18n";
 import SiteHeader from "./SiteHeader";
 
 // Gate for the signed-in tools (inventory, kanban, account). When auth is not
@@ -16,7 +17,7 @@ import SiteHeader from "./SiteHeader";
 export default function AuthGate({
   children,
   allowPending = false,
-  checkingText = "Checking access...",
+  checkingText,
   slowText,
   signInPath = "/sign-in",
   frame,
@@ -28,6 +29,7 @@ export default function AuthGate({
   signInPath?: string;
   frame?: (content: ReactNode) => ReactNode;
 }) {
+  const t = useT();
   const { user, loading, isConfigured, account, accountLoading } = useAuth();
   const router = useRouter();
   const signedOut = isConfigured && !loading && !user;
@@ -57,7 +59,13 @@ export default function AuthGate({
       <div className="flex flex-col items-center gap-3 text-neutral-500">
         <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
         <p className="text-sm" style={body}>
-          {checking ? (slow ? slowText : checkingText) : signedOut ? "Redirecting to sign in..." : "Redirecting..."}
+          {checking
+            ? slow
+              ? slowText
+              : (checkingText ?? t({ en: "Checking access...", id: "Memeriksa akses..." }))
+            : signedOut
+              ? t({ en: "Redirecting to sign in...", id: "Mengalihkan ke halaman masuk..." })
+              : t({ en: "Redirecting...", id: "Mengalihkan..." })}
         </p>
       </div>
     );

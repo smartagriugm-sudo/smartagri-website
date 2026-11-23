@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { body } from "../lib/fonts";
+import { useT } from "../lib/i18n";
 
 // Frames a self-contained workflow HTML (under public/) in a smartagri-styled
 // dark panel. The widget is isolated in an iframe so its theme and animation
@@ -14,6 +15,7 @@ export default function WorkflowEmbed({
   height?: number;
 }) {
   const [loaded, setLoaded] = useState(false);
+  const t = useT();
 
   return (
     <div className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-[#08313A]">
@@ -23,7 +25,7 @@ export default function WorkflowEmbed({
             className="text-sm font-normal text-white/60 animate-pulse"
             style={body}
           >
-            Loading workflow…
+            {t({ en: "Loading workflow…", id: "Memuat alur kerja…" })}
           </span>
         </div>
       )}

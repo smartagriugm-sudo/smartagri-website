@@ -4,6 +4,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "../lib/auth/auth";
 import { body } from "../lib/fonts";
+import { useT } from "../lib/i18n";
 import SiteHeader from "./SiteHeader";
 
 // Gates a page behind Supabase auth, mirroring the behaviour of the /ai area
@@ -21,6 +22,7 @@ import SiteHeader from "./SiteHeader";
 //    anyone who asks for it. Real data must be protected at the API, the way
 //    /api/ai/* verifies the Supabase token per request.
 export default function RequireAuth({ children }: { children: ReactNode }) {
+  const t = useT();
   const { user, loading, isConfigured } = useAuth();
   const router = useRouter();
 
@@ -41,7 +43,9 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
           <div className="flex flex-col items-center gap-3 text-neutral-500">
             <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
             <p className="text-sm" style={body}>
-              {loading ? "Checking access..." : "Redirecting to sign in..."}
+              {loading
+                ? t({ en: "Checking access...", id: "Memeriksa akses..." })
+                : t({ en: "Redirecting to sign in...", id: "Mengalihkan ke halaman masuk..." })}
             </p>
           </div>
         </section>

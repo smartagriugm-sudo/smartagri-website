@@ -90,6 +90,13 @@ Ringkasan naratif semua fitur yang sudah dibangun ada di `docs/STATUS-PENGEMBANG
   Pakai koma, titik dua, titik, tanda kurung, atau separator `·`/`|` sesuai konteks.
   En dash (–) hanya untuk rentang angka/tanggal (mis. 14–18px, 19–20).
   Importer berita menormalkan em dash otomatis (`noEmDash` di `scripts/import-wp.mjs`).
+- Situs publik dua bahasa (EN/ID) lewat `src/lib/i18n.tsx`: bahasa disimpan di cookie `smartagri_lang`
+  (default dari `Accept-Language`); pemilihnya menu globe di `SiteHeader` dan switch di `Footer`
+  (`components/LanguageToggle.tsx`). Teks baru di halaman publik
+  WAJIB ditulis dua bahasa: `const t = useT(); t({ en: "...", id: "..." })`; data di `src/lib`
+  tetap berbentuk Inggris dengan overlay Indonesia (`localize`, mis. `researchAreasFor(lang)`);
+  judul `head()` pakai `headLang(matches)`. Istilah teknis yang lazim (IoT, AI, indoor farming,
+  plant factory, dashboard) dan tagline tetap bahasa Inggris. Dashboard agrosphere belum diterjemahkan.
 - Inject font Google Fonts lewat `head()` route root; pastikan `src/styles.css` meng-`@import "tailwindcss";`
   dan berisi keyframes `marquee` + class `.animate-marquee`.
 

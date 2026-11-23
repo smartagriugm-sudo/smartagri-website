@@ -4,6 +4,17 @@
 
 export type StudentLevel = "Undergraduate" | "Postgraduate" | "Doctoral";
 
+const STUDENT_LEVEL_ID: Record<StudentLevel, string> = {
+  Undergraduate: "Sarjana",
+  Postgraduate: "Magister",
+  Doctoral: "Doktor",
+};
+
+/** Display label for a study level; the enum value itself stays English. */
+export function studentLevelLabel(level: StudentLevel, lang: "en" | "id"): string {
+  return lang === "id" ? STUDENT_LEVEL_ID[level] : level;
+}
+
 export type Student = { name: string; year: number; level: StudentLevel };
 
 const U: StudentLevel = "Undergraduate";

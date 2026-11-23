@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { partnerLogo } from "./assets";
+import type { Lang } from "./i18n-core";
 
 // Master switch for the annual exhibition. While false, every entry point
 // (header, footer, /links guest book button) is hidden and /exhibition and
@@ -178,3 +179,92 @@ export const DOCUMENTS: ExhibitionDoc[] = [
     meta: "PDF",
   },
 ];
+
+// Indonesian overlays. The English constants above keep their shape; pages
+// read the copy for the current language through the helpers below.
+const EVENT_ID: Partial<typeof EVENT> = {
+  tagline:
+    "Pameran internasional Indonesia untuk teknologi pertanian, hortikultura, dan perkebunan.",
+  date: "28–30 Juli 2026",
+};
+
+export function eventFor(lang: Lang): typeof EVENT {
+  return lang === "id" ? { ...EVENT, ...EVENT_ID } : EVENT;
+}
+
+// Keyed by the English title.
+const SHOWCASE_ID: Record<string, { title: string; desc: string }> = {
+  "UAV Crop Mapping & Survey": {
+    title: "Pemetaan & Survei Tanaman dengan UAV",
+    desc: "Survei multispektral dengan drone yang diolah menjadi peta kesehatan tanaman per petak untuk pemantauan, estimasi hasil panen, dan perlakuan presisi.",
+  },
+  "Irrigation Modernization": {
+    title: "Modernisasi Irigasi",
+    desc: "Telemetri, analisis hidraulik, dan penjadwalan berbasis kebutuhan untuk saluran irigasi dan jaringan air di tingkat usaha tani.",
+  },
+  "Smart Greenhouse & Plant Factory": {
+    title: "Smart Greenhouse & Plant Factory",
+    desc: "Perancangan dan pemasangan kendali iklim dan irigasi tertutup (closed-loop) untuk greenhouse dan plant factory.",
+  },
+  "IoT Field Monitoring": {
+    title: "Pemantauan Lahan Berbasis IoT",
+    desc: "Pemasangan jaringan sensor tanah, iklim, dan cuaca berbiaya rendah yang mengalirkan data lahan secara langsung ke tim Anda.",
+  },
+  "Farm Data Platform & Dashboards": {
+    title: "Platform Data Pertanian & Dashboard",
+    desc: "Dashboard dan platform data khusus yang mengubah data sensor, drone, dan cuaca menjadi keputusan yang dapat langsung dijalankan petani.",
+  },
+  "Agronomy & Data Advisory": {
+    title: "Pendampingan Agronomi & Data",
+    desc: "Pendampingan berbasis riset yang memadukan keahlian agronomi dengan model, penginderaan, dan analitik milik pusat riset kami.",
+  },
+};
+
+export function showcaseFor(lang: Lang): ShowcaseItem[] {
+  if (lang !== "id") return SHOWCASE;
+  return SHOWCASE.map((item) => ({ ...item, ...SHOWCASE_ID[item.title] }));
+}
+
+const ARCHITECTURE_ID: Record<string, { title: string; components: string[] }> = {
+  "In the field": {
+    title: "Di lahan",
+    components: ["Sensor tanah & iklim", "Stasiun cuaca", "Survei drone UAV"],
+  },
+  Connectivity: {
+    title: "Konektivitas",
+    components: ["Gateway LoRa", "Uplink seluler / internet", "Perangkat edge"],
+  },
+  "Platform & intelligence": {
+    title: "Platform & kecerdasan",
+    components: ["Platform data cloud", "Model AI / ML", "Mesin geospasial"],
+  },
+  "For the farmer": {
+    title: "Untuk petani",
+    components: ["Dashboard web & mobile", "Peringatan & rekomendasi", "Laporan lahan"],
+  },
+};
+
+export function architectureFor(lang: Lang): ArchitectureStage[] {
+  if (lang !== "id") return ARCHITECTURE;
+  return ARCHITECTURE.map((stage) => ({ ...stage, ...ARCHITECTURE_ID[stage.title] }));
+}
+
+const DOCUMENTS_ID: Record<string, { title: string; desc: string }> = {
+  "smartagri Leaflet": {
+    title: "Leaflet smartagri",
+    desc: "Ringkasan satu halaman tentang siapa kami dan apa yang kami tawarkan, cocok dibawa pulang dari booth.",
+  },
+  "Company / Center Profile": {
+    title: "Profil Pusat Riset",
+    desc: "Profil lengkap Smart Agriculture Research Center, beserta program dan timnya.",
+  },
+  "Product & Service Catalog": {
+    title: "Katalog Produk & Layanan",
+    desc: "Spesifikasi rinci produk dan layanan yang kami tampilkan di INAGRITECH 2026.",
+  },
+};
+
+export function documentsFor(lang: Lang): ExhibitionDoc[] {
+  if (lang !== "id") return DOCUMENTS;
+  return DOCUMENTS.map((doc) => ({ ...doc, ...DOCUMENTS_ID[doc.title] }));
+}

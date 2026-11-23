@@ -7,9 +7,12 @@ import { accent, body, display } from "../lib/fonts";
 import {
   GALLERY_FILTERS,
   albums,
+  galleryCategoryLabel,
   galleryCovers,
+  localizeAlbum,
   type GalleryAlbum,
 } from "../lib/gallery";
+import { useLang, useT } from "../lib/i18n";
 import { CategoryChip, EASE, MaskLine, META } from "./NoteParts";
 
 // Gallery, built like Field Notes (Quayside journal): masked headline,
@@ -64,13 +67,14 @@ function Tile({
 }
 
 function PhotoCount({ album }: { album: GalleryAlbum }) {
+  const t = useT();
   return (
     <span
       className={`absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-[#08313A]/55 px-3 py-1 text-white backdrop-blur-sm ${META}`}
       style={body}
     >
       <Camera className="h-3.5 w-3.5" />
-      {album.photoCount} photos
+      {album.photoCount} {t({ en: "photos", id: "foto" })}
     </span>
   );
 }
@@ -90,6 +94,9 @@ function Place({ album }: { album: GalleryAlbum }) {
 }
 
 function FeaturedAlbum({ album }: { album: GalleryAlbum }) {
+  const lang = useLang();
+  const t = useT();
+  const category = galleryCategoryLabel(album.category, lang);
   const [main, second, third] = photosOf(album);
   return (
     <Link
@@ -107,14 +114,14 @@ function FeaturedAlbum({ album }: { album: GalleryAlbum }) {
           className={`absolute bottom-5 left-6 text-white/85 ${META}`}
           style={body}
         >
-          {album.category}
+          {category}
         </span>
         <PhotoCount album={album} />
       </div>
 
       <div className="flex flex-col gap-5 p-7 md:p-10">
         <div>
-          <CategoryChip>{album.category}</CategoryChip>
+          <CategoryChip>{category}</CategoryChip>
         </div>
         <h3
           className="line-clamp-3 text-[26px] font-semibold leading-[1.15] tracking-[-0.03em] text-neutral-900 transition-colors duration-300 group-hover:text-[#0B6477] md:text-[32px]"
@@ -134,7 +141,7 @@ function FeaturedAlbum({ album }: { album: GalleryAlbum }) {
             className="inline-flex items-center gap-1.5 text-[15px] font-medium text-[#0B6477]"
             style={body}
           >
-            View the album
+            {t({ en: "View the album", id: "Lihat album" })}
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
           </span>
         </div>
@@ -150,6 +157,8 @@ export function AlbumCard({
   album: GalleryAlbum;
   index: number;
 }) {
+  const lang = useLang();
+  const category = galleryCategoryLabel(album.category, lang);
   return (
     <Link
       to="/gallery/$slug"
@@ -163,13 +172,13 @@ export function AlbumCard({
           className={`absolute bottom-4 left-5 text-white/85 ${META}`}
           style={body}
         >
-          {album.category}
+          {category}
         </span>
         <PhotoCount album={album} />
       </div>
       <div className="flex flex-1 flex-col gap-3 p-6">
         <div>
-          <CategoryChip>{album.category}</CategoryChip>
+          <CategoryChip>{category}</CategoryChip>
         </div>
         <h3
           className="line-clamp-2 text-lg font-medium leading-snug tracking-[-0.02em] text-neutral-900 transition-colors duration-300 group-hover:text-[#0B6477] md:text-xl"
@@ -207,9 +216,12 @@ export default function GalleryPreview({
 }: {
   archive?: boolean;
 }) {
+  const lang = useLang();
+  const t = useT();
   const [filter, setFilter] = useState("All");
-  const list =
-    filter === "All" ? albums : albums.filter((a) => a.category === filter);
+  const list = (
+    filter === "All" ? albums : albums.filter((a) => a.category === filter)
+  ).map((a) => localizeAlbum(a, lang));
   const [featured, ...rest] = list;
   const cards = archive ? rest : rest.slice(0, 3);
   const Heading = archive ? motion.h1 : motion.h2;
@@ -232,16 +244,20 @@ export default function GalleryPreview({
             >
               {archive ? (
                 <>
-                  <MaskLine delay={0}>Documenting our work,</MaskLine>
+                  <MaskLine delay={0}>
+                    {t({ en: "Documenting our work,", id: "Merekam kerja kami," })}
+                  </MaskLine>
                   <MaskLine delay={0.12}>
-                    <span style={accent}>in the field and beyond.</span>
+                    <span style={accent}>
+                      {t({ en: "in the field and beyond.", id: "di lapangan dan di luarnya." })}
+                    </span>
                   </MaskLine>
                 </>
               ) : (
                 <>
-                  <MaskLine delay={0}>Moments from</MaskLine>
+                  <MaskLine delay={0}>{t({ en: "Moments from", id: "Momen dari" })}</MaskLine>
                   <MaskLine delay={0.12}>
-                    <span style={accent}>our work.</span>
+                    <span style={accent}>{t({ en: "our work.", id: "kerja kami." })}</span>
                   </MaskLine>
                 </>
               )}
@@ -252,15 +268,22 @@ export default function GalleryPreview({
               style={body}
             >
               {archive
-                ? "A visual record of what smartagri does: exhibitions, conferences, field deployments, workshops with farmers, and the collaborations behind the research."
-                : "Documentation from exhibitions, conferences, field deployments and workshops across the smartagri program."}
+                ? t({
+                    en: "A visual record of what smartagri does: exhibitions, conferences, field deployments, workshops with farmers, and the collaborations behind the research.",
+                    id: "Rekam visual kegiatan smartagri: pameran, konferensi, penerapan di lapangan, workshop bersama petani, dan kolaborasi di balik riset kami.",
+                  })
+                : t({
+                    en: "Documentation from exhibitions, conferences, field deployments and workshops across the smartagri program.",
+                    id: "Dokumentasi pameran, konferensi, penerapan di lapangan, dan workshop dari seluruh program smartagri.",
+                  })}
             </motion.p>
           </div>
           <motion.div {...fadeUp(0.4)}>
             {archive ? (
               <span className={`text-neutral-400 ${META}`} style={body}>
-                {list.length} {list.length === 1 ? "album" : "albums"} ·{" "}
-                {list.reduce((n, a) => n + a.photoCount, 0)} photos
+                {list.length}{" "}
+                {t({ en: list.length === 1 ? "album" : "albums", id: "album" })} ·{" "}
+                {list.reduce((n, a) => n + a.photoCount, 0)} {t({ en: "photos", id: "foto" })}
               </span>
             ) : (
               <Link
@@ -268,7 +291,7 @@ export default function GalleryPreview({
                 className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                 style={body}
               >
-                Full gallery
+                {t({ en: "Full gallery", id: "Seluruh galeri" })}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             )}
@@ -280,7 +303,10 @@ export default function GalleryPreview({
           {...fadeUp(0.5)}
           className="mt-10 flex flex-wrap gap-2"
           role="tablist"
-          aria-label="Filter albums by category"
+          aria-label={t({
+            en: "Filter albums by category",
+            id: "Saring album menurut kategori",
+          })}
         >
           {GALLERY_FILTERS.map((f) => {
             const active = f === filter;
@@ -305,7 +331,7 @@ export default function GalleryPreview({
                     transition={{ duration: 0.45, ease: EASE }}
                   />
                 )}
-                <span className="relative">{f}</span>
+                <span className="relative">{galleryCategoryLabel(f, lang)}</span>
               </button>
             );
           })}

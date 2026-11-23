@@ -3,8 +3,10 @@ import { motion } from "framer-motion";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Check } from "lucide-react";
 import { researchPhoto, researchPhotoAlt } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
-import { RESEARCH_AREAS, type ResearchArea } from "../lib/research";
-import { EVIDENCE_TOTALS, evidenceFor } from "../lib/research-evidence";
+import { RESEARCH_AREAS, researchAreasFor, type ResearchArea } from "../lib/research";
+import { EVIDENCE_TOTALS, evidenceForLang } from "../lib/research-evidence";
+import { techLabel } from "../lib/technology";
+import { headLang, useLang, useT } from "../lib/i18n";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
 import AmbientWash from "../components/AmbientWash";
@@ -15,18 +17,23 @@ import { EvidenceHeading, Roadmap } from "../components/ResearchEvidence";
 
 export const Route = createFileRoute("/research")({
   component: ResearchPage,
-  head: () => ({
-    meta: [
-      {
-        title: "Research | smartagri",
-      },
-      {
-        name: "description",
-        content:
-          "The six focus areas where the Smart Agriculture Research Center combines AI, IoT sensing, and agronomy, from open fields to indoor farming.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        {
+          title: l === "id" ? "Riset | smartagri" : "Research | smartagri",
+        },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Enam bidang riset tempat Smart Agriculture Research Center memadukan AI, penginderaan IoT, dan agronomi, dari lahan terbuka hingga indoor farming."
+              : "The six focus areas where the Smart Agriculture Research Center combines AI, IoT sensing, and agronomy, from open fields to indoor farming.",
+        },
+      ],
+    };
+  },
 });
 
 // Research overview laid out after the Blitz "services" page: a headline, a
@@ -80,6 +87,8 @@ const item = {
 };
 
 function AreaSection({ area, i }: { area: ResearchArea; i: number }) {
+  const t = useT();
+  const lang = useLang();
   const photoLeft = i % 2 === 0;
   return (
     <section
@@ -108,7 +117,7 @@ function AreaSection({ area, i }: { area: ResearchArea; i: number }) {
             style={body}
           >
             <area.icon className="h-3.5 w-3.5" aria-hidden="true" />
-            Research area
+            {t({ en: "Research area", id: "Bidang riset" })}
           </motion.p>
           <motion.h2
             initial="hidden"
@@ -133,7 +142,7 @@ function AreaSection({ area, i }: { area: ResearchArea; i: number }) {
           <div className="mt-10 grid gap-10 border-t border-[#0B6477]/12 pt-8 md:grid-cols-2">
             <div>
               <p className={`mb-4 text-neutral-400 ${META}`} style={body}>
-                What we do
+                {t({ en: "What we do", id: "Kiprah kami" })}
               </p>
               <motion.ul
                 variants={list}
@@ -153,7 +162,7 @@ function AreaSection({ area, i }: { area: ResearchArea; i: number }) {
             </div>
             <div>
               <p className={`mb-4 text-neutral-400 ${META}`} style={body}>
-                Why it matters
+                {t({ en: "Why it matters", id: "Mengapa penting" })}
               </p>
               <motion.ul
                 variants={list}
@@ -175,7 +184,7 @@ function AreaSection({ area, i }: { area: ResearchArea; i: number }) {
 
           <div className="mt-8">
             <p className={`mb-3 text-neutral-400 ${META}`} style={body}>
-              Built on
+              {t({ en: "Built on", id: "Didukung oleh" })}
             </p>
             <motion.ul
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
@@ -184,21 +193,21 @@ function AreaSection({ area, i }: { area: ResearchArea; i: number }) {
               viewport={{ once: true, amount: 0.6 }}
               className="flex flex-wrap gap-2"
             >
-              {area.technologies.map((t) => (
+              {area.technologies.map((tech) => (
                 <motion.li
-                  key={t}
+                  key={tech}
                   variants={{ hidden: { opacity: 0, scale: 0.9 }, show: { opacity: 1, scale: 1 } }}
                   className="rounded-full border border-[#0B6477]/15 bg-white/80 px-3 py-1.5 text-[13px] text-[#0B6477]"
                   style={body}
                 >
-                  {t}
+                  {techLabel(tech, lang)}
                 </motion.li>
               ))}
             </motion.ul>
           </div>
 
           {(() => {
-            const ev = evidenceFor(area.slug);
+            const ev = evidenceForLang(area.slug, lang);
             const top = ev.highlights[0];
             if (!top) return null;
             return (
@@ -225,11 +234,17 @@ function AreaSection({ area, i }: { area: ResearchArea; i: number }) {
                   style={body}
                 >
                   <span>
-                    {ev.projects.length} center {ev.projects.length === 1 ? "project" : "projects"}
+                    {t({
+                      en: `${ev.projects.length} center ${ev.projects.length === 1 ? "project" : "projects"}`,
+                      id: `${ev.projects.length} proyek pusat riset`,
+                    })}
                   </span>
                   {ev.studies.length > 0 && (
                     <span>
-                      {ev.studies.length} student {ev.studies.length === 1 ? "thesis" : "theses"}
+                      {t({
+                        en: `${ev.studies.length} student ${ev.studies.length === 1 ? "thesis" : "theses"}`,
+                        id: `${ev.studies.length} tugas akhir mahasiswa`,
+                      })}
                     </span>
                   )}
                 </span>
@@ -244,7 +259,7 @@ function AreaSection({ area, i }: { area: ResearchArea; i: number }) {
               className="group inline-flex h-12 items-center gap-3 rounded-lg bg-[#08313A] px-6 text-sm font-medium uppercase tracking-[0.08em] text-white transition-colors hover:bg-[#0B6477]"
               style={body}
             >
-              Explore {area.label}
+              {t({ en: "Explore", id: "Jelajahi" })} {area.label}
               <ArrowRight className="h-4 w-4 text-[#45DFB1] transition-transform group-hover:translate-x-1" />
             </Link>
             {area.slug === "indoor-farming-technology" && (
@@ -253,7 +268,7 @@ function AreaSection({ area, i }: { area: ResearchArea; i: number }) {
                 className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                 style={body}
               >
-                Indoor Farming section
+                {t({ en: "Indoor Farming section", id: "Halaman Indoor Farming" })}
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </Link>
             )}
@@ -265,6 +280,8 @@ function AreaSection({ area, i }: { area: ResearchArea; i: number }) {
 }
 
 function ResearchPage() {
+  const t = useT();
+  const areas = researchAreasFor(useLang());
   return (
     <main>
       <SiteHeader />
@@ -280,9 +297,10 @@ function ResearchPage() {
                 className="text-[44px] font-semibold leading-[1.0] tracking-[-0.04em] text-neutral-900 sm:text-6xl md:text-[80px] lg:col-span-7"
                 style={display}
               >
-                <MaskLine delay={0}>Smart research</MaskLine>
+                <MaskLine delay={0}>{t({ en: "Smart research", id: "Riset cerdas" })}</MaskLine>
                 <MaskLine delay={0.12}>
-                  for the fields <span style={accent}>of tomorrow.</span>
+                  {t({ en: "for the fields ", id: "untuk lahan " })}
+                  <span style={accent}>{t({ en: "of tomorrow.", id: "masa depan." })}</span>
                 </MaskLine>
               </motion.h1>
               <div className="lg:col-span-4 lg:col-start-9">
@@ -293,9 +311,10 @@ function ResearchPage() {
                   className="text-base leading-relaxed text-neutral-600 md:text-lg"
                   style={body}
                 >
-                  Six focus areas, one goal: turning field data into healthier, more sustainable
-                  harvests for farmers, from open fields and canals to estates and plant
-                  factories.
+                  {t({
+                    en: "Six focus areas, one goal: turning field data into healthier, more sustainable harvests for farmers, from open fields and canals to estates and plant factories.",
+                    id: "Enam bidang riset, satu tujuan: mengubah data lapangan menjadi panen yang lebih sehat dan berkelanjutan bagi petani, dari lahan terbuka dan saluran irigasi hingga perkebunan dan plant factory.",
+                  })}
                 </motion.p>
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
@@ -309,7 +328,7 @@ function ResearchPage() {
                     className="group inline-flex h-12 items-center gap-3 rounded-lg bg-[#45DFB1] px-6 text-sm font-medium uppercase tracking-[0.08em] text-[#0B2A22] transition-colors hover:bg-[#80ED99]"
                     style={body}
                   >
-                    Start a project
+                    {t({ en: "Start a project", id: "Mulai proyek" })}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </motion.div>
@@ -320,9 +339,9 @@ function ResearchPage() {
                   className="mt-8 flex gap-8 border-t border-[#0B6477]/12 pt-6"
                 >
                   {[
-                    { value: EVIDENCE_TOTALS.projects, label: "Center projects" },
-                    { value: EVIDENCE_TOTALS.studies, label: "Student theses" },
-                    { value: RESEARCH_AREAS.length, label: "Focus areas" },
+                    { value: EVIDENCE_TOTALS.projects, label: t({ en: "Center projects", id: "Proyek pusat riset" }) },
+                    { value: EVIDENCE_TOTALS.studies, label: t({ en: "Student theses", id: "Tugas akhir mahasiswa" }) },
+                    { value: RESEARCH_AREAS.length, label: t({ en: "Focus areas", id: "Bidang riset" }) },
                   ].map((f) => (
                     <div key={f.label}>
                       <dd
@@ -342,13 +361,13 @@ function ResearchPage() {
 
             {/* Strip of the six areas; each jumps to its section below. */}
             <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 md:gap-5">
-              {RESEARCH_AREAS.map((area, i) => (
+              {areas.map((area, i) => (
                 <AreaCard key={area.slug} area={area} i={i} />
               ))}
             </div>
           </section>
 
-          {RESEARCH_AREAS.map((area, i) => (
+          {areas.map((area, i) => (
             <AreaSection key={area.slug} area={area} i={i} />
           ))}
 
@@ -359,9 +378,12 @@ function ResearchPage() {
                 <div>
                   <p className={`flex items-center gap-2 text-[#14919B] ${META}`} style={body}>
                     <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
-                    Roadmap 2012–2030
+                    {t({ en: "Roadmap 2012–2030", id: "Peta jalan 2012–2030" })}
                   </p>
-                  <EvidenceHeading first="From foundations" second="to full ecosystems." />
+                  <EvidenceHeading
+                    first={t({ en: "From foundations", id: "Dari fondasi" })}
+                    second={t({ en: "to full ecosystems.", id: "menuju ekosistem utuh." })}
+                  />
                 </div>
                 <motion.p
                   initial={{ opacity: 0, y: 12 }}
@@ -371,8 +393,10 @@ function ResearchPage() {
                   className="max-w-[460px] text-base leading-relaxed text-neutral-500 md:text-lg"
                   style={body}
                 >
-                  Six stages, supported throughout by research on environmental monitoring and control
-                  and on knowledge and information management.
+                  {t({
+                    en: "Six stages, supported throughout by research on environmental monitoring and control and on knowledge and information management.",
+                    id: "Enam tahap, yang sepanjang jalannya didukung riset pemantauan dan kendali lingkungan serta manajemen pengetahuan dan informasi.",
+                  })}
                 </motion.p>
               </div>
               <Roadmap />

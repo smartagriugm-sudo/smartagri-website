@@ -11,30 +11,36 @@ import CallToAction from "../components/CallToAction";
 import { TeamCard } from "../components/TeamCard";
 import StudentsTable from "../components/StudentsTable";
 import { EASE, MaskLine, META } from "../components/NoteParts";
+import { headLang, useT, type Bi } from "../lib/i18n";
 
 export const Route = createFileRoute("/team")({
   component: TeamPage,
-  head: () => ({
-    meta: [
-      { title: "Team | smartagri" },
-      {
-        name: "description",
-        content:
-          "The lecturers, researchers, and students behind the Smart Agriculture Research Center, Universitas Gadjah Mada.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        { title: l === "id" ? "Tim | smartagri" : "Team | smartagri" },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Dosen, peneliti, dan mahasiswa di balik Smart Agriculture Research Center, Universitas Gadjah Mada."
+              : "The lecturers, researchers, and students behind the Smart Agriculture Research Center, Universitas Gadjah Mada.",
+        },
+      ],
+    };
+  },
 });
 
 // The team: masthead with counts from the roster, group pills over the member
 // cards, the students who have worked with the center (a searchable table),
 // and the landing CTA.
 
-const categoryHeadings: Record<TeamCategory, string> = {
-  Lecturer: "Lecturers",
-  Researcher: "Researchers",
-  Student: "Students",
-  "Past Member": "Past members",
+const categoryHeadings: Record<TeamCategory, Bi> = {
+  Lecturer: { en: "Lecturers", id: "Dosen" },
+  Researcher: { en: "Researchers", id: "Peneliti" },
+  Student: { en: "Students", id: "Mahasiswa" },
+  "Past Member": { en: "Past members", id: "Alumni" },
 };
 
 const GROUPS = TEAM_CATEGORIES.map((c) => ({ category: c, members: membersByCategory(c) })).filter(
@@ -42,9 +48,9 @@ const GROUPS = TEAM_CATEGORIES.map((c) => ({ category: c, members: membersByCate
 );
 const EASE_FADE = { duration: 0.45, ease: EASE };
 
-const FIGURES = [
+const FIGURES: { value: number; label: Bi }[] = [
   ...GROUPS.map((g) => ({ value: g.members.length, label: categoryHeadings[g.category] })),
-  ...(STUDENTS.length ? [{ value: STUDENTS.length, label: "Students so far" }] : []),
+  ...(STUDENTS.length ? [{ value: STUDENTS.length, label: { en: "Students so far", id: "Mahasiswa hingga kini" } }] : []),
 ];
 
 function CountUp({ value }: { value: number }) {
@@ -137,6 +143,7 @@ function Pills<T extends string>({
 }
 
 function TeamPage() {
+  const t = useT();
   const [group, setGroup] = useState<"All" | TeamCategory>("All");
   const shown = group === "All" ? GROUPS : GROUPS.filter((g) => g.category === group);
 
@@ -156,7 +163,7 @@ function TeamPage() {
                   className="text-[44px] font-semibold leading-[1.0] tracking-[-0.04em] text-neutral-900 sm:text-6xl md:text-[80px]"
                   style={display}
                 >
-                  <MaskLine delay={0}>The people growing</MaskLine>
+                  <MaskLine delay={0}>{t({ en: "The people growing", id: "Orang-orang yang menumbuhkan" })}</MaskLine>
                   <MaskLine delay={0.12}>
                     <span style={accent}>smartagri.</span>
                   </MaskLine>
@@ -168,15 +175,17 @@ function TeamPage() {
                   className="max-w-[480px] text-base leading-relaxed text-neutral-600 md:text-lg"
                   style={body}
                 >
-                  Lecturers, researchers, and students of the Smart Agriculture Research Center,
-                  Department of Agricultural and Biosystems Engineering, Universitas Gadjah Mada.
+                  {t({
+                    en: "Lecturers, researchers, and students of the Smart Agriculture Research Center, Department of Agricultural and Biosystems Engineering, Universitas Gadjah Mada.",
+                    id: "Dosen, peneliti, dan mahasiswa Smart Agriculture Research Center, Departemen Teknik Pertanian dan Biosistem, Universitas Gadjah Mada.",
+                  })}
                 </motion.p>
               </div>
 
               <div className="mt-12 flex flex-wrap gap-px overflow-clip rounded-[24px] border border-[#0B6477]/12 bg-[#0B6477]/12">
                 {FIGURES.map((f, i) => (
                   <motion.div
-                    key={f.label}
+                    key={f.label.en}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 + i * 0.08, duration: 0.6, ease: EASE }}
@@ -186,7 +195,7 @@ function TeamPage() {
                       <CountUp value={f.value} />
                     </span>
                     <span className="mt-3 block text-[13px] text-neutral-500" style={body}>
-                      {f.label}
+                      {t(f.label)}
                     </span>
                   </motion.div>
                 ))}
@@ -196,15 +205,15 @@ function TeamPage() {
             {/* Members */}
             <section className="mx-auto max-w-[1360px] px-6 pb-20 pt-14 md:px-12 md:pb-28">
               <Pills
-                label="Filter members by group"
+                label={t({ en: "Filter members by group", id: "Saring anggota menurut kelompok" })}
                 layoutId="team-group-pill"
                 value={group}
                 onChange={setGroup}
                 items={[
-                  { key: "All", label: "All" },
+                  { key: "All", label: t({ en: "All", id: "Semua" }) },
                   ...GROUPS.map((g) => ({
                     key: g.category,
-                    label: categoryHeadings[g.category],
+                    label: t(categoryHeadings[g.category]),
                     count: g.members.length,
                   })),
                 ]}
@@ -224,9 +233,9 @@ function TeamPage() {
                         className="mb-6 flex items-baseline gap-3 text-3xl font-semibold tracking-[-0.03em] text-neutral-900 md:text-4xl"
                         style={display}
                       >
-                        {categoryHeadings[category]}
+                        {t(categoryHeadings[category])}
                         <span className={`text-neutral-400 ${META}`} style={body}>
-                          {members.length} {members.length === 1 ? "person" : "people"}
+                          {members.length} {t({ en: members.length === 1 ? "person" : "people", id: "orang" })}
                         </span>
                       </h2>
                       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
@@ -248,7 +257,7 @@ function TeamPage() {
                     <div>
                       <p className={`flex items-center gap-2 text-[#14919B] ${META}`} style={body}>
                         <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
-                        Students
+                        {t({ en: "Students", id: "Mahasiswa" })}
                       </p>
                       <motion.h2
                         initial="hidden"
@@ -257,15 +266,17 @@ function TeamPage() {
                         className="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 md:text-5xl"
                         style={display}
                       >
-                        <MaskLine delay={0}>Students who</MaskLine>
+                        <MaskLine delay={0}>{t({ en: "Students who", id: "Mahasiswa yang" })}</MaskLine>
                         <MaskLine delay={0.1}>
-                          <span style={accent}>worked with us.</span>
+                          <span style={accent}>{t({ en: "worked with us.", id: "berkarya bersama kami." })}</span>
                         </MaskLine>
                       </motion.h2>
                     </div>
                     <p className="max-w-[440px] text-base leading-relaxed text-neutral-500 md:text-lg" style={body}>
-                      Doctoral, postgraduate and undergraduate students who carried out their
-                      research with the center. Search by name, filter, or sort any column.
+                      {t({
+                        en: "Doctoral, postgraduate and undergraduate students who carried out their research with the center. Search by name, filter, or sort any column.",
+                        id: "Mahasiswa doktor, magister, dan sarjana yang menjalankan riset mereka bersama pusat ini. Cari berdasarkan nama, saring, atau urutkan kolom mana pun.",
+                      })}
                     </p>
                   </div>
 

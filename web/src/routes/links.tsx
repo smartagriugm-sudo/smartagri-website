@@ -6,23 +6,32 @@ import { A } from "../lib/assets";
 import { body, display } from "../lib/fonts";
 import { trackClick, trackView } from "../lib/links-analytics";
 import { EXHIBITION_LIVE } from "../lib/exhibition";
+import { headLang, useT, type Bi } from "../lib/i18n";
 
 export const Route = createFileRoute("/links")({
   component: LinksPage,
-  head: () => ({
-    meta: [
-      { title: "smartagri | Links" },
-      {
-        name: "description",
-        content:
-          "Connect with the Smart Agriculture Research Center, UGM: website, Instagram, and WhatsApp.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        { title: l === "id" ? "smartagri | Tautan" : "smartagri | Links" },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Terhubung dengan Smart Agriculture Research Center, UGM: website, Instagram, dan WhatsApp."
+              : "Connect with the Smart Agriculture Research Center, UGM: website, Instagram, and WhatsApp.",
+        },
+      ],
+    };
+  },
 });
 
 type LinkItem = {
+  // English label, also the analytics key for clicks.
   label: string;
+  // Display text when it differs between languages.
+  text?: Bi;
   href: string;
   icon: React.ReactNode;
   // mailto and same-site links open in place; social/external open in a new tab.
@@ -61,6 +70,7 @@ const LINKS: LinkItem[] = [
   },
   {
     label: "Question Form",
+    text: { en: "Question Form", id: "Formulir Pertanyaan" },
     href: "https://www.smart-agri.id/contact-us",
     icon: <MessageSquare size={20} strokeWidth={1.75} />,
     newTab: true,
@@ -68,6 +78,7 @@ const LINKS: LinkItem[] = [
 ];
 
 function LinksPage() {
+  const t = useT();
   // Record one page view per mount (the ref guards against React's double-
   // invoke of effects in development StrictMode).
   const viewed = useRef(false);
@@ -135,7 +146,7 @@ function LinksPage() {
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
           />
           <PenLine size={19} strokeWidth={2} className="shrink-0" />
-          INAGRITECH 2026 - Sign Guest Book
+          {t({ en: "INAGRITECH 2026 - Sign Guest Book", id: "INAGRITECH 2026 - Isi Buku Tamu" })}
         </motion.a>
         )}
 
@@ -162,7 +173,7 @@ function LinksPage() {
               <span className="absolute left-5 flex items-center text-white/85 transition-colors group-hover:text-[#80ED99]">
                 {item.icon}
               </span>
-              {item.label}
+              {item.text ? t(item.text) : item.label}
             </motion.a>
           ))}
         </nav>

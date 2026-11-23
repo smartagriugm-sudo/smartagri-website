@@ -3,34 +3,43 @@ import { motion, type Variants } from "framer-motion";
 import { Instagram, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { A } from "../lib/assets";
 import { body } from "../lib/fonts";
-import { RESEARCH_AREAS } from "../lib/research";
+import { researchAreasFor } from "../lib/research";
 import { EXHIBITION_LIVE } from "../lib/exhibition";
 import { AI_ASSISTANT_ENABLED } from "../lib/features";
+import { useLang, useT, type Bi } from "../lib/i18n";
+import { LanguageSwitch } from "./LanguageToggle";
 
 // lucide has no WhatsApp glyph; this is the standard mark, colored via currentColor.
 function WhatsAppIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.15-.174.199-.298.298-.497.1-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
     </svg>
   );
 }
 
-const researchLinks = RESEARCH_AREAS.map((area) => ({
-  label: area.label,
-  href: `/research/${area.slug}`,
-}));
-
-const centerLinks = [
-  { label: "Research", href: "/research" },
-  { label: "Technology", href: "/technology" },
-  ...(AI_ASSISTANT_ENABLED ? [{ label: "AI Assistant", href: "/ai" }] : []),
-  { label: "Publications", href: "/publications" },
-  { label: "Field Notes", href: "/field-notes" },
-  { label: "Gallery", href: "/gallery" },
-  ...(EXHIBITION_LIVE ? [{ label: "Exhibition", href: "/exhibition" }] : []),
-  { label: "About Us", href: "/about-us" },
-  { label: "Contact", href: "/contact-us" },
+const centerLinks: { label: Bi; href: string }[] = [
+  { label: { en: "Research", id: "Riset" }, href: "/research" },
+  { label: { en: "Technology", id: "Teknologi" }, href: "/technology" },
+  ...(AI_ASSISTANT_ENABLED
+    ? [{ label: { en: "AI Assistant", id: "AI Assistant" }, href: "/ai" }]
+    : []),
+  { label: { en: "Publications", id: "Publikasi" }, href: "/publications" },
+  {
+    label: { en: "Field Notes", id: "Catatan Lapangan" },
+    href: "/field-notes",
+  },
+  { label: { en: "Gallery", id: "Galeri" }, href: "/gallery" },
+  ...(EXHIBITION_LIVE
+    ? [{ label: { en: "Exhibition", id: "Pameran" }, href: "/exhibition" }]
+    : []),
+  { label: { en: "About Us", id: "Tentang Kami" }, href: "/about-us" },
+  { label: { en: "Contact", id: "Kontak" }, href: "/contact-us" },
 ];
 
 type Social = {
@@ -67,7 +76,11 @@ const socials: Social[] = [
     // Gradient blooms in from the bottom-left corner, like the app icon.
     reveal: {
       rest: { scale: 0, opacity: 0 },
-      hover: { scale: 1, opacity: 1, transition: { duration: 0.45, ease: EASE } },
+      hover: {
+        scale: 1,
+        opacity: 1,
+        transition: { duration: 0.45, ease: EASE },
+      },
     },
     // Camera tilts as if taking a shot.
     move: {
@@ -99,7 +112,10 @@ const socials: Social[] = [
     // A small professional hop.
     move: {
       rest: { y: 0 },
-      hover: { y: [0, -5, 0, -2, 0], transition: { duration: 0.6, ease: "easeOut" } },
+      hover: {
+        y: [0, -5, 0, -2, 0],
+        transition: { duration: 0.6, ease: "easeOut" },
+      },
     },
   },
   {
@@ -126,7 +142,11 @@ const socials: Social[] = [
         x: [0, 16, -16, 0],
         y: [0, -16, 16, 0],
         opacity: [1, 0, 0, 1],
-        transition: { duration: 0.7, times: [0, 0.4, 0.41, 1], ease: "easeInOut" },
+        transition: {
+          duration: 0.7,
+          times: [0, 0.4, 0.41, 1],
+          ease: "easeInOut",
+        },
       },
     },
   },
@@ -141,7 +161,11 @@ const socials: Social[] = [
     // Green opens out from the centre.
     reveal: {
       rest: { scale: 0, opacity: 0 },
-      hover: { scale: 1, opacity: 1, transition: { duration: 0.4, ease: EASE } },
+      hover: {
+        scale: 1,
+        opacity: 1,
+        transition: { duration: 0.4, ease: EASE },
+      },
     },
     // Rings like an incoming call.
     move: {
@@ -211,7 +235,12 @@ function SocialButton({ social }: { social: Social }) {
         aria-hidden="true"
         variants={{
           rest: { opacity: 0, y: 6, scale: 0.95 },
-          hover: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: EASE } },
+          hover: {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: { duration: 0.3, ease: EASE },
+          },
         }}
         className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-white px-2.5 py-1 text-[12px] font-medium text-[#0B2A22] shadow-lg"
         style={body}
@@ -224,6 +253,12 @@ function SocialButton({ social }: { social: Social }) {
 }
 
 export default function Footer() {
+  const lang = useLang();
+  const t = useT();
+  const researchLinks = researchAreasFor(lang).map((area) => ({
+    label: area.label,
+    href: `/research/${area.slug}`,
+  }));
   return (
     <footer className="bg-[#08313A] text-white">
       <div className="max-w-[1360px] mx-auto px-6 md:px-12 pt-16 pb-8">
@@ -234,8 +269,10 @@ export default function Footer() {
               className="text-white/60 text-sm font-normal leading-relaxed max-w-[300px] mt-4"
               style={body}
             >
-              Smart Agriculture Research Center UGM. We unite AI, IoT sensing,
-              and agronomy to help farmers grow more sustainably.
+              {t({
+                en: "Smart Agriculture Research Center UGM. We unite AI, IoT sensing, and agronomy to help farmers grow more sustainably.",
+                id: "Smart Agriculture Research Center UGM. Kami memadukan AI, penginderaan IoT, dan agronomi untuk membantu petani bertani secara lebih berkelanjutan.",
+              })}
             </p>
             <div className="flex gap-3 mt-6">
               {socials.map((social) => (
@@ -249,7 +286,7 @@ export default function Footer() {
               className="text-xs font-semibold uppercase tracking-[0.14em] text-white/50 mb-4"
               style={body}
             >
-              Research
+              {t({ en: "Research", id: "Riset" })}
             </div>
             <div className="flex flex-col gap-2.5">
               {researchLinks.map((link) => (
@@ -270,17 +307,17 @@ export default function Footer() {
               className="text-xs font-semibold uppercase tracking-[0.14em] text-white/50 mb-4"
               style={body}
             >
-              Center
+              {t({ en: "Center", id: "Pusat Riset" })}
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
               {centerLinks.map((link) => (
                 <a
-                  key={link.label}
+                  key={link.href}
                   href={link.href}
                   className="text-[15px] font-normal text-white/75 hover:text-white transition-colors"
                   style={body}
                 >
-                  {link.label}
+                  {t(link.label)}
                 </a>
               ))}
             </div>
@@ -291,7 +328,7 @@ export default function Footer() {
               className="text-xs font-semibold uppercase tracking-[0.14em] text-white/50 mb-4"
               style={body}
             >
-              Contact
+              {t({ en: "Contact", id: "Kontak" })}
             </div>
             <div className="flex flex-col gap-3">
               <div className="flex items-start gap-3">
@@ -332,24 +369,29 @@ export default function Footer() {
 
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-3">
           <span className="text-sm font-normal text-white/45" style={body}>
-            © 2026 Smart Agriculture Research Center, Faculty of Agricultural
-            Technology, Universitas Gadjah Mada. All rights reserved.
+            {t({
+              en: "© 2026 Smart Agriculture Research Center, Faculty of Agricultural Technology, Universitas Gadjah Mada. All rights reserved.",
+              id: "© 2026 Smart Agriculture Research Center, Fakultas Teknologi Pertanian, Universitas Gadjah Mada. Hak cipta dilindungi.",
+            })}
           </span>
-          <div className="flex gap-6">
-            <a
-              href="/privacy-policy"
-              className="text-sm font-normal text-white/45 hover:text-white/80 transition-colors"
-              style={body}
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="/terms-of-use"
-              className="text-sm font-normal text-white/45 hover:text-white/80 transition-colors"
-              style={body}
-            >
-              Terms of Use
-            </a>
+          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
+            <LanguageSwitch />
+            <div className="flex gap-6">
+              <a
+                href="/privacy-policy"
+                className="text-sm font-normal text-white/45 hover:text-white/80 transition-colors"
+                style={body}
+              >
+                {t({ en: "Privacy Policy", id: "Kebijakan Privasi" })}
+              </a>
+              <a
+                href="/terms-of-use"
+                className="text-sm font-normal text-white/45 hover:text-white/80 transition-colors"
+                style={body}
+              >
+                {t({ en: "Terms of Use", id: "Ketentuan Penggunaan" })}
+              </a>
+            </div>
           </div>
         </div>
       </div>

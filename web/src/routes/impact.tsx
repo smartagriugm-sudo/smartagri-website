@@ -6,55 +6,81 @@ import { stats } from "../components/Impact";
 import PageHero from "../components/PageHero";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
+import { headLang, useT, type Bi } from "../lib/i18n";
 
 export const Route = createFileRoute("/impact")({
   component: ImpactPage,
-  head: () => ({
-    meta: [
-      {
-        title: "Impact | smartagri",
-      },
-      {
-        name: "description",
-        content:
-          "How the Smart Agriculture Research Center's work lands in the real world: for farmers, for science, and for policy.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        {
+          title: l === "id" ? "Dampak | smartagri" : "Impact | smartagri",
+        },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Bagaimana karya Smart Agriculture Research Center hadir di dunia nyata: bagi petani, bagi ilmu pengetahuan, dan bagi kebijakan."
+              : "How the Smart Agriculture Research Center's work lands in the real world: for farmers, for science, and for policy.",
+        },
+      ],
+    };
+  },
 });
 
-const outcomes = [
+const outcomes: { icon: typeof Sprout; title: Bi; desc: Bi }[] = [
   {
     icon: Sprout,
-    title: "For farmers",
-    desc: "Less water, fewer losses, better harvest timing. Our partner cooperatives use live field data to decide when to irrigate, scout, and sell.",
+    title: { en: "For farmers", id: "Bagi petani" },
+    desc: {
+      en: "Less water, fewer losses, better harvest timing. Our partner cooperatives use live field data to decide when to irrigate, scout, and sell.",
+      id: "Air lebih hemat, kerugian lebih kecil, waktu panen lebih tepat. Koperasi mitra kami memakai data lahan secara langsung untuk memutuskan kapan mengairi, memantau tanaman, dan menjual hasil.",
+    },
   },
   {
     icon: FlaskConical,
-    title: "For science",
-    desc: "Open datasets, reproducible models, and peer-reviewed methods that other research groups in the region can build on.",
+    title: { en: "For science", id: "Bagi ilmu pengetahuan" },
+    desc: {
+      en: "Open datasets, reproducible models, and peer-reviewed methods that other research groups in the region can build on.",
+      id: "Dataset terbuka, model yang dapat direproduksi, dan metode peer-reviewed yang dapat dikembangkan lebih lanjut oleh kelompok riset lain di kawasan ini.",
+    },
   },
   {
     icon: Landmark,
-    title: "For policy & partners",
-    desc: "Evidence local governments and agribusiness partners use to target subsidies, insurance, and extension programs where they matter most.",
+    title: { en: "For policy & partners", id: "Bagi kebijakan & mitra" },
+    desc: {
+      en: "Evidence local governments and agribusiness partners use to target subsidies, insurance, and extension programs where they matter most.",
+      id: "Bukti yang dipakai pemerintah daerah dan mitra agribisnis untuk mengarahkan subsidi, asuransi, dan program penyuluhan ke tempat yang paling membutuhkan.",
+    },
   },
 ];
 
 function ImpactPage() {
+  const t = useT();
   return (
     <main>
       <SiteHeader />
       <section className="bg-[#F3F7F6]">
         <div className="max-w-[1360px] mx-auto px-6 md:px-12 pt-14 md:pt-20 pb-16 md:pb-20">
           <PageHero
-            eyebrow="Impact"
-            title={
-              <>
-                Research that <span style={accent}>delivers in the field</span>
-              </>
-            }
-            subtitle="Numbers we hold ourselves to, and what they mean for the farmers, scientists, and policymakers we work with."
+            eyebrow={t({ en: "Impact", id: "Dampak" })}
+            title={t({
+              en: (
+                <>
+                  Research that <span style={accent}>delivers in the field</span>
+                </>
+              ),
+              id: (
+                <>
+                  Riset yang <span style={accent}>nyata hasilnya di lahan</span>
+                </>
+              ),
+            })}
+            subtitle={t({
+              en: "Numbers we hold ourselves to, and what they mean for the farmers, scientists, and policymakers we work with.",
+              id: "Angka yang menjadi tolok ukur kami, dan artinya bagi petani, ilmuwan, serta pembuat kebijakan yang bekerja bersama kami.",
+            })}
           />
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -65,7 +91,7 @@ function ImpactPage() {
           >
             {stats.map((stat) => (
               <div
-                key={stat.label}
+                key={stat.value}
                 className="flex flex-col items-center text-center gap-2"
               >
                 <div
@@ -78,7 +104,7 @@ function ImpactPage() {
                   className="text-sm md:text-base font-normal text-white/70 max-w-[220px]"
                   style={body}
                 >
-                  {stat.label}
+                  {t(stat.label)}
                 </div>
               </div>
             ))}
@@ -92,12 +118,23 @@ function ImpactPage() {
             className="text-center text-3xl md:text-4xl font-semibold tracking-[-0.025em] text-neutral-900 mb-12"
             style={display}
           >
-            Where the impact <span style={accent}>lands</span>
+            {t({
+              en: (
+                <>
+                  Where the impact <span style={accent}>lands</span>
+                </>
+              ),
+              id: (
+                <>
+                  Di mana dampaknya <span style={accent}>terasa</span>
+                </>
+              ),
+            })}
           </h2>
           <div className="grid md:grid-cols-3 gap-6 mb-16">
             {outcomes.map((outcome, i) => (
               <motion.div
-                key={outcome.title}
+                key={outcome.title.en}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
@@ -111,13 +148,13 @@ function ImpactPage() {
                   className="text-xl md:text-2xl font-medium text-neutral-900"
                   style={display}
                 >
-                  {outcome.title}
+                  {t(outcome.title)}
                 </h3>
                 <p
                   className="text-sm md:text-base font-normal text-neutral-500 leading-relaxed"
                   style={body}
                 >
-                  {outcome.desc}
+                  {t(outcome.desc)}
                 </p>
               </motion.div>
             ))}
@@ -134,9 +171,10 @@ function ImpactPage() {
               className="text-2xl md:text-3xl text-neutral-900 leading-snug"
               style={serif}
             >
-              “Instead of guessing when to irrigate or treat crops, we now act
-              on real data, like having an agronomist watching every plot, day
-              and night.”
+              {t({
+                en: "“Instead of guessing when to irrigate or treat crops, we now act on real data, like having an agronomist watching every plot, day and night.”",
+                id: "“Dulu kami menebak kapan harus mengairi atau merawat tanaman, sekarang kami bertindak berdasarkan data nyata, seperti punya ahli agronomi yang mengawasi setiap petak siang dan malam.”",
+              })}
             </p>
             <footer className="mt-6">
               <span
@@ -149,7 +187,7 @@ function ImpactPage() {
                 className="text-base font-normal text-black/50"
                 style={body}
               >
-                Farm Cooperative Lead, Sleman
+                {t({ en: "Farm Cooperative Lead, Sleman", id: "Ketua Koperasi Tani, Sleman" })}
               </span>
             </footer>
           </motion.blockquote>
