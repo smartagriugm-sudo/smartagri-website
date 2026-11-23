@@ -2,25 +2,26 @@ import { createFileRoute } from "@tanstack/react-router";
 import { body, display } from "../lib/fonts";
 import {
   AERIAL_KEYS,
-  DASHBOARD_NAV,
-  METRICS,
   POINTS_PER_DAY,
   ROOT_KEYS,
   ZONES,
+  dashboardScreen,
   formatValue,
+  metricsFor,
   seriesFor,
   statusOf,
+  zonesFor,
 } from "../lib/indoor-dashboard";
+import { headLang, useLang, useT } from "../lib/i18n";
 import { useDashboard } from "../lib/dashboard-state";
 import { Panel } from "../components/dashboard/parts";
 import { ScreenHeading } from "../components/dashboard/AppShell";
 
 export const Route = createFileRoute("/indoor-farming_/dashboard/analytics")({
   component: AnalyticsScreen,
-  head: () => ({ meta: [{ title: "Analytics · Dashboard | smartagri" }] }),
+  head: ({ matches }) => ({ meta: [{ title: headLang(matches) === "id" ? "Analitik · Dashboard | smartagri" : "Analytics · Dashboard | smartagri" }] }),
 });
 
-const NAV = DASHBOARD_NAV.find((n) => n.label === "Analytics")!;
 
 // Metrics that are schedule-driven rather than controlled: a dark room at 02:00
 // and a closed valve are correct states, so scoring them as time out of band
@@ -39,18 +40,22 @@ function timeInBand(zone: (typeof ZONES)[number], key: (typeof AERIAL_KEYS)[numb
 
 function AnalyticsScreen() {
   const { tick, zone } = useDashboard();
+  const lang = useLang();
+  const t = useT();
+  const NAV = dashboardScreen("/indoor-farming/dashboard/analytics", lang);
+  const METRICS = metricsFor(lang);
   const keys = [...AERIAL_KEYS, ...ROOT_KEYS].filter((k) => !SCHEDULED.has(k));
-  const online = ZONES.filter((z) => z.online);
+  const online = zonesFor(lang).filter((z) => z.online);
 
   return (
     <>
-      <ScreenHeading title="Analytics" blurb={NAV.blurb} />
+      <ScreenHeading title={NAV.label} blurb={NAV.blurb} />
 
       <Panel
-        title={`Time in band · ${zone.short}`}
+        title={`${t({ en: "Time in band", id: "Waktu dalam rentang" })} · ${zone.short}`}
         action={
           <span className="text-[11px] text-neutral-400" style={body}>
-            Midnight to {String(Math.floor((tick * 15) / 60)).padStart(2, "0")}:
+            {t({ en: "Midnight to", id: "Tengah malam sampai" })} {String(Math.floor((tick * 15) / 60)).padStart(2, "0")}:
             {String((tick * 15) % 60).padStart(2, "0")}
           </span>
         }
@@ -83,21 +88,24 @@ function AnalyticsScreen() {
           </div>
         ) : (
           <p className="py-8 text-center text-[13px] text-neutral-400" style={body}>
-            {zone.name} is offline, so there is nothing to score.
+            {t({
+              en: `${zone.name} is offline, so there is nothing to score.`,
+              id: `${zone.name} sedang offline, jadi tidak ada yang bisa dinilai.`,
+            })}
           </p>
         )}
       </Panel>
 
-      <Panel title="Day extremes by room">
+      <Panel title={t({ en: "Day extremes by room", id: "Nilai ekstrem harian per ruang" })}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[620px] border-collapse text-left">
             <thead>
               <tr className="text-[11px] text-neutral-400">
-                <th className="pb-2 pr-3 font-medium" style={body}>Room</th>
-                <th className="pb-2 pr-3 font-medium" style={body}>Air temp min</th>
-                <th className="pb-2 pr-3 font-medium" style={body}>Air temp max</th>
-                <th className="pb-2 pr-3 font-medium" style={body}>VPD max</th>
-                <th className="pb-2 font-medium" style={body}>Peak PPFD</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>{t({ en: "Room", id: "Ruang" })}</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>{t({ en: "Air temp min", id: "Suhu udara min" })}</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>{t({ en: "Air temp max", id: "Suhu udara maks" })}</th>
+                <th className="pb-2 pr-3 font-medium" style={body}>{t({ en: "VPD max", id: "VPD maks" })}</th>
+                <th className="pb-2 font-medium" style={body}>{t({ en: "Peak PPFD", id: "PPFD puncak" })}</th>
               </tr>
             </thead>
             <tbody>
@@ -111,13 +119,13 @@ function AnalyticsScreen() {
                       {z.short}
                     </td>
                     <td className="py-2.5 pr-3 text-[13px] text-neutral-600 tabular-nums" style={body}>
-                      {formatValue("airTemp", Math.min(...temp))} °C
+                      {formatValue("airTemp", Math.min(...temp), lang)} °C
                     </td>
                     <td className="py-2.5 pr-3 text-[13px] text-neutral-600 tabular-nums" style={body}>
-                      {formatValue("airTemp", Math.max(...temp))} °C
+                      {formatValue("airTemp", Math.max(...temp), lang)} °C
                     </td>
                     <td className="py-2.5 pr-3 text-[13px] text-neutral-600 tabular-nums" style={body}>
-                      {formatValue("vpd", Math.max(...vpd))} kPa
+                      {formatValue("vpd", Math.max(...vpd), lang)} kPa
                     </td>
                     <td className="py-2.5 text-[13px] text-neutral-600 tabular-nums" style={body}>
                       {Math.round(Math.max(...ppfd))} µmol/m²/s
@@ -129,8 +137,10 @@ function AnalyticsScreen() {
           </table>
         </div>
         <p className="mt-3 text-[11px] text-neutral-400" style={body}>
-          Figures cover the full modelled day ({POINTS_PER_DAY} samples at 15
-          minute intervals), not only the part played so far.
+          {t({
+            en: `Figures cover the full modelled day (${POINTS_PER_DAY} samples at 15 minute intervals), not only the part played so far.`,
+            id: `Angka mencakup seluruh hari yang dimodelkan (${POINTS_PER_DAY} sampel dengan interval 15 menit), bukan hanya bagian yang sudah diputar.`,
+          })}
         </p>
       </Panel>
     </>

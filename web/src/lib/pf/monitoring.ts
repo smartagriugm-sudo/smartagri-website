@@ -1,3 +1,4 @@
+import type { Lang } from "../i18n-core";
 import { check, db, toErpError, unwrap, ErpDataError } from "./foundation";
 
 // Sensor monitoring (supabase/pf-monitoring.sql): devices and their calibration,
@@ -24,14 +25,25 @@ export type AssetKind = "iklim" | "nutrisi";
 
 export const metricInfo = (key: string) => METRICS.find((m) => m.key === key) ?? { key, label: key, unit: "", decimals: 2, kind: "iklim" as AssetKind };
 
-export function formatValue(metric: string, value: number) {
+const METRIC_LABEL_ID: Record<string, string> = {
+  suhu: "Suhu",
+  rh: "Kelembapan",
+  cahaya: "Cahaya",
+  do: "Oksigen terlarut",
+  suhu_larutan: "Suhu larutan",
+};
+
+/** A metric's name in the reader's language; English is the catalogue's `label`. */
+export const metricLabel = (key: string, lang: Lang = "en") => (lang === "id" ? METRIC_LABEL_ID[key] ?? metricInfo(key).label : metricInfo(key).label);
+
+export function formatValue(metric: string, value: number, lang: Lang = "en") {
   const { decimals } = metricInfo(metric);
-  return value.toLocaleString("en-GB", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  return value.toLocaleString(lang === "id" ? "id-ID" : "en-GB", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
-export const formatWithUnit = (metric: string, value: number) => {
+export const formatWithUnit = (metric: string, value: number, lang: Lang = "en") => {
   const { unit } = metricInfo(metric);
-  return unit ? `${formatValue(metric, value)} ${unit}` : formatValue(metric, value);
+  return unit ? `${formatValue(metric, value, lang)} ${unit}` : formatValue(metric, value, lang);
 };
 
 /** The two places sensors hang today, by the code in pf_location. */
@@ -41,6 +53,13 @@ export const MONITORED_PLACES = [
 ] as const;
 
 export type PlaceCode = (typeof MONITORED_PLACES)[number]["code"];
+
+/** A monitored place's name in the reader's language. */
+export const placeLabel = (code: string, lang: Lang = "en") => {
+  const place = MONITORED_PLACES.find((p) => p.code === code);
+  if (!place) return code;
+  return lang === "id" && place.code === "CH1" ? "Persemaian" : place.label;
+};
 
 /* -------------------------------------------------------------------- types */
 
@@ -53,6 +72,16 @@ export const LINK_STATES: Record<LinkState, { label: string; dot: string }> = {
   perawatan: { label: "Maintenance", dot: "bg-[#8D9398]" },
   pensiun: { label: "Retired", dot: "bg-[#8D9398]" },
 };
+
+const LINK_STATE_LABEL_ID: Record<LinkState, string> = {
+  online: "Mengirim",
+  terlambat: "Berhenti mengirim",
+  belum_mengirim: "Belum mengirim",
+  perawatan: "Pemeliharaan",
+  pensiun: "Pensiun",
+};
+
+export const linkStateLabel = (s: LinkState, lang: Lang = "en") => (lang === "id" ? LINK_STATE_LABEL_ID[s] : LINK_STATES[s].label);
 
 export type Asset = {
   id: string;
@@ -131,18 +160,25 @@ export function rangeState(value: number, band: Pick<RecipeTarget, "low" | "high
   return "ok";
 }
 
-export const formatBand = (metric: string, band: Pick<RecipeTarget, "low" | "high">) => {
+export const formatBand = (metric: string, band: Pick<RecipeTarget, "low" | "high">, lang: Lang = "en") => {
   const { unit } = metricInfo(metric);
   const tail = unit ? ` ${unit}` : "";
-  if (band.low !== null && band.high !== null) return `${formatValue(metric, band.low)}–${formatValue(metric, band.high)}${tail}`;
-  if (band.low !== null) return `at least ${formatValue(metric, band.low)}${tail}`;
-  if (band.high !== null) return `at most ${formatValue(metric, band.high)}${tail}`;
+  const v = (n: number) => formatValue(metric, n, lang);
+  if (band.low !== null && band.high !== null) return `${v(band.low)}–${v(band.high)}${tail}`;
+  if (band.low !== null) return `${lang === "id" ? "minimal" : "at least"} ${v(band.low)}${tail}`;
+  if (band.high !== null) return `${lang === "id" ? "maksimal" : "at most"} ${v(band.high)}${tail}`;
   return "-";
 };
 
 /** How long ago, in words, for a reading or an alarm. */
-export function ago(iso: string, now: Date = new Date()) {
+export function ago(iso: string, now: Date = new Date(), lang: Lang = "en") {
   const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000);
+  if (lang === "id") {
+    if (minutes < 1) return "baru saja";
+    if (minutes < 60) return `${minutes} menit lalu`;
+    const h = Math.floor(minutes / 60);
+    return h < 24 ? `${h} jam lalu` : `${Math.floor(h / 24)} hari lalu`;
+  }
   if (minutes < 1) return "just now";
   if (minutes < 60) return minutes === 1 ? "1 minute ago" : `${minutes} minutes ago`;
   const hours = Math.floor(minutes / 60);
@@ -178,53 +214,56 @@ const parseOptional = (s: string) => (s.trim() === "" ? null : Number(s.trim().r
 
 export type AssetForm = { code: string; name: string; kind: AssetKind; model: string; serial: string; locationId: string; metrics: string[]; intervalS: string; status: Asset["status"]; notes: string };
 
-export function parseAssetForm(f: AssetForm) {
-  if (!f.code.trim()) return { error: "A device code is required." } as const;
-  if (!/^[A-Za-z0-9-]+$/.test(f.code.trim())) return { error: "A code can only have letters, numbers and hyphens." } as const;
-  if (!f.name.trim()) return { error: "A device name is required." } as const;
-  if (!f.locationId) return { error: "Choose the device's location." } as const;
-  if (f.metrics.length === 0) return { error: "Choose at least one reading type." } as const;
+/** English first, Indonesian second, picked by `lang`. */
+const say = (lang: Lang, en: string, id: string) => (lang === "id" ? id : en);
+
+export function parseAssetForm(f: AssetForm, lang: Lang = "en") {
+  if (!f.code.trim()) return { error: say(lang, "A device code is required.", "Kode perangkat wajib diisi.") } as const;
+  if (!/^[A-Za-z0-9-]+$/.test(f.code.trim())) return { error: say(lang, "A code can only have letters, numbers and hyphens.", "Kode hanya boleh berisi huruf, angka, dan tanda hubung.") } as const;
+  if (!f.name.trim()) return { error: say(lang, "A device name is required.", "Nama perangkat wajib diisi.") } as const;
+  if (!f.locationId) return { error: say(lang, "Choose the device's location.", "Pilih lokasi perangkat.") } as const;
+  if (f.metrics.length === 0) return { error: say(lang, "Choose at least one reading type.", "Pilih minimal satu jenis pembacaan.") } as const;
   const interval = Number(f.intervalS.trim());
-  if (!Number.isInteger(interval) || interval <= 0) return { error: "The send interval must be a whole number of seconds above 0." } as const;
+  if (!Number.isInteger(interval) || interval <= 0) return { error: say(lang, "The send interval must be a whole number of seconds above 0.", "Interval kirim harus bilangan bulat detik di atas 0.") } as const;
   return { error: null, interval } as const;
 }
 
 export type RuleForm = { warnLow: string; warnHigh: string; critLow: string; critHigh: string; delayMin: string };
 
-export function parseRuleForm(f: RuleForm) {
+export function parseRuleForm(f: RuleForm, lang: Lang = "en") {
   const values = [f.warnLow, f.warnHigh, f.critLow, f.critHigh].map(parseOptional);
-  if (values.some((v) => v !== null && !Number.isFinite(v))) return { error: "Limits must be numbers." } as const;
-  if (values.every((v) => v === null)) return { error: "Fill in at least one limit." } as const;
+  if (values.some((v) => v !== null && !Number.isFinite(v))) return { error: say(lang, "Limits must be numbers.", "Batas harus berupa angka.") } as const;
+  if (values.every((v) => v === null)) return { error: say(lang, "Fill in at least one limit.", "Isi minimal satu batas.") } as const;
   const [warnLow, warnHigh, critLow, critHigh] = values;
   const out = (a: number | null, b: number | null) => a !== null && b !== null && a > b;
   if (out(warnLow, warnHigh) || out(critLow, critHigh) || out(critLow, warnLow) || out(warnHigh, critHigh)) {
-    return { error: "Limits are out of order: critical must be outside warning, and lower below upper." } as const;
+    return { error: say(lang, "Limits are out of order: critical must be outside warning, and lower below upper.", "Urutan batas salah: batas kritis harus di luar batas peringatan, dan batas bawah di bawah batas atas.") } as const;
   }
   const delay = Number((f.delayMin.trim() || "0").replace(",", "."));
-  if (!Number.isFinite(delay) || delay < 0) return { error: "The waiting time cannot be negative." } as const;
+  if (!Number.isFinite(delay) || delay < 0) return { error: say(lang, "The waiting time cannot be negative.", "Waktu tunggu tidak boleh negatif.") } as const;
   return { error: null, warnLow, warnHigh, critLow, critHigh, delayS: Math.round(delay * 60) } as const;
 }
 
-export function parseCalibrationForm(offset: string, slope: string) {
+export function parseCalibrationForm(offset: string, slope: string, lang: Lang = "en") {
   const offsetValue = parseOptional(offset) ?? 0;
   const slopeValue = parseOptional(slope) ?? 1;
-  if (!Number.isFinite(offsetValue) || !Number.isFinite(slopeValue)) return { error: "Offset and multiplier must be numbers." } as const;
-  if (slopeValue === 0) return { error: "The multiplier cannot be zero." } as const;
+  if (!Number.isFinite(offsetValue) || !Number.isFinite(slopeValue)) return { error: say(lang, "Offset and multiplier must be numbers.", "Offset dan pengali harus berupa angka.") } as const;
+  if (slopeValue === 0) return { error: say(lang, "The multiplier cannot be zero.", "Pengali tidak boleh nol.") } as const;
   return { error: null, offsetValue, slopeValue } as const;
 }
 
 export type TargetRow = { metric: string; low: string; target: string; high: string };
 
-export function parseTargetRows(rows: readonly TargetRow[]) {
+export function parseTargetRows(rows: readonly TargetRow[], lang: Lang = "en") {
   const out: { metric: string; low: number | null; target: number | null; high: number | null }[] = [];
   for (const r of rows) {
     const low = parseOptional(r.low);
     const target = parseOptional(r.target);
     const high = parseOptional(r.high);
     if (low === null && target === null && high === null) continue;
-    const label = metricInfo(r.metric).label;
-    if ([low, target, high].some((v) => v !== null && !Number.isFinite(v))) return { error: `Reference ${label} must be a number.` } as const;
-    if (low !== null && high !== null && low > high) return { error: `Lower limit ${label} above the upper limit.` } as const;
+    const label = metricLabel(r.metric, lang);
+    if ([low, target, high].some((v) => v !== null && !Number.isFinite(v))) return { error: say(lang, `Reference ${label} must be a number.`, `Acuan ${label} harus berupa angka.`) } as const;
+    if (low !== null && high !== null && low > high) return { error: say(lang, `Lower limit ${label} above the upper limit.`, `Batas bawah ${label} di atas batas atas.`) } as const;
     out.push({ metric: r.metric, low, target, high });
   }
   return { error: null, targets: out } as const;

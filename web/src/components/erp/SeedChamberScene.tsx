@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 import type { ChamberSelection, SeedChamberScene as Engine } from "plant-factory-3d";
 import { loadModel, modelShown, weakDevice } from "../../lib/pf/model-load";
-import { SLOT_STATES, type ChamberProvider } from "../../lib/pf/chamber";
+import { slotStatesIn, type ChamberProvider } from "../../lib/pf/chamber";
+import { useLang } from "../../lib/i18n";
 
 // Mounts the growth chamber engine; the same arrangement as PlantFactoryScene.
 // Its GLB is not to be edited here, and the doors it animates are only a view
@@ -22,6 +23,10 @@ export default function SeedChamberScene({ provider, onReady, onSelect, onError,
   const container = useRef<HTMLDivElement>(null);
   const handlers = useRef({ onReady, onSelect, onError });
   handlers.current = { onReady, onSelect, onError };
+  // The engine is built once per provider; it takes the labels of the language at that moment.
+  const lang = useLang();
+  const langRef = useRef(lang);
+  langRef.current = lang;
 
   useEffect(() => {
     let engine: ChamberEngine | undefined;
@@ -34,7 +39,7 @@ export default function SeedChamberScene({ provider, onReady, onSelect, onError,
           container: container.current!,
           ...urls,
           provider,
-          slotStates: states ? { ...SLOT_STATES, ...states } : SLOT_STATES,
+          slotStates: states ? { ...slotStatesIn(langRef.current), ...states } : slotStatesIn(langRef.current),
           tooltip: false,
           lite: weakDevice(),
         });

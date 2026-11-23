@@ -1,5 +1,6 @@
 import { check, db, unwrap } from "./foundation";
 import type { Leave } from "./people";
+import type { Lang } from "../i18n-core";
 
 // Bookings (supabase/pf-booking.sql): research sessions, visits, trainings and meetings.
 // A booking offers one or more times; with more than one, the people invited answer
@@ -9,26 +10,33 @@ import type { Leave } from "./people";
 /* -------------------------------------------------------------------- types */
 
 export const BOOKING_KINDS = [
-  { key: "penelitian", label: "Research", color: "#0B6477" },
-  { key: "kunjungan", label: "Visit", color: "#0E7A5C" },
-  { key: "pelatihan", label: "Training", color: "#6D5BD0" },
-  { key: "rapat", label: "Meeting", color: "#2F6DB5" },
-  { key: "lainnya", label: "Other", color: "#8A5A07" },
+  { key: "penelitian", label: "Research", labelId: "Penelitian", color: "#0B6477" },
+  { key: "kunjungan", label: "Visit", labelId: "Kunjungan", color: "#0E7A5C" },
+  { key: "pelatihan", label: "Training", labelId: "Pelatihan", color: "#6D5BD0" },
+  { key: "rapat", label: "Meeting", labelId: "Rapat", color: "#2F6DB5" },
+  { key: "lainnya", label: "Other", labelId: "Lainnya", color: "#8A5A07" },
 ] as const;
 export type BookingKind = (typeof BOOKING_KINDS)[number]["key"];
 export const kindOf = (key: string) => BOOKING_KINDS.find((k) => k.key === key) ?? BOOKING_KINDS[4];
+export const kindLabel = (key: string, lang: Lang = "en") => {
+  const k = kindOf(key);
+  return lang === "id" ? k.labelId : k.label;
+};
 
 /** Online and outdoor bookings never clash over a room. */
 export const BOOKING_SPACES = [
-  { key: "plant_factory", label: "Plant factory", shared: false },
-  { key: "growth_chamber", label: "Growth chamber", shared: false },
-  { key: "lab", label: "Laboratory", shared: false },
-  { key: "ruang_rapat", label: "Meeting room", shared: false },
-  { key: "lapangan", label: "Field or outdoor", shared: true },
-  { key: "daring", label: "Online only", shared: true },
+  { key: "plant_factory", label: "Plant factory", labelId: "Plant factory", shared: false },
+  { key: "growth_chamber", label: "Growth chamber", labelId: "Growth chamber", shared: false },
+  { key: "lab", label: "Laboratory", labelId: "Laboratorium", shared: false },
+  { key: "ruang_rapat", label: "Meeting room", labelId: "Ruang rapat", shared: false },
+  { key: "lapangan", label: "Field or outdoor", labelId: "Lapangan atau luar ruang", shared: true },
+  { key: "daring", label: "Online only", labelId: "Daring saja", shared: true },
 ] as const;
 export type BookingSpace = (typeof BOOKING_SPACES)[number]["key"];
-export const spaceLabel = (key: string) => BOOKING_SPACES.find((s) => s.key === key)?.label ?? key;
+export const spaceLabel = (key: string, lang: Lang = "en") => {
+  const s = BOOKING_SPACES.find((x) => x.key === key);
+  return s ? (lang === "id" ? s.labelId : s.label) : key;
+};
 
 export type BookingStatus = "mencari" | "terjadwal" | "batal";
 export type Answer = "ya" | "mungkin" | "tidak";
@@ -38,6 +46,8 @@ export const ANSWERS: Record<Answer, { label: string; className: string }> = {
   mungkin: { label: "If need be", className: "bg-[#FFF6E5] text-[#B26205]" },
   tidak: { label: "No", className: "bg-[#EEF3F4] text-[#6B8187]" },
 };
+const ANSWERS_ID: Record<Answer, string> = { ya: "Ya", mungkin: "Kalau perlu", tidak: "Tidak" };
+export const answerLabel = (a: Answer, lang: Lang = "en") => (lang === "id" ? ANSWERS_ID[a] : ANSWERS[a].label);
 
 /** One time on offer. No start and end means the whole day. */
 export type TimeOption = { day: string; start: string | null; end: string | null };
@@ -85,6 +95,8 @@ export const BOOKING_STAGE: Record<BookingStage, { label: string; className: str
   done: { label: "Done", className: "bg-[#EEF3F4] text-[#4F6B73]" },
   cancelled: { label: "Cancelled", className: "bg-[#FDECEA] text-[#B3362C]" },
 };
+const BOOKING_STAGE_ID: Record<BookingStage, string> = { finding: "Mencari waktu", booked: "Terjadwal", done: "Selesai", cancelled: "Dibatalkan" };
+export const bookingStageLabel = (s: BookingStage, lang: Lang = "en") => (lang === "id" ? BOOKING_STAGE_ID[s] : BOOKING_STAGE[s].label);
 
 export function bookingStage(b: Pick<Booking, "status" | "chosen_day" | "last_day">, today: string): BookingStage {
   if (b.status === "batal") return "cancelled";
@@ -102,6 +114,8 @@ export const DURATIONS = [
   { key: 180, label: "3h" },
   { key: 0, label: "All day" },
 ] as const;
+/** A DURATIONS label in the reader's language: "1j 30m" and "Seharian" in Indonesian. */
+export const durationChoiceLabel = (key: number, lang: Lang = "en") => (key === 0 ? (lang === "id" ? "Seharian" : "All day") : durationLabel(key, lang));
 
 /** The first and last start times offered, in minutes. The lab is open 06.00–21.00. */
 export const DAY_OPENS = 6 * 60;
@@ -113,16 +127,17 @@ export const toClock = (m: number) => `${String(Math.floor(m / 60)).padStart(2, 
 /** "09:00" as the lab writes it: "09.00". */
 export const clockLabel = (t: string) => t.slice(0, 5).replace(":", ".");
 
-export function durationLabel(minutes: number) {
+export function durationLabel(minutes: number, lang: Lang = "en") {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return h && m ? `${h}h ${m}m` : h ? `${h}h` : `${m}m`;
+  const hu = lang === "id" ? "j" : "h";
+  return h && m ? `${h}${hu} ${m}m` : h ? `${h}${hu}` : `${m}m`;
 }
 
 export const optionMinutes = (o: Pick<TimeOption, "start" | "end">) => (o.start && o.end ? toMinutes(o.end) - toMinutes(o.start) : 0);
 
-export function optionLabel(o: Pick<TimeOption, "start" | "end">) {
-  return o.start && o.end ? `${clockLabel(o.start)}–${clockLabel(o.end)}` : "All day";
+export function optionLabel(o: Pick<TimeOption, "start" | "end">, lang: Lang = "en") {
+  return o.start && o.end ? `${clockLabel(o.start)}–${clockLabel(o.end)}` : lang === "id" ? "Seharian" : "All day";
 }
 
 const sameOption = (a: TimeOption, b: TimeOption) => a.day === b.day && a.start === b.start && a.end === b.end;
@@ -235,17 +250,18 @@ export function overlaps(a: { day: string; start: string | null; end: string | n
 }
 
 /** What stands in the way of one time: the room already taken, the host or someone invited on leave. */
-export function clashesFor(option: TimeOption, space: string, busy: readonly Busy[], leaves: readonly Leave[], people: readonly { id: string; name: string }[]): string[] {
+export function clashesFor(option: TimeOption, space: string, busy: readonly Busy[], leaves: readonly Leave[], people: readonly { id: string; name: string }[], lang: Lang = "en"): string[] {
+  const id = lang === "id";
   const out: string[] = [];
   const sharedSpace = BOOKING_SPACES.find((s) => s.key === space)?.shared ?? true;
   if (!sharedSpace) {
     for (const b of busy) {
-      if (b.space === space && overlaps(option, b)) out.push(`${spaceLabel(space)} is booked: ${b.title}, ${optionLabel(b)}`);
+      if (b.space === space && overlaps(option, b)) out.push(id ? `${spaceLabel(space, lang)} sudah dipakai: ${b.title}, ${optionLabel(b, lang)}` : `${spaceLabel(space)} is booked: ${b.title}, ${optionLabel(b)}`);
     }
   }
   for (const p of people) {
     const away = leaves.find((l) => l.person_id === p.id && l.status === "disetujui" && l.start_date <= option.day && l.end_date >= option.day);
-    if (away) out.push(`${p.name} is on leave`);
+    if (away) out.push(id ? `${p.name} sedang cuti` : `${p.name} is on leave`);
   }
   return out;
 }
@@ -253,12 +269,13 @@ export function clashesFor(option: TimeOption, space: string, busy: readonly Bus
 /* ----------------------------------------------------------------- dates */
 
 const asDate = (d: string) => new Date(`${d}T00:00:00Z`);
-export const fmtDay = (d: string, options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("en-GB", { ...options, timeZone: "UTC" }).format(asDate(d));
+export const fmtDay = (d: string, options: Intl.DateTimeFormatOptions, lang: Lang = "en") => new Intl.DateTimeFormat(lang === "id" ? "id-ID" : "en-GB", { ...options, timeZone: "UTC" }).format(asDate(d));
 
-export function whenLabel(b: Pick<Booking, "status" | "chosen_day" | "chosen_start" | "chosen_end" | "first_day" | "last_day" | "option_count">) {
-  if (b.chosen_day) return `${fmtDay(b.chosen_day, { weekday: "short", day: "numeric", month: "short" })} · ${optionLabel({ start: b.chosen_start, end: b.chosen_end })}`;
-  if (!b.first_day) return "No times yet";
-  const span = b.first_day === b.last_day || !b.last_day ? fmtDay(b.first_day, { day: "numeric", month: "short" }) : `${fmtDay(b.first_day, { day: "numeric", month: "short" })}–${fmtDay(b.last_day, { day: "numeric", month: "short" })}`;
+export function whenLabel(b: Pick<Booking, "status" | "chosen_day" | "chosen_start" | "chosen_end" | "first_day" | "last_day" | "option_count">, lang: Lang = "en") {
+  if (b.chosen_day) return `${fmtDay(b.chosen_day, { weekday: "short", day: "numeric", month: "short" }, lang)} · ${optionLabel({ start: b.chosen_start, end: b.chosen_end }, lang)}`;
+  if (!b.first_day) return lang === "id" ? "Belum ada waktu" : "No times yet";
+  const span = b.first_day === b.last_day || !b.last_day ? fmtDay(b.first_day, { day: "numeric", month: "short" }, lang) : `${fmtDay(b.first_day, { day: "numeric", month: "short" }, lang)}–${fmtDay(b.last_day, { day: "numeric", month: "short" }, lang)}`;
+  if (lang === "id") return `${b.option_count} pilihan waktu · ${span}`;
   return `${b.option_count} ${b.option_count === 1 ? "time" : "times"} offered · ${span}`;
 }
 
@@ -266,8 +283,14 @@ export function whenLabel(b: Pick<Booking, "status" | "chosen_day" | "chosen_sta
 export const sortDay = (b: Pick<Booking, "chosen_day" | "first_day" | "created_at">) => b.chosen_day ?? b.first_day ?? b.created_at.slice(0, 10);
 
 /** How far off a day is, in words: "Today", "Tomorrow", "In 3 days", "2 days ago". */
-export function countdownLabel(day: string, today: string) {
+export function countdownLabel(day: string, today: string, lang: Lang = "en") {
   const n = Math.round((asDate(day).getTime() - asDate(today).getTime()) / 86_400_000);
+  if (lang === "id") {
+    if (n === 0) return "Hari ini";
+    if (n === 1) return "Besok";
+    if (n === -1) return "Kemarin";
+    return n > 0 ? `${n} hari lagi` : `${-n} hari lalu`;
+  }
   if (n === 0) return "Today";
   if (n === 1) return "Tomorrow";
   if (n === -1) return "Yesterday";
@@ -283,10 +306,10 @@ const icsStamp = (day: string, time: string) => `${day.replace(/-/g, "")}T${time
  * A calendar file (.ics) for a booked time, in WIB, so it lands in Google Calendar,
  * Outlook or a phone's calendar at the right hour. Made in the browser; nothing is sent.
  */
-export function bookingIcs(b: Pick<Booking, "id" | "title" | "space" | "place_note" | "description" | "video_link" | "chosen_day" | "chosen_start" | "chosen_end">, now = new Date()): string | null {
+export function bookingIcs(b: Pick<Booking, "id" | "title" | "space" | "place_note" | "description" | "video_link" | "chosen_day" | "chosen_start" | "chosen_end">, now = new Date(), lang: Lang = "en"): string | null {
   if (!b.chosen_day) return null;
-  const where = [spaceLabel(b.space), b.place_note].filter(Boolean).join(", ");
-  const about = [b.description, b.video_link ? `Video call: ${b.video_link}` : ""].filter(Boolean).join("\n\n");
+  const where = [spaceLabel(b.space, lang), b.place_note].filter(Boolean).join(", ");
+  const about = [b.description, b.video_link ? `${lang === "id" ? "Panggilan video" : "Video call"}: ${b.video_link}` : ""].filter(Boolean).join("\n\n");
   const timed = b.chosen_start && b.chosen_end;
   const next = new Date(`${b.chosen_day}T00:00:00Z`);
   next.setUTCDate(next.getUTCDate() + 1);
@@ -310,14 +333,15 @@ export function bookingIcs(b: Pick<Booking, "id" | "title" | "space" | "place_no
 }
 
 /** The booking as a short message to paste into WhatsApp or an email to the guests. */
-export function bookingMessage(b: Pick<Booking, "title" | "space" | "place_note" | "host_name" | "video_link" | "chosen_day" | "chosen_start" | "chosen_end">): string {
-  const when = b.chosen_day ? `${fmtDay(b.chosen_day, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}, ${optionLabel({ start: b.chosen_start, end: b.chosen_end })}${b.chosen_start ? " WIB" : ""}` : "Time still being decided";
+export function bookingMessage(b: Pick<Booking, "title" | "space" | "place_note" | "host_name" | "video_link" | "chosen_day" | "chosen_start" | "chosen_end">, lang: Lang = "en"): string {
+  const id = lang === "id";
+  const when = b.chosen_day ? `${fmtDay(b.chosen_day, { weekday: "long", day: "numeric", month: "long", year: "numeric" }, lang)}, ${optionLabel({ start: b.chosen_start, end: b.chosen_end }, lang)}${b.chosen_start ? " WIB" : ""}` : id ? "Waktu masih ditentukan" : "Time still being decided";
   return [
     b.title,
-    `When: ${when}`,
-    `Where: ${[spaceLabel(b.space), b.place_note].filter(Boolean).join(", ")}`,
-    ...(b.host_name ? [`Host: ${b.host_name}`] : []),
-    ...(b.video_link ? [`Video call: ${b.video_link}`] : []),
+    `${id ? "Waktu" : "When"}: ${when}`,
+    `${id ? "Tempat" : "Where"}: ${[spaceLabel(b.space, lang), b.place_note].filter(Boolean).join(", ")}`,
+    ...(b.host_name ? [`${id ? "Tuan rumah" : "Host"}: ${b.host_name}`] : []),
+    ...(b.video_link ? [`${id ? "Panggilan video" : "Video call"}: ${b.video_link}`] : []),
   ].join("\n");
 }
 
@@ -330,11 +354,11 @@ export type Lane = { space: BookingSpace; label: string; items: LaneItem[] };
  * What happens on one day, a row per space: the booked times there, plus any times a
  * poll offers. The space in focus always gets a row, even when nothing else is there.
  */
-export function dayLanes(day: string, bookings: readonly Booking[], focusSpace: string, offered: readonly LaneItem[] = []): Lane[] {
+export function dayLanes(day: string, bookings: readonly Booking[], focusSpace: string, offered: readonly LaneItem[] = [], lang: Lang = "en"): Lane[] {
   const booked = bookings.filter((b) => b.status === "terjadwal" && b.chosen_day === day);
   return BOOKING_SPACES.filter((s) => s.key === focusSpace || booked.some((b) => b.space === s.key)).map((s) => ({
     space: s.key,
-    label: s.label,
+    label: lang === "id" ? s.labelId : s.label,
     items: [
       ...booked.filter((b) => b.space === s.key).map((b) => ({ id: b.id, title: b.title, kind: b.kind, start: b.chosen_start?.slice(0, 5) ?? null, end: b.chosen_end?.slice(0, 5) ?? null })),
       ...(s.key === focusSpace ? offered : []),
@@ -402,7 +426,23 @@ export function bookingToForm(b: Booking, options: readonly BookingOption[], inv
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function checkBookingForm(f: BookingForm, today: string): string | null {
+const BOOKING_FORM_ID: Record<string, string> = {
+  "Give the booking a title.": "Beri judul reservasi.",
+  "Pick at least one date on the calendar.": "Pilih minimal satu tanggal di kalender.",
+  "A time in the past cannot be offered. Remove it from the calendar.": "Waktu yang sudah lewat tidak bisa ditawarkan. Hapus dari kalender.",
+  "Each time must end after it starts.": "Setiap waktu harus selesai setelah dimulai.",
+  "The number of guests must be a whole number.": "Jumlah tamu harus bilangan bulat.",
+  "A booking can take at most 500 guests.": "Satu reservasi maksimal 500 tamu.",
+  "The contact email does not look like an email address.": "Email kontak tidak terlihat seperti alamat email.",
+  "The video call link must start with https://.": "Tautan panggilan video harus diawali https://.",
+};
+
+export function checkBookingForm(f: BookingForm, today: string, lang: Lang = "en"): string | null {
+  const error = checkBookingFormEn(f, today);
+  return error && lang === "id" ? (BOOKING_FORM_ID[error] ?? error) : error;
+}
+
+function checkBookingFormEn(f: BookingForm, today: string): string | null {
   if (!f.title.trim()) return "Give the booking a title.";
   if (f.options.length === 0) return "Pick at least one date on the calendar.";
   if (f.options.some((o) => o.day < today)) return "A time in the past cannot be offered. Remove it from the calendar.";

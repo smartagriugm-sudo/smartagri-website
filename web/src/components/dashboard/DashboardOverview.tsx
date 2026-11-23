@@ -6,23 +6,27 @@ import { indoorDashboardImage } from "../../lib/assets";
 import { accent, body, display } from "../../lib/fonts";
 import {
   CHART_KEYS,
-  METRICS,
   STATUS_TONE,
   ACTUATOR_TONE,
   STEP_MINUTES,
-  ZONES,
+  actuatorLabel,
   axisPercent,
   clockLabel,
+  fixed,
   formatValue,
+  metricsFor,
   readingAt,
   statusOf,
   targetFor,
   rangeAxis,
-  RANGES,
+  rangesFor,
+  weatherLabel,
+  zonesFor,
   type MetricKey,
 } from "../../lib/indoor-dashboard";
 import { useDashboard } from "../../lib/dashboard-state";
-import { DayChart, KpiCard, MetricBar, Panel, Pill, StatusDot } from "./parts";
+import { localeOf, useLang, useT } from "../../lib/i18n";
+import { DayChart, KpiCard, MetricBar, Panel, Pill, StatusDot, num } from "./parts";
 
 // The Overview screen: the facility at a glance. Everything it draws comes from
 // the shared dashboard context, so the playhead and the selected zone stay in
@@ -53,7 +57,11 @@ export default function DashboardOverview() {
 
   // Weekly and monthly series are entirely in the past, so the playhead sits on
   // the last point. Only the daily view has a "rest of the day" still to come.
-  const axis = rangeAxis(range);
+  const lang = useLang();
+  const t = useT();
+  const METRICS = metricsFor(lang);
+  const ZONES = zonesFor(lang);
+  const axis = rangeAxis(range, lang);
   const playhead = range === "daily" ? tick : chartSeries.length - 1;
 
   return (
@@ -87,9 +95,9 @@ export default function DashboardOverview() {
           className="mt-1 text-[19px] sm:text-[23px] font-semibold tracking-[-0.03em] leading-[1.15] text-white"
           style={display}
         >
-          {inBand} of {onlineZones.length} rooms are{" "}
+          {t({ en: `${inBand} of ${onlineZones.length} rooms are`, id: `${inBand} dari ${onlineZones.length} ruang` })}{" "}
           <span style={{ ...accent, color: "#80ED99" }}>
-            inside their target envelope
+            {t({ en: "inside their target envelope", id: "berada dalam rentang targetnya" })}
           </span>
         </h2>
       </div>
@@ -100,7 +108,7 @@ export default function DashboardOverview() {
           <div className="flex items-center gap-4 sm:gap-5">
             <div>
               <div className="text-[11px] text-white/60" style={body}>
-                Rooms online
+                {t({ en: "Rooms online", id: "Ruang online" })}
               </div>
               <div
                 className="text-[21px] font-semibold tracking-[-0.03em] text-white tabular-nums leading-tight"
@@ -113,29 +121,29 @@ export default function DashboardOverview() {
                 </span>
               </div>
               <div className="text-[10px] text-white/50" style={body}>
-                1 in maintenance
+                {t({ en: "1 in maintenance", id: "1 dalam pemeliharaan" })}
               </div>
             </div>
             <div className="h-10 w-px bg-white/15" />
             <div>
               <div className="text-[11px] text-white/60" style={body}>
-                Under control
+                {t({ en: "Under control", id: "Terkendali" })}
               </div>
               <div
                 className="text-[21px] font-semibold tracking-[-0.03em] text-white tabular-nums leading-tight"
                 style={display}
               >
-                {totalArea.toLocaleString("en-US")}
+                {totalArea.toLocaleString(localeOf(lang))}
                 <span className="text-[13px] font-normal text-white/50"> m²</span>
               </div>
               <div className="text-[10px] text-white/50" style={body}>
-                across {onlineZones.length} rooms
+                {t({ en: `across ${onlineZones.length} rooms`, id: `di ${onlineZones.length} ruang` })}
               </div>
             </div>
             <div className="hidden sm:block h-10 w-px bg-white/15" />
             <div className="hidden sm:block">
               <div className="text-[11px] text-white/60" style={body}>
-                Facility clock
+                {t({ en: "Facility clock", id: "Jam fasilitas" })}
               </div>
               <div
                 className="text-[21px] font-semibold tracking-[-0.03em] text-white tabular-nums leading-tight"
@@ -144,7 +152,7 @@ export default function DashboardOverview() {
                 {clockLabel(tick)}
               </div>
               <div className="text-[10px] text-white/50" style={body}>
-                sampling every {STEP_MINUTES} min
+                {t({ en: `sampling every ${STEP_MINUTES} min`, id: `sampel tiap ${STEP_MINUTES} menit` })}
               </div>
             </div>
           </div>
@@ -155,26 +163,26 @@ export default function DashboardOverview() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-[11px] text-white/60" style={body}>
-                Weather station · outdoor
+                {t({ en: "Weather station · outdoor", id: "Stasiun cuaca · luar" })}
               </div>
               <div
                 className="text-[19px] font-semibold text-white tabular-nums leading-tight"
                 style={display}
               >
-                {weather.airTemp.toFixed(1)} °C
+                {fixed(weather.airTemp, 1, lang)} °C
               </div>
               <div className="text-[11px] text-white/60" style={body}>
-                {weather.condition}
+                {weatherLabel(weather.condition, lang)}
               </div>
             </div>
             <WeatherIcon className="w-8 h-8 text-[#45DFB1]" strokeWidth={1.5} />
           </div>
           <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1">
             {[
-              { label: "Solar", value: `${Math.round(weather.solar)} W/m²` },
-              { label: "Humidity", value: `${Math.round(weather.rh)} %` },
-              { label: "Wind", value: `${weather.wind.toFixed(1)} m/s` },
-              { label: "Rain today", value: `${rain.toFixed(1)} mm` },
+              { label: t({ en: "Solar", id: "Radiasi" }), value: `${Math.round(weather.solar)} W/m²` },
+              { label: t({ en: "Humidity", id: "Kelembapan" }), value: `${Math.round(weather.rh)} %` },
+              { label: t({ en: "Wind", id: "Angin" }), value: `${fixed(weather.wind, 1, lang)} m/s` },
+              { label: t({ en: "Rain today", id: "Hujan hari ini" }), value: `${fixed(rain, 1, lang)} mm` },
             ].map((row) => (
               <div key={row.label} className="flex items-center justify-between gap-2">
                 <span className="text-[10px] text-white/50" style={body}>
@@ -197,7 +205,7 @@ export default function DashboardOverview() {
   {/* room switcher */}
   <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
     <span className="text-[12px] font-medium text-neutral-400 shrink-0" style={body}>
-      Room
+      {t({ en: "Room", id: "Ruang" })}
     </span>
     {ZONES.map((z) => (
       <Pill key={z.id} active={z.id === zoneId} onClick={() => setZoneId(z.id)}>
@@ -249,17 +257,18 @@ export default function DashboardOverview() {
           className="text-[30px] font-semibold tracking-[-0.03em] text-neutral-900 tabular-nums leading-none"
           style={display}
         >
-          {formatValue(metricKey, chartSeries[playhead])}
+          {formatValue(metricKey, chartSeries[playhead], lang)}
         </span>
         <span className="text-[13px] text-neutral-400" style={body}>
           {METRICS[metricKey].unit}
         </span>
         <StatusDot status={statusOf(metricKey, chartSeries[playhead], zone)} />
         <span className="text-[12px] text-neutral-400" style={body}>
-          Target band {targetFor(metricKey, zone)[0]} to {targetFor(metricKey, zone)[1]}
+          {t({ en: "Target band", id: "Rentang target" })} {num(targetFor(metricKey, zone)[0], lang)}{" "}
+          {t({ en: "to", id: "sampai" })} {num(targetFor(metricKey, zone)[1], lang)}
         </span>
         <div className="ml-auto flex shrink-0 items-center gap-1">
-          {RANGES.map((r) => (
+          {rangesFor(lang).map((r) => (
             <Pill key={r.key} active={r.key === range} onClick={() => setRange(r.key)}>
               {r.label}
             </Pill>
@@ -277,20 +286,26 @@ export default function DashboardOverview() {
         />
       </div>
       <p className="mt-1 text-[11px] text-neutral-400" style={body}>
-        {range === "daily"
-          ? "Solid line is measured to the playhead. The dashed continuation is the modelled rest of the day."
-          : `One point per day, each the day's average. ${
-              range === "weekly" ? "Last 7 days" : "Last 30 days"
-            }, ending today.`}
+        {lang === "id"
+          ? range === "daily"
+            ? "Garis tegas adalah data terukur sampai playhead. Garis putus-putus adalah sisa hari yang dimodelkan."
+            : `Satu titik per hari, masing-masing rata-rata harian. ${
+                range === "weekly" ? "7 hari terakhir" : "30 hari terakhir"
+              }, berakhir hari ini.`
+          : range === "daily"
+            ? "Solid line is measured to the playhead. The dashed continuation is the modelled rest of the day."
+            : `One point per day, each the day's average. ${
+                range === "weekly" ? "Last 7 days" : "Last 30 days"
+              }, ending today.`}
       </p>
     </Panel>
 
     <div className="flex min-w-0 flex-col gap-3">
       <Panel
-        title="Root zone"
+        title={t({ en: "Root zone", id: "Zona akar" })}
         action={
           <span className="text-[11px] text-neutral-400" style={body}>
-            Mixing tank · 2,000 L
+            {t({ en: "Mixing tank · 2,000 L", id: "Tangki pencampur · 2.000 L" })}
           </span>
         }
       >
@@ -301,7 +316,7 @@ export default function DashboardOverview() {
         </div>
       </Panel>
 
-      <Panel title="Light and canopy">
+      <Panel title={t({ en: "Light and canopy", id: "Cahaya dan kanopi" })}>
         <div className="flex flex-col gap-3">
           {(["ppfd", "dli", "leafTemp"] as MetricKey[]).map((key) => {
             const m = METRICS[key];
@@ -320,7 +335,7 @@ export default function DashboardOverview() {
                     className="text-[13px] font-semibold text-neutral-900 tabular-nums"
                     style={display}
                   >
-                    {formatValue(key, value)}
+                    {formatValue(key, value, lang)}
                     <span className="ml-1 text-[10px] font-normal text-neutral-400">
                       {m.unit}
                     </span>
@@ -346,10 +361,10 @@ export default function DashboardOverview() {
   {/* room comparison + actuators */}
   <div className="grid xl:grid-cols-[1.55fr_1fr] gap-3">
     <Panel
-      title="Room comparison"
+      title={t({ en: "Room comparison", id: "Perbandingan ruang" })}
       action={
         <span className="text-[11px] text-neutral-400" style={body}>
-          {inBand} of {onlineZones.length} rooms active
+          {t({ en: `${inBand} of ${onlineZones.length} rooms active`, id: `${inBand} dari ${onlineZones.length} ruang aktif` })}
         </span>
       }
       padded={false}
@@ -359,13 +374,13 @@ export default function DashboardOverview() {
           <thead>
             <tr className="text-[11px] text-neutral-400">
               <th className="pb-2 pr-3 font-medium" style={body}>
-                Room
+                {t({ en: "Room", id: "Ruang" })}
               </th>
               <th className="pb-2 pr-3 font-medium" style={body}>
-                Crop
+                {t({ en: "Crop", id: "Tanaman" })}
               </th>
               <th className="pb-2 pr-3 font-medium" style={body}>
-                Air
+                {t({ en: "Air", id: "Udara" })}
               </th>
               <th className="pb-2 pr-3 font-medium" style={body}>
                 VPD
@@ -374,7 +389,7 @@ export default function DashboardOverview() {
                 EC
               </th>
               <th className="pb-2 font-medium" style={body}>
-                Status
+                {t({ en: "Status", id: "Status" })}
               </th>
             </tr>
           </thead>
@@ -405,19 +420,19 @@ export default function DashboardOverview() {
                     className="py-2.5 pr-3 text-neutral-600 tabular-nums whitespace-nowrap"
                     style={body}
                   >
-                    {z.online ? `${r.airTemp.toFixed(1)} °C` : "-"}
+                    {z.online ? `${fixed(r.airTemp, 1, lang)} °C` : "-"}
                   </td>
                   <td
                     className="py-2.5 pr-3 text-neutral-600 tabular-nums whitespace-nowrap"
                     style={body}
                   >
-                    {z.online ? `${r.vpd.toFixed(2)} kPa` : "-"}
+                    {z.online ? `${fixed(r.vpd, 2, lang)} kPa` : "-"}
                   </td>
                   <td
                     className="py-2.5 pr-3 text-neutral-600 tabular-nums whitespace-nowrap"
                     style={body}
                   >
-                    {z.online ? r.ec.toFixed(2) : "-"}
+                    {z.online ? fixed(r.ec, 2, lang) : "-"}
                   </td>
                   <td className="py-2.5">
                     {z.online ? (
@@ -440,10 +455,13 @@ export default function DashboardOverview() {
     </Panel>
 
     <Panel
-      title="Actuators"
+      title={t({ en: "Actuators", id: "Aktuator" })}
       action={
         <span className="text-[11px] text-neutral-400" style={body}>
-          {actuators.filter((a) => a.state === "on").length} of {actuators.length} running
+          {t({
+            en: `${actuators.filter((a) => a.state === "on").length} of ${actuators.length} running`,
+            id: `${actuators.filter((a) => a.state === "on").length} dari ${actuators.length} berjalan`,
+          })}
         </span>
       }
     >
@@ -471,13 +489,13 @@ export default function DashboardOverview() {
                   className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-[0.02em]"
                   style={{ ...body, color: tone.color, backgroundColor: tone.bg }}
                 >
-                  {tone.label}
+                  {actuatorLabel(a.state, lang)}
                 </span>
                 {/* How hard it is working is a separate question from whether it
                     is working, so the load only appears when there is a load. */}
                 {a.state === "on" && (
                   <span className="text-[10px] text-neutral-400 tabular-nums" style={body}>
-                    {a.load}% load
+                    {t({ en: `${a.load}% load`, id: `beban ${a.load}%` })}
                   </span>
                 )}
               </div>
@@ -492,10 +510,10 @@ export default function DashboardOverview() {
   <div className="grid xl:grid-cols-[1.55fr_1fr] gap-3">
     <Panel
       className="flex flex-col"
-      title="Resource use today"
+      title={t({ en: "Resource use today", id: "Pemakaian sumber daya hari ini" })}
       action={
         <span className="text-[11px] text-neutral-400" style={body}>
-          Since midnight
+          {t({ en: "Since midnight", id: "Sejak tengah malam" })}
         </span>
       }
     >
@@ -536,19 +554,21 @@ export default function DashboardOverview() {
         ))}
       </div>
       <p className="mt-3 text-[11px] text-neutral-400" style={body}>
-        Meters read against the day's planned budget. Nutrient stock counts down
-        from a full tank rather than up.
+        {t({
+          en: "Meters read against the day's planned budget. Nutrient stock counts down from a full tank rather than up.",
+          id: "Meter dibandingkan dengan anggaran harian yang direncanakan. Stok nutrisi dihitung mundur dari tangki penuh, bukan naik.",
+        })}
       </p>
     </Panel>
 
     <Panel
-      title="Event log"
+      title={t({ en: "Event log", id: "Log kejadian" })}
       action={
         <span
           className="inline-flex items-center gap-1 text-[11px] font-medium text-[#0B6477]"
           style={body}
         >
-          View all
+          {t({ en: "View all", id: "Lihat semua" })}
           <ArrowRight className="w-3 h-3" />
         </span>
       }

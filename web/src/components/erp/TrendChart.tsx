@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceArea, XAxis, YAxis } from "recharts";
+import { localeOf, useLang, type Lang } from "../../lib/i18n";
 
 // Lines over time, drawn with Recharts: one parameter on its axis, or several, each on an
 // axis of its own in its own units. The reading follows the cursor: it opens beside the
@@ -42,16 +43,19 @@ const TOOLTIP_WIDTH = 224;
 const LINE_REACH = 14;
 const SINGLE_AXIS = "y";
 
-const axisTime = (ms: number, spanHours: number) =>
-  new Intl.DateTimeFormat("en-GB", spanHours <= 48 ? { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" } : { day: "numeric", month: "short", timeZone: "Asia/Jakarta" }).format(new Date(ms));
+const timeLocale = (lang: Lang) => (lang === "id" ? localeOf(lang) : "en-GB");
 
-const fullTime = (ms: number) => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(ms));
+const axisTime = (ms: number, spanHours: number, lang: Lang = "en") =>
+  new Intl.DateTimeFormat(timeLocale(lang), spanHours <= 48 ? { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" } : { day: "numeric", month: "short", timeZone: "Asia/Jakarta" }).format(new Date(ms));
+
+const fullTime = (ms: number, lang: Lang = "en") => new Intl.DateTimeFormat(timeLocale(lang), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(ms));
 
 const INK = "#4F6B73";
 const QUIET = "#B4C3C6";
 const tickStyle = { fontSize: 12, fill: INK, fontVariantNumeric: "tabular-nums" } as const;
 
 export default function TrendChart({ lines, rows, from, to, height, yTicks = [0, 1], formatTick = String, band, summary, focus = null }: { lines: TrendLine[]; rows: TrendRow[]; from: number; to: number; height: number; yTicks?: number[]; formatTick?: (v: number) => string; band?: { low: number; high: number } | null; summary: string; focus?: string | null }) {
+  const lang = useLang();
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [hover, setHover] = useState<{ index: number; y: number } | null>(null);
@@ -134,7 +138,7 @@ export default function TrendChart({ lines, rows, from, to, height, yTicks = [0,
     return (
       <LineChart width={width} height={height} data={rows} margin={{ top, right: edge, bottom: 0, left: 0 }} accessibilityLayer={false}>
         <CartesianGrid vertical={false} stroke="#E3ECED" yAxisId={combined ? lines[0]?.key : SINGLE_AXIS} />
-        <XAxis dataKey="t" type="number" scale="time" domain={[from, to]} ticks={xTicks} height={AXIS_HEIGHT} tickFormatter={(v: number) => axisTime(v, spanHours)} tick={tickStyle} tickLine={false} axisLine={{ stroke: "#C9D6D8" }} interval={0} allowDataOverflow />
+        <XAxis dataKey="t" type="number" scale="time" domain={[from, to]} ticks={xTicks} height={AXIS_HEIGHT} tickFormatter={(v: number) => axisTime(v, spanHours, lang)} tick={tickStyle} tickLine={false} axisLine={{ stroke: "#C9D6D8" }} interval={0} allowDataOverflow />
         {combined ? (
           lines.map((l) => {
             const t = ticksOf(l);
@@ -169,7 +173,7 @@ export default function TrendChart({ lines, rows, from, to, height, yTicks = [0,
     );
     // The ticks of each axis follow from `lines`, and the axes' places from the keys below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [width, height, rows, lines, active, from, to, xTicks, leftKeys, rightKeys, yTicks, formatTick, band, top, combined, spanHours]);
+  }, [width, height, rows, lines, active, from, to, xTicks, leftKeys, rightKeys, yTicks, formatTick, band, top, combined, spanHours, lang]);
 
   const hx = row ? px(row.t) : 0;
   // The reading opens beside the point nearest the pointer, and flips to stay inside the card.
@@ -214,8 +218,8 @@ export default function TrendChart({ lines, rows, from, to, height, yTicks = [0,
             <span key={p.line.key} className="pointer-events-none absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white" style={{ left: hx, top: p.y, background: p.line.color, opacity: active && active !== p.line.key ? 0.35 : 1 }} />
           ))}
           <div className="pointer-events-none absolute z-10 rounded-lg border border-[#DCE7E8] bg-white px-2.5 py-1.5 text-[12.5px] shadow-[0_2px_8px_rgba(8,49,58,0.12)]" style={{ left: tooltipLeft, top: tooltipTop, width: lines.length > 1 ? TOOLTIP_WIDTH : undefined }}>
-            <p className="whitespace-nowrap text-[#4F6B73]">{fullTime(row.t)}</p>
-            {present.length === 0 && <p className="text-[#4F6B73]">No readings</p>}
+            <p className="whitespace-nowrap text-[#4F6B73]">{fullTime(row.t, lang)}</p>
+            {present.length === 0 && <p className="text-[#4F6B73]">{lang === "id" ? "Tidak ada pembacaan" : "No readings"}</p>}
             {present.map((l) => (
               <p key={l.key} className="flex items-center justify-between gap-3 whitespace-nowrap">
                 {lines.length > 1 && <span className={`flex min-w-0 items-center gap-1.5 ${active === l.key ? "font-medium text-[#0F2F36]" : "text-[#4F6B73]"}`}><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: l.color }} /><span className="truncate">{l.label}</span></span>}

@@ -1,5 +1,6 @@
 import { Activity, BellRing, BookOpen, Boxes, CalendarCheck, CalendarDays, ClipboardCheck, ClipboardList, Contact, Cpu, Factory, FileText, Fingerprint, History, LayoutDashboard, Leaf, MapPin, Package, ScanSearch, ShieldCheck, ShoppingBag, ShoppingCart, Sprout, UserCheck, Users, Wallet, Wrench, type LucideIcon } from "lucide-react";
 import type { ErpAccess } from "../../lib/pf/foundation";
+import type { Bi } from "../../lib/i18n";
 
 // The ERP's menu, in the order a day runs: what is growing, what the sensors say,
 // what is on the shelf, who buys it, who does the work, then the records everything
@@ -7,80 +8,80 @@ import type { ErpAccess } from "../../lib/pf/foundation";
 
 export type NavPath = "/erp" | "/erp/costs" | "/erp/maintenance" | "/erp/clock-in" | "/erp/attendance" | "/erp/schedule" | "/erp/bookings" | "/erp/people" | "/erp/stock" | "/erp/purchasing" | "/erp/stock-count" | "/erp/orders" | "/erp/invoice" | "/erp/customers" | "/erp/trace" | "/erp/monitoring" | "/erp/alarms" | "/erp/devices" | "/erp/batch" | "/erp/seedlings" | "/erp/plant-factory" | "/erp/seed-lots" | "/erp/crops" | "/erp/recipes" | "/erp/settings/locations" | "/erp/settings/roles" | "/erp/settings/audit";
 
-export type NavItem = { to: NavPath; label: string; icon: LucideIcon; exact?: boolean; gate?: keyof ErpAccess };
-export type NavGroup = { key: string; label: string; items: NavItem[]; startsOpen?: boolean };
+export type NavItem = { to: NavPath; label: Bi; icon: LucideIcon; exact?: boolean; gate?: keyof ErpAccess };
+export type NavGroup = { key: string; label: Bi; items: NavItem[]; startsOpen?: boolean };
 
-export const NAV_HOME: NavItem = { to: "/erp", label: "Overview", icon: LayoutDashboard, exact: true };
+export const NAV_HOME: NavItem = { to: "/erp", label: { en: "Overview", id: "Ringkasan" }, icon: LayoutDashboard, exact: true };
 
 export const NAV_GROUPS: NavGroup[] = [
   {
     key: "budidaya",
-    label: "Growing",
+    label: { en: "Growing", id: "Budidaya" },
     startsOpen: true,
     items: [
-      { to: "/erp/batch", label: "Batch", icon: ClipboardList },
-      { to: "/erp/seedlings", label: "Seedlings", icon: Sprout },
-      { to: "/erp/plant-factory", label: "Plant factory", icon: Factory },
+      { to: "/erp/batch", label: { en: "Batch", id: "Batch" }, icon: ClipboardList },
+      { to: "/erp/seedlings", label: { en: "Seedlings", id: "Bibit" }, icon: Sprout },
+      { to: "/erp/plant-factory", label: { en: "Plant factory", id: "Plant factory" }, icon: Factory },
     ],
   },
   {
     key: "monitoring",
-    label: "Monitoring",
+    label: { en: "Monitoring", id: "Pemantauan" },
     startsOpen: true,
     items: [
-      { to: "/erp/monitoring", label: "Conditions", icon: Activity },
-      { to: "/erp/alarms", label: "Alarms", icon: BellRing },
-      { to: "/erp/devices", label: "Devices", icon: Cpu },
-      { to: "/erp/maintenance", label: "Maintenance", icon: Wrench, gate: "canReadMaintenance" },
+      { to: "/erp/monitoring", label: { en: "Conditions", id: "Kondisi" }, icon: Activity },
+      { to: "/erp/alarms", label: { en: "Alarms", id: "Alarm" }, icon: BellRing },
+      { to: "/erp/devices", label: { en: "Devices", id: "Perangkat" }, icon: Cpu },
+      { to: "/erp/maintenance", label: { en: "Maintenance", id: "Pemeliharaan" }, icon: Wrench, gate: "canReadMaintenance" },
     ],
   },
   {
     key: "persediaan",
-    label: "Inventory",
+    label: { en: "Inventory", id: "Persediaan" },
     items: [
-      { to: "/erp/stock", label: "Stock", icon: Boxes },
-      { to: "/erp/seed-lots", label: "Seed lots", icon: Package },
-      { to: "/erp/purchasing", label: "Purchasing", icon: ShoppingBag, gate: "canReadPurchase" },
-      { to: "/erp/stock-count", label: "Stock count", icon: ClipboardCheck },
+      { to: "/erp/stock", label: { en: "Stock", id: "Stok" }, icon: Boxes },
+      { to: "/erp/seed-lots", label: { en: "Seed lots", id: "Lot benih" }, icon: Package },
+      { to: "/erp/purchasing", label: { en: "Purchasing", id: "Pembelian" }, icon: ShoppingBag, gate: "canReadPurchase" },
+      { to: "/erp/stock-count", label: { en: "Stock count", id: "Stok opname" }, icon: ClipboardCheck },
     ],
   },
   {
     key: "penjualan",
-    label: "Sales and costs",
+    label: { en: "Sales and costs", id: "Penjualan dan biaya" },
     items: [
-      { to: "/erp/orders", label: "Orders", icon: ShoppingCart, gate: "canReadSales" },
-      { to: "/erp/invoice", label: "Invoices", icon: FileText, gate: "canReadSales" },
-      { to: "/erp/customers", label: "Customers", icon: Contact, gate: "canReadSales" },
-      { to: "/erp/trace", label: "Trace", icon: ScanSearch, gate: "canReadSales" },
-      { to: "/erp/costs", label: "Costs", icon: Wallet, gate: "canReadCost" },
+      { to: "/erp/orders", label: { en: "Orders", id: "Pesanan" }, icon: ShoppingCart, gate: "canReadSales" },
+      { to: "/erp/invoice", label: { en: "Invoices", id: "Invoice" }, icon: FileText, gate: "canReadSales" },
+      { to: "/erp/customers", label: { en: "Customers", id: "Pelanggan" }, icon: Contact, gate: "canReadSales" },
+      { to: "/erp/trace", label: { en: "Trace", id: "Telusur" }, icon: ScanSearch, gate: "canReadSales" },
+      { to: "/erp/costs", label: { en: "Costs", id: "Biaya" }, icon: Wallet, gate: "canReadCost" },
     ],
   },
   {
     key: "tim",
-    label: "Team",
+    label: { en: "Team", id: "Tim" },
     items: [
-      { to: "/erp/clock-in", label: "Clock in", icon: Fingerprint },
-      { to: "/erp/attendance", label: "Attendance", icon: UserCheck, gate: "canReadPeople" },
-      { to: "/erp/schedule", label: "Schedule", icon: CalendarDays, gate: "canReadPeople" },
-      { to: "/erp/bookings", label: "Bookings", icon: CalendarCheck },
-      { to: "/erp/people", label: "People", icon: Users, gate: "canReadPeople" },
+      { to: "/erp/clock-in", label: { en: "Clock in", id: "Absen" }, icon: Fingerprint },
+      { to: "/erp/attendance", label: { en: "Attendance", id: "Presensi" }, icon: UserCheck, gate: "canReadPeople" },
+      { to: "/erp/schedule", label: { en: "Schedule", id: "Jadwal" }, icon: CalendarDays, gate: "canReadPeople" },
+      { to: "/erp/bookings", label: { en: "Bookings", id: "Reservasi" }, icon: CalendarCheck },
+      { to: "/erp/people", label: { en: "People", id: "Personel" }, icon: Users, gate: "canReadPeople" },
     ],
   },
   {
     key: "data-induk",
-    label: "Master data",
+    label: { en: "Master data", id: "Data induk" },
     items: [
-      { to: "/erp/crops", label: "Crops", icon: Leaf },
-      { to: "/erp/recipes", label: "Recipes", icon: BookOpen },
-      { to: "/erp/settings/locations", label: "Locations", icon: MapPin },
+      { to: "/erp/crops", label: { en: "Crops", id: "Tanaman" }, icon: Leaf },
+      { to: "/erp/recipes", label: { en: "Recipes", id: "Resep" }, icon: BookOpen },
+      { to: "/erp/settings/locations", label: { en: "Locations", id: "Lokasi" }, icon: MapPin },
     ],
   },
   {
     key: "administrasi",
-    label: "Administration",
+    label: { en: "Administration", id: "Administrasi" },
     items: [
-      { to: "/erp/settings/roles", label: "Roles", icon: ShieldCheck },
-      { to: "/erp/settings/audit", label: "Audit log", icon: History },
+      { to: "/erp/settings/roles", label: { en: "Roles", id: "Peran" }, icon: ShieldCheck },
+      { to: "/erp/settings/audit", label: { en: "Audit log", id: "Log audit" }, icon: History },
     ],
   },
 ];

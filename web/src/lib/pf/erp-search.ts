@@ -2,6 +2,8 @@
 // hole or a tray. Plain functions over plain data, so the rules can be tested
 // without a browser. It looks only at what the client already holds.
 
+import type { Lang } from "../i18n-core";
+
 export type SearchHit = {
   key: string;
   kind: "Page" | "Batch" | "Hole" | "Tray";
@@ -19,7 +21,14 @@ export type SearchSource = {
   isHole: (code: string) => boolean;
   /** True when this code is a real tray position of the chamber. */
   isSlot: (code: string) => boolean;
+  /** The language of the details the search writes itself; English when left out. */
+  lang?: Lang;
 };
+
+const KIND_ID: Record<SearchHit["kind"], string> = { Page: "Halaman", Batch: "Batch", Hole: "Lubang", Tray: "Tray" };
+
+/** A hit's kind as the reader sees it; `kind` itself stays English. */
+export const kindLabel = (kind: SearchHit["kind"], lang: Lang = "en") => (lang === "id" ? KIND_ID[kind] : kind);
 
 const words = (s: string) => s.toLowerCase().trim().split(/\s+/).filter(Boolean);
 
@@ -39,9 +48,10 @@ export function searchErp(query: string, source: SearchSource, limit = 8): Searc
   const q = query.trim();
   if (!q) return [];
   const code = q.toUpperCase();
+  const id = source.lang === "id";
   const exact: SearchHit[] = [];
-  if (source.isHole(code)) exact.push({ key: `hole-${code}`, kind: "Hole", title: code, detail: "Open in the plant factory model", to: "/erp/plant-factory", search: { hole: code } });
-  if (source.isSlot(code)) exact.push({ key: `slot-${code}`, kind: "Tray", title: code, detail: "Open in the seedling model", to: "/erp/seedlings", search: { slot: code } });
+  if (source.isHole(code)) exact.push({ key: `hole-${code}`, kind: "Hole", title: code, detail: id ? "Buka di model plant factory" : "Open in the plant factory model", to: "/erp/plant-factory", search: { hole: code } });
+  if (source.isSlot(code)) exact.push({ key: `slot-${code}`, kind: "Tray", title: code, detail: id ? "Buka di model bibit" : "Open in the seedling model", to: "/erp/seedlings", search: { slot: code } });
 
   const ranked = [
     ...source.batches.map((b) => ({

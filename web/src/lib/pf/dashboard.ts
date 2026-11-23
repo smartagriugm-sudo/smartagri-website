@@ -1,17 +1,20 @@
 import { addDays, daysBetween } from "./facility";
 import type { FoundationSummary } from "./foundation";
 import type { SeedLot } from "./batch";
+import { localeOf, type Lang } from "../i18n-core";
 
 // What the ERP's front page works out: the day's queue of work, and where each
 // batch stands on the calendar. Plain functions over plain data, so the rules can
 // be tested without a browser or a database.
 
-export const formatShortDate = (iso: string) =>
-  new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
+const dateLocale = (lang: Lang) => (lang === "id" ? localeOf(lang) : "en-GB");
+
+export const formatShortDate = (iso: string, lang: Lang = "en") =>
+  new Intl.DateTimeFormat(dateLocale(lang), { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
 
 /** A stored date as people read it: 26 Okt 2026. */
-export const formatLongDate = (iso: string) =>
-  new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${iso.slice(0, 10)}T00:00:00Z`));
+export const formatLongDate = (iso: string, lang: Lang = "en") =>
+  new Intl.DateTimeFormat(dateLocale(lang), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${iso.slice(0, 10)}T00:00:00Z`));
 
 /* ------------------------------------------------------------- the day's work */
 
@@ -46,6 +49,8 @@ export type BatchWork = {
 
 export type WorkInput = {
   today: string;
+  /** The reader's language for the words of each item; English when left out. */
+  lang?: Lang;
   batches: readonly BatchWork[];
   freeHoles: number;
   sanitation: readonly { rack: number; tier: number }[];
@@ -80,29 +85,35 @@ const TONE_ORDER: Record<WorkTone, number> = { urgent: 0, due: 1, setup: 2, late
 
 const batchLink = (b: { id?: string }, fallback: "/erp/seedlings" | "/erp/plant-factory"): WorkLink => (b.id ? { to: "/erp/batch/$id", id: b.id } : { to: fallback });
 
-const list = (items: readonly string[], shown = 2) =>
-  items.length <= shown ? items.join(", ") : `${items.slice(0, shown).join(", ")}, and ${items.length - shown} more`;
+const list = (items: readonly string[], shown = 2, lang: Lang = "en") =>
+  items.length <= shown ? items.join(", ") : `${items.slice(0, shown).join(", ")}, ${lang === "id" ? "dan" : "and"} ${items.length - shown} ${lang === "id" ? "lainnya" : "more"}`;
 
-const count = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+/** Indonesian nouns do not take a plural ending. */
+const count = (n: number, word: string, lang: Lang = "en") => (lang === "id" ? `${n} ${word}` : `${n} ${word}${n === 1 ? "" : "s"}`);
 
-const ago = (days: number) => (days === 0 ? "today" : days === 1 ? "1 day ago" : `${days} days ago`);
+const ago = (days: number, lang: Lang = "en") =>
+  lang === "id" ? (days === 0 ? "hari ini" : `${days} hari lalu`) : days === 0 ? "today" : days === 1 ? "1 day ago" : `${days} days ago`;
 
-export function buildWork({ today, batches, freeHoles, sanitation, planned, lots, setup, alarms = [], silentDevices = [], calibrationsDue = [], ordersDue = [], invoicesOverdue = [], lotsAging = [], lowStock = [], shortages = [], purchasesLate = [], absentToday = [], flaggedAttendance = [], leavePending = [], contractsEnding = [], maintenanceDue = [] }: WorkInput): WorkItem[] {
+export function buildWork({ today, lang = "en", batches, freeHoles, sanitation, planned, lots, setup, alarms = [], silentDevices = [], calibrationsDue = [], ordersDue = [], invoicesOverdue = [], lotsAging = [], lowStock = [], shortages = [], purchasesLate = [], absentToday = [], flaggedAttendance = [], leavePending = [], contractsEnding = [], maintenanceDue = [] }: WorkInput): WorkItem[] {
   const items: WorkItem[] = [];
+  const id = lang === "id";
+  const L = (en: string, idText: string) => (id ? idText : en);
+  const date = (iso: string) => formatShortDate(iso, lang);
+  const show = (xs: readonly string[]) => list(xs, 2, lang);
 
   for (const a of alarms) {
     items.push({
       key: `alarm-${a.id}`,
       tone: "urgent",
-      tag: a.level === "kritis" ? "Critical alarms" : "Alarm",
-      title: `${a.label} ${a.value} at ${a.place}`,
-      detail: `Since ${a.since}`,
-      action: "View alarms",
+      tag: a.level === "kritis" ? L("Critical alarms", "Alarm kritis") : "Alarm",
+      title: id ? `${a.label} ${a.value} di ${a.place}` : `${a.label} ${a.value} at ${a.place}`,
+      detail: `${L("Since", "Sejak")} ${a.since}`,
+      action: L("View alarms", "Lihat alarm"),
       link: { to: "/erp/alarms" },
     });
   }
   for (const d of silentDevices) {
-    items.push({ key: `silent-${d.id}`, tone: "urgent", tag: "Device", title: `${d.code} stopped sending`, detail: `Last ${d.since}`, action: "Check", link: { to: "/erp/devices" } });
+    items.push({ key: `silent-${d.id}`, tone: "urgent", tag: L("Device", "Perangkat"), title: id ? `${d.code} berhenti mengirim` : `${d.code} stopped sending`, detail: `${L("Last", "Terakhir")} ${d.since}`, action: L("Check", "Periksa"), link: { to: "/erp/devices" } });
   }
 
   for (const b of batches) {
@@ -110,10 +121,10 @@ export function buildWork({ today, batches, freeHoles, sanitation, planned, lots
       items.push({
         key: `holes-${b.code}`,
         tone: "urgent",
-        tag: "Problem",
-        title: `${count(b.problemHoles.length, "plant")} with a problem in ${b.code}`,
-        detail: list(b.problemHoles),
-        action: "Check",
+        tag: L("Problem", "Masalah"),
+        title: id ? `${count(b.problemHoles.length, "tanaman", lang)} bermasalah di ${b.code}` : `${count(b.problemHoles.length, "plant")} with a problem in ${b.code}`,
+        detail: show(b.problemHoles),
+        action: L("Check", "Periksa"),
         link: batchLink(b, "/erp/plant-factory"),
       });
     }
@@ -121,10 +132,10 @@ export function buildWork({ today, batches, freeHoles, sanitation, planned, lots
       items.push({
         key: `trays-${b.code}`,
         tone: "urgent",
-        tag: "Problem",
-        title: `${count(b.problemTrays.length, "tray")} with a problem in ${b.code}`,
-        detail: list(b.problemTrays),
-        action: "Check",
+        tag: L("Problem", "Masalah"),
+        title: id ? `${count(b.problemTrays.length, "tray", lang)} bermasalah di ${b.code}` : `${count(b.problemTrays.length, "tray")} with a problem in ${b.code}`,
+        detail: show(b.problemTrays),
+        action: L("Check", "Periksa"),
         link: batchLink(b, "/erp/seedlings"),
       });
     }
@@ -134,20 +145,20 @@ export function buildWork({ today, batches, freeHoles, sanitation, planned, lots
       items.push({
         key: `harvest-${b.code}`,
         tone: "urgent",
-        tag: "Late",
-        title: `${b.code} past the harvest target`,
-        detail: `${b.plants} plants ${b.crop} · target ${formatShortDate(target)}, ${ago(b.age - b.cycle)}`,
-        action: "Record harvest",
+        tag: L("Late", "Terlambat"),
+        title: id ? `${b.code} melewati target panen` : `${b.code} past the harvest target`,
+        detail: id ? `${b.plants} tanaman ${b.crop} · target ${date(target)}, ${ago(b.age - b.cycle, lang)}` : `${b.plants} plants ${b.crop} · target ${formatShortDate(target)}, ${ago(b.age - b.cycle)}`,
+        action: L("Record harvest", "Catat panen"),
         link: batchLink(b, "/erp/plant-factory"),
       });
     } else if (b.harvestReady > 0) {
       items.push({
         key: `harvest-${b.code}`,
         tone: "due",
-        tag: "Ready to harvest",
-        title: `${b.code} ready to harvest`,
-        detail: `${b.harvestReady} plants ${b.crop} · target ${formatShortDate(target)}`,
-        action: "Record harvest",
+        tag: L("Ready to harvest", "Siap panen"),
+        title: id ? `${b.code} siap panen` : `${b.code} ready to harvest`,
+        detail: id ? `${b.harvestReady} tanaman ${b.crop} · target ${date(target)}` : `${b.harvestReady} plants ${b.crop} · target ${formatShortDate(target)}`,
+        action: L("Record harvest", "Catat panen"),
         link: batchLink(b, "/erp/plant-factory"),
       });
     }
@@ -158,10 +169,10 @@ export function buildWork({ today, batches, freeHoles, sanitation, planned, lots
       items.push({
         key: `move-${b.code}`,
         tone: late ? "urgent" : "due",
-        tag: late ? "Late" : "Ready to move",
-        title: `${b.code} ready to transplant`,
-        detail: `${b.readySeedlings} seedlings ${b.crop} · scheduled ${formatShortDate(planned)}${late ? `, ${ago(b.age - b.transplantDay)}` : ""}`,
-        action: "Transplant",
+        tag: late ? L("Late", "Terlambat") : L("Ready to move", "Siap pindah"),
+        title: id ? `${b.code} siap pindah tanam` : `${b.code} ready to transplant`,
+        detail: id ? `${b.readySeedlings} bibit ${b.crop} · jadwal ${date(planned)}${late ? `, ${ago(b.age - b.transplantDay, lang)}` : ""}` : `${b.readySeedlings} seedlings ${b.crop} · scheduled ${formatShortDate(planned)}${late ? `, ${ago(b.age - b.transplantDay)}` : ""}`,
+        action: L("Transplant", "Pindah tanam"),
         link: batchLink(b, "/erp/seedlings"),
       });
     }
@@ -172,10 +183,10 @@ export function buildWork({ today, batches, freeHoles, sanitation, planned, lots
     items.push({
       key: "capacity",
       tone: "due",
-      tag: "Capacity",
-      title: `${seedlings - freeHoles} seedlings have no hole yet`,
-      detail: `${seedlings} seedlings ready to transplant, ${freeHoles} holes ready`,
-      action: "View tier",
+      tag: L("Capacity", "Kapasitas"),
+      title: id ? `${seedlings - freeHoles} bibit belum dapat lubang` : `${seedlings - freeHoles} seedlings have no hole yet`,
+      detail: id ? `${seedlings} bibit siap pindah tanam, ${freeHoles} lubang siap` : `${seedlings} seedlings ready to transplant, ${freeHoles} holes ready`,
+      action: L("View tier", "Lihat tier"),
       link: { to: "/erp/plant-factory" },
     });
   }
@@ -184,22 +195,22 @@ export function buildWork({ today, batches, freeHoles, sanitation, planned, lots
     items.push({
       key: "sanitation",
       tone: "due",
-      tag: "Sanitation",
-      title: `${count(sanitation.length, "tier")} waiting for sanitation`,
-      detail: list(sanitation.map((t) => `Rack ${t.rack} · Tier ${t.tier}`)),
-      action: "Mark as done",
+      tag: L("Sanitation", "Sanitasi"),
+      title: id ? `${count(sanitation.length, "tier", lang)} menunggu sanitasi` : `${count(sanitation.length, "tier")} waiting for sanitation`,
+      detail: show(sanitation.map((t) => `Rack ${t.rack} · Tier ${t.tier}`)),
+      action: L("Mark as done", "Tandai selesai"),
       link: { to: "/erp/batch" },
     });
   }
 
   for (const l of lots ?? []) {
     if (l.qty_on_hand <= 0 || !l.expiry_date) continue;
-    const left = `left ${l.qty_on_hand.toLocaleString("en-GB")} ${l.unit}`;
+    const left = id ? `sisa ${l.qty_on_hand.toLocaleString(localeOf(lang))} ${l.unit}` : `left ${l.qty_on_hand.toLocaleString("en-GB")} ${l.unit}`;
     const until = daysBetween(today, l.expiry_date);
     if (until < 0) {
-      items.push({ key: `lot-${l.id}`, tone: "due", tag: "Expires", title: `${l.itemName ?? "Lot"} ${l.lot_no} already expired`, detail: `${left} · since ${formatShortDate(l.expiry_date)}`, action: "Correct stock", link: { to: l.itemName ? "/erp/stock" : "/erp/seed-lots" } });
+      items.push({ key: `lot-${l.id}`, tone: "due", tag: L("Expires", "Kedaluwarsa"), title: id ? `${l.itemName ?? "Lot"} ${l.lot_no} sudah kedaluwarsa` : `${l.itemName ?? "Lot"} ${l.lot_no} already expired`, detail: `${left} · ${L("since", "sejak")} ${date(l.expiry_date)}`, action: L("Correct stock", "Koreksi stok"), link: { to: l.itemName ? "/erp/stock" : "/erp/seed-lots" } });
     } else if (until <= LOT_EXPIRY_WARNING_DAYS) {
-      items.push({ key: `lot-${l.id}`, tone: "later", tag: "Expiring soon", title: `${l.itemName ?? "Lot"} ${l.lot_no} expires ${until === 0 ? "today" : `in ${until} days`}`, detail: `${left} · until ${formatShortDate(l.expiry_date)}`, action: "View lots", link: { to: l.itemName ? "/erp/stock" : "/erp/seed-lots" } });
+      items.push({ key: `lot-${l.id}`, tone: "later", tag: L("Expiring soon", "Segera kedaluwarsa"), title: id ? `${l.itemName ?? "Lot"} ${l.lot_no} kedaluwarsa ${until === 0 ? "hari ini" : `dalam ${until} hari`}` : `${l.itemName ?? "Lot"} ${l.lot_no} expires ${until === 0 ? "today" : `in ${until} days`}`, detail: `${left} · ${L("until", "sampai")} ${date(l.expiry_date)}`, action: L("View lots", "Lihat lot"), link: { to: l.itemName ? "/erp/stock" : "/erp/seed-lots" } });
     }
   }
 
@@ -208,68 +219,70 @@ export function buildWork({ today, batches, freeHoles, sanitation, planned, lots
     items.push({
       key: `order-${o.id}`,
       tone: late ? "urgent" : "due",
-      tag: late ? "Late" : "Ship today",
-      title: `${o.no} for ${o.customer}`,
-      detail: `${o.openKg} not delivered · requested ${formatShortDate(o.requested)}`,
-      action: "Send",
+      tag: late ? L("Late", "Terlambat") : L("Ship today", "Kirim hari ini"),
+      title: id ? `${o.no} untuk ${o.customer}` : `${o.no} for ${o.customer}`,
+      detail: id ? `${o.openKg} belum dikirim · diminta ${date(o.requested)}` : `${o.openKg} not delivered · requested ${formatShortDate(o.requested)}`,
+      action: L("Send", "Kirim"),
       link: { to: "/erp/orders/$id", id: o.id },
     });
   }
   for (const i of invoicesOverdue) {
-    items.push({ key: `invoice-${i.id}`, tone: "due", tag: "Due date", title: `${i.no} of ${i.customer} unpaid`, detail: `Left ${i.balance} · due ${formatShortDate(i.due)}`, action: "View", link: { to: "/erp/invoice/$id", id: i.id } });
+    items.push({ key: `invoice-${i.id}`, tone: "due", tag: L("Due date", "Jatuh tempo"), title: id ? `${i.no} dari ${i.customer} belum dibayar` : `${i.no} of ${i.customer} unpaid`, detail: id ? `Sisa ${i.balance} · jatuh tempo ${date(i.due)}` : `Left ${i.balance} · due ${formatShortDate(i.due)}`, action: L("View", "Lihat"), link: { to: "/erp/invoice/$id", id: i.id } });
   }
   for (const l of lotsAging) {
-    items.push({ key: `aging-${l.id}`, tone: "due", tag: "Sell soon", title: `${l.code}: ${l.kg} ${l.label}`, detail: `Keep until ${formatShortDate(l.until)}`, action: "Create order", link: { to: "/erp/orders" } });
+    items.push({ key: `aging-${l.id}`, tone: "due", tag: L("Sell soon", "Segera jual"), title: `${l.code}: ${l.kg} ${l.label}`, detail: `${L("Keep until", "Simpan sampai")} ${date(l.until)}`, action: L("Create order", "Buat pesanan"), link: { to: "/erp/orders" } });
   }
 
   for (const x of absentToday) {
-    items.push({ key: `absent-${x.id}`, tone: "due", tag: "Not clocked in", title: `${x.name} not clocked in`, detail: `Scheduled from ${x.start}`, action: "View", link: { to: "/erp/attendance" } });
+    items.push({ key: `absent-${x.id}`, tone: "due", tag: L("Not clocked in", "Belum absen"), title: id ? `${x.name} belum absen masuk` : `${x.name} not clocked in`, detail: `${L("Scheduled from", "Jadwal mulai")} ${x.start}`, action: L("View", "Lihat"), link: { to: "/erp/attendance" } });
   }
   for (const x of flaggedAttendance) {
-    items.push({ key: `flag-${x.id}`, tone: "later", tag: "Check attendance", title: `${x.name}: ${x.flag.toLowerCase()}`, detail: "For a coordinator to check", action: "Check", link: { to: "/erp/attendance" } });
+    items.push({ key: `flag-${x.id}`, tone: "later", tag: L("Check attendance", "Cek presensi"), title: `${x.name}: ${x.flag.toLowerCase()}`, detail: L("For a coordinator to check", "Perlu dicek koordinator"), action: L("Check", "Periksa"), link: { to: "/erp/attendance" } });
   }
   for (const x of leavePending) {
-    items.push({ key: `leave-${x.id}`, tone: "due", tag: "Leave", title: `${x.name} asked for ${x.label}`, detail: `Starts ${formatShortDate(x.from)}`, action: "Decide", link: { to: "/erp/attendance" } });
+    items.push({ key: `leave-${x.id}`, tone: "due", tag: L("Leave", "Cuti"), title: id ? `${x.name} mengajukan ${x.label}` : `${x.name} asked for ${x.label}`, detail: `${L("Starts", "Mulai")} ${date(x.from)}`, action: L("Decide", "Putuskan"), link: { to: "/erp/attendance" } });
   }
   for (const x of contractsEnding) {
-    items.push({ key: `contract-${x.id}`, tone: "later", tag: "Contract", title: `Contract ${x.name} ending soon`, detail: `Until ${formatShortDate(x.until)}`, action: "View", link: { to: "/erp/people" } });
+    items.push({ key: `contract-${x.id}`, tone: "later", tag: L("Contract", "Kontrak"), title: id ? `Kontrak ${x.name} segera berakhir` : `Contract ${x.name} ending soon`, detail: `${L("Until", "Sampai")} ${date(x.until)}`, action: L("View", "Lihat"), link: { to: "/erp/people" } });
   }
   for (const x of maintenanceDue) {
-    items.push({ key: `maintenance-${x.id}`, tone: "due", tag: "Maintenance", title: x.title, detail: `Scheduled ${formatShortDate(x.due)}`, action: "Open", link: { to: "/erp/maintenance" } });
+    items.push({ key: `maintenance-${x.id}`, tone: "due", tag: L("Maintenance", "Pemeliharaan"), title: x.title, detail: `${L("Scheduled", "Jadwal")} ${date(x.due)}`, action: L("Open", "Buka"), link: { to: "/erp/maintenance" } });
   }
   for (const x of shortages) {
-    items.push({ key: `short-${x.id}`, tone: "due", tag: "Short of stock", title: `${x.name} short by ${x.short}`, detail: `When used ${x.batch}`, action: "Handle", link: { to: "/erp/stock" } });
+    items.push({ key: `short-${x.id}`, tone: "due", tag: L("Short of stock", "Stok kurang"), title: id ? `${x.name} kurang ${x.short}` : `${x.name} short by ${x.short}`, detail: `${L("When used", "Saat dipakai")} ${x.batch}`, action: L("Handle", "Tangani"), link: { to: "/erp/stock" } });
   }
   for (const x of lowStock) {
-    items.push({ key: `low-${x.id}`, tone: "due", tag: "Running low", title: `${x.name} left ${x.left}`, detail: `Minimum level ${x.minimum}`, action: "View stock", link: { to: "/erp/stock" } });
+    items.push({ key: `low-${x.id}`, tone: "due", tag: L("Running low", "Stok menipis"), title: id ? `${x.name} sisa ${x.left}` : `${x.name} left ${x.left}`, detail: `${L("Minimum level", "Batas minimum")} ${x.minimum}`, action: L("View stock", "Lihat stok"), link: { to: "/erp/stock" } });
   }
   for (const x of purchasesLate) {
-    items.push({ key: `po-${x.id}`, tone: "due", tag: "Not arrived yet", title: `${x.no} of ${x.supplier}`, detail: `Expected ${formatShortDate(x.expected)}`, action: "View", link: { to: "/erp/purchasing/$id", id: x.id } });
+    items.push({ key: `po-${x.id}`, tone: "due", tag: L("Not arrived yet", "Belum tiba"), title: id ? `${x.no} dari ${x.supplier}` : `${x.no} of ${x.supplier}`, detail: `${L("Expected", "Diperkirakan")} ${date(x.expected)}`, action: L("View", "Lihat"), link: { to: "/erp/purchasing/$id", id: x.id } });
   }
 
   for (const c of calibrationsDue) {
-    items.push({ key: `cal-${c.id}`, tone: "due", tag: "Calibration", title: `${c.code} past their calibration date`, detail: `Scheduled ${formatShortDate(c.due)}`, action: "Record", link: { to: "/erp/devices" } });
+    items.push({ key: `cal-${c.id}`, tone: "due", tag: L("Calibration", "Kalibrasi"), title: id ? `${c.code} lewat tanggal kalibrasi` : `${c.code} past their calibration date`, detail: `${L("Scheduled", "Jadwal")} ${date(c.due)}`, action: L("Record", "Catat"), link: { to: "/erp/devices" } });
   }
 
   for (const p of planned ?? []) {
-    items.push({ key: `plan-${p.id}`, tone: "later", tag: "Not sown yet", title: `${p.code} not sown yet`, detail: p.crop, action: "Sow", link: { to: "/erp/batch/$id", id: p.id } });
+    items.push({ key: `plan-${p.id}`, tone: "later", tag: L("Not sown yet", "Belum disemai"), title: id ? `${p.code} belum disemai` : `${p.code} not sown yet`, detail: p.crop, action: L("Sow", "Semai"), link: { to: "/erp/batch/$id", id: p.id } });
   }
 
   if (setup) {
-    if (setup.slots.missing.length > 0) items.push({ key: "setup-slots", tone: "setup", tag: "Preparation", title: "Location codes are incomplete", detail: `${setup.slots.present} of ${setup.slots.expected} holes and tray positions`, action: "Check", link: { to: "/erp/settings/locations" } });
-    if (setup.crops === 0) items.push({ key: "setup-crops", tone: "setup", tag: "Preparation", title: "No crops yet", detail: "Recipes and seed lots need a crop", action: "Add", link: { to: "/erp/crops" } });
-    if (setup.activeRecipes === 0) items.push({ key: "setup-recipes", tone: "setup", tag: "Preparation", title: "No active recipe yet", detail: "New batches use the active recipe", action: "Set recipe", link: { to: "/erp/recipes" } });
-    if (setup.seedLots === 0) items.push({ key: "setup-lots", tone: "setup", tag: "Preparation", title: "No seed lots yet", detail: "Every batch uses one seed lot", action: "Add", link: { to: "/erp/seed-lots" } });
+    if (setup.slots.missing.length > 0) items.push({ key: "setup-slots", tone: "setup", tag: L("Preparation", "Persiapan"), title: L("Location codes are incomplete", "Kode lokasi belum lengkap"), detail: id ? `${setup.slots.present} dari ${setup.slots.expected} lubang dan posisi tray` : `${setup.slots.present} of ${setup.slots.expected} holes and tray positions`, action: L("Check", "Periksa"), link: { to: "/erp/settings/locations" } });
+    if (setup.crops === 0) items.push({ key: "setup-crops", tone: "setup", tag: L("Preparation", "Persiapan"), title: L("No crops yet", "Belum ada tanaman"), detail: L("Recipes and seed lots need a crop", "Resep dan lot benih perlu tanaman"), action: L("Add", "Tambah"), link: { to: "/erp/crops" } });
+    if (setup.activeRecipes === 0) items.push({ key: "setup-recipes", tone: "setup", tag: L("Preparation", "Persiapan"), title: L("No active recipe yet", "Belum ada resep aktif"), detail: L("New batches use the active recipe", "Batch baru memakai resep aktif"), action: L("Set recipe", "Atur resep"), link: { to: "/erp/recipes" } });
+    if (setup.seedLots === 0) items.push({ key: "setup-lots", tone: "setup", tag: L("Preparation", "Persiapan"), title: L("No seed lots yet", "Belum ada lot benih"), detail: L("Every batch uses one seed lot", "Setiap batch memakai satu lot benih"), action: L("Add", "Tambah"), link: { to: "/erp/seed-lots" } });
   }
 
   return items.map((item, i) => [item, i] as const).sort(([a, i], [b, j]) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone] || i - j).map(([item]) => item);
 }
 
 /** The line under the page title: how much there is, and where to start. */
-export function workSummary(items: readonly WorkItem[]) {
-  if (items.length === 0) return "Nothing pending today.";
+export function workSummary(items: readonly WorkItem[], lang: Lang = "en") {
+  const id = lang === "id";
+  if (items.length === 0) return id ? "Tidak ada yang tertunda hari ini." : "Nothing pending today.";
   const first = items[0];
   if (items.length === 1) return `${first.title}.`;
+  if (id) return `${items.length} tugas menunggu. ${first.tone === "urgent" ? "Paling mendesak" : "Mulai dari"}: ${first.title}.`;
   return `${count(items.length, "task")} waiting. ${first.tone === "urgent" ? "Most urgent" : "Starting from"}: ${first.title}.`;
 }
 

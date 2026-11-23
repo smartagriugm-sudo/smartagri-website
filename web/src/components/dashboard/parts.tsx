@@ -8,18 +8,26 @@ import {
 } from "lucide-react";
 import { body, display } from "../../lib/fonts";
 import {
-  METRICS,
   STATUS_TONE,
   type MetricKey,
   type Zone,
   axisPercent,
   deltaOver,
+  fixed,
   formatValue,
+  metricsFor,
   round,
   seriesFor,
+  statusLabel,
   statusOf,
   targetFor,
 } from "../../lib/indoor-dashboard";
+import { useLang, useT, type Lang } from "../../lib/i18n";
+
+/** A plain number (a band edge, an axis bound) with the language's decimal separator. */
+export function num(value: number, lang: Lang): string {
+  return lang === "id" ? String(value).replace(".", ",") : String(value);
+}
 
 // Shared building blocks for the Indoor Farming dashboard.
 //
@@ -103,13 +111,14 @@ export function Pill({
 
 export function StatusDot({ status }: { status: keyof typeof STATUS_TONE }) {
   const tone = STATUS_TONE[status];
+  const lang = useLang();
   return (
     <span
       className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
       style={{ ...body, color: tone.color, backgroundColor: tone.bg }}
     >
       <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tone.color }} />
-      {tone.label}
+      {statusLabel(status, lang)}
     </span>
   );
 }
@@ -220,7 +229,8 @@ export function DayChart({
   labelAt: (i: number) => string;
 }) {
   const n = series.length;
-  const metric = METRICS[metricKey];
+  const lang = useLang();
+  const metric = metricsFor(lang)[metricKey];
   const [lo, hi] = metric.axis;
   const [hover, setHover] = useState<number | null>(null);
   const plotRef = useRef<HTMLDivElement>(null);
@@ -274,7 +284,7 @@ export function DayChart({
   }
 
   const axisLabel = (v: number) =>
-    metric.decimals > 1 ? v.toFixed(1) : String(Math.round(v));
+    metric.decimals > 1 ? fixed(v, 1, lang) : String(Math.round(v));
 
   return (
     <div className="flex h-full flex-col">
@@ -303,7 +313,11 @@ export function DayChart({
             preserveAspectRatio="none"
             className="h-full w-full touch-none"
             role="img"
-            aria-label={`${metric.label}, in ${metric.unit || "index units"}`}
+            aria-label={
+              lang === "id"
+                ? `${metric.label}, dalam ${metric.unit || "satuan indeks"}`
+                : `${metric.label}, in ${metric.unit || "index units"}`
+            }
           >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -408,7 +422,7 @@ export function DayChart({
               style={body}
             >
               <div className="text-[13px] font-semibold text-neutral-900 tabular-nums">
-                {formatValue(metricKey, series[marker])}
+                {formatValue(metricKey, series[marker], lang)}
                 <span className="text-[11px] font-normal text-neutral-400"> {metric.unit}</span>
               </div>
               <div className="text-[10px] text-neutral-400 tabular-nums">{labelAt(marker)}</div>
@@ -447,7 +461,9 @@ export function Ring({
   value: number;
   zone: Zone;
 }) {
-  const metric = METRICS[metricKey];
+  const lang = useLang();
+  const t = useT();
+  const metric = metricsFor(lang)[metricKey];
   const status = statusOf(metricKey, value, zone);
   const band = targetFor(metricKey, zone);
   const pct = axisPercent(metricKey, value);
@@ -474,7 +490,7 @@ export function Ring({
           className="absolute inset-0 flex items-center justify-center text-[13px] font-semibold text-neutral-900 tabular-nums"
           style={display}
         >
-          {formatValue(metricKey, value)}
+          {formatValue(metricKey, value, lang)}
         </div>
       </div>
       <div className="min-w-0">
@@ -482,7 +498,7 @@ export function Ring({
           {metric.label}
         </div>
         <div className="text-[11px] text-neutral-400" style={body}>
-          Target {band[0]} to {band[1]} {metric.unit}
+          {t({ en: "Target", id: "Target" })} {num(band[0], lang)} {t({ en: "to", id: "sampai" })} {num(band[1], lang)} {metric.unit}
         </div>
       </div>
     </div>
@@ -492,7 +508,8 @@ export function Ring({
 /* ------------------------------------------------------------- KPI card */
 
 export function KpiCard({ zone, metricKey, tick }: { zone: Zone; metricKey: MetricKey; tick: number }) {
-  const metric = METRICS[metricKey];
+  const lang = useLang();
+  const metric = metricsFor(lang)[metricKey];
   const series = useMemo(() => seriesFor(zone, metricKey), [zone, metricKey]);
   const value = series[tick];
   const status = statusOf(metricKey, value, zone);
@@ -523,7 +540,7 @@ export function KpiCard({ zone, metricKey, tick }: { zone: Zone; metricKey: Metr
               color: status === "optimal" ? "#171717" : STATUS_TONE[status].color,
             }}
           >
-            {formatValue(metricKey, value)}
+            {formatValue(metricKey, value, lang)}
           </span>
           <span className="text-[11px] font-normal text-neutral-400" style={body}>
             {metric.unit}
@@ -532,7 +549,7 @@ export function KpiCard({ zone, metricKey, tick }: { zone: Zone; metricKey: Metr
         <div className="flex items-center gap-2 mt-0.5">
           <TrendChip
             dir={delta.dir}
-            text={`${delta.diff > 0 ? "+" : ""}${delta.diff.toFixed(metric.decimals)} in 2 h`}
+            text={`${delta.diff > 0 ? "+" : ""}${fixed(delta.diff, metric.decimals, lang)} ${lang === "id" ? "dalam 2 jam" : "in 2 h"}`}
           />
         </div>
       </div>
@@ -595,7 +612,9 @@ export function MetricBar({
   value: number;
   zone: Zone;
 }) {
-  const metric = METRICS[metricKey];
+  const lang = useLang();
+  const t = useT();
+  const metric = metricsFor(lang)[metricKey];
   const [lo, hi] = metric.axis;
   const span = hi - lo || 1;
   const at = (v: number) => round(((Math.min(hi, Math.max(lo, v)) - lo) / span) * 100, 1);
@@ -619,7 +638,7 @@ export function MetricBar({
             className="text-[14px] font-semibold"
             style={{ ...display, color: STATUS_TONE[status].color }}
           >
-            {formatValue(metricKey, value)}
+            {formatValue(metricKey, value, lang)}
           </span>
           <span className="text-[10px] text-neutral-400"> {metric.unit}</span>
         </span>
@@ -645,11 +664,11 @@ export function MetricBar({
       </div>
 
       <div className="mt-1 flex justify-between text-[10px] text-neutral-400 tabular-nums" style={body}>
-        <span>{lo}</span>
+        <span>{num(lo, lang)}</span>
         <span>
-          Target {bandLo} to {bandHi}
+          {t({ en: "Target", id: "Target" })} {num(bandLo, lang)} {t({ en: "to", id: "sampai" })} {num(bandHi, lang)}
         </span>
-        <span>{hi}</span>
+        <span>{num(hi, lang)}</span>
       </div>
     </div>
   );

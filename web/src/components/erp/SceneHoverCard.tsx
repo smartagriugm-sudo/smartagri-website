@@ -6,6 +6,7 @@ import type { ChamberEngine } from "./SeedChamberScene";
 import type { SceneEngine } from "./PlantFactoryScene";
 import { CctvLive, CctvViewer } from "./Cctv";
 import { Bar } from "./ui";
+import { useT, type Lang } from "../../lib/i18n";
 
 // The card that floats beside the cursor in a 3D model and says what the plant, the tray
 // or the equipment under it is doing. The engine reports what is hovered, and its own
@@ -25,14 +26,14 @@ export function zoomToCursor(engine: AnyEngine) {
   (engine.three.controls as { zoomToCursor: boolean }).zoomToCursor = true;
 }
 
-export function sceneFacts(store: ErpStore, engine: AnyEngine | null, target: SceneTarget | null): SceneFacts | null {
+export function sceneFacts(store: ErpStore, engine: AnyEngine | null, target: SceneTarget | null, lang: Lang = "en"): SceneFacts | null {
   if (!engine || !target) return null;
-  if (target.kind === "hole") return holeFacts(store, target.id);
-  if (target.kind === "slot") return slotFacts(store, target.id);
+  if (target.kind === "hole") return holeFacts(store, target.id, lang);
+  if (target.kind === "slot") return slotFacts(store, target.id, lang);
   const objects = engine.manifest.objects as { id: string; type: string }[];
   const object = objects.find((o) => o.id === target.id);
   if (!object) return null;
-  return "bounds" in engine.manifest && "controlX" in engine.manifest.bounds ? factoryObjectFacts(store, object) : chamberObjectFacts(store, object);
+  return "bounds" in engine.manifest && "controlX" in engine.manifest.bounds ? factoryObjectFacts(store, object, lang) : chamberObjectFacts(store, object, lang);
 }
 
 /** The thing under the cursor, and a way to place a card by the cursor without re-rendering. */
@@ -145,6 +146,7 @@ export function useScenePin(engine: AnyEngine | null) {
 export default function SceneHoverCard({ facts, cardRef, place, onClose, showCamera = true, children }: { facts: SceneFacts; cardRef: RefObject<HTMLDivElement | null>; place: () => void; onClose?: () => void; showCamera?: boolean; children?: ReactNode }) {
   // The size changes with what the card says, so its place is worked out after each change.
   useLayoutEffect(place);
+  const t = useT();
   const camera = showCamera ? facts.cctv : undefined;
   const width = camera?.live ? (onClose ? "w-[344px]" : "w-[320px]") : "w-[256px]";
   return (
@@ -159,7 +161,7 @@ export default function SceneHoverCard({ facts, cardRef, place, onClose, showCam
           <p className="truncate text-[12.5px] text-[#4F6B73]">{facts.sub}</p>
         </div>
         {onClose && (
-          <button type="button" onClick={onClose} aria-label="Close card" className="-mr-1 -mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[#4F6B73] hover:bg-[#EEF5F5]">
+          <button type="button" onClick={onClose} aria-label={t({ en: "Close card", id: "Tutup kartu" })} className="-mr-1 -mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[#4F6B73] hover:bg-[#EEF5F5]">
             <X className="h-3.5 w-3.5" />
           </button>
         )}
@@ -193,7 +195,7 @@ export default function SceneHoverCard({ facts, cardRef, place, onClose, showCam
           ) : (
             <>
               <CctvLive feed={camera} compact />
-              <p className="mt-1.5 text-[12px] text-[#4F6B73]">Click the camera to keep this open and turn it.</p>
+              <p className="mt-1.5 text-[12px] text-[#4F6B73]">{t({ en: "Click the camera to keep this open and turn it.", id: "Klik kamera agar kartu tetap terbuka dan kamera bisa diputar." })}</p>
             </>
           )}
         </div>

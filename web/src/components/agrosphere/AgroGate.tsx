@@ -3,7 +3,16 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Loader2, Lock } from "lucide-react";
 import { A } from "../../lib/assets";
 import { accent, body, display } from "../../lib/fonts";
-import { AGRO_APPS, AGROSPHERE_HOME, AGROSPHERE_SIGN_IN, canOpen, useAgroAccess, type AgroApp } from "../../lib/agrosphere";
+import {
+  AGROSPHERE_HOME,
+  AGROSPHERE_SIGN_IN,
+  accessErrorText,
+  agroAppsFor,
+  canOpen,
+  useAgroAccess,
+  type AgroApp,
+} from "../../lib/agrosphere";
+import { useLang, useT } from "../../lib/i18n";
 import AuthGate from "../AuthGate";
 
 // The door of every agrosphere page: signed in (on agrosphere's own sign-in page),
@@ -12,8 +21,14 @@ import AuthGate from "../AuthGate";
 // launcher needs. Turning away here is a courtesy: Row Level Security still guards
 // the data behind every dashboard.
 export default function AgroGate({ app, children }: { app?: AgroApp; children: ReactNode }) {
+  const t = useT();
   return (
-    <AuthGate signInPath={AGROSPHERE_SIGN_IN} frame={(c) => <AgroFrame>{c}</AgroFrame>} checkingText="Checking access..." slowText="Slow connection, still trying...">
+    <AuthGate
+      signInPath={AGROSPHERE_SIGN_IN}
+      frame={(c) => <AgroFrame>{c}</AgroFrame>}
+      checkingText={t({ en: "Checking access...", id: "Memeriksa akses..." })}
+      slowText={t({ en: "Slow connection, still trying...", id: "Koneksi lambat, masih mencoba..." })}
+    >
       {app ? <AppCheck app={app}>{children}</AppCheck> : children}
     </AuthGate>
   );
@@ -21,7 +36,9 @@ export default function AgroGate({ app, children }: { app?: AgroApp; children: R
 
 function AppCheck({ app, children }: { app: AgroApp; children: ReactNode }) {
   const access = useAgroAccess();
-  const name = AGRO_APPS.find((a) => a.app === app)?.name ?? "This dashboard";
+  const lang = useLang();
+  const t = useT();
+  const name = agroAppsFor(lang).find((a) => a.app === app)?.name ?? t({ en: "This dashboard", id: "Dashboard ini" });
 
   if (access.state === "loading") {
     return (
@@ -29,7 +46,7 @@ function AppCheck({ app, children }: { app: AgroApp; children: ReactNode }) {
         <div className="flex flex-col items-center gap-3 text-neutral-500">
           <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
           <p className="text-sm" style={body}>
-            Checking access...
+            {t({ en: "Checking access...", id: "Memeriksa akses..." })}
           </p>
         </div>
       </AgroFrame>
@@ -38,7 +55,11 @@ function AppCheck({ app, children }: { app: AgroApp; children: ReactNode }) {
   if (access.state === "error") {
     return (
       <AgroFrame>
-        <Notice title="Access could not be" accentWord="checked" text={access.message} />
+        <Notice
+          title={t({ en: "Access could not be", id: "Akses tidak dapat" })}
+          accentWord={t({ en: "checked", id: "diperiksa" })}
+          text={accessErrorText(access, lang)}
+        />
       </AgroFrame>
     );
   }
@@ -47,8 +68,11 @@ function AppCheck({ app, children }: { app: AgroApp; children: ReactNode }) {
       <AgroFrame>
         <Notice
           title={name}
-          accentWord="is not shared"
-          text={`This account cannot open ${name}. Ask a smartagri lab admin if you need it.`}
+          accentWord={t({ en: "is not shared", id: "tidak dibagikan" })}
+          text={t({
+            en: `This account cannot open ${name}. Ask a smartagri lab admin if you need it.`,
+            id: `Akun ini tidak dapat membuka ${name}. Minta ke admin lab smartagri jika Anda membutuhkannya.`,
+          })}
         />
       </AgroFrame>
     );
@@ -57,6 +81,7 @@ function AppCheck({ app, children }: { app: AgroApp; children: ReactNode }) {
 }
 
 function Notice({ title, accentWord, text }: { title: string; accentWord: string; text: string }) {
+  const t = useT();
   return (
     <div className="w-full max-w-[440px] text-center">
       <span className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#08313A]">
@@ -74,7 +99,7 @@ function Notice({ title, accentWord, text }: { title: string; accentWord: string
         style={body}
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to agrosphere
+        {t({ en: "Back to agrosphere", id: "Kembali ke agrosphere" })}
       </Link>
     </div>
   );
@@ -82,10 +107,11 @@ function Notice({ title, accentWord, text }: { title: string; accentWord: string
 
 /** A quiet agrosphere page for waiting and refusals: logo on top, content centred. */
 export function AgroFrame({ children }: { children: ReactNode }) {
+  const t = useT();
   return (
     <main className="flex min-h-[100dvh] flex-col bg-[#F3F7F6]" style={body}>
       <header className="px-5 py-5 sm:px-8">
-        <Link to={AGROSPHERE_HOME} aria-label="agrosphere home" className="inline-block">
+        <Link to={AGROSPHERE_HOME} aria-label={t({ en: "agrosphere home", id: "Beranda agrosphere" })} className="inline-block">
           <img src={A.agrosphereLogo} alt="agrosphere" className="h-6 w-auto" />
         </Link>
       </header>

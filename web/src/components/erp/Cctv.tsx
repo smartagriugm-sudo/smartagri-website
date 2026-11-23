@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Maximize2, RefreshCw, Volume2, VolumeX } from "lucide-react";
-import { CCTV_QUALITY_LABEL, CctvError, fetchTicket, movePtz, mseCodecs, streamUrl, ticketFresh, type CctvFeed, type CctvQuality, type CctvTicket, type PtzDir } from "../../lib/pf/cctv";
+import { CCTV_QUALITY_LABEL, CctvError, cctvErrorText, feedLabel, fetchTicket, movePtz, mseCodecs, streamUrl, ticketFresh, type CctvFeed, type CctvQuality, type CctvTicket, type PtzDir } from "../../lib/pf/cctv";
 import { useErpAccess } from "./page";
+import { useLang, useT, type Bi } from "../../lib/i18n";
 
 // The plant factory camera (Bardi IDR-IPC-PTZ), shown where the camera sits in the 3D
 // model: a small live view on the floating card, and a fuller one with controls in the
@@ -176,7 +177,8 @@ function usePageVisible() {
 /** Keeps a video element playing the camera, reconnecting after a drop. */
 function useCctvStream(video: React.RefObject<HTMLVideoElement | null>, quality: CctvQuality) {
   const [phase, setPhase] = useState<CctvPhase>("connecting");
-  const [message, setMessage] = useState<string | null>(null);
+  // What went wrong, kept raw so the words follow the reader's language.
+  const [issue, setIssue] = useState<{ closed: true } | { error: unknown } | null>(null);
   const [attempt, setAttempt] = useState(0);
   const visible = usePageVisible();
   // A retry on its own keeps saying "offline" until a picture comes, rather than
@@ -200,7 +202,7 @@ function useCctvStream(video: React.RefObject<HTMLVideoElement | null>, quality:
       }, RETRY_MS[Math.min(attempt, RETRY_MS.length - 1)]));
     if (!quietRetry.current) {
       setPhase("connecting");
-      setMessage(null);
+      setIssue(null);
     }
     quietRetry.current = false;
 
@@ -212,7 +214,7 @@ function useCctvStream(video: React.RefObject<HTMLVideoElement | null>, quality:
           closed: () => {
             if (cancelled) return;
             setPhase("offline");
-            setMessage("The camera is not answering. It may be off, or the bridge PC is on another network. Trying again…");
+            setIssue({ closed: true });
             again();
           },
         });
@@ -221,7 +223,7 @@ function useCctvStream(video: React.RefObject<HTMLVideoElement | null>, quality:
         if (cancelled) return;
         const kind = e instanceof CctvError ? e.kind : "offline";
         setPhase(kind);
-        setMessage(e instanceof Error ? e.message : "The camera could not be opened.");
+        setIssue({ error: e });
         if (kind === "offline") again();
       });
 
@@ -236,19 +238,25 @@ function useCctvStream(video: React.RefObject<HTMLVideoElement | null>, quality:
     shared = null;
     setAttempt((n) => n + 1);
   };
-  return { phase, message, retry };
+  return { phase, issue, retry };
 }
 
 /* ------------------------------------------------------------------- the view */
 
-const STATUS: Record<CctvPhase, { label: string; color: string }> = {
-  connecting: { label: "Connecting", color: "#E0A526" },
-  live: { label: "Live", color: "#E5484D" },
-  paused: { label: "Paused", color: "#8AA3A9" },
-  offline: { label: "Offline", color: "#8AA3A9" },
-  not_set_up: { label: "Not set up", color: "#8AA3A9" },
-  not_allowed: { label: "No access", color: "#8AA3A9" },
+const STATUS: Record<CctvPhase, { label: Bi; color: string }> = {
+  connecting: { label: { en: "Connecting", id: "Menghubungkan" }, color: "#E0A526" },
+  live: { label: { en: "Live", id: "Live" }, color: "#E5484D" },
+  paused: { label: { en: "Paused", id: "Dijeda" }, color: "#8AA3A9" },
+  offline: { label: { en: "Offline", id: "Offline" }, color: "#8AA3A9" },
+  not_set_up: { label: { en: "Not set up", id: "Belum disiapkan" }, color: "#8AA3A9" },
+  not_allowed: { label: { en: "No access", id: "Tanpa akses" }, color: "#8AA3A9" },
 };
+
+const CLOSED: Bi = {
+  en: "The camera is not answering. It may be off, or the bridge PC is on another network. Trying again…",
+  id: "Kamera tidak merespons. Mungkin kamera mati, atau PC bridge ada di jaringan lain. Mencoba lagi…",
+};
+const NOT_OPENED: Bi = { en: "The camera could not be opened.", id: "Kamera tidak dapat dibuka." };
 
 const iconButton = "inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[#DCE7E8] bg-white text-[#0B6477] hover:bg-[#EEF3F4] lg:h-8 lg:w-8";
 
@@ -258,8 +266,12 @@ const iconButton = "inline-flex h-11 w-11 items-center justify-center rounded-lg
  */
 export function CctvLive({ feed, quality = "sd", muted = true, compact = false, frame }: { feed: CctvFeed; quality?: CctvQuality; muted?: boolean; compact?: boolean; frame?: React.RefObject<HTMLDivElement | null> }) {
   const video = useRef<HTMLVideoElement>(null);
-  const { phase, message, retry } = useCctvStream(video, quality);
-  const status = STATUS[phase];
+  const t = useT();
+  const lang = useLang();
+  const { phase, issue, retry } = useCctvStream(video, quality);
+  const status = { label: t(STATUS[phase].label), color: STATUS[phase].color };
+  const name = feedLabel(feed, lang);
+  const message = !issue ? null : "closed" in issue ? t(CLOSED) : issue.error instanceof Error ? cctvErrorText(issue.error, lang) : t(NOT_OPENED);
   const showVideo = phase === "live" || phase === "connecting";
 
   useEffect(() => {
@@ -268,34 +280,36 @@ export function CctvLive({ feed, quality = "sd", muted = true, compact = false, 
 
   return (
     <div ref={frame} className="relative aspect-video overflow-hidden rounded-lg bg-[#08313A]">
-      <video ref={video} className={`h-full w-full object-contain ${showVideo ? "" : "invisible"}`} muted autoPlay playsInline aria-label={`Live video, ${feed.label}`} />
+      <video ref={video} className={`h-full w-full object-contain ${showVideo ? "" : "invisible"}`} muted autoPlay playsInline aria-label={t({ en: `Live video, ${name}`, id: `Video langsung, ${name}` })} />
       <span className={`absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-[#08313A]/80 font-medium text-white ${compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-[12px]"}`}>
         <span className={`h-2 w-2 rounded-full ${phase === "live" ? "motion-safe:animate-pulse" : ""}`} style={{ background: status.color }} aria-hidden="true" />
         {status.label}
       </span>
-      {phase === "connecting" && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#CFE3E6]">Opening the camera…</p>}
+      {phase === "connecting" && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#CFE3E6]">{t({ en: "Opening the camera…", id: "Membuka kamera…" })}</p>}
       {!showVideo && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 px-4 text-center">
           <p className={`max-w-[360px] leading-[1.45] text-[#CFE3E6] ${compact ? "text-[12px]" : "text-[13px]"}`}>
-            {phase === "paused" ? "The video resumes when you come back to this tab." : message ?? "The camera could not be opened."}
+            {phase === "paused" ? t({ en: "The video resumes when you come back to this tab.", id: "Video berlanjut saat Anda kembali ke tab ini." }) : message ?? t(NOT_OPENED)}
           </p>
           {!compact && (phase === "offline" || phase === "not_allowed") && (
             <button type="button" onClick={retry} className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#45DFB1] px-3.5 text-[14px] font-medium text-[#0B2A22] hover:bg-[#80ED99] lg:min-h-[36px]">
-              <RefreshCw className="h-4 w-4" aria-hidden="true" /> Try again
+              <RefreshCw className="h-4 w-4" aria-hidden="true" /> {t({ en: "Try again", id: "Coba lagi" })}
             </button>
           )}
         </div>
       )}
-      <span className="sr-only" role="status">{`${feed.label}: ${status.label}`}</span>
+      <span className="sr-only" role="status">{`${name}: ${status.label}`}</span>
     </div>
   );
 }
 
 /** A camera with no stream: same frame, saying so. */
 export function CctvNotLive({ feed }: { feed: CctvFeed }) {
+  const t = useT();
+  const name = feedLabel(feed, useLang());
   return (
     <div className="flex aspect-video items-center justify-center rounded-lg bg-[#EEF3F4] px-4 text-center text-[13px] leading-[1.45] text-[#4F6B73]">
-      {feed.label}: no camera installed here yet.
+      {t({ en: `${name}: no camera installed here yet.`, id: `${name}: belum ada kamera terpasang di sini.` })}
     </div>
   );
 }
@@ -303,6 +317,7 @@ export function CctvNotLive({ feed }: { feed: CctvFeed }) {
 /** The full camera view: picture, quality, sound, full screen and, for operators, the arrows. */
 export function CctvViewer({ feed, footer }: { feed: CctvFeed; footer?: ReactNode }) {
   const { canOperate } = useErpAccess();
+  const t = useT();
   const [quality, setQuality] = useState<CctvQuality>("sd");
   const [muted, setMuted] = useState(true);
   const [ptzError, setPtzError] = useState(false);
@@ -328,22 +343,22 @@ export function CctvViewer({ feed, footer }: { feed: CctvFeed; footer?: ReactNod
     <div className="space-y-2.5">
       <CctvLive feed={feed} quality={quality} muted={muted} frame={frame} />
       <div className="flex flex-wrap items-center gap-1.5">
-        <div className="flex rounded-lg bg-[#EEF3F4] p-0.5 text-[13px] font-medium" role="group" aria-label="Picture quality">
+        <div className="flex rounded-lg bg-[#EEF3F4] p-0.5 text-[13px] font-medium" role="group" aria-label={t({ en: "Picture quality", id: "Kualitas gambar" })}>
           {(["sd", "hd"] as const).map((q) => (
             <button key={q} type="button" aria-pressed={quality === q} onClick={() => setQuality(q)} className={`min-h-[40px] rounded-md px-2.5 lg:min-h-[28px] ${quality === q ? "bg-white text-[#0F2F36] shadow-sm" : "text-[#4F6B73] hover:text-[#0F2F36]"}`}>
               {CCTV_QUALITY_LABEL[q]}
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => setMuted((m) => !m)} aria-pressed={!muted} aria-label={muted ? "Turn sound on" : "Turn sound off"} className={iconButton}>
+        <button type="button" onClick={() => setMuted((m) => !m)} aria-pressed={!muted} aria-label={muted ? t({ en: "Turn sound on", id: "Nyalakan suara" }) : t({ en: "Turn sound off", id: "Matikan suara" })} className={iconButton}>
           {muted ? <VolumeX className="h-4 w-4" aria-hidden="true" /> : <Volume2 className="h-4 w-4" aria-hidden="true" />}
         </button>
-        <button type="button" onClick={fullscreen} aria-label="Show the video full screen" className={iconButton}>
+        <button type="button" onClick={fullscreen} aria-label={t({ en: "Show the video full screen", id: "Tampilkan video layar penuh" })} className={iconButton}>
           <Maximize2 className="h-4 w-4" aria-hidden="true" />
         </button>
         {canOperate && <PtzPad onMove={move} />}
       </div>
-      {canOperate && <p className="text-[12px] leading-[1.45] text-[#4F6B73]">{ptzError ? "The camera did not take the command. Try again in a moment." : "Hold an arrow to turn the camera, let go to stop."}</p>}
+      {canOperate && <p className="text-[12px] leading-[1.45] text-[#4F6B73]">{ptzError ? t({ en: "The camera did not take the command. Try again in a moment.", id: "Kamera tidak menerima perintah. Coba lagi sebentar lagi." }) : t({ en: "Hold an arrow to turn the camera, let go to stop.", id: "Tahan tombol panah untuk memutar kamera, lepas untuk berhenti." })}</p>}
       {footer}
     </div>
   );
@@ -352,12 +367,13 @@ export function CctvViewer({ feed, footer }: { feed: CctvFeed; footer?: ReactNod
 /* ---------------------------------------------------------------------- PTZ */
 
 function PtzPad({ onMove }: { onMove: (d: PtzDir) => void }) {
+  const t = useT();
   return (
-    <div className="ml-auto flex items-center gap-1" role="group" aria-label="Turn the camera">
-      <PtzButton dir="left" label="Turn left" onMove={onMove}><ChevronLeft className="h-4 w-4" aria-hidden="true" /></PtzButton>
-      <PtzButton dir="up" label="Turn up" onMove={onMove}><ChevronUp className="h-4 w-4" aria-hidden="true" /></PtzButton>
-      <PtzButton dir="down" label="Turn down" onMove={onMove}><ChevronDown className="h-4 w-4" aria-hidden="true" /></PtzButton>
-      <PtzButton dir="right" label="Turn right" onMove={onMove}><ChevronRight className="h-4 w-4" aria-hidden="true" /></PtzButton>
+    <div className="ml-auto flex items-center gap-1" role="group" aria-label={t({ en: "Turn the camera", id: "Putar kamera" })}>
+      <PtzButton dir="left" label={t({ en: "Turn left", id: "Putar ke kiri" })} onMove={onMove}><ChevronLeft className="h-4 w-4" aria-hidden="true" /></PtzButton>
+      <PtzButton dir="up" label={t({ en: "Turn up", id: "Putar ke atas" })} onMove={onMove}><ChevronUp className="h-4 w-4" aria-hidden="true" /></PtzButton>
+      <PtzButton dir="down" label={t({ en: "Turn down", id: "Putar ke bawah" })} onMove={onMove}><ChevronDown className="h-4 w-4" aria-hidden="true" /></PtzButton>
+      <PtzButton dir="right" label={t({ en: "Turn right", id: "Putar ke kanan" })} onMove={onMove}><ChevronRight className="h-4 w-4" aria-hidden="true" /></PtzButton>
     </div>
   );
 }

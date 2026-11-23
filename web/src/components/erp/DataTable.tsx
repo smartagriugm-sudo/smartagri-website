@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowDown, ArrowUpRight, ChevronsUpDown, LayoutGrid, RotateCcw, Rows3, Search } from "lucide-react";
+import { useT } from "../../lib/i18n";
 
 // The ERP's one table, taken from the instrument inventory on the main site: figures
 // that double as filters, status pills with counts, a search box and dropdowns, headers
@@ -65,7 +66,7 @@ export default function DataTable<T>({
   onOpen,
   selected,
   searchText,
-  searchLabel = "Search",
+  searchLabel: searchLabelProp,
   pills,
   filters,
   figures,
@@ -95,6 +96,8 @@ export default function DataTable<T>({
   initialSort?: { key: string; dir: "asc" | "desc" };
   initialPill?: string;
 }) {
+  const t = useT();
+  const searchLabel = searchLabelProp ?? t({ en: "Search", id: "Cari" });
   const [query, setQuery] = useState("");
   const [pill, setPill] = useState(initialPill);
   const [picked, setPicked] = useState<Record<string, string>>({});
@@ -160,8 +163,8 @@ export default function DataTable<T>({
         {hasToolbar && (
           <div className="flex flex-col gap-3 border-b border-[#0B6477]/10 p-3 md:p-4">
             {pills && pills.length > 0 && (
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Filter by status">
-                {[{ key: "all", label: "All", match: () => true } as Pill<T>, ...pills].map((p) => {
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label={t({ en: "Filter by status", id: "Filter menurut status" })}>
+                {[{ key: "all", label: t({ en: "All", id: "Semua" }), match: () => true } as Pill<T>, ...pills].map((p) => {
                   const on = pill === p.key;
                   return (
                     <button key={p.key} type="button" aria-pressed={on} onClick={() => setPill(p.key)} className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${on ? "border-transparent bg-[#08313A] text-white" : "border-[#0B6477]/15 bg-white text-[#36525A] hover:border-[#0B6477]/40"}`}>
@@ -192,8 +195,8 @@ export default function DataTable<T>({
                 })}
                 {extra}
                 {card && (
-                  <div className="hidden rounded-lg border border-[#0B6477]/15 bg-[#F3F7F6] p-1 md:flex" role="group" aria-label="View">
-                    {([{ key: "table", icon: Rows3, label: "Table view" }, { key: "grid", icon: LayoutGrid, label: "Grid view" }] as const).map((v) => (
+                  <div className="hidden rounded-lg border border-[#0B6477]/15 bg-[#F3F7F6] p-1 md:flex" role="group" aria-label={t({ en: "View", id: "Tampilan" })}>
+                    {([{ key: "table", icon: Rows3, label: t({ en: "Table view", id: "Tampilan tabel" }) }, { key: "grid", icon: LayoutGrid, label: t({ en: "Grid view", id: "Tampilan grid" }) }] as const).map((v) => (
                       <button key={v.key} type="button" onClick={() => setView(v.key)} aria-pressed={view === v.key} aria-label={v.label} className={`grid h-8 w-9 place-items-center rounded-md transition-colors ${view === v.key ? "bg-[#08313A] text-[#45DFB1]" : "text-[#4F6B73] hover:text-[#0F2F36]"}`}>
                         <v.icon className="h-4 w-4" />
                       </button>
@@ -203,11 +206,11 @@ export default function DataTable<T>({
               </div>
             )}
             <div className="flex min-h-[20px] items-center justify-between gap-3">
-              <p className={`${META} text-[#6B8187]`}>{shown.length === rows.length ? `${rows.length} ${noun}` : `${shown.length} of ${rows.length} ${noun}`}</p>
+              <p className={`${META} text-[#6B8187]`}>{shown.length === rows.length ? `${rows.length} ${noun}` : t({ en: `${shown.length} of ${rows.length} ${noun}`, id: `${shown.length} dari ${rows.length} ${noun}` })}</p>
               {filtersOn && (
                 <button type="button" onClick={reset} className={`group inline-flex items-center gap-1.5 text-[#0B6477] ${META}`}>
                   <RotateCcw className="h-3.5 w-3.5 transition-transform duration-500 group-hover:-rotate-180" />
-                  Reset filters
+                  {t({ en: "Reset filters", id: "Reset filter" })}
                 </button>
               )}
             </div>
@@ -216,9 +219,9 @@ export default function DataTable<T>({
 
         {shown.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-            <p className="text-[14px] text-[#4F6B73]">{filtersOn ? "Nothing matches these filters." : empty ?? `No ${noun} yet.`}</p>
+            <p className="text-[14px] text-[#4F6B73]">{filtersOn ? t({ en: "Nothing matches these filters.", id: "Tidak ada yang cocok dengan filter ini." }) : empty ?? t({ en: `No ${noun} yet.`, id: `Belum ada ${noun}.` })}</p>
             {filtersOn && (
-              <button type="button" onClick={reset} className={`inline-flex items-center gap-1.5 border-b border-[#0B6477]/30 pb-1 text-[#0B6477] ${META}`}><RotateCcw className="h-3.5 w-3.5" /> Reset filters</button>
+              <button type="button" onClick={reset} className={`inline-flex items-center gap-1.5 border-b border-[#0B6477]/30 pb-1 text-[#0B6477] ${META}`}><RotateCcw className="h-3.5 w-3.5" /> {t({ en: "Reset filters", id: "Reset filter" })}</button>
             )}
           </div>
         ) : view === "grid" && card ? (
@@ -256,7 +259,7 @@ export default function DataTable<T>({
                 return (
                   <li key={key} className={`group relative border-b border-[#0B6477]/8 transition-colors last:border-b-0 ${on ? "bg-[#EEF5F5]" : opens ? "hover:bg-[#F3F7F6]" : ""}`}>
                     {opens && <span className={`absolute inset-y-0 left-0 w-[3px] bg-[#14919B] transition-opacity ${on ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`} />}
-                    {link ? <Link to={link} className={cover} aria-label="Open" /> : onOpen ? <button type="button" onClick={() => onOpen(r)} aria-pressed={on} className={cover} aria-label="Open" /> : null}
+                    {link ? <Link to={link} className={cover} aria-label={t({ en: "Open", id: "Buka" })} /> : onOpen ? <button type="button" onClick={() => onOpen(r)} aria-pressed={on} className={cover} aria-label={t({ en: "Open", id: "Buka" })} /> : null}
                     {/* Desktop */}
                     <div className="pointer-events-none relative hidden items-center gap-4 px-4 py-3 md:grid" style={{ gridTemplateColumns: template }}>
                       {columns.map((c) => (
@@ -283,7 +286,7 @@ export default function DataTable<T>({
         )}
         {shown.length > limit && (
           <div className="border-t border-[#0B6477]/10 p-3 text-center">
-            <button type="button" onClick={() => setLimit(limit + PAGE)} className="min-h-[44px] text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]">Show {Math.min(PAGE, shown.length - limit)} more</button>
+            <button type="button" onClick={() => setLimit(limit + PAGE)} className="min-h-[44px] text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]">{t({ en: `Show ${Math.min(PAGE, shown.length - limit)} more`, id: `Tampilkan ${Math.min(PAGE, shown.length - limit)} lagi` })}</button>
           </div>
         )}
       </div>

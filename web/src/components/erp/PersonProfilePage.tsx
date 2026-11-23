@@ -4,8 +4,9 @@ import { ArrowLeft, Mail, MapPin, Phone } from "lucide-react";
 import { jakartaToday } from "../../lib/pf/batch";
 import { formatLongDate } from "../../lib/pf/dashboard";
 import { addDays } from "../../lib/pf/facility";
-import { AUDIT_ACTIONS, AUDIT_TABLES, auditSubject, fetchActorAudit, fetchMembers, type AuditEntry, type LabMember } from "../../lib/pf/foundation";
-import { LEAVE_STATUS, LEAVE_TYPES, attendanceFlags, cameLate, clockText, fetchContracts, fetchPeople, fetchPersonLabor, fetchPersonRecords, formatMinutes, personTypeLabel, savePersonDetails, timeOfDay, workedMinutes, type Attendance, type Contract, type LaborEntry, type Leave, type Person, type Shift } from "../../lib/pf/people";
+import { auditActionLabel, auditSubject, auditTableLabel, fetchActorAudit, fetchMembers, type AuditEntry, type LabMember } from "../../lib/pf/foundation";
+import { useLang, useT, type Bi, type Lang } from "../../lib/i18n";
+import { LEAVE_STATUS, LEAVE_TYPES, attendanceFlags, optionLabel, cameLate, clockText, fetchContracts, fetchPeople, fetchPersonLabor, fetchPersonRecords, formatMinutes, personTypeLabel, savePersonDetails, timeOfDay, workedMinutes, type Attendance, type Contract, type LaborEntry, type Leave, type Person, type Shift } from "../../lib/pf/people";
 import DataTable, { CellTitle, Chip, type Column } from "./DataTable";
 import { ActionNote, DataState, ErpPage, Field, PrimaryButton, SecondaryButton, formatDateTime, inputClass, useAction, useErpAccess, useLoad } from "./page";
 import { ContractSection, PersonAvatar, PersonEditor } from "./PeoplePage";
@@ -14,6 +15,8 @@ import { Card, Note, Rows, Segmented } from "./ui";
 // One person's page, for whoever looks after the team: who they are, how to reach them,
 // when they came, what they are scheduled for, and what they have been doing. Contract
 // terms still open only for HR staff, Leadership and the person themselves.
+
+type T = <V>(copy: Bi<V>) => V;
 
 type Tab = "overview" | "attendance" | "schedule" | "activity" | "contracts";
 
@@ -30,22 +33,23 @@ function DetailsEditor({ person, onDone }: { person: Person; onDone: (saved: boo
   const [skills, setSkills] = useState(person.skills ?? "");
   const [notes, setNotes] = useState(person.notes ?? "");
   const action = useAction();
+  const t = useT();
   const submit = async () => {
     if (await action.run(() => savePersonDetails(person.id, { email, address, emergency, skills, notes }))) onDone(true);
   };
   return (
     <Card className="p-4">
-      <h2 className={`${sectionTitle} mb-3`}>Edit details</h2>
+      <h2 className={`${sectionTitle} mb-3`}>{t({ en: "Edit details", id: "Ubah detail" })}</h2>
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-        <Field label="Email"><input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
-        <Field label="Address"><input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} /></Field>
-        <Field label="Emergency contact" hint="A name and a phone number."><input className={inputClass} value={emergency} onChange={(e) => setEmergency(e.target.value)} /></Field>
-        <Field label="Skills" hint="Separate with commas: nursery work, nutrient mixing, harvesting."><input className={inputClass} value={skills} onChange={(e) => setSkills(e.target.value)} /></Field>
-        <Field label="Notes"><textarea rows={3} className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
+        <Field label={t({ en: "Email", id: "Email" })}><input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+        <Field label={t({ en: "Address", id: "Alamat" })}><input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} /></Field>
+        <Field label={t({ en: "Emergency contact", id: "Kontak darurat" })} hint={t({ en: "A name and a phone number.", id: "Nama dan nomor telepon." })}><input className={inputClass} value={emergency} onChange={(e) => setEmergency(e.target.value)} /></Field>
+        <Field label={t({ en: "Skills", id: "Keahlian" })} hint={t({ en: "Separate with commas: nursery work, nutrient mixing, harvesting.", id: "Pisahkan dengan koma: pembibitan, peracikan nutrisi, panen." })}><input className={inputClass} value={skills} onChange={(e) => setSkills(e.target.value)} /></Field>
+        <Field label={t({ en: "Notes", id: "Catatan" })}><textarea rows={3} className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
         <ActionNote action={{ error: action.error, saved: false }} />
         <div className="flex gap-2">
-          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? "Saving…" : "Save"}</PrimaryButton>
-          <SecondaryButton onClick={() => onDone(false)}>Cancel</SecondaryButton>
+          <PrimaryButton type="submit" disabled={action.busy}>{action.busy ? t({ en: "Saving…", id: "Menyimpan…" }) : t({ en: "Save", id: "Simpan" })}</PrimaryButton>
+          <SecondaryButton onClick={() => onDone(false)}>{t({ en: "Cancel", id: "Batal" })}</SecondaryButton>
         </div>
       </form>
     </Card>
@@ -53,45 +57,48 @@ function DetailsEditor({ person, onDone }: { person: Person; onDone: (saved: boo
 }
 
 function AttendanceChip({ record }: { record: Attendance }) {
-  if (record.missed_out) return <Chip label="Missed clock-out" className="bg-[#FFF6E5] text-[#8A5A07]" />;
-  if (cameLate(record)) return <Chip label="Late" className="bg-[#FFF6E5] text-[#8A5A07]" />;
-  if (!record.clock_out) return <Chip label="Still in" className="bg-[#E3F4F4] text-[#0B6477]" />;
-  return <Chip label="On time" className="bg-[#E3F7F0] text-[#0E7A5C]" />;
+  const t = useT();
+  if (record.missed_out) return <Chip label={t({ en: "Missed clock-out", id: "Lupa absen pulang" })} className="bg-[#FFF6E5] text-[#8A5A07]" />;
+  if (cameLate(record)) return <Chip label={t({ en: "Late", id: "Terlambat" })} className="bg-[#FFF6E5] text-[#8A5A07]" />;
+  if (!record.clock_out) return <Chip label={t({ en: "Still in", id: "Masih di lokasi" })} className="bg-[#E3F4F4] text-[#0B6477]" />;
+  return <Chip label={t({ en: "On time", id: "Tepat waktu" })} className="bg-[#E3F7F0] text-[#0E7A5C]" />;
 }
 
-const attendanceColumns: Column<Attendance>[] = [
-  { key: "date", label: "Date", phone: "title", sort: (a, b) => a.work_date.localeCompare(b.work_date), cell: (a) => <CellTitle title={formatLongDate(a.work_date)} sub={a.source === "manual" ? "Recorded by hand" : undefined} /> },
-  { key: "in", label: "In", track: "80px", cell: (a) => <span className="tabular-nums">{timeOfDay(a.clock_in)}</span> },
-  { key: "out", label: "Out", track: "80px", cell: (a) => <span className="tabular-nums">{a.clock_out ? timeOfDay(a.clock_out) : "-"}</span> },
-  { key: "hours", label: "Worked", track: "120px", align: "right", sort: (a, b) => (workedMinutes(a) ?? 0) - (workedMinutes(b) ?? 0), cell: (a) => { const m = workedMinutes(a); return <span className="tabular-nums">{m === null ? "-" : formatMinutes(m)}</span>; } },
-  { key: "state", label: "Status", track: "150px", cell: (a) => <AttendanceChip record={a} /> },
-  { key: "flags", label: "To check", phone: "hidden", cell: (a) => { const flags = attendanceFlags(a); return <span className={`block truncate text-[13px] ${flags.length ? "font-medium text-[#8A5A07]" : ""}`}>{flags.join(" · ") || "-"}</span>; } },
+const attendanceColumns = (t: T, lang: Lang): Column<Attendance>[] => [
+  { key: "date", label: t({ en: "Date", id: "Tanggal" }), phone: "title", sort: (a, b) => a.work_date.localeCompare(b.work_date), cell: (a) => <CellTitle title={formatLongDate(a.work_date, lang)} sub={a.source === "manual" ? t({ en: "Recorded by hand", id: "Dicatat manual" }) : undefined} /> },
+  { key: "in", label: t({ en: "In", id: "Masuk" }), track: "80px", cell: (a) => <span className="tabular-nums">{timeOfDay(a.clock_in)}</span> },
+  { key: "out", label: t({ en: "Out", id: "Pulang" }), track: "80px", cell: (a) => <span className="tabular-nums">{a.clock_out ? timeOfDay(a.clock_out) : "-"}</span> },
+  { key: "hours", label: t({ en: "Worked", id: "Durasi" }), track: "120px", align: "right", sort: (a, b) => (workedMinutes(a) ?? 0) - (workedMinutes(b) ?? 0), cell: (a) => { const m = workedMinutes(a); return <span className="tabular-nums">{m === null ? "-" : formatMinutes(m, lang)}</span>; } },
+  { key: "state", label: t({ en: "Status", id: "Status" }), track: "150px", cell: (a) => <AttendanceChip record={a} /> },
+  { key: "flags", label: t({ en: "To check", id: "Perlu dicek" }), phone: "hidden", cell: (a) => { const flags = attendanceFlags(a, lang); return <span className={`block truncate text-[13px] ${flags.length ? "font-medium text-[#8A5A07]" : ""}`}>{flags.join(" · ") || "-"}</span>; } },
 ];
 
-const shiftColumns: Column<Shift>[] = [
-  { key: "date", label: "Date", phone: "title", sort: (a, b) => a.work_date.localeCompare(b.work_date), cell: (s) => <CellTitle title={formatLongDate(s.work_date)} /> },
-  { key: "time", label: "Time", track: "130px", cell: (s) => <span className="tabular-nums">{clockText(s.start_at)}–{clockText(s.end_at)}</span> },
-  { key: "area", label: "Work area", cell: (s) => <span className="block truncate text-[13px]">{s.area_name ?? "Any work area"}</span> },
+const shiftColumns = (t: T, lang: Lang): Column<Shift>[] => [
+  { key: "date", label: t({ en: "Date", id: "Tanggal" }), phone: "title", sort: (a, b) => a.work_date.localeCompare(b.work_date), cell: (s) => <CellTitle title={formatLongDate(s.work_date, lang)} /> },
+  { key: "time", label: t({ en: "Time", id: "Jam" }), track: "130px", cell: (s) => <span className="tabular-nums">{clockText(s.start_at)}–{clockText(s.end_at)}</span> },
+  { key: "area", label: t({ en: "Work area", id: "Area kerja" }), cell: (s) => <span className="block truncate text-[13px]">{s.area_name ?? t({ en: "Any work area", id: "Area kerja mana pun" })}</span> },
 ];
 
-const leaveColumns: Column<Leave>[] = [
-  { key: "type", label: "Type", track: "110px", phone: "title", cell: (l) => <span className="font-medium text-[#0F2F36]">{LEAVE_TYPES.find((t) => t.key === l.type)?.label}</span> },
-  { key: "date", label: "Dates", sort: (a, b) => a.start_date.localeCompare(b.start_date), cell: (l) => <span className="text-[13px]">{formatLongDate(l.start_date)}{l.end_date !== l.start_date ? ` to ${formatLongDate(l.end_date)}` : ""}</span> },
-  { key: "reason", label: "Reason", phone: "hidden", cell: (l) => <span className="block truncate text-[13px]">{l.reason || "-"}</span> },
-  { key: "status", label: "Status", track: "120px", cell: (l) => <Chip label={LEAVE_STATUS[l.status].label} className={LEAVE_STATUS[l.status].className} /> },
+const leaveColumns = (t: T, lang: Lang): Column<Leave>[] => [
+  { key: "type", label: t({ en: "Type", id: "Jenis" }), track: "110px", phone: "title", cell: (l) => <span className="font-medium text-[#0F2F36]">{optionLabel(LEAVE_TYPES.find((o) => o.key === l.type), lang)}</span> },
+  { key: "date", label: t({ en: "Dates", id: "Tanggal" }), sort: (a, b) => a.start_date.localeCompare(b.start_date), cell: (l) => <span className="text-[13px]">{formatLongDate(l.start_date, lang)}{l.end_date !== l.start_date ? ` ${t({ en: "to", id: "s.d." })} ${formatLongDate(l.end_date, lang)}` : ""}</span> },
+  { key: "reason", label: t({ en: "Reason", id: "Alasan" }), phone: "hidden", cell: (l) => <span className="block truncate text-[13px]">{l.reason || "-"}</span> },
+  { key: "status", label: t({ en: "Status", id: "Status" }), track: "120px", cell: (l) => <Chip label={optionLabel(LEAVE_STATUS[l.status], lang)!} className={LEAVE_STATUS[l.status].className} /> },
 ];
 
 type Activity = { key: string; at: string; title: string; sub: string; link: string | null };
 
-function activityOf(labor: readonly LaborEntry[], audit: readonly AuditEntry[]): Activity[] {
-  const work = labor.map((l): Activity => ({ key: `l${l.id}`, at: `${l.work_date}T12:00:00+07:00`, title: l.activity || "Work on a batch", sub: `${l.batch_code} · ${formatMinutes(l.minutes)}`, link: `/erp/batch/${l.batch_id}` }));
-  const changes = audit.map((e): Activity => ({ key: `a${e.id}`, at: e.at, title: `${AUDIT_ACTIONS[e.action]}: ${AUDIT_TABLES.find((t) => t.key === e.table_name)?.label ?? e.table_name}`, sub: auditSubject(e), link: null }));
+function activityOf(labor: readonly LaborEntry[], audit: readonly AuditEntry[], lang: Lang): Activity[] {
+  const work = labor.map((l): Activity => ({ key: `l${l.id}`, at: `${l.work_date}T12:00:00+07:00`, title: l.activity || (lang === "id" ? "Pekerjaan pada batch" : "Work on a batch"), sub: `${l.batch_code} · ${formatMinutes(l.minutes, lang)}`, link: `/erp/batch/${l.batch_id}` }));
+  const changes = audit.map((e): Activity => ({ key: `a${e.id}`, at: e.at, title: `${auditActionLabel(e.action, lang)}: ${auditTableLabel(e.table_name, lang)}`, sub: auditSubject(e, lang), link: null }));
   return [...work, ...changes].sort((a, b) => b.at.localeCompare(a.at));
 }
 
 function ActivityList({ items, limit }: { items: Activity[]; limit?: number }) {
+  const t = useT();
+  const lang = useLang();
   const shown = limit ? items.slice(0, limit) : items;
-  if (shown.length === 0) return <p className="px-4 py-6 text-center text-[14px] text-[#4F6B73]">No activity recorded yet.</p>;
+  if (shown.length === 0) return <p className="px-4 py-6 text-center text-[14px] text-[#4F6B73]">{t({ en: "No activity recorded yet.", id: "Belum ada aktivitas tercatat." })}</p>;
   return (
     <ol>
       {shown.map((a) => {
@@ -102,7 +109,7 @@ function ActivityList({ items, limit }: { items: Activity[]; limit?: number }) {
               <span className="block truncate text-[14px] font-medium text-[#0F2F36]">{a.title}</span>
               <span className="block truncate text-[13px] text-[#4F6B73]">{a.sub}</span>
             </span>
-            <span className="shrink-0 text-[12.5px] tabular-nums text-[#4F6B73]">{a.key.startsWith("l") ? formatLongDate(a.at.slice(0, 10)) : formatDateTime(a.at)}</span>
+            <span className="shrink-0 text-[12.5px] tabular-nums text-[#4F6B73]">{a.key.startsWith("l") ? formatLongDate(a.at.slice(0, 10), lang) : formatDateTime(a.at, lang)}</span>
           </>
         );
         const cls = "flex items-start gap-3 border-t border-[#EDF2F2] px-4 py-2.5 first:border-0";
@@ -122,12 +129,14 @@ function Stat({ label, value, sub }: { label: string; value: string; sub: string
   );
 }
 
-function hoursText(minutes: number) {
-  return `${Math.round(minutes / 60).toLocaleString("en-GB")} h`;
+function hoursText(minutes: number, lang: Lang) {
+  return `${Math.round(minutes / 60).toLocaleString(lang === "id" ? "id-ID" : "en-GB")} ${lang === "id" ? "jam" : "h"}`;
 }
 
 export default function PersonProfilePage({ id }: { id: string }) {
   const today = jakartaToday();
+  const t = useT();
+  const lang = useLang();
   const { canManagePeople, canReadPeople, canReadPrivate, canWriteContracts } = useErpAccess();
   const base = useLoad(async () => {
     const [people, members] = await Promise.all([fetchPeople(), fetchMembers().catch(() => [] as LabMember[])]);
@@ -147,19 +156,19 @@ export default function PersonProfilePage({ id }: { id: string }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [editing, setEditing] = useState<"person" | "details" | null>(null);
 
-  const activity = useMemo(() => activityOf(records.data?.labor ?? [], records.data?.audit ?? []), [records.data]);
+  const activity = useMemo(() => activityOf(records.data?.labor ?? [], records.data?.audit ?? [], lang), [records.data, lang]);
 
-  const back = <Link to="/erp/people" className="inline-flex min-h-[44px] items-center gap-1.5 text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]"><ArrowLeft className="h-4 w-4" /> All people</Link>;
+  const back = <Link to="/erp/people" className="inline-flex min-h-[44px] items-center gap-1.5 text-[14px] font-medium text-[#0B6477] hover:underline sm:min-h-[24px]"><ArrowLeft className="h-4 w-4" /> {t({ en: "All people", id: "Semua personel" })}</Link>;
 
   if (!canReadPeople) {
-    return <ErpPage eyebrow="Team" title="Profile"><Note>This page is for HR staff, Production managers, Admins and Leadership.</Note></ErpPage>;
+    return <ErpPage eyebrow={t({ en: "Team", id: "Tim" })} title={t({ en: "Profile", id: "Profil" })}><Note>{t({ en: "This page is for HR staff, Production managers, Admins and Leadership.", id: "Halaman ini untuk Staf SDM, Manajer produksi, Admin, dan Pimpinan." })}</Note></ErpPage>;
   }
 
   return (
-    <ErpPage eyebrow="Team" title={person?.full_name ?? "Profile"} actions={back}>
+    <ErpPage eyebrow={t({ en: "Team", id: "Tim" })} title={person?.full_name ?? t({ en: "Profile", id: "Profil" })} actions={back}>
       <DataState state={base}>
         {({ people, members }) => {
-          if (!person) return <Note>This person could not be found.</Note>;
+          if (!person) return <Note>{t({ en: "This person could not be found.", id: "Personel ini tidak ditemukan." })}</Note>;
           const member = members.find((m) => m.id === person.profile_id);
           const skills = (person.skills ?? "").split(",").map((s) => s.trim()).filter(Boolean);
           const from = addDays(today, -WINDOW_DAYS);
@@ -170,8 +179,8 @@ export default function PersonProfilePage({ id }: { id: string }) {
                   <PersonAvatar name={person.full_name} url={member?.avatar_url} size={72} />
                   <div className="min-w-0 flex-1 basis-[260px]">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Chip label={person.status === "aktif" ? "Active" : "Inactive"} className={person.status === "aktif" ? "bg-[#E3F7F0] text-[#0E7A5C]" : undefined} />
-                      <span className="text-[14px] text-[#36525A]">{personTypeLabel(person.person_type)}</span>
+                      <Chip label={person.status === "aktif" ? t({ en: "Active", id: "Aktif" }) : t({ en: "Inactive", id: "Nonaktif" })} className={person.status === "aktif" ? "bg-[#E3F7F0] text-[#0E7A5C]" : undefined} />
+                      <span className="text-[14px] text-[#36525A]">{personTypeLabel(person.person_type, lang)}</span>
                       {records.data && (() => { const c = currentContract(records.data.contracts, today); return c?.position ? <span className="text-[14px] text-[#36525A]">· {c.position}</span> : null; })()}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[14px] text-[#36525A]">
@@ -183,8 +192,8 @@ export default function PersonProfilePage({ id }: { id: string }) {
                   </div>
                   {canManagePeople && editing === null && (
                     <div className="flex flex-wrap gap-2">
-                      <SecondaryButton onClick={() => setEditing("details")}>Edit details</SecondaryButton>
-                      <SecondaryButton onClick={() => setEditing("person")}>Edit employment</SecondaryButton>
+                      <SecondaryButton onClick={() => setEditing("details")}>{t({ en: "Edit details", id: "Ubah detail" })}</SecondaryButton>
+                      <SecondaryButton onClick={() => setEditing("person")}>{t({ en: "Edit employment", id: "Ubah kepegawaian" })}</SecondaryButton>
                     </div>
                   )}
                 </div>
@@ -204,43 +213,43 @@ export default function PersonProfilePage({ id }: { id: string }) {
                   return (
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-px overflow-clip rounded-2xl border border-[#0B6477]/12 bg-[#0B6477]/12 lg:grid-cols-4">
-                        <Stat label="Days present" value={`${days}`} sub={`last ${WINDOW_DAYS} days`} />
-                        <Stat label="Late arrivals" value={`${late}`} sub={`last ${WINDOW_DAYS} days`} />
-                        <Stat label="Hours worked" value={hoursText(worked)} sub="from clock-in and clock-out" />
-                        <Stat label="Hours on batches" value={hoursText(onBatches)} sub="logged against a batch" />
+                        <Stat label={t({ en: "Days present", id: "Hari hadir" })} value={`${days}`} sub={t({ en: `last ${WINDOW_DAYS} days`, id: `${WINDOW_DAYS} hari terakhir` })} />
+                        <Stat label={t({ en: "Late arrivals", id: "Terlambat" })} value={`${late}`} sub={t({ en: `last ${WINDOW_DAYS} days`, id: `${WINDOW_DAYS} hari terakhir` })} />
+                        <Stat label={t({ en: "Hours worked", id: "Jam kerja" })} value={hoursText(worked, lang)} sub={t({ en: "from clock-in and clock-out", id: "dari absen masuk dan pulang" })} />
+                        <Stat label={t({ en: "Hours on batches", id: "Jam di batch" })} value={hoursText(onBatches, lang)} sub={t({ en: "logged against a batch", id: "dicatat pada batch" })} />
                       </div>
 
-                      <Segmented value={tab} onChange={setTab} options={[{ key: "overview", label: "Overview" }, { key: "attendance", label: "Attendance" }, { key: "schedule", label: "Schedule and leave" }, { key: "activity", label: "Activity" }, { key: "contracts", label: "Contracts" }]} />
+                      <Segmented value={tab} onChange={setTab} options={[{ key: "overview", label: t({ en: "Overview", id: "Ringkasan" }) }, { key: "attendance", label: t({ en: "Attendance", id: "Presensi" }) }, { key: "schedule", label: t({ en: "Schedule and leave", id: "Jadwal dan izin" }) }, { key: "activity", label: t({ en: "Activity", id: "Aktivitas" }) }, { key: "contracts", label: t({ en: "Contracts", id: "Kontrak" }) }]} />
 
                       {tab === "overview" && (
                         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
                           <Card className="p-4">
-                            <h2 className={`${sectionTitle} mb-3`}>Details</h2>
+                            <h2 className={`${sectionTitle} mb-3`}>{t({ en: "Details", id: "Detail" })}</h2>
                             <Rows rows={[
-                              ["Type", personTypeLabel(person.person_type)],
-                              ["Supervisor", person.supervisor_name ?? "-"],
-                              ["Joined", person.joined_on ? formatLongDate(person.joined_on) : "-"],
-                              ["Left", person.left_on ? formatLongDate(person.left_on) : "-"],
-                              ["Login", person.has_account ? "Connected" : "None"],
-                              ["Emergency contact", person.emergency_contact || "-"],
+                              [t({ en: "Type", id: "Jenis" }), personTypeLabel(person.person_type, lang)],
+                              [t({ en: "Supervisor", id: "Atasan" }), person.supervisor_name ?? "-"],
+                              [t({ en: "Joined", id: "Bergabung" }), person.joined_on ? formatLongDate(person.joined_on, lang) : "-"],
+                              [t({ en: "Left", id: "Keluar" }), person.left_on ? formatLongDate(person.left_on, lang) : "-"],
+                              [t({ en: "Login", id: "Login" }), person.has_account ? t({ en: "Connected", id: "Terhubung" }) : t({ en: "None", id: "Tidak ada" })],
+                              [t({ en: "Emergency contact", id: "Kontak darurat" }), person.emergency_contact || "-"],
                             ]} />
                             {person.notes && <p className="mt-3 border-t border-[#EDF2F2] pt-3 text-[13.5px] leading-[1.5] text-[#36525A]">{person.notes}</p>}
                           </Card>
                           <div className="min-w-0 space-y-4">
                             <Card>
                               <div className="flex items-baseline justify-between gap-2 px-4 pt-3 pb-2">
-                                <h2 className={sectionTitle}>Recent activity</h2>
-                                {activity.length > 5 && <button type="button" onClick={() => setTab("activity")} className="text-[13px] font-medium text-[#0B6477] hover:underline">See all</button>}
+                                <h2 className={sectionTitle}>{t({ en: "Recent activity", id: "Aktivitas terbaru" })}</h2>
+                                {activity.length > 5 && <button type="button" onClick={() => setTab("activity")} className="text-[13px] font-medium text-[#0B6477] hover:underline">{t({ en: "See all", id: "Lihat semua" })}</button>}
                               </div>
                               <div className="border-t border-[#EDF2F2]"><ActivityList items={activity} limit={5} /></div>
                             </Card>
                             <Card>
-                              <h2 className={`${sectionTitle} px-4 pt-3 pb-2`}>Next shifts</h2>
-                              {upcoming.length === 0 ? <p className="border-t border-[#EDF2F2] px-4 py-5 text-center text-[14px] text-[#4F6B73]">Nothing scheduled.</p> : (
+                              <h2 className={`${sectionTitle} px-4 pt-3 pb-2`}>{t({ en: "Next shifts", id: "Shift berikutnya" })}</h2>
+                              {upcoming.length === 0 ? <p className="border-t border-[#EDF2F2] px-4 py-5 text-center text-[14px] text-[#4F6B73]">{t({ en: "Nothing scheduled.", id: "Belum ada jadwal." })}</p> : (
                                 <ul>
                                   {upcoming.slice(0, 5).map((s) => (
                                     <li key={s.id} className="flex items-center justify-between gap-3 border-t border-[#EDF2F2] px-4 py-2 text-[14px]">
-                                      <span className="text-[#0F2F36]">{formatLongDate(s.work_date)}</span>
+                                      <span className="text-[#0F2F36]">{formatLongDate(s.work_date, lang)}</span>
                                       <span className="tabular-nums text-[#4F6B73]">{clockText(s.start_at)}–{clockText(s.end_at)}</span>
                                     </li>
                                   ))}
@@ -251,17 +260,17 @@ export default function PersonProfilePage({ id }: { id: string }) {
                         </div>
                       )}
 
-                      {tab === "attendance" && <DataTable rows={attendance} rowKey={(a) => a.id} noun="records" columns={attendanceColumns} empty="No attendance recorded yet." pills={[{ key: "late", label: "Late", dot: "#E0A100", match: cameLate }, { key: "missed", label: "Missed clock-out", dot: "#E0A100", match: (a) => a.missed_out }]} />}
+                      {tab === "attendance" && <DataTable rows={attendance} rowKey={(a) => a.id} noun={t({ en: "records", id: "catatan" })} columns={attendanceColumns(t, lang)} empty={t({ en: "No attendance recorded yet.", id: "Belum ada presensi tercatat." })} pills={[{ key: "late", label: t({ en: "Late", id: "Terlambat" }), dot: "#E0A100", match: cameLate }, { key: "missed", label: t({ en: "Missed clock-out", id: "Lupa absen pulang" }), dot: "#E0A100", match: (a) => a.missed_out }]} />}
 
                       {tab === "schedule" && (
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <h2 className={sectionTitle}>Shifts</h2>
-                            <DataTable rows={shifts} rowKey={(s) => s.id} noun="shifts" columns={shiftColumns} empty="No shifts yet." initialPill="next" pills={[{ key: "next", label: "Coming up", dot: "#14919B", match: (s) => s.work_date >= today }, { key: "past", label: "Past", dot: "#8FA3A8", match: (s) => s.work_date < today }]} />
+                            <h2 className={sectionTitle}>{t({ en: "Shifts", id: "Shift" })}</h2>
+                            <DataTable rows={shifts} rowKey={(s) => s.id} noun={t({ en: "shifts", id: "shift" })} columns={shiftColumns(t, lang)} empty={t({ en: "No shifts yet.", id: "Belum ada shift." })} initialPill="next" pills={[{ key: "next", label: t({ en: "Coming up", id: "Mendatang" }), dot: "#14919B", match: (s) => s.work_date >= today }, { key: "past", label: t({ en: "Past", id: "Lewat" }), dot: "#8FA3A8", match: (s) => s.work_date < today }]} />
                           </div>
                           <div className="space-y-2">
-                            <h2 className={sectionTitle}>Leave</h2>
-                            <DataTable rows={leaves} rowKey={(l) => l.id} noun="requests" columns={leaveColumns} empty="No leave requests yet." />
+                            <h2 className={sectionTitle}>{t({ en: "Leave", id: "Izin" })}</h2>
+                            <DataTable rows={leaves} rowKey={(l) => l.id} noun={t({ en: "requests", id: "pengajuan" })} columns={leaveColumns(t, lang)} empty={t({ en: "No leave requests yet.", id: "Belum ada pengajuan izin." })} />
                           </div>
                         </div>
                       )}
@@ -270,7 +279,7 @@ export default function PersonProfilePage({ id }: { id: string }) {
 
                       {tab === "contracts" && (canReadPrivate ? (
                         <Card className="p-4"><ContractSection person={person} canEdit={canWriteContracts} /></Card>
-                      ) : <Note>Contracts open only for HR staff, Leadership and the person themselves.</Note>)}
+                      ) : <Note>{t({ en: "Contracts open only for HR staff, Leadership and the person themselves.", id: "Kontrak hanya terbuka untuk Staf SDM, Pimpinan, dan personel itu sendiri." })}</Note>)}
                     </div>
                   );
                 }}

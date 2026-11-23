@@ -17,7 +17,6 @@ import { DEFAULT_SIGNED_IN_PATH } from '../lib/features'
 import { AGROSPHERE_SIGNUP } from '../lib/agrosphere'
 import { accent, body, display } from '../lib/fonts'
 import { headLang, useLang, useT } from '../lib/i18n'
-import type { Lang } from '../lib/i18n'
 import SiteHeader from '../components/SiteHeader'
 import AuthGate from '../components/AuthGate'
 
@@ -43,32 +42,6 @@ export const Route = createFileRoute('/welcome')({
     }
   },
 })
-
-// Indonesian display for lib/account copy, keyed by its English text (the role
-// values and the English messages there stay as they are).
-const ROLE_LABEL_ID: Record<string, string> = {
-  Lecturer: 'Dosen',
-  Researcher: 'Peneliti',
-  Staff: 'Staf',
-  'Doctoral student (S3)': 'Mahasiswa doktoral (S3)',
-  'Master student (S2)': 'Mahasiswa magister (S2)',
-  'Undergraduate (S1)': 'Mahasiswa sarjana (S1)',
-  Alumni: 'Alumni',
-  Partner: 'Mitra',
-}
-
-const ONBOARDING_ERROR_ID: Record<string, string> = {
-  'Enter your full name.': 'Isi nama lengkap Anda.',
-  'Choose your role in the lab.': 'Pilih peran Anda di lab.',
-  'Enter your cohort as the year you started, for example 2024.': 'Isi angkatan Anda dengan tahun masuk, misalnya 2024.',
-  'Enter your student ID (NIM).': 'Isi NIM Anda.',
-  'Enter your research topic (a working title is fine).': 'Isi topik riset Anda (judul sementara pun tidak apa-apa).',
-}
-
-function roleLabel(role: string | null | undefined, lang: Lang): string {
-  const en = labRoleLabel(role)
-  return lang === 'id' ? (ROLE_LABEL_ID[en] ?? en) : en
-}
 
 // First stop after signing in: a short onboarding (who you are, and for
 // students their cohort, NIM, topic and supervisor), then a waiting room until
@@ -287,9 +260,9 @@ function OnboardingForm({
 
   const submit = async () => {
     // Step 1 checks only the identity part; the full check runs on the last step.
-    const problem = onboardingError(step === 1 && student ? { ...f, cohort: year, staff_id: '-', research_topic: '-' } : f, year)
+    const problem = onboardingError(step === 1 && student ? { ...f, cohort: year, staff_id: '-', research_topic: '-' } : f, year, lang)
     if (problem) {
-      setError(lang === 'id' ? (ONBOARDING_ERROR_ID[problem] ?? problem) : problem)
+      setError(problem)
       return
     }
     setError(null)
@@ -383,7 +356,7 @@ function OnboardingForm({
                       }`}
                       style={body}
                     >
-                      {lang === 'id' ? (ROLE_LABEL_ID[r.label] ?? r.label) : r.label}
+                      {lang === 'id' ? r.labelId : r.label}
                       {on && <Check className="h-4 w-4 shrink-0" />}
                     </button>
                   )
@@ -445,7 +418,7 @@ function OnboardingForm({
                 <option value="">{t({ en: 'Not listed yet', id: 'Belum ada di daftar' })}</option>
                 {supervisors.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.full_name} ({roleLabel(s.lab_role, lang)})
+                    {s.full_name} ({labRoleLabel(s.lab_role, lang)})
                   </option>
                 ))}
               </select>
@@ -501,7 +474,7 @@ function Waiting({
   const [stillPending, setStillPending] = useState(false)
   const rows: [string, string][] = [
     [t({ en: 'Name', id: 'Nama' }), profile?.full_name ?? ''],
-    [t({ en: 'Role', id: 'Peran' }), roleLabel(profile?.lab_role, lang)],
+    [t({ en: 'Role', id: 'Peran' }), labRoleLabel(profile?.lab_role, lang)],
   ]
   if (isStudentRole(profile?.lab_role)) {
     rows.push(

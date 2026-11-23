@@ -3,6 +3,7 @@ import { useAuth } from "../../lib/auth/auth";
 import { body, display } from "../../lib/fonts";
 import AgroGate from "../agrosphere/AgroGate";
 import SiteHeader from "../SiteHeader";
+import { useT } from "../../lib/i18n";
 
 // The ERP's door: signed in, onboarded and approved, and given the Plant Factory
 // (an ERP role, see supabase/agrosphere.sql), or no entry. Unlike the rest
@@ -11,14 +12,15 @@ import SiteHeader from "../SiteHeader";
 // without them. RLS still protects the data behind this.
 export default function ErpGate({ children }: { children: ReactNode }) {
   const { isConfigured } = useAuth();
+  const t = useT();
   if (!isConfigured && !import.meta.env.DEV) {
     return (
       <main>
         <SiteHeader />
         <section className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-white px-4 text-center" style={body}>
           <div>
-            <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-[#0F2F36]" style={display}>The ERP cannot open here yet</h1>
-            <p className="mt-2 text-[15px] leading-[1.5] text-[#4F6B73]">Login settings are not filled in for this deployment.</p>
+            <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-[#0F2F36]" style={display}>{t({ en: "The ERP cannot open here yet", id: "ERP belum bisa dibuka di sini" })}</h1>
+            <p className="mt-2 text-[15px] leading-[1.5] text-[#4F6B73]">{t({ en: "Login settings are not filled in for this deployment.", id: "Pengaturan login belum diisi untuk deployment ini." })}</p>
           </div>
         </section>
       </main>

@@ -3,25 +3,27 @@
 // are missing and every signed-in user counts as an onboarded, active member,
 // so the site keeps working during the switch.
 import { supabase } from './auth/supabase'
+import type { Lang } from './i18n-core'
 import type { Profile } from './profile'
 
 export type AccountStatus = 'pending' | 'active' | 'suspended' | 'rejected'
 
 export type LabRole = 'dosen' | 'peneliti' | 'staf' | 's3' | 's2' | 's1' | 'alumni' | 'mitra'
 
-export const LAB_ROLES: { value: LabRole; label: string }[] = [
-  { value: 'dosen', label: 'Lecturer' },
-  { value: 'peneliti', label: 'Researcher' },
-  { value: 'staf', label: 'Staff' },
-  { value: 's3', label: 'Doctoral student (S3)' },
-  { value: 's2', label: 'Master student (S2)' },
-  { value: 's1', label: 'Undergraduate (S1)' },
-  { value: 'alumni', label: 'Alumni' },
-  { value: 'mitra', label: 'Partner' },
+export const LAB_ROLES: { value: LabRole; label: string; labelId: string }[] = [
+  { value: 'dosen', label: 'Lecturer', labelId: 'Dosen' },
+  { value: 'peneliti', label: 'Researcher', labelId: 'Peneliti' },
+  { value: 'staf', label: 'Staff', labelId: 'Staf' },
+  { value: 's3', label: 'Doctoral student (S3)', labelId: 'Mahasiswa doktoral (S3)' },
+  { value: 's2', label: 'Master student (S2)', labelId: 'Mahasiswa magister (S2)' },
+  { value: 's1', label: 'Undergraduate (S1)', labelId: 'Mahasiswa sarjana (S1)' },
+  { value: 'alumni', label: 'Alumni', labelId: 'Alumni' },
+  { value: 'mitra', label: 'Partner', labelId: 'Mitra' },
 ]
 
-export function labRoleLabel(role: string | null | undefined): string {
-  return LAB_ROLES.find((r) => r.value === role)?.label ?? ''
+export function labRoleLabel(role: string | null | undefined, lang: Lang = 'en'): string {
+  const r = LAB_ROLES.find((x) => x.value === role)
+  return r ? (lang === 'id' ? r.labelId : r.label) : ''
 }
 
 export function isStudentRole(role: string | null | undefined): boolean {
@@ -98,13 +100,16 @@ export async function listSupervisors(): Promise<{ id: string; full_name: string
 }
 
 // Validation for the onboarding form; returns the first problem or null.
-export function onboardingError(f: OnboardingFields, currentYear: number): string | null {
-  if (f.full_name.trim().length < 3) return 'Enter your full name.'
-  if (!LAB_ROLES.some((r) => r.value === f.lab_role)) return 'Choose your role in the lab.'
+export function onboardingError(f: OnboardingFields, currentYear: number, lang: Lang = 'en'): string | null {
+  const id = lang === 'id'
+  if (f.full_name.trim().length < 3) return id ? 'Isi nama lengkap Anda.' : 'Enter your full name.'
+  if (!LAB_ROLES.some((r) => r.value === f.lab_role)) return id ? 'Pilih peran Anda di lab.' : 'Choose your role in the lab.'
   if (isStudentRole(f.lab_role)) {
-    if (!f.cohort || f.cohort < 1990 || f.cohort > currentYear) return 'Enter your cohort as the year you started, for example 2024.'
-    if (!f.staff_id.trim()) return 'Enter your student ID (NIM).'
-    if (!f.research_topic.trim()) return 'Enter your research topic (a working title is fine).'
+    if (!f.cohort || f.cohort < 1990 || f.cohort > currentYear)
+      return id ? 'Isi angkatan Anda dengan tahun masuk, misalnya 2024.' : 'Enter your cohort as the year you started, for example 2024.'
+    if (!f.staff_id.trim()) return id ? 'Isi NIM Anda.' : 'Enter your student ID (NIM).'
+    if (!f.research_topic.trim())
+      return id ? 'Isi topik riset Anda (judul sementara pun tidak apa-apa).' : 'Enter your research topic (a working title is fine).'
   }
   return null
 }

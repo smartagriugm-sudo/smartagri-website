@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CostDetailPage } from "../components/erp/CostPage";
+import { headLang } from "../lib/i18n";
 
 export const Route = createFileRoute("/erp/costs/$id")({
   component: Page,
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Batch costs | agrosphere" },
+      { title: headLang(matches) === "id" ? "Biaya batch | agrosphere" : "Batch costs | agrosphere" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

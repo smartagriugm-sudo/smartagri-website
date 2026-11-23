@@ -1,4 +1,5 @@
 import { check, db, parseAmount, unwrap } from "./foundation";
+import type { Lang } from "../i18n-core";
 
 // Inventory (supabase/pf-inventory.sql): every kind of stock, purchasing, what a
 // recipe uses up by itself, and stock takes. Stock changes only through
@@ -7,17 +8,20 @@ import { check, db, parseAmount, unwrap } from "./foundation";
 /* -------------------------------------------------------------------- types */
 
 export const ITEM_CATEGORIES = [
-  { key: "benih", label: "Seed" },
-  { key: "nutrisi", label: "Nutrients" },
-  { key: "media", label: "Growing media" },
-  { key: "kemasan", label: "Packaging" },
-  { key: "suku_cadang", label: "Spare parts" },
-  { key: "lainnya", label: "Other" },
+  { key: "benih", label: "Seed", labelId: "Benih" },
+  { key: "nutrisi", label: "Nutrients", labelId: "Nutrisi" },
+  { key: "media", label: "Growing media", labelId: "Media tanam" },
+  { key: "kemasan", label: "Packaging", labelId: "Kemasan" },
+  { key: "suku_cadang", label: "Spare parts", labelId: "Suku cadang" },
+  { key: "lainnya", label: "Other", labelId: "Lainnya" },
 ] as const;
 
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number]["key"];
 
-export const categoryLabel = (key: string) => ITEM_CATEGORIES.find((c) => c.key === key)?.label ?? key;
+export const categoryLabel = (key: string, lang: Lang = "en") => {
+  const c = ITEM_CATEGORIES.find((x) => x.key === key);
+  return c ? (lang === "id" ? c.labelId : c.label) : key;
+};
 
 export const ITEM_UNITS = ["pcs", "kg", "gram", "liter", "ml", "meter", "biji"] as const;
 
@@ -68,6 +72,16 @@ export const MOVE_LABELS: Record<MoveType, string> = {
   opname: "Stock count",
 };
 
+const MOVE_LABELS_ID: Record<MoveType, string> = {
+  masuk: "Masuk",
+  pakai_semai: "Dipakai untuk semai",
+  pakai_batch: "Dipakai di batch",
+  pakai_lain: "Dipakai",
+  koreksi: "Koreksi",
+  opname: "Stok opname",
+};
+export const moveLabel = (type: MoveType, lang: Lang = "en") => (lang === "id" ? MOVE_LABELS_ID : MOVE_LABELS)[type] ?? type;
+
 export type StockMove = { id: number; lot_id: string; type: MoveType; qty: number; batch_id: string | null; reason: string; at: string; lot_no: string; item_id: string; item_name: string; unit: string; batch_code: string | null };
 
 export type Shortage = { id: string; item_id: string; batch_id: string; qty_short: number; at: string; resolved_at: string | null; note: string; item_name: string; unit: string; batch_code: string };
@@ -94,10 +108,10 @@ export type PoLine = { id: string; po_id: string; item_id: string; qty: number; 
 
 export type MaterialBasis = "per_benih" | "per_tanaman" | "per_kg_panen";
 
-export const MATERIAL_BASES: { key: MaterialBasis; label: string; when: string }[] = [
-  { key: "per_benih", label: "Per seed", when: "at sowing" },
-  { key: "per_tanaman", label: "Per plant", when: "at transplant" },
-  { key: "per_kg_panen", label: "Per kg harvested", when: "at harvest" },
+export const MATERIAL_BASES: { key: MaterialBasis; label: string; when: string; labelId: string; whenId: string }[] = [
+  { key: "per_benih", label: "Per seed", when: "at sowing", labelId: "Per benih", whenId: "saat semai" },
+  { key: "per_tanaman", label: "Per plant", when: "at transplant", labelId: "Per tanaman", whenId: "saat pindah tanam" },
+  { key: "per_kg_panen", label: "Per kg harvested", when: "at harvest", labelId: "Per kg panen", whenId: "saat panen" },
 ];
 
 export type RecipeMaterial = { id: string; recipe_id: string; item_id: string; basis: MaterialBasis; qty: number; sku: string; item_name: string; unit: string };
@@ -112,12 +126,12 @@ const parseQty = (s: string) => (s.trim() === "" ? null : Number(s.trim().replac
 const parseMoney = parseAmount;
 
 /** Units are stored in the database's own words. */
-export const unitLabel = (unit: string) => (unit === "biji" ? "seeds" : unit);
+export const unitLabel = (unit: string, lang: Lang = "en") => (unit === "biji" && lang !== "id" ? "seeds" : unit);
 
-export const formatQty = (qty: number, unit: string) => `${qty.toLocaleString("en-GB", { maximumFractionDigits: 2 })} ${unitLabel(unit)}`;
+export const formatQty = (qty: number, unit: string, lang: Lang = "en") => `${qty.toLocaleString(lang === "id" ? "id-ID" : "en-GB", { maximumFractionDigits: 2 })} ${unitLabel(unit, lang)}`;
 
 /** What is missing, in what can be bought: a part of a piece or a seed rounds up to a whole one. */
-export const formatShort = (qty: number, unit: string) => formatQty(unit === "pcs" || unit === "biji" ? Math.ceil(qty) : qty, unit);
+export const formatShort = (qty: number, unit: string, lang: Lang = "en") => formatQty(unit === "pcs" || unit === "biji" ? Math.ceil(qty) : qty, unit, lang);
 
 export type PoStage = "draf" | "menunggu" | "sebagian" | "diterima" | "batal";
 
@@ -129,6 +143,9 @@ export const PO_STAGE: Record<PoStage, { label: string; className: string }> = {
   batal: { label: "Cancelled", className: "bg-[#EEF3F4] text-[#4F6B73]" },
 };
 
+const PO_STAGE_ID: Record<PoStage, string> = { draf: "Draf", menunggu: "Menunggu barang", sebagian: "Diterima sebagian", diterima: "Diterima", batal: "Dibatalkan" };
+export const poStageLabel = (stage: PoStage, lang: Lang = "en") => (lang === "id" ? PO_STAGE_ID[stage] : PO_STAGE[stage].label);
+
 export function poStage(p: Pick<PurchaseOrder, "status" | "open_lines" | "received_lines">): PoStage {
   if (p.status === "batal") return "batal";
   if (p.status === "draf") return "draf";
@@ -138,46 +155,49 @@ export function poStage(p: Pick<PurchaseOrder, "status" | "open_lines" | "receiv
 
 export type ItemForm = { name: string; category: ItemCategory; unit: string; reorder: string; expires: boolean; notes: string; active: boolean };
 
-export function parseItemForm(f: ItemForm) {
-  if (!f.name.trim()) return { error: "An item name is required." } as const;
+export function parseItemForm(f: ItemForm, lang: Lang = "en") {
+  const id = lang === "id";
+  if (!f.name.trim()) return { error: id ? "Nama barang wajib diisi." : "An item name is required." } as const;
   const reorder = parseQty(f.reorder);
-  if (reorder !== null && (!Number.isFinite(reorder) || reorder < 0)) return { error: "The minimum level must be a number, not negative." } as const;
+  if (reorder !== null && (!Number.isFinite(reorder) || reorder < 0)) return { error: id ? "Batas minimum harus berupa angka, tidak boleh negatif." : "The minimum level must be a number, not negative." } as const;
   return { error: null, reorder } as const;
 }
 
-export function parseQtyInput(s: string) {
+export function parseQtyInput(s: string, lang: Lang = "en") {
   const qty = parseQty(s);
-  if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: "Quantity must be above 0." } as const;
+  if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: lang === "id" ? "Jumlah harus lebih dari 0." : "Quantity must be above 0." } as const;
   return { error: null, qty } as const;
 }
 
 export type ReceiveForm = { lotNo: string; qty: string; receivedOn: string; expiryOn: string };
 
-export function parseReceive(f: ReceiveForm, today: string, needsExpiry: boolean, left?: number) {
-  if (!f.lotNo.trim()) return { error: "A lot number is required." } as const;
-  const parsed = parseQtyInput(f.qty);
+export function parseReceive(f: ReceiveForm, today: string, needsExpiry: boolean, left?: number, lang: Lang = "en") {
+  const id = lang === "id";
+  if (!f.lotNo.trim()) return { error: id ? "Nomor lot wajib diisi." : "A lot number is required." } as const;
+  const parsed = parseQtyInput(f.qty, lang);
   if (parsed.error !== null) return parsed;
-  if (left !== undefined && parsed.qty > left) return { error: `More than ordered: still short by ${left.toLocaleString("en-GB")}.` } as const;
-  if (!f.receivedOn || f.receivedOn > today) return { error: "The received date cannot be in the future." } as const;
-  if (needsExpiry && !f.expiryOn) return { error: "An expiry date is required for this item." } as const;
-  if (f.expiryOn && f.expiryOn < f.receivedOn) return { error: "The expiry date is before the received date." } as const;
+  if (left !== undefined && parsed.qty > left) return { error: id ? `Melebihi pesanan: sisa yang belum datang ${left.toLocaleString("id-ID")}.` : `More than ordered: still short by ${left.toLocaleString("en-GB")}.` } as const;
+  if (!f.receivedOn || f.receivedOn > today) return { error: id ? "Tanggal terima tidak boleh di masa depan." : "The received date cannot be in the future." } as const;
+  if (needsExpiry && !f.expiryOn) return { error: id ? "Barang ini wajib diberi tanggal kedaluwarsa." : "An expiry date is required for this item." } as const;
+  if (f.expiryOn && f.expiryOn < f.receivedOn) return { error: id ? "Tanggal kedaluwarsa lebih awal dari tanggal terima." : "The expiry date is before the received date." } as const;
   return { error: null, qty: parsed.qty } as const;
 }
 
 export type PoLineForm = { itemId: string; qty: string; unitPrice: string };
 
-export function parsePoForm(supplierId: string, orderedOn: string, expectedOn: string, rows: readonly PoLineForm[]) {
-  if (!supplierId) return { error: "Choose a supplier." } as const;
-  if (!orderedOn) return { error: "An order date is required." } as const;
-  if (expectedOn && expectedOn < orderedOn) return { error: "The expected arrival is before the order date." } as const;
-  if (rows.length === 0) return { error: "Add at least one line." } as const;
+export function parsePoForm(supplierId: string, orderedOn: string, expectedOn: string, rows: readonly PoLineForm[], lang: Lang = "en") {
+  const id = lang === "id";
+  if (!supplierId) return { error: id ? "Pilih pemasok." : "Choose a supplier." } as const;
+  if (!orderedOn) return { error: id ? "Tanggal pesanan wajib diisi." : "An order date is required." } as const;
+  if (expectedOn && expectedOn < orderedOn) return { error: id ? "Perkiraan tiba lebih awal dari tanggal pesanan." : "The expected arrival is before the order date." } as const;
+  if (rows.length === 0) return { error: id ? "Tambahkan minimal satu baris." : "Add at least one line." } as const;
   const lines = [];
   for (const [i, r] of rows.entries()) {
-    if (!r.itemId) return { error: `Line ${i + 1}: choose an item.` } as const;
+    if (!r.itemId) return { error: id ? `Baris ${i + 1}: pilih barang.` : `Line ${i + 1}: choose an item.` } as const;
     const qty = parseQty(r.qty);
-    if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: `Line ${i + 1}: quantity must be above 0.` } as const;
+    if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: id ? `Baris ${i + 1}: jumlah harus lebih dari 0.` : `Line ${i + 1}: quantity must be above 0.` } as const;
     const price = parseMoney(r.unitPrice);
-    if (price === null || !Number.isFinite(price) || price < 0) return { error: `Line ${i + 1}: price must be a number.` } as const;
+    if (price === null || !Number.isFinite(price) || price < 0) return { error: id ? `Baris ${i + 1}: harga harus berupa angka.` : `Line ${i + 1}: price must be a number.` } as const;
     lines.push({ item_id: r.itemId, qty, unit_price: price });
   }
   return { error: null, lines } as const;
@@ -191,27 +211,29 @@ export const poFormTotal = (rows: readonly PoLineForm[]) =>
   }, 0);
 
 /** Only what was actually counted goes in: an empty box means that lot was not counted, not that it is empty. */
-export function parseCountRows(rows: readonly { lotId: string; counted: string }[]) {
+export function parseCountRows(rows: readonly { lotId: string; counted: string }[], lang: Lang = "en") {
+  const id = lang === "id";
   const out: { lot_id: string; counted: number }[] = [];
   for (const r of rows) {
     const value = parseQty(r.counted);
     if (value === null) continue;
-    if (!Number.isFinite(value) || value < 0) return { error: "The count must be a number, not negative." } as const;
+    if (!Number.isFinite(value) || value < 0) return { error: id ? "Hasil hitung harus berupa angka, tidak boleh negatif." : "The count must be a number, not negative." } as const;
     out.push({ lot_id: r.lotId, counted: value });
   }
-  if (out.length === 0) return { error: "Enter a count for at least one lot." } as const;
+  if (out.length === 0) return { error: id ? "Isi hasil hitung untuk minimal satu lot." : "Enter a count for at least one lot." } as const;
   return { error: null, rows: out } as const;
 }
 
-export function parseMaterialRows(rows: readonly { itemId: string; basis: MaterialBasis; qty: string }[]) {
+export function parseMaterialRows(rows: readonly { itemId: string; basis: MaterialBasis; qty: string }[], lang: Lang = "en") {
+  const id = lang === "id";
   const out: { item_id: string; basis: MaterialBasis; qty: number }[] = [];
   const seen = new Set<string>();
   for (const [i, r] of rows.entries()) {
-    if (!r.itemId) return { error: `Line ${i + 1}: choose an item.` } as const;
+    if (!r.itemId) return { error: id ? `Baris ${i + 1}: pilih barang.` : `Line ${i + 1}: choose an item.` } as const;
     const qty = parseQty(r.qty);
-    if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: `Line ${i + 1}: quantity must be above 0.` } as const;
+    if (qty === null || !Number.isFinite(qty) || qty <= 0) return { error: id ? `Baris ${i + 1}: jumlah harus lebih dari 0.` : `Line ${i + 1}: quantity must be above 0.` } as const;
     const key = `${r.itemId}:${r.basis}`;
-    if (seen.has(key)) return { error: `Line ${i + 1}: this item and basis are already listed.` } as const;
+    if (seen.has(key)) return { error: id ? `Baris ${i + 1}: barang dan dasar hitung ini sudah ada.` : `Line ${i + 1}: this item and basis are already listed.` } as const;
     seen.add(key);
     out.push({ item_id: r.itemId, basis: r.basis, qty });
   }
@@ -339,7 +361,7 @@ export async function itemPhotoLinks(paths: readonly string[]): Promise<Map<stri
 }
 
 /** WebP at a sensible size, so a phone photo of a sack of fertilizer does not cost a megabyte on every list. */
-export async function compressProductPhoto(file: Blob, maxSide = 900): Promise<Blob> {
+export async function compressProductPhoto(file: Blob, maxSide = 900, lang: Lang = "en"): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
@@ -347,15 +369,15 @@ export async function compressProductPhoto(file: Blob, maxSide = 900): Promise<B
   canvas.height = Math.round(bitmap.height * scale);
   canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
-  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("The photo could not be processed."))), "image/webp", 0.82));
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error(lang === "id" ? "Foto tidak dapat diproses." : "The photo could not be processed."))), "image/webp", 0.82));
 }
 
-export async function setItemPhoto(item: string, file: Blob | null, previous: string | null | undefined) {
+export async function setItemPhoto(item: string, file: Blob | null, previous: string | null | undefined, lang: Lang = "en") {
   let path: string | null = null;
   if (file) {
     path = `items/${item}/${crypto.randomUUID()}.webp`;
     const { error } = await db().storage.from(MEDIA_BUCKET).upload(path, file, { contentType: "image/webp", upsert: false });
-    if (error) throw new Error(`The photo could not be uploaded: ${error.message}. Has pf-profile-media.sql been run?`);
+    if (error) throw new Error(lang === "id" ? `Foto tidak dapat diunggah: ${error.message}. Apakah pf-profile-media.sql sudah dijalankan?` : `The photo could not be uploaded: ${error.message}. Has pf-profile-media.sql been run?`);
   }
   check(await db().rpc("pf_item_photo_set", { item, path }));
   if (previous) await db().storage.from(MEDIA_BUCKET).remove([previous]);

@@ -1,6 +1,7 @@
 import { supabase } from "../auth/supabase";
 import { RACK_SPEC, holeId } from "./facility";
 import { SHELVES, slotId } from "./chamber";
+import type { Lang } from "../i18n-core";
 
 // The ERP's master data (supabase/pf-foundation.sql): places, crops, versioned
 // recipes, roles and the audit log. RLS decides who may do what; the checks here
@@ -20,6 +21,31 @@ export const ERP_ROLES = [
 ] as const;
 
 export type ErpRole = (typeof ERP_ROLES)[number]["key"];
+
+const ERP_ROLES_ID: Record<ErpRole, { label: string; note: string }> = {
+  pimpinan: { label: "Pimpinan", note: "Melihat semua data dan log audit" },
+  admin: { label: "Admin sistem", note: "Mengelola peran dan lokasi" },
+  manajer_produksi: { label: "Manajer produksi", note: "Mengelola tanaman, resep, lot benih, dan batch" },
+  staf_penjualan: { label: "Staf penjualan", note: "Mengelola pelanggan, pesanan, invoice, dan pembayaran" },
+  staf_sdm: { label: "Staf SDM", note: "Mengelola personel, kontrak, jadwal, dan presensi" },
+  teknisi: { label: "Teknisi", note: "Mengelola perangkat, kalibrasi, dan token" },
+  operator: { label: "Operator", note: "Mencatat semai, pindah tanam, dan panen" },
+  peneliti: { label: "Peneliti dan mahasiswa", note: "Membaca data" },
+};
+
+/** A role's name in the reader's language; an unknown key comes back as it is. */
+export function roleLabel(key: string, lang: Lang = "en"): string {
+  const en = ERP_ROLES.find((x) => x.key === key);
+  if (!en) return key;
+  return lang === "id" ? ERP_ROLES_ID[en.key].label : en.label;
+}
+
+/** What a role may do, in the reader's language. */
+export function roleNote(key: string, lang: Lang = "en"): string {
+  const en = ERP_ROLES.find((x) => x.key === key);
+  if (!en) return "";
+  return lang === "id" ? ERP_ROLES_ID[en.key].note : en.note;
+}
 
 export type ErpAccess = { canAdmin: boolean; canManageProduction: boolean; canOperate: boolean; canMaintain: boolean; canReadAudit: boolean; canSell: boolean; canReadSales: boolean; canReadPurchase: boolean; canManagePeople: boolean; canSchedule: boolean; canReadPeople: boolean; canReadPrivate: boolean; canWriteContracts: boolean; canSweepPhotos: boolean; canReadCost: boolean; canReadMaintenance: boolean };
 
@@ -65,6 +91,12 @@ export const SLOT_STATUSES: { key: SlotStatus; label: string; color: string }[] 
   { key: "sanitasi", label: "Sanitation", color: "#7FB7E8" },
 ];
 
+const SLOT_STATUS_ID: Record<SlotStatus, string> = { available: "Siap dipakai", maintenance: "Pemeliharaan", retired: "Tidak dipakai", sanitasi: "Sanitasi" };
+
+export function slotStatusLabel(key: SlotStatus, lang: Lang = "en"): string {
+  return lang === "id" ? SLOT_STATUS_ID[key] : (SLOT_STATUSES.find((x) => x.key === key)?.label ?? key);
+}
+
 export const LEVEL_LABELS: Record<LocationLevel, string> = {
   site: "Site",
   room: "Room",
@@ -76,6 +108,20 @@ export const LEVEL_LABELS: Record<LocationLevel, string> = {
   chamber_shelf: "Chamber shelf",
   tray_position: "Tray position",
 };
+
+const LEVEL_LABELS_ID: Record<LocationLevel, string> = {
+  site: "Situs",
+  room: "Ruang",
+  rack: "Rack",
+  tier: "Tier",
+  gully: "Gully",
+  hole: "Lubang",
+  chamber: "Chamber",
+  chamber_shelf: "Rak chamber",
+  tray_position: "Posisi tray",
+};
+
+export const levelLabel = (level: LocationLevel, lang: Lang = "en") => (lang === "id" ? LEVEL_LABELS_ID : LEVEL_LABELS)[level] ?? level;
 
 export type PfLocation = {
   id: string;
@@ -165,13 +211,14 @@ export function cropToForm(c: PfCrop): CropForm {
 
 const parseNumber = (s: string) => (s.trim() === "" ? null : Number(s.trim().replace(",", ".")));
 
-export function parseCropForm(f: CropForm): { fields: CropFields; error: null } | { fields: null; error: string } {
+export function parseCropForm(f: CropForm, lang: Lang = "en"): { fields: CropFields; error: null } | { fields: null; error: string } {
+  const id = lang === "id";
   const name = f.name.trim();
-  if (!name) return { fields: null, error: "A crop name is required." };
+  if (!name) return { fields: null, error: id ? "Nama tanaman wajib diisi." : "A crop name is required." };
   const cycle = parseNumber(f.cycleDays);
-  if (cycle !== null && (!Number.isInteger(cycle) || cycle <= 0)) return { fields: null, error: "The cycle must be a whole number above 0." };
+  if (cycle !== null && (!Number.isInteger(cycle) || cycle <= 0)) return { fields: null, error: id ? "Siklus harus bilangan bulat di atas 0." : "The cycle must be a whole number above 0." };
   const germ = parseNumber(f.germRate);
-  if (germ !== null && (!Number.isFinite(germ) || germ < 0 || germ > 100)) return { fields: null, error: "Germination must be 0–100%." };
+  if (germ !== null && (!Number.isFinite(germ) || germ < 0 || germ > 100)) return { fields: null, error: id ? "Perkecambahan harus 0–100%." : "Germination must be 0–100%." };
   return {
     fields: { name, variety: f.variety.trim(), cycle_days: cycle, germ_rate: germ, notes: f.notes.trim(), active: f.active },
     error: null,
@@ -190,6 +237,10 @@ export const RECIPE_STATUS: Record<RecipeStatus, { label: string; className: str
   retired: { label: "Done", className: "bg-[#EEF3F4] text-[#4F6B73]" },
 };
 
+const RECIPE_STATUS_ID: Record<RecipeStatus, string> = { draft: "Draf", active: "Aktif", retired: "Selesai" };
+
+export const recipeStatusLabel = (s: RecipeStatus, lang: Lang = "en") => (lang === "id" ? RECIPE_STATUS_ID[s] : RECIPE_STATUS[s].label);
+
 export const RECIPE_PHASES = [
   { key: "semai", label: "Sow" },
   { key: "germinasi", label: "Germination" },
@@ -200,7 +251,9 @@ export const RECIPE_PHASES = [
 
 export type RecipePhaseKey = (typeof RECIPE_PHASES)[number]["key"];
 
-export const phaseLabel = (k: string) => RECIPE_PHASES.find((p) => p.key === k)?.label ?? k;
+const RECIPE_PHASES_ID: Record<string, string> = { semai: "Semai", germinasi: "Perkecambahan", bibit: "Bibit", vegetatif: "Vegetatif", pra_panen: "Pra-panen" };
+
+export const phaseLabel = (k: string, lang: Lang = "en") => (lang === "id" ? RECIPE_PHASES_ID[k] : undefined) ?? RECIPE_PHASES.find((p) => p.key === k)?.label ?? k;
 
 export type PfRecipe = {
   id: string;
@@ -257,17 +310,18 @@ export function phaseToForm(p: PfRecipePhase): PhaseForm {
 }
 
 /** Rows in screen order become seq 1, 2, 3... */
-export function parsePhaseForms(forms: readonly PhaseForm[]): { fields: PhaseFields[]; error: null } | { fields: null; error: string } {
-  if (forms.length === 0) return { fields: null, error: "A recipe needs at least one phase." };
+export function parsePhaseForms(forms: readonly PhaseForm[], lang: Lang = "en"): { fields: PhaseFields[]; error: null } | { fields: null; error: string } {
+  const id = lang === "id";
+  if (forms.length === 0) return { fields: null, error: id ? "Resep perlu minimal satu fase." : "A recipe needs at least one phase." };
   const fields: PhaseFields[] = [];
   for (const [i, f] of forms.entries()) {
-    const where = `Phase ${i + 1} (${phaseLabel(f.phase)})`;
+    const where = id ? `Fase ${i + 1} (${phaseLabel(f.phase, lang)})` : `Phase ${i + 1} (${phaseLabel(f.phase)})`;
     const days = parseNumber(f.durationDays);
-    if (days === null || !Number.isInteger(days) || days <= 0) return { fields: null, error: `${where}: phase length must be a whole number above 0.` };
+    if (days === null || !Number.isInteger(days) || days <= 0) return { fields: null, error: id ? `${where}: lama fase harus bilangan bulat di atas 0.` : `${where}: phase length must be a whole number above 0.` };
     const photo = parseNumber(f.photoperiodH);
-    if (photo !== null && (!Number.isFinite(photo) || photo < 0 || photo > 24)) return { fields: null, error: `${where}: photoperiod must be 0–24 hours.` };
+    if (photo !== null && (!Number.isFinite(photo) || photo < 0 || photo > 24)) return { fields: null, error: id ? `${where}: fotoperiode harus 0–24 jam.` : `${where}: photoperiod must be 0–24 hours.` };
     const ppfd = parseNumber(f.ppfdUmol);
-    if (ppfd !== null && (!Number.isFinite(ppfd) || ppfd < 0)) return { fields: null, error: `${where}: PPFD cannot be negative.` };
+    if (ppfd !== null && (!Number.isFinite(ppfd) || ppfd < 0)) return { fields: null, error: id ? `${where}: PPFD tidak boleh negatif.` : `${where}: PPFD cannot be negative.` };
     fields.push({ phase: f.phase, seq: i + 1, duration_days: days, photoperiod_h: photo, ppfd_umol: ppfd });
   }
   return { fields, error: null };
@@ -326,7 +380,54 @@ export const AUDIT_TABLES: { key: string; label: string }[] = [
   { key: "pf_recipe_target", label: "Recipe reference" },
 ];
 
+const AUDIT_TABLES_ID: Record<string, string> = {
+  pf_location: "Lokasi",
+  pf_crop: "Tanaman",
+  pf_recipe: "Resep",
+  pf_recipe_phase: "Fase resep",
+  pf_user_role: "Peran",
+  pf_batch: "Batch",
+  pf_harvest_lot: "Lot panen",
+  pf_stock_lot: "Lot benih",
+  pf_item: "Barang",
+  pf_cost_entry: "Tagihan",
+  pf_labor_rate: "Tarif tenaga kerja",
+  pf_lot_price: "Harga lot",
+  pf_maintenance_plan: "Rencana pemeliharaan",
+  pf_work_order: "Perintah kerja",
+  pf_person: "Personel",
+  pf_shift: "Jadwal",
+  pf_leave: "Cuti",
+  pf_work_area: "Area kerja",
+  pf_labor_log: "Jam kerja",
+  pf_purchase_order: "Pembelian",
+  pf_po_line: "Baris pembelian",
+  pf_recipe_material: "Bahan resep",
+  pf_stock_count: "Stok opname",
+  pf_stock_shortage: "Kekurangan stok",
+  pf_partner: "Pelanggan",
+  pf_sales_order: "Pesanan",
+  pf_so_allocation: "Alokasi lot",
+  pf_delivery: "Pengiriman",
+  pf_invoice: "Invoice",
+  pf_payment: "Pembayaran",
+  pf_tax_rate: "Tarif pajak",
+  pf_asset: "Perangkat",
+  pf_calibration: "Kalibrasi",
+  pf_alarm_rule: "Aturan alarm",
+  pf_recipe_target: "Acuan resep",
+};
+
+/** The kind of data a table holds, in the reader's language. */
+export function auditTableLabel(key: string, lang: Lang = "en"): string {
+  return (lang === "id" ? AUDIT_TABLES_ID[key] : undefined) ?? AUDIT_TABLES.find((x) => x.key === key)?.label ?? key;
+}
+
 export const AUDIT_ACTIONS: Record<AuditEntry["action"], string> = { INSERT: "Created", UPDATE: "Changed", DELETE: "Removed" };
+
+const AUDIT_ACTIONS_ID: Record<AuditEntry["action"], string> = { INSERT: "Dibuat", UPDATE: "Diubah", DELETE: "Dihapus" };
+
+export const auditActionLabel = (a: AuditEntry["action"], lang: Lang = "en") => (lang === "id" ? AUDIT_ACTIONS_ID : AUDIT_ACTIONS)[a];
 
 export type AuditChange = { field: string; from: unknown; to: unknown };
 
@@ -353,16 +454,16 @@ export function groupAudit(entries: readonly AuditEntry[]): AuditGroup[] {
   return groups;
 }
 
-export function auditSubject(e: Pick<AuditEntry, "old_data" | "new_data" | "row_id">): string {
+export function auditSubject(e: Pick<AuditEntry, "old_data" | "new_data" | "row_id">, lang: Lang = "en"): string {
   const d = e.new_data ?? e.old_data ?? {};
   const pick = (k: string) => (typeof d[k] === "string" && d[k] ? (d[k] as string) : "");
-  if (pick("role")) return ERP_ROLES.find((r) => r.key === pick("role"))?.label ?? pick("role");
+  if (pick("role")) return roleLabel(pick("role"), lang);
   if (pick("code")) return typeof d.version === "number" ? `${pick("code")} v${d.version}` : pick("code");
   if (pick("name")) return cropLabel({ name: pick("name"), variety: pick("variety") });
-  if (pick("phase")) return phaseLabel(pick("phase"));
+  if (pick("phase")) return phaseLabel(pick("phase"), lang);
   for (const k of ["wo_no", "po_no", "lot_code", "lot_no", "full_name", "title", "description", "sku"]) if (pick(k)) return pick(k);
   const day = pick("work_date") || pick("start_date") || pick("valid_from");
-  if (day) return `for ${day}`;
+  if (day) return lang === "id" ? `untuk ${day}` : `for ${day}`;
   // An id means nothing to a reader; what changed is under Details.
   return "";
 }
@@ -406,7 +507,47 @@ const AUDIT_NOUNS: Record<string, [string, string]> = {
   pf_recipe_target: ["recipe reference", "recipe references"],
 };
 
-export function auditNoun(table: string, count: number): string {
+/** Indonesian nouns do not change with the count. */
+const AUDIT_NOUNS_ID: Record<string, string> = {
+  pf_location: "lokasi",
+  pf_crop: "tanaman",
+  pf_recipe: "resep",
+  pf_recipe_phase: "fase resep",
+  pf_user_role: "peran",
+  pf_batch: "batch",
+  pf_harvest_lot: "lot panen",
+  pf_stock_lot: "lot stok",
+  pf_item: "barang",
+  pf_cost_entry: "tagihan",
+  pf_labor_rate: "tarif tenaga kerja",
+  pf_lot_price: "harga lot",
+  pf_maintenance_plan: "rencana pemeliharaan",
+  pf_work_order: "perintah kerja",
+  pf_person: "personel",
+  pf_shift: "shift",
+  pf_leave: "pengajuan cuti",
+  pf_work_area: "area kerja",
+  pf_labor_log: "catatan jam kerja",
+  pf_purchase_order: "pesanan pembelian",
+  pf_po_line: "baris pembelian",
+  pf_recipe_material: "bahan resep",
+  pf_stock_count: "stok opname",
+  pf_stock_shortage: "kekurangan stok",
+  pf_partner: "pelanggan",
+  pf_sales_order: "pesanan",
+  pf_so_allocation: "alokasi lot",
+  pf_delivery: "pengiriman",
+  pf_invoice: "invoice",
+  pf_payment: "pembayaran",
+  pf_tax_rate: "tarif pajak",
+  pf_asset: "perangkat",
+  pf_calibration: "kalibrasi",
+  pf_alarm_rule: "aturan alarm",
+  pf_recipe_target: "acuan resep",
+};
+
+export function auditNoun(table: string, count: number, lang: Lang = "en"): string {
+  if (lang === "id" && AUDIT_NOUNS_ID[table]) return AUDIT_NOUNS_ID[table];
   const n = AUDIT_NOUNS[table];
   if (!n) return table.replace(/^pf_/, "").replace(/_/g, " ");
   return count === 1 ? n[0] : n[1];
@@ -441,6 +582,22 @@ function friendlyMessage(e: PostgrestLikeError) {
 export function toErpError(e: unknown): ErpDataError {
   if (e instanceof ErpDataError) return e;
   return toDataError({ message: e instanceof Error ? e.message : "Something went wrong" });
+}
+
+const MESSAGES_ID: Record<string, string> = {
+  "Cannot reach the server. Check your internet connection, then try again.": "Server tidak terjangkau. Periksa koneksi internet, lalu coba lagi.",
+  "Something with that name or code already exists.": "Sudah ada data dengan nama atau kode itu.",
+  "Your account does not have permission for this.": "Akun Anda tidak punya izin untuk ini.",
+  "Something went wrong": "Terjadi kesalahan",
+  "Supabase is not configured in this environment.": "Supabase belum dikonfigurasi di lingkungan ini.",
+};
+
+/**
+ * An error message for the screen, in the reader's language. The messages this file
+ * writes itself are translated; one from the database is shown as it came.
+ */
+export function erpMessage(message: string, lang: Lang = "en"): string {
+  return (lang === "id" ? MESSAGES_ID[message] : undefined) ?? message;
 }
 
 export function db() {
@@ -570,15 +727,15 @@ export async function fetchFoundationSummary(): Promise<FoundationSummary> {
 }
 
 /** The strongest thing this person is here as, for the profile menu. */
-export function accessLabel(a: ErpAccess) {
-  if (a.canAdmin) return "System admin";
-  if (a.canManageProduction) return "Production manager";
-  if (a.canSell) return "Sales staff";
-  if (a.canManagePeople) return "HR staff";
-  if (a.canMaintain) return "Technician";
-  if (a.canOperate) return "Operator";
-  if (a.canReadAudit) return "Leadership";
-  return "Researchers and students";
+export function accessLabel(a: ErpAccess, lang: Lang = "en") {
+  if (a.canAdmin) return roleLabel("admin", lang);
+  if (a.canManageProduction) return roleLabel("manajer_produksi", lang);
+  if (a.canSell) return roleLabel("staf_penjualan", lang);
+  if (a.canManagePeople) return roleLabel("staf_sdm", lang);
+  if (a.canMaintain) return roleLabel("teknisi", lang);
+  if (a.canOperate) return roleLabel("operator", lang);
+  if (a.canReadAudit) return roleLabel("pimpinan", lang);
+  return roleLabel("peneliti", lang);
 }
 
 /**

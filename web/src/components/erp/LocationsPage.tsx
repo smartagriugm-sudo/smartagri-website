@@ -2,12 +2,13 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import {
-  LEVEL_LABELS,
   SLOT_STATUSES,
   buildLocationTree,
   fetchLocations,
   isSlot,
+  levelLabel,
   slotCoverage,
+  slotStatusLabel,
   slotsUnder,
   updateSlotStatus,
   type LocationNode,
@@ -15,6 +16,7 @@ import {
 } from "../../lib/pf/foundation";
 import { ActionNote, DataState, ErpPage, ReadOnlyNote, SecondaryButton, inputClass, useAction, useErpAccess, useLoad } from "./page";
 import { Card, Note } from "./ui";
+import { useLang, useT } from "../../lib/i18n";
 
 // The tree of places. Its codes are fixed, since they link to the 3D models; what
 // an admin changes here is whether a hole or tray position can be used.
@@ -34,11 +36,12 @@ function TreeRow({ node, depth, selected, open, onToggle, onSelect }: {
   // The slots themselves are drawn as a grid in the detail panel.
   const branches = node.children.filter((c) => !isSlot(c));
   const isOpen = open.has(node.id);
+  const t = useT();
   return (
     <>
       <div className={`flex items-center rounded-lg ${selected === node.id ? "bg-[#E3F7F0]" : "hover:bg-[#F3F7F7]"}`} style={{ paddingLeft: depth * 14 }}>
         {branches.length > 0 ? (
-          <button type="button" onClick={() => onToggle(node.id)} className="grid h-11 w-9 shrink-0 place-items-center text-[#4F6B73] sm:h-8 sm:w-8" aria-label={isOpen ? `Close ${node.code}` : `Open ${node.code}`} aria-expanded={isOpen}>
+          <button type="button" onClick={() => onToggle(node.id)} className="grid h-11 w-9 shrink-0 place-items-center text-[#4F6B73] sm:h-8 sm:w-8" aria-label={isOpen ? t({ en: `Close ${node.code}`, id: `Tutup ${node.code}` }) : t({ en: `Open ${node.code}`, id: `Buka ${node.code}` })} aria-expanded={isOpen}>
             <ChevronRight className={`h-4 w-4 transition-transform ${isOpen ? "rotate-90" : ""}`} />
           </button>
         ) : (
@@ -55,12 +58,13 @@ function TreeRow({ node, depth, selected, open, onToggle, onSelect }: {
 }
 
 function StatusLegend({ slots }: { slots: LocationNode[] }) {
+  const lang = useLang();
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[#36525A]">
       {SLOT_STATUSES.map((s) => (
         <span key={s.key} className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />
-          {s.label} <span className="font-medium">{slots.filter((n) => n.slot_status === s.key).length}</span>
+          {slotStatusLabel(s.key, lang)} <span className="font-medium">{slots.filter((n) => n.slot_status === s.key).length}</span>
         </span>
       ))}
     </div>
@@ -71,6 +75,9 @@ function Detail({ node, canEdit, onChanged }: { node: LocationNode; canEdit: boo
   const slots = useMemo(() => slotsUnder(node), [node]);
   const [picked, setPicked] = useState<string | null>(null);
   const action = useAction();
+  const t = useT();
+  const lang = useLang();
+  const statusText = (key: SlotStatus | null) => (key && statusOf(key) ? slotStatusLabel(key, lang) : "");
   // Children of a gully or shelf are few enough to pick one by one.
   const grid = node.children.length > 0 && node.children.every(isSlot);
   const current = grid ? node.children.find((c) => c.id === picked) : isSlot(node) ? node : undefined;
@@ -83,9 +90,9 @@ function Detail({ node, canEdit, onChanged }: { node: LocationNode; canEdit: boo
 
   return (
     <Card className="p-4">
-      <p className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]">{LEVEL_LABELS[node.level]}</p>
+      <p className="text-[13px] font-medium tracking-[0.03em] text-[#0B6477]">{levelLabel(node.level, lang)}</p>
       <h2 className="text-[20px] font-semibold tracking-[-0.025em] text-[#0F2F36]">{node.code}</h2>
-      <p className="mb-3 text-[14px] text-[#4F6B73]">{node.name}{node.capacity != null && !isSlot(node) ? ` · capacity ${node.capacity}` : ""}</p>
+      <p className="mb-3 text-[14px] text-[#4F6B73]">{node.name}{node.capacity != null && !isSlot(node) ? t({ en: ` · capacity ${node.capacity}`, id: ` · kapasitas ${node.capacity}` }) : ""}</p>
 
       {slots.length > 1 && <StatusLegend slots={slots} />}
 
@@ -96,7 +103,7 @@ function Detail({ node, canEdit, onChanged }: { node: LocationNode; canEdit: boo
               key={c.id}
               type="button"
               onClick={() => setPicked(picked === c.id ? null : c.id)}
-              title={`${c.code} · ${statusOf(c.slot_status)?.label ?? ""}`}
+              title={`${c.code} · ${statusText(c.slot_status)}`}
               aria-pressed={picked === c.id}
               className={`rounded-md border py-1.5 text-center text-[12.5px] font-medium text-[#0F2F36] ${picked === c.id ? "border-[#0B6477] bg-[#E3F7F0]" : "border-[#E3ECED] hover:border-[#14919B]"}`}
             >
@@ -110,32 +117,34 @@ function Detail({ node, canEdit, onChanged }: { node: LocationNode; canEdit: boo
       {current && (
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px]">
           <span className="font-medium text-[#0F2F36]">{current.code}</span>
-          <span className="text-[#4F6B73]">{statusOf(current.slot_status)?.label}</span>
+          <span className="text-[#4F6B73]">{statusText(current.slot_status)}</span>
           {current.level === "hole" ? (
             <Link to="/erp/plant-factory" search={{ hole: current.code }} className="flex items-center gap-1 font-medium text-[#0B6477] hover:underline">
-              View in 3D <ArrowRight className="h-3.5 w-3.5" />
+              {t({ en: "View in 3D", id: "Lihat di 3D" })} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           ) : (
             <Link to="/erp/seedlings" search={{ slot: current.code }} className="flex items-center gap-1 font-medium text-[#0B6477] hover:underline">
-              View in 3D <ArrowRight className="h-3.5 w-3.5" />
+              {t({ en: "View in 3D", id: "Lihat di 3D" })} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           )}
         </div>
       )}
 
       {canEdit && targets.length === 0 && (
-        <p className="mt-3 text-[13px] text-[#4F6B73]">Choose a tier, gully or chamber shelf to change its status.</p>
+        <p className="mt-3 text-[13px] text-[#4F6B73]">{t({ en: "Choose a tier, gully or chamber shelf to change its status.", id: "Pilih tingkat, gully, atau rak ruang bibit untuk mengubah statusnya." })}</p>
       )}
 
       {canEdit && targets.length > 0 && (
         <div className="mt-4 border-t border-[#E3ECED] pt-3">
           <p className="mb-2 text-[13px] font-medium text-[#36525A]">
-            Change status {targets.length === 1 ? targets[0].code : `${targets.length} positions in ${node.code}`}
+            {targets.length === 1
+              ? t({ en: `Change status ${targets[0].code}`, id: `Ubah status ${targets[0].code}` })
+              : t({ en: `Change status ${targets.length} positions in ${node.code}`, id: `Ubah status ${targets.length} posisi di ${node.code}` })}
           </p>
           <div className="flex flex-wrap gap-2">
             {SLOT_STATUSES.map((s) => (
               <SecondaryButton key={s.key} disabled={action.busy} onClick={() => void setStatus(s.key)}>
-                <span className="h-2 w-2 rounded-full" style={{ background: s.color }} /> {s.label}
+                <span className="h-2 w-2 rounded-full" style={{ background: s.color }} /> {slotStatusLabel(s.key, lang)}
               </SecondaryButton>
             ))}
           </div>
@@ -167,6 +176,7 @@ function ancestors(rows: LocationNode[], id: string, path: string[] = []): strin
 export default function LocationsPage() {
   const state = useLoad(fetchLocations);
   const { canAdmin } = useErpAccess();
+  const t = useT();
   const tree = useMemo(() => buildLocationTree(state.data ?? []), [state.data]);
   const coverage = useMemo(() => slotCoverage(state.data ?? []), [state.data]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -186,8 +196,8 @@ export default function LocationsPage() {
   }, [tree, toggled]);
 
   const toggle = (id: string) =>
-    setToggled((t) => {
-      const next = new Set(t);
+    setToggled((now) => {
+      const next = new Set(now);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
@@ -195,8 +205,8 @@ export default function LocationsPage() {
 
   const reveal = (id: string) => {
     const path = ancestors(tree, id) ?? [];
-    setToggled((t) => {
-      const next = new Set(t);
+    setToggled((now) => {
+      const next = new Set(now);
       for (const a of path) if (!open.has(a)) next.add(a);
       return next;
     });
@@ -228,23 +238,23 @@ export default function LocationsPage() {
   }, [tree, selected]);
 
   return (
-    <ErpPage eyebrow="Master data" title="Locations" sub="Every place in one tree. The codes match the 3D model and cannot be changed.">
+    <ErpPage eyebrow={t({ en: "Master data", id: "Data master" })} title={t({ en: "Locations", id: "Lokasi" })} sub={t({ en: "Every place in one tree. The codes match the 3D model and cannot be changed.", id: "Semua tempat dalam satu pohon. Kodenya sama dengan model 3D dan tidak bisa diubah." })}>
       <DataState state={state}>
         {() => (
           <div className="space-y-4">
             {coverage.missing.length === 0 ? (
-              <Note>All {coverage.expected} holes and tray positions already have a code.</Note>
+              <Note>{t({ en: `All ${coverage.expected} holes and tray positions already have a code.`, id: `Semua ${coverage.expected} lubang dan posisi tray sudah punya kode.` })}</Note>
             ) : (
-              <Note tone="warn">{coverage.missing.length} codes are missing, among them {coverage.missing.slice(0, 3).join(", ")}. Run pf-foundation.sql again.</Note>
+              <Note tone="warn">{t({ en: `${coverage.missing.length} codes are missing, among them ${coverage.missing.slice(0, 3).join(", ")}. Run pf-foundation.sql again.`, id: `${coverage.missing.length} kode belum ada, di antaranya ${coverage.missing.slice(0, 3).join(", ")}. Jalankan pf-foundation.sql lagi.` })}</Note>
             )}
-            {!canAdmin && <ReadOnlyNote who="System admin" />}
+            {!canAdmin && <ReadOnlyNote who={t({ en: "System admin", id: "Admin sistem" })} />}
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
               <Card className="p-3">
                 <form className="mb-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); find(); }}>
-                  <input className={inputClass} value={search} onChange={(e) => { setSearch(e.target.value); setNotFound(false); }} placeholder="Search a code, e.g. R1-T2-G3" aria-label="Search location code" />
-                  <SecondaryButton type="submit">Search</SecondaryButton>
+                  <input className={inputClass} value={search} onChange={(e) => { setSearch(e.target.value); setNotFound(false); }} placeholder={t({ en: "Search a code, e.g. R1-T2-G3", id: "Cari kode, mis. R1-T2-G3" })} aria-label={t({ en: "Search location code", id: "Cari kode lokasi" })} />
+                  <SecondaryButton type="submit">{t({ en: "Search", id: "Cari" })}</SecondaryButton>
                 </form>
-                {notFound && <div className="mb-2"><Note tone="warn">That code was not found.</Note></div>}
+                {notFound && <div className="mb-2"><Note tone="warn">{t({ en: "That code was not found.", id: "Kode itu tidak ditemukan." })}</Note></div>}
                 {tree.map((n) => <TreeRow key={n.id} node={n} depth={0} selected={node?.id ?? null} open={open} onToggle={toggle} onSelect={setSelected} />)}
               </Card>
               {node && <Detail key={node.id} node={node} canEdit={canAdmin} onChanged={state.reload} />}

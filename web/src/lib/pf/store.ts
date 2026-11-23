@@ -4,6 +4,7 @@ import { ageOn, batchLabel, fetchErpSnapshot, holeStateOn, jakartaDate, phaseAt,
 import { fetchMonitoringIfInstalled, latestAt, type MonitoringSummary } from "./monitoring";
 import { ErpDataError, toErpError } from "./foundation";
 import { PfProvider, RACK_NUMBERS, TIER_NUMBERS } from "./provider";
+import type { Lang } from "../i18n-core";
 
 // The ERP's shared view of both facilities, for the dashboard and the 3D screens.
 // A batch is one record across both: sown in growth chamber trays, then moved into
@@ -15,16 +16,26 @@ import { PfProvider, RACK_NUMBERS, TIER_NUMBERS } from "./provider";
 // and says so through `mode`.
 
 export const LIFECYCLE_PHASES = [
-  { label: "Sow", place: "CH1" },
-  { label: "Germination", place: "CH1" },
-  { label: "Transplant", place: "to PF01" },
-  { label: "Vegetative", place: "PF01" },
-  { label: "Harvest", place: "PF01" },
+  { label: "Sow", place: "CH1", labelId: "Semai", placeId: "CH1" },
+  { label: "Germination", place: "CH1", labelId: "Perkecambahan", placeId: "CH1" },
+  { label: "Transplant", place: "to PF01", labelId: "Pindah tanam", placeId: "ke PF01" },
+  { label: "Vegetative", place: "PF01", labelId: "Vegetatif", placeId: "PF01" },
+  { label: "Harvest", place: "PF01", labelId: "Panen", placeId: "PF01" },
 ];
 
 /** The day a batch reaches each step of the strip, from its own recipe. */
 export function lifecycleDay(step: number, batch: Pick<Batch, "germinationDay" | "transplantDay" | "cycle">) {
   return [0, batch.germinationDay, batch.transplantDay, batch.transplantDay, batch.cycle][step];
+}
+
+/** A tier's `blocked` reason in the reader's language; the stored value stays English. */
+export function blockedLabel(blocked: string, lang: Lang = "en") {
+  if (lang !== "id") return blocked;
+  if (blocked === "Still in sanitation") return "Masih sanitasi";
+  if (blocked === "Full") return "Penuh";
+  if (blocked === "Used another batch") return "Dipakai batch lain";
+  if (blocked.startsWith("Used ")) return `Dipakai ${blocked.slice(5)}`;
+  return blocked;
 }
 
 export type StoreMode = "loading" | "live" | "sample" | "error";

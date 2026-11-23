@@ -1,3 +1,4 @@
+import type { Lang } from "../i18n-core";
 import { addDays } from "./facility";
 import { check, db, unwrap } from "./foundation";
 
@@ -8,14 +9,16 @@ import { check, db, unwrap } from "./foundation";
 /* -------------------------------------------------------------------- types */
 
 export const PERSON_TYPES = [
-  { key: "karyawan", label: "Employee" },
-  { key: "peneliti", label: "Researcher" },
-  { key: "mahasiswa", label: "Student" },
-  { key: "magang", label: "Intern" },
-  { key: "harian", label: "Daily worker" },
+  { key: "karyawan", label: "Employee", labelId: "Karyawan" },
+  { key: "peneliti", label: "Researcher", labelId: "Peneliti" },
+  { key: "mahasiswa", label: "Student", labelId: "Mahasiswa" },
+  { key: "magang", label: "Intern", labelId: "Magang" },
+  { key: "harian", label: "Daily worker", labelId: "Pekerja harian" },
 ] as const;
 export type PersonType = (typeof PERSON_TYPES)[number]["key"];
-export const personTypeLabel = (key: string) => PERSON_TYPES.find((t) => t.key === key)?.label ?? key;
+/** The label of an option in the chosen language. */
+export const optionLabel = (o: { label: string; labelId: string } | undefined, lang: Lang = "en") => (o ? (lang === "id" ? o.labelId : o.label) : undefined);
+export const personTypeLabel = (key: string, lang: Lang = "en") => optionLabel(PERSON_TYPES.find((t) => t.key === key), lang) ?? key;
 
 export type Person = {
   id: string;
@@ -38,16 +41,16 @@ export type Person = {
 };
 
 export const CONTRACT_TYPES = [
-  { key: "tetap", label: "Permanent" },
-  { key: "kontrak", label: "Contract" },
-  { key: "magang", label: "Intern" },
-  { key: "harian", label: "Daily worker" },
-  { key: "lainnya", label: "Other" },
+  { key: "tetap", label: "Permanent", labelId: "Tetap" },
+  { key: "kontrak", label: "Contract", labelId: "Kontrak" },
+  { key: "magang", label: "Intern", labelId: "Magang" },
+  { key: "harian", label: "Daily worker", labelId: "Pekerja harian" },
+  { key: "lainnya", label: "Other", labelId: "Lainnya" },
 ] as const;
 export const RATE_BASES = [
-  { key: "bulan", label: "per month" },
-  { key: "hari", label: "per day" },
-  { key: "jam", label: "per hour" },
+  { key: "bulan", label: "per month", labelId: "per bulan" },
+  { key: "hari", label: "per day", labelId: "per hari" },
+  { key: "jam", label: "per hour", labelId: "per jam" },
 ] as const;
 
 export type Contract = { id: string; person_id: string; type: string; position: string; start_date: string; end_date: string | null; rate_idr: number | null; rate_basis: string; notes: string };
@@ -57,17 +60,17 @@ export type WorkArea = { id: string; name: string; lat: number; lng: number; rad
 export type Shift = { id: string; person_id: string; full_name: string; work_date: string; start_at: string; end_at: string; area_id: string | null; area_name: string | null; notes: string };
 
 export const LEAVE_TYPES = [
-  { key: "izin", label: "Leave" },
-  { key: "sakit", label: "Sick" },
-  { key: "cuti", label: "Time off" },
+  { key: "izin", label: "Leave", labelId: "Izin" },
+  { key: "sakit", label: "Sick", labelId: "Sakit" },
+  { key: "cuti", label: "Time off", labelId: "Cuti" },
 ] as const;
 export type LeaveType = (typeof LEAVE_TYPES)[number]["key"];
 export type LeaveStatus = "diajukan" | "disetujui" | "ditolak" | "batal";
-export const LEAVE_STATUS: Record<LeaveStatus, { label: string; className: string }> = {
-  diajukan: { label: "Waiting", className: "bg-[#FFF6E5] text-[#8A5A07]" },
-  disetujui: { label: "Approved", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
-  ditolak: { label: "Rejected", className: "bg-[#FDECEA] text-[#B3362C]" },
-  batal: { label: "Cancelled", className: "bg-[#EEF3F4] text-[#4F6B73]" },
+export const LEAVE_STATUS: Record<LeaveStatus, { label: string; labelId: string; className: string }> = {
+  diajukan: { label: "Waiting", labelId: "Menunggu", className: "bg-[#FFF6E5] text-[#8A5A07]" },
+  disetujui: { label: "Approved", labelId: "Disetujui", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
+  ditolak: { label: "Rejected", labelId: "Ditolak", className: "bg-[#FDECEA] text-[#B3362C]" },
+  batal: { label: "Cancelled", labelId: "Dibatalkan", className: "bg-[#EEF3F4] text-[#4F6B73]" },
 };
 export type Leave = { id: string; person_id: string; full_name: string; type: LeaveType; start_date: string; end_date: string; reason: string; status: LeaveStatus; decide_note: string };
 
@@ -109,9 +112,10 @@ const jakartaMinutes = (d: Date) => {
 };
 const minutesOf = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 
-export const formatMinutes = (minutes: number) => {
+export const formatMinutes = (minutes: number, lang: Lang = "en") => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
+  if (lang === "id") return h && m ? `${h} jam ${m} menit` : h ? `${h} jam` : `${m} menit`;
   const hours = `${h} ${h === 1 ? "hour" : "hours"}`;
   const mins = `${m} ${m === 1 ? "minute" : "minutes"}`;
   return h && m ? `${hours} ${mins}` : h ? hours : mins;
@@ -119,31 +123,32 @@ export const formatMinutes = (minutes: number) => {
 
 export type RosterState = "hadir" | "terlambat" | "belum_datang" | "tidak_hadir" | "izin" | "tanpa_jadwal";
 
-export const ROSTER_STATE: Record<RosterState, { label: string; className: string }> = {
-  hadir: { label: "Present", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
-  terlambat: { label: "Late", className: "bg-[#FFF6E5] text-[#8A5A07]" },
-  belum_datang: { label: "Not due yet", className: "bg-[#EEF3F4] text-[#4F6B73]" },
-  tidak_hadir: { label: "Not clocked in", className: "bg-[#FDECEA] text-[#B3362C]" },
-  izin: { label: "Leave", className: "bg-[#E3F4F4] text-[#0B6477]" },
-  tanpa_jadwal: { label: "No schedule", className: "bg-[#EEF3F4] text-[#4F6B73]" },
+export const ROSTER_STATE: Record<RosterState, { label: string; labelId: string; className: string }> = {
+  hadir: { label: "Present", labelId: "Hadir", className: "bg-[#E3F7F0] text-[#0E7A5C]" },
+  terlambat: { label: "Late", labelId: "Terlambat", className: "bg-[#FFF6E5] text-[#8A5A07]" },
+  belum_datang: { label: "Not due yet", labelId: "Belum waktunya", className: "bg-[#EEF3F4] text-[#4F6B73]" },
+  tidak_hadir: { label: "Not clocked in", labelId: "Belum absen", className: "bg-[#FDECEA] text-[#B3362C]" },
+  izin: { label: "Leave", labelId: "Izin", className: "bg-[#E3F4F4] text-[#0B6477]" },
+  tanpa_jadwal: { label: "No schedule", labelId: "Tanpa jadwal", className: "bg-[#EEF3F4] text-[#4F6B73]" },
 };
 
 export type RosterRow = { key: string; personId: string; name: string; state: RosterState; shift: Shift | null; attendance: Attendance | null; leave: Leave | null; flags: string[] };
 
 /** What to check about one attendance record. An unknown location is said to be unknown, not called outside. */
-export function attendanceFlags(a: Pick<Attendance, "in_within_area" | "out_within_area" | "missed_out" | "source" | "clock_out">) {
+export function attendanceFlags(a: Pick<Attendance, "in_within_area" | "out_within_area" | "missed_out" | "source" | "clock_out">, lang: Lang = "en") {
+  const id = lang === "id";
   const flags: string[] = [];
-  if (a.in_within_area === false) flags.push("Clocked in outside the area");
-  if (a.out_within_area === false) flags.push("Clocked out outside the area");
-  if (a.source === "ponsel" && a.in_within_area === null) flags.push("Clock-in location unknown");
-  if (a.source === "ponsel" && a.clock_out && a.out_within_area === null) flags.push("Clock-out location unknown");
-  if (a.missed_out) flags.push("Missed clock-out");
-  if (a.source === "manual") flags.push("Recorded by hand");
+  if (a.in_within_area === false) flags.push(id ? "Absen masuk di luar area" : "Clocked in outside the area");
+  if (a.out_within_area === false) flags.push(id ? "Absen pulang di luar area" : "Clocked out outside the area");
+  if (a.source === "ponsel" && a.in_within_area === null) flags.push(id ? "Lokasi absen masuk tidak diketahui" : "Clock-in location unknown");
+  if (a.source === "ponsel" && a.clock_out && a.out_within_area === null) flags.push(id ? "Lokasi absen pulang tidak diketahui" : "Clock-out location unknown");
+  if (a.missed_out) flags.push(id ? "Lupa absen pulang" : "Missed clock-out");
+  if (a.source === "manual") flags.push(id ? "Dicatat manual" : "Recorded by hand");
   return flags;
 }
 
 /** One day: everyone scheduled, plus anyone who came without a schedule. */
-export function buildRoster(date: string, today: string, now: Date, shifts: readonly Shift[], attendance: readonly Attendance[], leaves: readonly Leave[]): RosterRow[] {
+export function buildRoster(date: string, today: string, now: Date, shifts: readonly Shift[], attendance: readonly Attendance[], leaves: readonly Leave[], lang: Lang = "en"): RosterRow[] {
   const dayShifts = shifts.filter((s) => s.work_date === date).sort((a, b) => a.start_at.localeCompare(b.start_at) || a.full_name.localeCompare(b.full_name));
   const day = attendance.filter((a) => a.work_date === date);
   const onLeave = (person: string) => leaves.find((l) => l.person_id === person && l.status === "disetujui" && l.start_date <= date && l.end_date >= date) ?? null;
@@ -157,10 +162,10 @@ export function buildRoster(date: string, today: string, now: Date, shifts: read
     else if (leave) state = "izin";
     else if (date > today || (date === today && nowMinutes <= minutesOf(shift.start_at) + GRACE_MINUTES)) state = "belum_datang";
     else state = "tidak_hadir";
-    return { key: shift.id, personId: shift.person_id, name: shift.full_name, state, shift, attendance: record, leave, flags: record ? attendanceFlags(record) : [] };
+    return { key: shift.id, personId: shift.person_id, name: shift.full_name, state, shift, attendance: record, leave, flags: record ? attendanceFlags(record, lang) : [] };
   });
   for (const record of day.filter((a) => !a.shift_id || !dayShifts.some((s) => s.id === a.shift_id))) {
-    rows.push({ key: record.id, personId: record.person_id, name: record.full_name, state: "tanpa_jadwal", shift: null, attendance: record, leave: null, flags: attendanceFlags(record) });
+    rows.push({ key: record.id, personId: record.person_id, name: record.full_name, state: "tanpa_jadwal", shift: null, attendance: record, leave: null, flags: attendanceFlags(record, lang) });
   }
   return rows;
 }
@@ -182,32 +187,35 @@ export function datesOnWeekdays(from: string, to: string, weekdays: readonly num
   return out;
 }
 
-export function parseShiftForm(personId: string, from: string, to: string, weekdays: readonly number[], start: string, end: string) {
-  if (!personId) return { error: "Choose a person." } as const;
-  if (!from || !to || to < from) return { error: "The end date is before the start date." } as const;
-  if (!start || !end || end <= start) return { error: "The end time must be after the start time." } as const;
+export function parseShiftForm(personId: string, from: string, to: string, weekdays: readonly number[], start: string, end: string, lang: Lang = "en") {
+  const id = lang === "id";
+  if (!personId) return { error: id ? "Pilih personel." : "Choose a person." } as const;
+  if (!from || !to || to < from) return { error: id ? "Tanggal selesai sebelum tanggal mulai." : "The end date is before the start date." } as const;
+  if (!start || !end || end <= start) return { error: id ? "Jam selesai harus setelah jam mulai." : "The end time must be after the start time." } as const;
   const dates = datesOnWeekdays(from, to, weekdays);
-  if (dates.length === 0) return { error: "No date matches the chosen days." } as const;
+  if (dates.length === 0) return { error: id ? "Tidak ada tanggal yang cocok dengan hari yang dipilih." : "No date matches the chosen days." } as const;
   return { error: null, dates } as const;
 }
 
-export function parseDuration(hours: string, minutes: string) {
+export function parseDuration(hours: string, minutes: string, lang: Lang = "en") {
+  const id = lang === "id";
   const h = hours.trim() === "" ? 0 : Number(hours.trim().replace(",", "."));
   const m = minutes.trim() === "" ? 0 : Number(minutes.trim());
-  if (!Number.isFinite(h) || !Number.isFinite(m) || h < 0 || m < 0) return { error: "Duration must be a number." } as const;
+  if (!Number.isFinite(h) || !Number.isFinite(m) || h < 0 || m < 0) return { error: id ? "Durasi harus berupa angka." : "Duration must be a number." } as const;
   const total = Math.round(h * 60 + m);
-  if (total < 1 || total > 960) return { error: "Duration must be between 1 minute and 16 hours." } as const;
+  if (total < 1 || total > 960) return { error: id ? "Durasi harus antara 1 menit dan 16 jam." : "Duration must be between 1 minute and 16 hours." } as const;
   return { error: null, minutes: total } as const;
 }
 
-export function parseArea(name: string, lat: string, lng: string, radius: string) {
-  if (!name.trim()) return { error: "A location name is required." } as const;
+export function parseArea(name: string, lat: string, lng: string, radius: string, lang: Lang = "en") {
+  const id = lang === "id";
+  if (!name.trim()) return { error: id ? "Nama lokasi wajib diisi." : "A location name is required." } as const;
   const la = Number(lat.trim().replace(",", "."));
   const ln = Number(lng.trim().replace(",", "."));
-  if (lat.trim() === "" || !Number.isFinite(la) || la < -90 || la > 90) return { error: "Latitude must be between -90 and 90." } as const;
-  if (lng.trim() === "" || !Number.isFinite(ln) || ln < -180 || ln > 180) return { error: "Longitude must be between -180 and 180." } as const;
+  if (lat.trim() === "" || !Number.isFinite(la) || la < -90 || la > 90) return { error: id ? "Latitude harus antara -90 dan 90." : "Latitude must be between -90 and 90." } as const;
+  if (lng.trim() === "" || !Number.isFinite(ln) || ln < -180 || ln > 180) return { error: id ? "Longitude harus antara -180 dan 180." : "Longitude must be between -180 and 180." } as const;
   const r = Number(radius.trim());
-  if (!Number.isInteger(r) || r < 10 || r > 5000) return { error: "The radius must be between 10 and 5000 metres." } as const;
+  if (!Number.isInteger(r) || r < 10 || r > 5000) return { error: id ? "Radius harus antara 10 dan 5000 meter." : "The radius must be between 10 and 5000 metres." } as const;
   return { error: null, lat: la, lng: ln, radius: r } as const;
 }
 
@@ -343,10 +351,10 @@ export async function withdrawConsent() {
 
 export type Fix = { lat: number; lng: number; accuracy: number } | null;
 
-export async function uploadPhoto(person: string, photo: Blob): Promise<string> {
+export async function uploadPhoto(person: string, photo: Blob, lang: Lang = "en"): Promise<string> {
   const path = `${person}/${crypto.randomUUID()}.jpg`;
   const { error } = await db().storage.from(PHOTO_BUCKET).upload(path, photo, { contentType: "image/jpeg", upsert: false });
-  if (error) throw new Error(`The photo could not be uploaded: ${error.message}`);
+  if (error) throw new Error(lang === "id" ? `Foto gagal diunggah: ${error.message}` : `The photo could not be uploaded: ${error.message}`);
   return path;
 }
 
@@ -366,18 +374,18 @@ export async function correctAttendance(attendance: string, came: string, went: 
   check(await db().rpc("pf_attendance_correct", { attendance, came, went: went || null, why }));
 }
 
-export async function photoLink(path: string): Promise<string> {
+export async function photoLink(path: string, lang: Lang = "en"): Promise<string> {
   const { data, error } = await db().storage.from(PHOTO_BUCKET).createSignedUrl(path, 60);
-  if (error || !data) throw new Error("The photo cannot be opened. It may be past its retention period.");
+  if (error || !data) throw new Error(lang === "id" ? "Foto tidak bisa dibuka. Mungkin sudah melewati masa simpan." : "The photo cannot be opened. It may be past its retention period.");
   return data.signedUrl;
 }
 
 /** Removes photos past retention. Run when Staf SDM opens attendance; returns how many records were cleared. */
-export async function sweepExpiredPhotos(): Promise<number> {
+export async function sweepExpiredPhotos(lang: Lang = "en"): Promise<number> {
   const expired = unwrap(await db().rpc("pf_photos_expired")) as { id: string; paths: string[] }[];
   if (expired.length === 0) return 0;
   const { error } = await db().storage.from(PHOTO_BUCKET).remove(expired.flatMap((e) => e.paths));
-  if (error) throw new Error(`The old photo could not be removed: ${error.message}`);
+  if (error) throw new Error(lang === "id" ? `Foto lama gagal dihapus: ${error.message}` : `The old photo could not be removed: ${error.message}`);
   check(await db().rpc("pf_photos_mark_removed", { attendances: expired.map((e) => e.id) }));
   return expired.length;
 }

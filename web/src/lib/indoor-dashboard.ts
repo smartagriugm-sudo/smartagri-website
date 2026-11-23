@@ -20,6 +20,7 @@ import {
   Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { Lang } from "./i18n-core";
 
 // Data model for the Indoor Farming control dashboard (/indoor-farming/dashboard).
 //
@@ -661,7 +662,7 @@ export function seriesForRange(zone: Zone, key: MetricKey, range: RangeKey): num
 }
 
 /** Where to put x axis labels for a range, and what to write on them. */
-export function rangeAxis(range: RangeKey): {
+export function rangeAxis(range: RangeKey, lang: Lang = "en"): {
   points: number;
   ticks: number[];
   labelAt: (i: number) => string;
@@ -683,6 +684,7 @@ export function rangeAxis(range: RangeKey): {
     ticks,
     labelAt: (i) => {
       const ago = days - 1 - i;
+      if (lang === "id") return ago === 0 ? "hari ini" : `${ago} hr lalu`;
       return ago === 0 ? "today" : `${ago}d ago`;
     },
   };
@@ -797,9 +799,15 @@ export function axisPercent(key: MetricKey, value: number): number {
   return round(Math.min(100, Math.max(0, ((value - lo) / (hi - lo)) * 100)));
 }
 
-export function formatValue(key: MetricKey, value: number): string {
+export function formatValue(key: MetricKey, value: number, lang: Lang = "en"): string {
   const m = METRICS[key];
-  return value.toFixed(m.decimals);
+  return fixed(value, m.decimals, lang);
+}
+
+/** `toFixed` with the decimal separator of the language (a comma in Indonesian). */
+export function fixed(value: number, dp: number, lang: Lang = "en"): string {
+  const out = value.toFixed(dp);
+  return lang === "id" ? out.replace(".", ",") : out;
 }
 
 /** Change against the same metric two hours earlier, for the trend chips. */
@@ -848,14 +856,14 @@ export type ActuatorRow = {
   load: number;
 };
 
-export function actuatorsAt(index: number): ActuatorRow[] {
+export function actuatorsAt(index: number, lang: Lang = "en"): ActuatorRow[] {
   const w = sampleWeather(index);
   const hot = w.airTemp > 28;
   const warm = w.airTemp > 26;
   const hour = (index * STEP_MINUTES) / 60;
   const lit = hour >= 6 && hour < 22;
   const dosing = index % 8 < 2;
-  return [
+  const rows: ActuatorRow[] = [
     {
       name: "Exhaust and circulation fans",
       room: "Greenhouse 1 · Bay A",
@@ -908,6 +916,9 @@ export function actuatorsAt(index: number): ActuatorRow[] {
       load: 0,
     },
   ];
+  return lang === "id"
+    ? rows.map((r) => ({ ...r, name: ACTUATOR_NAME_ID[r.name] ?? r.name, room: placeId(r.room) }))
+    : rows;
 }
 
 /* ------------------------------------------------------- resource use */
@@ -927,7 +938,7 @@ export type ResourceRow = {
  * Everything here is derived from the same schedules that drive the actuators,
  * so the figures move when the machines do rather than drifting on their own.
  */
-export function resourceUseAt(index: number): ResourceRow[] {
+export function resourceUseAt(index: number, lang: Lang = "en"): ResourceRow[] {
   const hours = (index * STEP_MINUTES) / 60;
 
   // Lamps dominate the bill in a plant factory: two racks at 3.1 kW, running
@@ -946,6 +957,39 @@ export function resourceUseAt(index: number): ResourceRow[] {
   const stockLeft = Math.max(0, 100 - (index / POINTS_PER_DAY) * 62);
 
   const co2 = litHours * 0.72;
+
+  if (lang === "id") {
+    return [
+      {
+        label: "Listrik",
+        value: `${kwh.toFixed(0)} kWh`,
+        share: Math.min(1, kwh / 190),
+        detail: "Lampu, iklim, pompa",
+        icon: Zap,
+      },
+      {
+        label: "Air irigasi",
+        value: `${water.toLocaleString("id-ID")} L`,
+        share: Math.min(1, water / 1400),
+        detail: "Tersalur ke tanaman",
+        icon: Droplets,
+      },
+      {
+        label: "Stok nutrisi",
+        value: `${stockLeft.toFixed(0)} %`,
+        share: stockLeft / 100,
+        detail: "Sisa tangki A dan B",
+        icon: Beaker,
+      },
+      {
+        label: "CO2 diinjeksi",
+        value: `${fixed(co2, 1, lang)} kg`,
+        share: Math.min(1, co2 / 14),
+        detail: "Pengayaan plant factory",
+        icon: Wind,
+      },
+    ];
+  }
 
   return [
     {
@@ -1107,7 +1151,7 @@ export type AlertRow = {
 };
 
 /** Recent events, written the way a control log actually reads. */
-export function alertsAt(index: number): AlertRow[] {
+export function alertsAt(index: number, lang: Lang = "en"): AlertRow[] {
   const rows: AlertRow[] = [
     {
       zone: "Greenhouse 1 · Bay A",
@@ -1142,6 +1186,16 @@ export function alertsAt(index: number): AlertRow[] {
       level: "watch",
       ago: "just now",
     });
+  }
+  if (lang === "id") {
+    return rows.map((r) => ({
+      ...r,
+      zone: placeId(r.zone),
+      message:
+        ALERT_MESSAGE_ID[r.message] ??
+        `Hujan terdeteksi, ${fixed(w.rainfall, 1, lang)} mm/jam, ventilasi atap ditutup`,
+      ago: AGO_ID[r.ago] ?? r.ago,
+    }));
   }
   return rows;
 }
@@ -1437,4 +1491,353 @@ export function plantingSummary(zone: Zone) {
     ready,
     occupancy: plants.length === 0 ? 0 : planted.length / plants.length,
   };
+}
+
+/* ------------------------------------------------ Indonesian display copy */
+
+// The data above stays in English: ids, keys, and the English strings are what
+// the rest of the app and the instrumentation page read. These overlays only
+// change what an Indonesian reader sees, merged in by the helpers below.
+
+const ZONE_ID: Record<string, Pick<Zone, "name" | "short" | "crop" | "stage">> = {
+  "gh-1": { name: "Greenhouse 1 · Bay A", short: "GH-1 Bay A", crop: "Tomat beefsteak", stage: "Berbuah, minggu ke-11" },
+  "pf-a": { name: "Plant Factory · Rak A", short: "PF Rak A", crop: "Selada butterhead", stage: "Vegetatif, hari ke-19" },
+  "pf-b": { name: "Plant Factory · Rak B", short: "PF Rak B", crop: "Kemangi", stage: "Vegetatif, hari ke-12" },
+  nur: { name: "Nursery · Penyemaian", short: "Nursery", crop: "Bibit campuran", stage: "Perkecambahan sampai plug" },
+  "gh-2": { name: "Greenhouse 2 · Bay uji", short: "GH-2 Uji", crop: "Stroberi, uji kultivar", stage: "Antar siklus" },
+};
+
+const ZONES_ID: Zone[] = ZONES.map((z) => ({ ...z, ...ZONE_ID[z.id] }));
+
+/** The rooms with names, crops, and stages in the reader's language. */
+export function zonesFor(lang: Lang): Zone[] {
+  return lang === "id" ? ZONES_ID : ZONES;
+}
+
+/** One room in the reader's language (ids, seeds, and targets unchanged). */
+export function localizeZone(zone: Zone, lang: Lang): Zone {
+  return lang === "id" ? (ZONES_ID.find((z) => z.id === zone.id) ?? zone) : zone;
+}
+
+const METRIC_ID: Record<MetricKey, Pick<Metric, "label" | "short" | "why" | "sensor">> = {
+  airTemp: {
+    label: "Suhu udara",
+    short: "Suhu udara",
+    why: "Menentukan laju setiap proses tanaman, dari fotosintesis sampai pembentukan buah. Di daerah tropis masalahnya hampir selalu membuang panas, bukan menambahnya.",
+    sensor: "Probe T/RH beraspirasi berpelindung, satu per bay setinggi kanopi",
+  },
+  rh: {
+    label: "Kelembapan relatif",
+    short: "Kelembapan",
+    why: "Sendirian tidak banyak bercerita, tetapi bersama suhu ia memberi VPD. Kelembapan tinggi yang berkepanjangan juga membuka jalan bagi penyakit jamur.",
+    sensor: "Elemen RH kapasitif di probe beraspirasi yang sama",
+  },
+  vpd: {
+    label: "Defisit tekanan uap",
+    short: "VPD",
+    why: "Angka yang benar-benar menggerakkan transpirasi, dan yang kami kendalikan. Terlalu rendah, tanaman berhenti menarik air dan kalsium; terlalu tinggi, stomata menutup dan pertumbuhan terhenti.",
+    sensor: "Dihitung dari suhu dan kelembapan udara, tidak diukur langsung",
+  },
+  co2: {
+    label: "Karbon dioksida",
+    short: "CO2",
+    why: "Setelah cahaya dan suhu tepat, CO2 biasanya menjadi pembatas fotosintesis berikutnya. Rumah tanam tertutup menghabiskannya dengan cepat di pagi hari.",
+    sensor: "Sensor CO2 NDIR, baseline otomatis tiap minggu",
+  },
+  ppfd: {
+    label: "PPFD",
+    short: "PPFD",
+    why: "Kerapatan fluks foton fotosintetik: seberapa banyak cahaya berguna yang jatuh di kanopi saat ini, pada pita 400 sampai 700 nm yang dapat dipakai tanaman.",
+    sensor: "Sensor PAR kuantum setinggi kanopi, ditambah sensor referensi tetap",
+  },
+  dli: {
+    label: "Integral cahaya harian",
+    short: "DLI",
+    why: "Total cahaya sehari, angka yang menentukan hasil panen. DLI berjalan memberi tahu apakah perlu tambahan lampu sebelum hari berakhir.",
+    sensor: "Diintegrasikan dari sensor PAR sepanjang fotoperiode",
+  },
+  leafTemp: {
+    label: "Suhu daun",
+    short: "Suhu daun",
+    why: "Selisih suhu daun dan udara adalah petunjuk awal apakah tanaman masih bertranspirasi. Daun yang panas biasanya sudah menutup stomatanya.",
+    sensor: "Termometer kanopi inframerah, satu per bay",
+  },
+  ph: {
+    label: "pH",
+    short: "pH",
+    why: "Menentukan nutrisi mana yang benar-benar bisa diserap akar. pH yang naik di atas 6,5 mengunci besi dan mangan jauh sebelum gejalanya tampak di daun.",
+    sensor: "Elektroda pH kaca inline dengan dosis asam otomatis",
+  },
+  ec: {
+    label: "Daya hantar listrik",
+    short: "EC",
+    why: "Penanda seberapa pekat larutan nutrisi. EC yang naik di antara dosis berarti tanaman minum lebih cepat daripada makan, sinyal iklim sekaligus sinyal nutrisi.",
+    sensor: "Probe EC toroidal di jalur balik, terkompensasi suhu",
+  },
+  dissolvedOxygen: {
+    label: "Oksigen terlarut",
+    short: "DO",
+    why: "Akar bernapas, dan air hangat menahan lebih sedikit oksigen. Di zona akar tropis ini kegagalan yang diam: hasil turun jauh sebelum akar tampak bermasalah.",
+    sensor: "Probe DO optik di tangki pencampur",
+  },
+  waterTemp: {
+    label: "Suhu larutan nutrisi",
+    short: "Suhu air",
+    why: "Menentukan batas atas oksigen dan laju penyakit akar. Menjaga larutan tetap sejuk sering lebih murah daripada mendinginkan seluruh volume udara.",
+    sensor: "Probe PT1000 di tangki, probe kedua di jalur penyaluran",
+  },
+  flow: {
+    label: "Debit irigasi",
+    short: "Debit",
+    why: "Memastikan dosis benar-benar sampai ke tanaman. Debit nol saat jadwal penyiraman berarti saluran tersumbat, bukan tanaman yang tenang.",
+    sensor: "Flow meter paddle inline per grup katup irigasi",
+  },
+};
+
+const METRICS_ID = Object.fromEntries(
+  (Object.keys(METRICS) as MetricKey[]).map((k) => [k, { ...METRICS[k], ...METRIC_ID[k] }]),
+) as Record<MetricKey, Metric>;
+
+/** Metric labels, instruments, and notes in the reader's language. */
+export function metricsFor(lang: Lang): Record<MetricKey, Metric> {
+  return lang === "id" ? METRICS_ID : METRICS;
+}
+
+const RANGE_LABEL_ID: Record<RangeKey, string> = { daily: "Harian", weekly: "Mingguan", monthly: "Bulanan" };
+
+export function rangesFor(lang: Lang): typeof RANGES {
+  return lang === "id" ? RANGES.map((r) => ({ ...r, label: RANGE_LABEL_ID[r.key] })) : RANGES;
+}
+
+const STATUS_LABEL_ID: Record<Status, string> = { optimal: "Aktif", watch: "Waspada", alert: "Kritis" };
+
+export function statusLabel(status: Status, lang: Lang): string {
+  return lang === "id" ? STATUS_LABEL_ID[status] : STATUS_TONE[status].label;
+}
+
+const ACTUATOR_LABEL_ID: Record<ActuatorState, string> = { on: "NYALA", off: "MATI", maintenance: "PEMELIHARAAN" };
+
+export function actuatorLabel(state: ActuatorState, lang: Lang): string {
+  return lang === "id" ? ACTUATOR_LABEL_ID[state] : ACTUATOR_TONE[state].label;
+}
+
+const PLANT_HEALTH_ID: Record<PlantHealth, string> = {
+  healthy: "Sehat",
+  watch: "Waspada",
+  problem: "Bermasalah",
+  empty: "Kosong",
+};
+
+export function plantHealthLabel(health: PlantHealth, lang: Lang): string {
+  return lang === "id" ? PLANT_HEALTH_ID[health] : PLANT_HEALTH_TONE[health].label;
+}
+
+const STAGE_ID: Record<string, string> = {
+  Germination: "Perkecambahan",
+  Cotyledon: "Kotiledon",
+  "Ready to transplant": "Siap pindah tanam",
+  Establishment: "Adaptasi",
+  Vegetative: "Vegetatif",
+  "Flowering and set": "Berbunga dan berbuah",
+  "Harvest window": "Masa panen",
+  Empty: "Kosong",
+};
+
+/** A plant's growth stage (as `plantsFor` writes it) in the reader's language. */
+export function stageLabel(stage: string, lang: Lang): string {
+  return lang === "id" ? (STAGE_ID[stage] ?? stage) : stage;
+}
+
+const WEATHER_ID: Record<WeatherSample["condition"], string> = {
+  Clear: "Cerah",
+  "Partly cloudy": "Berawan sebagian",
+  Overcast: "Mendung",
+  Rain: "Hujan",
+};
+
+export function weatherLabel(condition: WeatherSample["condition"], lang: Lang): string {
+  return lang === "id" ? WEATHER_ID[condition] : condition;
+}
+
+const GROW_SYSTEM_ID: Record<GrowSystem, (typeof GROW_SYSTEMS)[GrowSystem]> = {
+  polybag: {
+    label: "Polybag",
+    rowLabel: "Bedeng",
+    slotLabel: "Polybag",
+    rowPlural: "Bedeng",
+    slotPlural: "Polybag",
+    note: "Polybag media tanam di bedeng, irigasi tetes per polybag.",
+  },
+  "dutch-bucket": {
+    label: "Dutch bucket",
+    rowLabel: "Jalur",
+    slotLabel: "Bucket",
+    rowPlural: "Jalur",
+    slotPlural: "Bucket",
+    note: "Bucket berpasangan di satu jalur drainase, satu dripper per bucket.",
+  },
+  gully: {
+    label: "Gully trapesium",
+    rowLabel: "Gully",
+    slotLabel: "Lubang",
+    rowPlural: "Gully",
+    slotPlural: "Lubang",
+    note: "Kanal trapesium miring, lapisan tipis larutan bersirkulasi.",
+  },
+  "vertical-rack": {
+    label: "Rak vertikal",
+    rowLabel: "Tingkat",
+    slotLabel: "Titik",
+    rowPlural: "Tingkat",
+    slotPlural: "Titik",
+    note: "Tingkat bertumpuk di bawah lampu tetap, tingkat teratas paling dekat lampu.",
+  },
+  tray: {
+    label: "Tray semai",
+    rowLabel: "Tray",
+    slotLabel: "Sel",
+    rowPlural: "Tray",
+    slotPlural: "Sel",
+    note: "Tray plug di atas meja, dikabutkan dengan timer.",
+  },
+};
+
+/** How a growing system is written, in the reader's language. */
+export function growSystemFor(system: GrowSystem, lang: Lang): (typeof GROW_SYSTEMS)[GrowSystem] {
+  return lang === "id" ? GROW_SYSTEM_ID[system] : GROW_SYSTEMS[system];
+}
+
+/**
+ * A planting position read out loud, e.g. "Bed 2 · 07" or "Bedeng 2 · 07".
+ * `plant.id` keeps the English form because it is the position's key.
+ */
+export function plantPositionLabel(plant: Plant, layout: RoomLayout, lang: Lang): string {
+  if (lang !== "id") return plant.id;
+  return `${GROW_SYSTEM_ID[layout.system].rowLabel} ${plant.row + 1} · ${String(plant.col + 1).padStart(2, "0")}`;
+}
+
+const SITE_ID: Record<string, Pick<Site, "name" | "city" | "note">> = {
+  ugm: {
+    name: "Kampus Riset UGM",
+    city: "Sleman, Yogyakarta",
+    note: "Lokasi riset utama: greenhouse, plant factory, penyemaian.",
+  },
+  kulonprogo: {
+    name: "Stasiun Lapang Kulon Progo",
+    city: "Kulon Progo, Yogyakarta",
+    note: "Lokasi uji dataran rendah untuk hortikultura di bawah plastik.",
+  },
+  magelang: {
+    name: "Unit Dataran Tinggi Magelang",
+    city: "Magelang, Jawa Tengah",
+    note: "Unit dataran tinggi, malam lebih sejuk, tanaman daun.",
+  },
+};
+
+export function sitesFor(lang: Lang): Site[] {
+  return lang === "id" ? SITES.map((s) => ({ ...s, ...SITE_ID[s.id] })) : SITES;
+}
+
+export function localizeSite(site: Site, lang: Lang): Site {
+  return lang === "id" ? { ...site, ...SITE_ID[site.id] } : site;
+}
+
+const LOCATION_ID: Record<string, string> = {
+  "North block · Bay A": "Blok utara · Bay A",
+  "Plant factory · Level 1": "Plant factory · Lantai 1",
+  "Hydroponic hall · East": "Hall hidroponik · Timur",
+  "Propagation house": "Rumah semai",
+  "Trial bay · South": "Bay uji · Selatan",
+};
+
+/** Where a room sits on its site, in the reader's language. */
+export function roomLocation(zoneId: string, lang: Lang): string {
+  const loc = ROOM_LAYOUTS[zoneId]?.location ?? "";
+  return lang === "id" ? (LOCATION_ID[loc] ?? loc) : loc;
+}
+
+// Place names used by the actuator list and the event log.
+const PLACE_ID: Record<string, string> = {
+  "Plant Factory · Rack A and B": "Plant Factory · Rak A dan B",
+  "Plant Factory · Rack A": "Plant Factory · Rak A",
+  "Mixing tank, shared": "Tangki pencampur, bersama",
+  "Plant Factory · two units": "Plant Factory · dua unit",
+  "Greenhouse 2 · Trial bay": "Greenhouse 2 · Bay uji",
+  "Mixing tank": "Tangki pencampur",
+  "Weather station": "Stasiun cuaca",
+};
+
+function placeId(place: string): string {
+  return PLACE_ID[place] ?? place;
+}
+
+const ACTUATOR_NAME_ID: Record<string, string> = {
+  "Exhaust and circulation fans": "Kipas exhaust dan sirkulasi",
+  "Evaporative cooling wall": "Dinding pendingin evaporatif",
+  "LED lighting": "Lampu LED",
+  "Nutrient dosing unit": "Unit dosis nutrisi",
+  "Chiller and aeration": "Chiller dan aerasi",
+  Dehumidifier: "Dehumidifier",
+  "Climate controller": "Pengendali iklim",
+};
+
+const ALERT_MESSAGE_ID: Record<string, string> = {
+  "VPD above 1.3 kPa around solar noon, screen closed to 40 percent":
+    "VPD di atas 1,3 kPa sekitar tengah hari, screen ditutup sampai 40 persen",
+  "pH corrected from 6.31 to 5.84, 180 mL acid dosed": "pH dikoreksi dari 6,31 ke 5,84, asam 180 mL didosiskan",
+  "Room offline, controller in maintenance since 06:10": "Ruang offline, pengendali dalam pemeliharaan sejak 06:10",
+  "Dissolved oxygen recovered to 7.4 mg/L after chiller cycle":
+    "Oksigen terlarut pulih ke 7,4 mg/L setelah siklus chiller",
+};
+
+const AGO_ID: Record<string, string> = {
+  "18 min ago": "18 menit lalu",
+  "42 min ago": "42 menit lalu",
+  "3 h ago": "3 jam lalu",
+  "4 h ago": "4 jam lalu",
+  "just now": "baru saja",
+};
+
+type NavCopy = { label: string; blurb: string };
+
+const DASHBOARD_NAV_ID: Record<string, NavCopy> = {
+  "/indoor-farming/dashboard": {
+    label: "Ringkasan",
+    blurb: "Fasilitas sekilas pandang: setiap ruang, hari ini, dan apa pun yang perlu diperhatikan.",
+  },
+  "/indoor-farming/dashboard/rooms": {
+    label: "Ruang",
+    blurb: "Setiap ruang tanam, isinya, dan bagaimana iklim serta nutrisinya berjalan.",
+  },
+  "/indoor-farming/dashboard/sensors": {
+    label: "Sensor",
+    blurb: "Instrumen di balik angka: apa yang terpasang, di mana, dan apakah masih mengirim data.",
+  },
+  "/indoor-farming/dashboard/nutrition": {
+    label: "Nutrisi",
+    blurb: "Kimia zona akar di seluruh fasilitas: pH, konduktivitas, oksigen terlarut, dan dosis.",
+  },
+  "/indoor-farming/dashboard/climate": {
+    label: "Iklim",
+    blurb: "Suhu udara, kelembapan, defisit tekanan uap, dan CO2, dibandingkan dengan cuaca luar yang memengaruhinya.",
+  },
+  "/indoor-farming/dashboard/analytics": {
+    label: "Analitik",
+    blurb: "Perilaku fasilitas sepanjang hari: waktu dalam rentang target, nilai ekstrem, dan ke mana upaya kontrol tercurah.",
+  },
+  "/indoor-farming/dashboard/calibration": {
+    label: "Kalibrasi",
+    blurb: "Kapan setiap instrumen terakhir dicek terhadap referensi, dan mana yang segera jatuh tempo.",
+  },
+};
+
+/** The Indoor dashboard's sidebar with labels and ledes in the reader's language. */
+export function dashboardNavFor(lang: Lang): typeof DASHBOARD_NAV {
+  return lang === "id" ? DASHBOARD_NAV.map((n) => ({ ...n, ...DASHBOARD_NAV_ID[n.to] })) : DASHBOARD_NAV;
+}
+
+/** One screen's title and lede, looked up by its route. */
+export function dashboardScreen(to: string, lang: Lang): NavCopy {
+  const item = DASHBOARD_NAV.find((n) => n.to === to) ?? DASHBOARD_NAV[0];
+  return lang === "id" ? (DASHBOARD_NAV_ID[item.to] ?? item) : { label: item.label, blurb: item.blurb };
 }

@@ -3,7 +3,8 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "../../lib/auth/auth";
 import { isAuthConfigured, supabase } from "../../lib/auth/supabase";
 import { body, display } from "../../lib/fonts";
-import { ErpDataError, accessOf, toErpError, type ErpAccess } from "../../lib/pf/foundation";
+import { ErpDataError, accessOf, erpMessage, toErpError, type ErpAccess } from "../../lib/pf/foundation";
+import { localeOf, useLang, useT, type Lang } from "../../lib/i18n";
 import { Card, Note } from "./ui";
 
 // Pieces shared by the ERP's data pages: loading, the page frame, form controls.
@@ -83,14 +84,19 @@ export function ErpPage({ eyebrow, title, sub, actions, children }: { eyebrow: s
 }
 
 function NotInstalled() {
+  const t = useT();
+  const code = (name: string) => <code className="rounded bg-[#EEF3F4] px-1">{name}</code>;
   return (
     <Card className="p-5">
-      <p className="text-[15px] font-medium text-[#0F2F36]">ERP tables are not installed yet</p>
+      <p className="text-[15px] font-medium text-[#0F2F36]">{t({ en: "ERP tables are not installed yet", id: "Tabel ERP belum dipasang" })}</p>
       <p className="mt-1 text-[14px] leading-[1.5] text-[#4F6B73]">
         {isAuthConfigured ? (
-          <>Run the ERP SQL files from the folder <code className="rounded bg-[#EEF3F4] px-1">web/supabase/</code> in the Supabase SQL Editor (<code className="rounded bg-[#EEF3F4] px-1">pf-foundation.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-batch.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-monitoring.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-sales.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-inventory.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-hr.sql</code>, then <code className="rounded bg-[#EEF3F4] px-1">pf-cost.sql</code>, <code className="rounded bg-[#EEF3F4] px-1">pf-profile-media.sql</code>), then reload this page.</>
+          t({
+            en: <>Run the ERP SQL files from the folder {code("web/supabase/")} in the Supabase SQL Editor ({code("pf-foundation.sql")}, {code("pf-batch.sql")}, {code("pf-monitoring.sql")}, {code("pf-sales.sql")}, {code("pf-inventory.sql")}, {code("pf-hr.sql")}, then {code("pf-cost.sql")}, {code("pf-profile-media.sql")}), then reload this page.</>,
+            id: <>Jalankan file SQL ERP dari folder {code("web/supabase/")} di Supabase SQL Editor ({code("pf-foundation.sql")}, {code("pf-batch.sql")}, {code("pf-monitoring.sql")}, {code("pf-sales.sql")}, {code("pf-inventory.sql")}, {code("pf-hr.sql")}, lalu {code("pf-cost.sql")}, {code("pf-profile-media.sql")}), kemudian muat ulang halaman ini.</>,
+          })
         ) : (
-          "Supabase is not configured in this environment, so ERP data cannot be read."
+          t({ en: "Supabase is not configured in this environment, so ERP data cannot be read.", id: "Supabase belum dikonfigurasi di lingkungan ini, jadi data ERP tidak bisa dibaca." })
         )}
       </p>
     </Card>
@@ -99,6 +105,8 @@ function NotInstalled() {
 
 /** The client retries a failed read for up to about 18 seconds, so a long wait gets a word of its own. */
 export const SLOW_TEXT = "Slow connection, still trying…";
+export const SLOW_TEXT_ID = "Koneksi lambat, masih mencoba…";
+export const slowText = (lang: Lang = "en") => (lang === "id" ? SLOW_TEXT_ID : SLOW_TEXT);
 
 export function useSlow(waiting: boolean, afterMs = 6000) {
   const [slow, setSlow] = useState(false);
@@ -115,6 +123,8 @@ export function useSlow(waiting: boolean, afterMs = 6000) {
 
 /** What failed, inside the block that failed, with the way to try again. */
 export function ErrorNote({ message, onRetry }: { message: string; onRetry: () => Promise<unknown> }) {
+  const lang = useLang();
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const retry = async () => {
     setBusy(true);
@@ -126,9 +136,9 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry: () =
   };
   return (
     <div role="alert" className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-[#FFF6E5] px-3 py-2 text-[13px] text-[#8A5A07]">
-      <span className="min-w-0">{message}</span>
+      <span className="min-w-0">{erpMessage(message, lang)}</span>
       <button type="button" disabled={busy} onClick={() => void retry()} className="whitespace-nowrap font-medium text-[#0F2F36] underline disabled:cursor-not-allowed disabled:opacity-50">
-        {busy ? "Connecting…" : "Try again"}
+        {busy ? t({ en: "Connecting…", id: "Menghubungkan…" }) : t({ en: "Try again", id: "Coba lagi" })}
       </button>
     </div>
   );
@@ -136,9 +146,10 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry: () =
 
 function LoadingNote() {
   const slow = useSlow(true);
+  const lang = useLang();
   return (
     <div className="flex items-center gap-2 py-10 text-[14px] text-[#4F6B73]">
-      <Loader2 className="h-4 w-4 animate-spin text-[#0B6477]" /> {slow ? SLOW_TEXT : "Loading data…"}
+      <Loader2 className="h-4 w-4 animate-spin text-[#0B6477]" /> {slow ? slowText(lang) : lang === "id" ? "Memuat data…" : "Loading data…"}
     </div>
   );
 }
@@ -191,8 +202,9 @@ export function useAction() {
 
 /** A form's answer: why it failed, or for a few seconds that it saved. */
 export function ActionNote({ action }: { action: { error: string | null; saved: boolean } }) {
-  if (action.error) return <Note tone="warn">{action.error}</Note>;
-  if (action.saved) return <p role="status" className="text-[13px] font-medium text-[#0E7A5C]">Saved</p>;
+  const lang = useLang();
+  if (action.error) return <Note tone="warn">{erpMessage(action.error, lang)}</Note>;
+  if (action.saved) return <p role="status" className="text-[13px] font-medium text-[#0E7A5C]">{lang === "id" ? "Tersimpan" : "Saved"}</p>;
   return null;
 }
 
@@ -220,8 +232,9 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 export function ReadOnlyNote({ who }: { who: string }) {
-  return <Note>You can see this data. Changing it needs the role {who}.</Note>;
+  const t = useT();
+  return <Note>{t({ en: <>You can see this data. Changing it needs the role {who}.</>, id: <>Anda bisa melihat data ini. Untuk mengubahnya perlu peran {who}.</> })}</Note>;
 }
 
-export const formatDateTime = (iso: string) =>
-  new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(iso));
+export const formatDateTime = (iso: string, lang: Lang = "en") =>
+  new Intl.DateTimeFormat(lang === "id" ? localeOf(lang) : "en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(iso));

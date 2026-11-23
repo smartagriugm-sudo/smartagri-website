@@ -1,4 +1,5 @@
-import { METRICS, formatValue, latestAt, metricInfo, metricsAt, rangeState, type Asset, type LatestReading, type PlaceCode, type RangeState, type RecipeTarget, type Series, type SeriesPoint } from "./monitoring";
+import { METRICS, formatValue, latestAt, metricInfo, metricLabel, metricsAt, rangeState, type Asset, type LatestReading, type PlaceCode, type RangeState, type RecipeTarget, type Series, type SeriesPoint } from "./monitoring";
+import type { Lang } from "../i18n-core";
 
 // What the front page reads about the air and the water at one facility. A place
 // with devices shows their readings, and only theirs. A place with none shows the
@@ -26,20 +27,20 @@ const SAMPLE_BANDS: Record<PlaceCode, Record<string, Pick<RecipeTarget, "low" | 
   CH1: { suhu: { low: 22, high: 26 }, rh: { low: 65, high: 80 }, vpd: { low: 0.5, high: 1.3 }, co2: { low: 600, high: 1000 }, cahaya: { low: 8000, high: 16000 } },
 };
 
-export function conditionsAt(place: PlaceCode, assets: readonly Asset[], latest: readonly LatestReading[], targetOf: (metric: string) => Pick<RecipeTarget, "low" | "high"> | null = () => null): Conditions {
+export function conditionsAt(place: PlaceCode, assets: readonly Asset[], latest: readonly LatestReading[], targetOf: (metric: string) => Pick<RecipeTarget, "low" | "high"> | null = () => null, lang: Lang = "en"): Conditions {
   const sent = metricsAt(assets, place);
   if (sent.length > 0) {
     return {
       sample: false,
       rows: sent.map((metric) => {
         const info = metricInfo(metric);
-        return { metric, label: info.label, unit: info.unit, value: latestAt(latest, place, metric)?.value ?? null, band: targetOf(metric) };
+        return { metric, label: lang === "id" ? metricLabel(metric, lang) : info.label, unit: info.unit, value: latestAt(latest, place, metric)?.value ?? null, band: targetOf(metric) };
       }),
     };
   }
   return {
     sample: true,
-    rows: METRICS.filter((m) => m.key in SAMPLE_VALUES[place]).map(({ key: metric, label, unit }) => ({ metric, label, unit, value: SAMPLE_VALUES[place][metric], band: SAMPLE_BANDS[place][metric] ?? null })),
+    rows: METRICS.filter((m) => m.key in SAMPLE_VALUES[place]).map(({ key: metric, label, unit }) => ({ metric, label: lang === "id" ? metricLabel(metric, lang) : label, unit, value: SAMPLE_VALUES[place][metric], band: SAMPLE_BANDS[place][metric] ?? null })),
   };
 }
 
@@ -76,10 +77,13 @@ export function summarize(points: readonly Pick<SeriesPoint, "v">[]) {
 }
 
 export const STATE_WORD: Record<RangeState, string> = { ok: "OK", rendah: "Low", tinggi: "High" };
+const STATE_WORD_ID: Record<RangeState, string> = { ok: "OK", rendah: "Rendah", tinggi: "Tinggi" };
+
+export const stateWord = (state: RangeState, lang: Lang = "en") => (lang === "id" ? STATE_WORD_ID : STATE_WORD)[state];
 
 export const rowState = (row: ConditionRow) => (row.value === null ? null : rangeState(row.value, row.band));
 
-export const rowValue = (row: ConditionRow) => (row.value === null ? "-" : formatValue(row.metric, row.value));
+export const rowValue = (row: ConditionRow, lang: Lang = "en") => (row.value === null ? "-" : formatValue(row.metric, row.value, lang));
 
 /* ------------------------------------------------------------ colour and groups */
 
@@ -110,6 +114,10 @@ export const CHART_GROUPS: readonly ChartGroup[] = [
   { key: "iklim", label: "Microclimate", metrics: ["suhu", "rh", "vpd", "co2"] },
   { key: "nutrisi", label: "Nutrients", metrics: ["suhu_larutan", "ph", "ec", "do"] },
 ];
+
+const CHART_GROUP_ID: Record<string, string> = { iklim: "Iklim mikro", nutrisi: "Nutrisi" };
+
+export const chartGroupLabel = (g: ChartGroup, lang: Lang = "en") => (lang === "id" ? (CHART_GROUP_ID[g.key] ?? g.label) : g.label);
 
 /** The groups a place can draw: at least two of their parameters must be there. */
 export const groupsAt = (metrics: readonly string[]) => CHART_GROUPS.filter((g) => g.metrics.filter((m) => metrics.includes(m)).length >= 2);
@@ -186,13 +194,14 @@ export function mergeSeries(series: readonly { key: string; points: readonly Pic
 export const MAX_RANGE_DAYS = 90;
 
 /** Reads the two date fields. Returns the range in milliseconds, or what is wrong with it. */
-export function parseCustomRange(fromText: string, toText: string, now: number): { from: number; to: number } | { error: string } {
+export function parseCustomRange(fromText: string, toText: string, now: number, lang: Lang = "en"): { from: number; to: number } | { error: string } {
+  const id = lang === "id";
   const from = new Date(fromText).getTime();
   const to = new Date(toText).getTime();
-  if (!fromText || !toText || Number.isNaN(from) || Number.isNaN(to)) return { error: "Fill in both dates and times." };
-  if (from >= to) return { error: "The start time must be before the end time." };
-  if (from > now) return { error: "The start time cannot be in the future." };
-  if (from < now - MAX_RANGE_DAYS * 86_400_000) return { error: `Data available up to ${MAX_RANGE_DAYS} days back.` };
+  if (!fromText || !toText || Number.isNaN(from) || Number.isNaN(to)) return { error: id ? "Isi kedua tanggal dan jam." : "Fill in both dates and times." };
+  if (from >= to) return { error: id ? "Waktu mulai harus sebelum waktu selesai." : "The start time must be before the end time." };
+  if (from > now) return { error: id ? "Waktu mulai tidak boleh di masa depan." : "The start time cannot be in the future." };
+  if (from < now - MAX_RANGE_DAYS * 86_400_000) return { error: id ? `Data tersedia hingga ${MAX_RANGE_DAYS} hari ke belakang.` : `Data available up to ${MAX_RANGE_DAYS} days back.` };
   return { from, to: Math.min(to, now) };
 }
 
