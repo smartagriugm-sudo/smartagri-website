@@ -61,6 +61,10 @@ export const researchPhotoAlt: Record<string, string> = {
 // so all media still resolves through this module.
 export const partnerLogo = (file: string) => `${BASE}/partners/${file}`;
 
+// WGFS 1.2 rate letter (No. 019/WGFS/1.2/SE/XI/2026) that the instrument
+// inventory's rates and billing rules follow, for users to read as PDF.
+export const rateLetterPdf = `${BASE}/documents/surat-tarif-wgfs-1.2-puapt-ugm.pdf`;
+
 // Team portraits live in public/brand/team/<slug>.webp (white background),
 // referenced by slug so all media still resolves through this module.
 export const teamPhoto = (slug: string) => `${BASE}/team/${slug}.webp`;

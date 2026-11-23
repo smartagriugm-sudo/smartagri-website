@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { MotionConfig, motion } from "framer-motion";
-import { ArrowLeft, Loader2, Microscope } from "lucide-react";
+import { ArrowLeft, Loader2, Microscope, Pencil } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import SiteHeader from "../components/SiteHeader";
 import Footer from "../components/Footer";
@@ -13,16 +13,27 @@ import { useAuth } from "../lib/auth/auth";
 import {
   type Instrument,
   type InstrumentStatus,
-  type Operator,
+  type PaymentStatus,
   type UsageLog,
-  type UserType,
-  INSTRUMENT_STATUSES,
-  computeCost,
   formatIDR,
-  rateTypeLabel,
-  resolveRate,
+  fmtDateTime,
+  logStatusMeta,
+  overdueDays,
+  paymentMeta,
   statusMeta,
 } from "../lib/inventory";
+import { labMemberNames, setPayment } from "../lib/inventory-data";
+import InstrumentForm from "../components/inventory/InstrumentForm";
+import Supporters from "../components/inventory/Supporters";
+import { Field, FormError, PrimaryButton, inputClass } from "../components/inventory/FormParts";
+import {
+  BookingList,
+  ContactLink,
+  Panel,
+  RequestPanel,
+  ReturnPanel,
+  StatusControl,
+} from "../components/inventory/LoanPanels";
 
 export const Route = createFileRoute("/inventory_/$slug")({
   component: InstrumentPage,
@@ -35,8 +46,9 @@ export const Route = createFileRoute("/inventory_/$slug")({
 });
 
 // One instrument: photo and rates on the left (sticky), the name, status and
-// the action that fits its state (check out, return, log an inspection) on
-// the right, then its usage or inspection history.
+// the action that fits its state on the right (book or check out, return,
+// or log an inspection for an installed unit), upcoming bookings, then the
+// usage or inspection history. Lab admins also edit the instrument here.
 function InstrumentPage() {
   return (
     <AuthGate>
@@ -46,7 +58,8 @@ function InstrumentPage() {
 }
 
 function InstrumentPageInner() {
-  const { user } = useAuth();
+  const { user, account } = useAuth();
+  const meta = user?.user_metadata as { full_name?: string; name?: string } | undefined;
   return (
     <MotionConfig reducedMotion="user">
       <main>
@@ -54,7 +67,11 @@ function InstrumentPageInner() {
         <div className="relative overflow-clip bg-white">
           <AmbientWash count={4} />
           <div className="relative">
-            <InstrumentDetail userId={user?.id ?? null} />
+            <InstrumentDetail
+              userId={user?.id ?? null}
+              userName={account?.name || meta?.full_name || meta?.name || ""}
+              isAdmin={!!account?.isAdmin}
+            />
           </div>
         </div>
         <Footer />
@@ -63,31 +80,40 @@ function InstrumentPageInner() {
   );
 }
 
-function InstrumentDetail({ userId }: { userId: string | null }) {
+function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null; userName: string; isAdmin: boolean }) {
   const { slug } = Route.useParams();
+  const navigate = useNavigate();
   const [instrument, setInstrument] = useState<Instrument | null>(null);
+  const [all, setAll] = useState<Instrument[]>([]);
   const [logs, setLogs] = useState<UsageLog[]>([]);
+  const [members, setMembers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [editing, setEditing] = useState(false);
 
   const refresh = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
+    labMemberNames()
+      .then(setMembers)
+      .catch(() => setMembers([]));
+  }, []);
+
+  useEffect(() => {
     let active = true;
-    setLoading(true);
+    // Only the first load shows the spinner; a refresh after an action keeps
+    // the page where it is.
+    if (reloadKey === 0) setLoading(true);
     setError(null);
     if (!supabase) {
       setError("Inventory storage is not configured on this environment.");
       setLoading(false);
       return;
     }
+    const db = supabase;
     (async () => {
-      const { data: inst, error: e1 } = await supabase
-        .from("instruments")
-        .select("*")
-        .eq("slug", slug)
-        .maybeSingle();
+      const { data: inst, error: e1 } = await db.from("instruments").select("*").eq("slug", slug).maybeSingle();
       if (!active) return;
       if (e1) {
         setError(e1.message);
@@ -99,22 +125,22 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
         setLoading(false);
         return;
       }
-      const instrument = inst as Instrument;
-      setInstrument(instrument);
-      const { data: rows, error: e2 } = await supabase
-        .from("usage_logs")
-        .select("*")
-        .eq("instrument_id", instrument.id)
-        .order("checkout_at", { ascending: false });
+      const found = inst as Instrument;
+      setInstrument(found);
+      const [{ data: rows, error: e2 }, everyone] = await Promise.all([
+        db.from("usage_logs").select("*").eq("instrument_id", found.id).order("checkout_at", { ascending: false }),
+        isAdmin ? db.from("instruments").select("*") : Promise.resolve({ data: [] as Instrument[] }),
+      ]);
       if (!active) return;
       if (e2) setError(e2.message);
       else setLogs((rows ?? []) as UsageLog[]);
+      setAll((everyone.data ?? []) as Instrument[]);
       setLoading(false);
     })();
     return () => {
       active = false;
     };
-  }, [slug, reloadKey]);
+  }, [slug, reloadKey, isAdmin]);
 
   if (loading) {
     return (
@@ -127,7 +153,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
   if (error) {
     return (
       <Shell>
-        <div className="rounded-[20px] border border-dashed border-[#0B6477]/25 bg-white/70 p-8 text-center text-neutral-500 text-sm" style={body}>
+        <div className="rounded-[20px] border border-dashed border-[#0B6477]/25 bg-white/70 p-8 text-center text-sm text-neutral-500" style={body}>
           {error}
         </div>
       </Shell>
@@ -144,14 +170,43 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
     );
   }
 
-  const activeLog = logs.find((l) => l.status === "ongoing") ?? null;
+  const borrowLogs = logs.filter((l) => l.log_type !== "check");
+  const activeLog = borrowLogs.find((l) => l.status === "ongoing") ?? null;
+  const bookings = borrowLogs.filter((l) => l.status === "booked");
   const meta = statusMeta[instrument.status as InstrumentStatus];
   const installed = instrument.kind === "installed";
+  const now = new Date();
 
   return (
-    <Shell>
+    <Shell
+      action={
+        isAdmin ? (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className={`inline-flex items-center gap-2 rounded-lg border border-[#0B6477]/20 px-3.5 py-2 text-[#0B6477] transition-colors hover:bg-[#F3F7F6] ${META}`}
+            style={body}
+          >
+            <Pencil className="h-3.5 w-3.5" /> Edit instrument
+          </button>
+        ) : null
+      }
+    >
+      {isAdmin && (
+        <InstrumentForm
+          open={editing}
+          instrument={instrument}
+          all={all}
+          onClose={() => setEditing(false)}
+          onSaved={(next) => {
+            setEditing(false);
+            if (next !== slug) navigate({ to: "/inventory/$slug", params: { slug: next } });
+            else refresh();
+          }}
+        />
+      )}
       <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
-        {/* Photo and rates */}
+        {/* Photo, rates and notes */}
         <div className="lg:col-span-5">
           <div className="flex flex-col gap-4 lg:sticky lg:top-[110px]">
             <motion.div
@@ -181,11 +236,42 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
 
             {!installed && (
               <div className="grid gap-px overflow-hidden rounded-[20px] border border-[#0B6477]/12 bg-[#0B6477]/12 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-                <RateCard label="Internal, self" value={instrument.rate_internal_self} unit={instrument.unit} />
+                <RateCard label="Internal, self-operated" value={instrument.rate_internal_self} unit={instrument.unit} />
                 <RateCard label="Internal, technician" value={instrument.rate_internal_tech} unit={instrument.unit} />
                 <RateCard label="External" value={instrument.rate_external} unit={instrument.unit} />
               </div>
             )}
+            {!installed && instrument.rate_tiers && instrument.rate_tiers.length > 0 && <TierTable instrument={instrument} />}
+            {instrument.terms && (
+              <div className="rounded-[20px] border border-[#0B6477]/12 bg-white/90 p-5" style={body}>
+                <p className={`mb-3 text-neutral-500 ${META}`}>
+                  {/sampel|sample/i.test(instrument.unit ?? "") ? "What counts as one sample" : "Terms from the rate letter"}
+                </p>
+                <ul className="flex list-disc flex-col gap-2 pl-4 text-sm leading-relaxed text-neutral-700 marker:text-[#14919B]">
+                  {instrument.terms
+                    .split("\n")
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                    .map((t) => (
+                      <li key={t}>{t}</li>
+                    ))}
+                </ul>
+              </div>
+            )}
+            {(instrument.pic || instrument.notes) && (
+              <div className="rounded-[20px] border border-[#0B6477]/12 bg-white/90 p-5 text-sm text-neutral-700" style={body}>
+                {instrument.pic && (
+                  <p>
+                    <span className="text-neutral-500">Person in charge: </span>
+                    <b className="font-medium text-neutral-900">{instrument.pic}</b>
+                  </p>
+                )}
+                {instrument.notes && (
+                  <p className={`whitespace-pre-line leading-relaxed ${instrument.pic ? "mt-2" : ""}`}>{instrument.notes}</p>
+                )}
+              </div>
+            )}
+            <Supporters compact />
           </div>
         </div>
 
@@ -215,10 +301,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
             transition={{ delay: 0.25, duration: 0.6, ease: "easeOut" }}
             className="mt-5 flex flex-wrap items-center gap-2"
           >
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${meta.chip}`}
-              style={body}
-            >
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${meta.chip}`} style={body}>
               <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
               {meta.label}
             </span>
@@ -227,10 +310,26 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
                 Permanently installed
               </span>
             )}
+            {bookings.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0AD1C8]/15 px-3 py-1.5 text-sm font-medium text-[#0B6477]" style={body}>
+                {bookings.length} upcoming {bookings.length === 1 ? "booking" : "bookings"}
+              </span>
+            )}
             <span className="text-[15px] text-neutral-500" style={body}>
               {[instrument.brand, instrument.category].filter(Boolean).join(" · ")}
             </span>
           </motion.div>
+          {instrument.spec && (
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
+              className="mt-5 max-w-[60ch] text-base leading-relaxed text-neutral-700 md:text-lg"
+              style={body}
+            >
+              {instrument.spec}
+            </motion.p>
+          )}
 
           {/* Action panel */}
           <motion.div
@@ -240,18 +339,29 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
             className="mt-10"
           >
             {installed ? (
-              <InspectionPanel instrument={instrument} userId={userId} onDone={refresh} />
+              <InspectionPanel instrument={instrument} userId={userId} defaultName={userName} onDone={refresh} />
             ) : activeLog ? (
-              <ReturnPanel instrument={instrument} log={activeLog} onDone={refresh} />
-            ) : instrument.status === "available" ? (
-              <CheckoutPanel instrument={instrument} userId={userId} onDone={refresh} />
+              <ReturnPanel key={activeLog.id} instrument={instrument} log={activeLog} onDone={refresh} />
             ) : (
-              <div className="rounded-[24px] border border-[#0B6477]/10 bg-white/90 p-6 text-[15px] text-neutral-600" style={body}>
-                This instrument is currently marked <b>{meta.label.toLowerCase()}</b> and is not available
-                for checkout.
-              </div>
+              <RequestPanel
+                key={`${instrument.id}-${instrument.status}-${logs.length}`}
+                instrument={instrument}
+                logs={logs}
+                defaultName={userName}
+                memberNames={members}
+                onDone={refresh}
+              />
             )}
-            <StatusControl instrument={instrument} disabled={!!activeLog} onDone={refresh} />
+            {!installed && (
+              <BookingList
+                bookings={bookings}
+                canHandOut={!activeLog && instrument.status === "available"}
+                userId={userId}
+                isAdmin={isAdmin}
+                onDone={refresh}
+              />
+            )}
+            {!activeLog && <StatusControl instrument={instrument} onDone={refresh} />}
           </motion.div>
         </div>
       </div>
@@ -262,10 +372,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
           <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
           {logs.length} {logs.length === 1 ? "entry" : "entries"}
         </p>
-        <h2
-          className="mb-6 text-3xl font-semibold tracking-[-0.03em] text-neutral-900 md:text-4xl"
-          style={display}
-        >
+        <h2 className="mb-6 text-3xl font-semibold tracking-[-0.03em] text-neutral-900 md:text-4xl" style={display}>
           {installed ? (
             <>
               Inspection <span style={accent}>log</span>
@@ -282,7 +389,7 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
           </div>
         ) : installed ? (
           <div className="overflow-x-auto rounded-[20px] border border-[#0B6477]/12 bg-white/90">
-            <table className="w-full text-left border-collapse min-w-[680px]">
+            <table className="w-full min-w-[680px] border-collapse text-left">
               <thead>
                 <tr className="bg-[#F3F7F6]/80 text-neutral-400">
                   <Th>Date</Th>
@@ -307,44 +414,70 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
           </div>
         ) : (
           <div className="overflow-x-auto rounded-[20px] border border-[#0B6477]/12 bg-white/90">
-            <table className="w-full text-left border-collapse min-w-[760px]">
+            <table className="w-full min-w-[860px] border-collapse text-left">
               <thead>
                 <tr className="bg-[#F3F7F6]/80 text-neutral-400">
                   <Th>Borrower</Th>
-                  <Th>Out</Th>
-                  <Th>Returned</Th>
+                  <Th>From</Th>
+                  <Th>Due / returned</Th>
                   <Th>Purpose</Th>
                   <Th className="text-right">Cost</Th>
                   <Th>Status</Th>
                 </tr>
               </thead>
               <tbody>
-                {logs.map((l) => (
-                  <tr key={l.id} className="border-t border-[#0B6477]/8 align-top transition-colors hover:bg-[#F3F7F6]/70">
-                    <Td>
-                      <div className="font-medium text-neutral-800">{l.borrower_name}</div>
-                      <div className="text-xs text-neutral-400">
-                        {l.borrower_org || "-"} · {l.user_type}
-                        {l.operator === "technician" ? " · technician" : ""}
-                      </div>
-                    </Td>
-                    <Td className="whitespace-nowrap text-neutral-600">{fmtDate(l.checkout_at)}</Td>
-                    <Td className="whitespace-nowrap text-neutral-600">{l.returned_at ? fmtDate(l.returned_at) : "-"}</Td>
-                    <Td className="text-neutral-600">{l.purpose || "-"}</Td>
-                    <Td className="text-right font-medium text-neutral-800">{formatIDR(l.cost)}</Td>
-                    <Td>
-                      <span
-                        className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${
-                          l.status === "ongoing"
-                            ? "bg-[#14919B]/15 text-[#0B6477]"
-                            : "bg-[#45DFB1]/20 text-[#0B6477]"
-                        }`}
-                      >
-                        {l.status === "ongoing" ? "Ongoing" : "Returned"}
-                      </span>
-                    </Td>
-                  </tr>
-                ))}
+                {logs.map((l) => {
+                  const late = overdueDays(l, now);
+                  const st = logStatusMeta[l.status] ?? logStatusMeta.returned;
+                  return (
+                    <tr
+                      key={l.id}
+                      className={`border-t border-[#0B6477]/8 align-top transition-colors hover:bg-[#F3F7F6]/70 ${
+                        l.status === "cancelled" ? "opacity-60" : ""
+                      }`}
+                    >
+                      <Td>
+                        <div className="font-medium text-neutral-800">{l.borrower_name}</div>
+                        <div className="text-xs text-neutral-500">
+                          {l.borrower_org || "-"} · {l.user_type === "external" ? "rental" : "internal"}
+                          {l.operator === "technician" ? ` · technician${l.technician_name ? ` ${l.technician_name}` : ""}` : ""}
+                        </div>
+                        {l.borrower_contact && (
+                          <div className="text-xs">
+                            <ContactLink value={l.borrower_contact} />
+                          </div>
+                        )}
+                      </Td>
+                      <Td className="whitespace-nowrap text-neutral-600">{fmtDateTime(l.checkout_at)}</Td>
+                      <Td className="whitespace-nowrap text-neutral-600">
+                        {l.returned_at ? (
+                          fmtDateTime(l.returned_at)
+                        ) : l.expected_return ? (
+                          <span className={late ? "font-medium text-[#B42318]" : ""}>
+                            due {fmtDateTime(l.expected_return)}
+                            {late ? ` (${late} d late)` : ""}
+                          </span>
+                        ) : (
+                          "-"
+                        )}
+                      </Td>
+                      <Td className="text-neutral-600">{l.purpose || "-"}</Td>
+                      <Td className="text-right">
+                        <div className="font-medium tabular-nums text-neutral-800">{formatIDR(l.cost)}</div>
+                        {l.payment_status && <PaymentCell log={l} isAdmin={isAdmin} onDone={refresh} />}
+                      </Td>
+                      <Td>
+                        <span
+                          className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${
+                            late ? "bg-[#E5484D]/12 text-[#B42318]" : st.chip
+                          }`}
+                        >
+                          {late ? "Overdue" : st.label}
+                        </span>
+                      </Td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -354,33 +487,87 @@ function InstrumentDetail({ userId }: { userId: string | null }) {
   );
 }
 
+function PaymentCell({ log, isAdmin, onDone }: { log: UsageLog; isAdmin: boolean; onDone: () => void }) {
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const status = log.payment_status as PaymentStatus;
+  const m = paymentMeta[status] ?? paymentMeta.unpaid;
+  if (!isAdmin) {
+    return <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${m.chip}`}>{m.label}</span>;
+  }
+  return (
+    <div className="mt-1 flex flex-col items-end gap-1">
+      <select
+        aria-label={`Payment by ${log.borrower_name}`}
+        value={status}
+        disabled={saving}
+        onChange={async (e) => {
+          setSaving(true);
+          setErr(null);
+          try {
+            await setPayment(log.id, e.target.value as PaymentStatus);
+            onDone();
+          } catch (e2) {
+            setErr(e2 instanceof Error ? e2.message : String(e2));
+          }
+          setSaving(false);
+        }}
+        className={`h-7 rounded-full border-0 px-2 text-[11px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#14919B]/40 ${m.chip}`}
+      >
+        {(Object.keys(paymentMeta) as PaymentStatus[]).map((p) => (
+          <option key={p} value={p}>
+            {paymentMeta[p].label}
+          </option>
+        ))}
+      </select>
+      {err && <span className="max-w-[180px] text-[11px] text-[#B42318]">{err}</span>}
+    </div>
+  );
+}
+
+const CHECK_TYPES = [
+  "Routine functional check",
+  "Periodic inspection",
+  "Troubleshooting",
+  "Data retrieval & health check",
+  "Preventive maintenance",
+  "Calibration check",
+];
+const CHECK_RESULTS = ["All functions normal", "Minor issue resolved", "Needs attention"];
+
 function InspectionPanel({
   instrument,
   userId,
+  defaultName,
   onDone,
 }: {
   instrument: Instrument;
   userId: string | null;
+  defaultName: string;
   onDone: () => void;
 }) {
   const today = new Date().toISOString().slice(0, 10);
-  const [inspector, setInspector] = useState("");
+  const [inspector, setInspector] = useState(defaultName);
   const [date, setDate] = useState(today);
-  const [type, setType] = useState("Routine functional check");
-  const [result, setResult] = useState("All functions normal");
+  const [type, setType] = useState(CHECK_TYPES[0]);
+  const [result, setResult] = useState(CHECK_RESULTS[0]);
   const [notes, setNotes] = useState("");
+  const [tried, setTried] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const submit = async () => {
-    if (!supabase) return;
-    if (!inspector.trim()) {
-      setErr("Please enter who carried out the check.");
-      return;
-    }
-    setSaving(true);
+  const nameErr = tried && !inspector.trim() ? "Enter who carried out the check." : null;
+  const dateErr = tried && (!date || date > today) ? "Pick today or an earlier date." : null;
+  const notesErr = tried && result === "Needs attention" && !notes.trim() ? "Describe what needs attention." : null;
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setTried(true);
     setErr(null);
-    const at = new Date(`${date}T00:00:00`).toISOString();
+    if (!supabase || !inspector.trim() || !date || date > today) return;
+    if (result === "Needs attention" && !notes.trim()) return;
+    setSaving(true);
+    const at = new Date(`${date}T12:00:00`).toISOString();
     const { error } = await supabase.from("usage_logs").insert({
       instrument_id: instrument.id,
       log_type: "check",
@@ -396,345 +583,113 @@ function InspectionPanel({
       notes: notes.trim() || null,
       created_by: userId,
     });
+    setSaving(false);
     if (error) {
       setErr(error.message);
-      setSaving(false);
       return;
     }
-    setSaving(false);
+    setNotes("");
+    setTried(false);
     onDone();
   };
 
-  return (
-    <Panel title="Log an inspection / maintenance check">
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Field label="Checked by" required>
-          <Input value={inspector} onChange={setInspector} placeholder="Name" />
-        </Field>
-        <Field label="Date">
-          <Input value={date} onChange={setDate} type="date" />
-        </Field>
-        <Field label="Type">
-          <SelectInput
-            value={type}
-            onChange={setType}
-            options={[
-              ["Routine functional check", "Routine functional check"],
-              ["Periodic inspection", "Periodic inspection"],
-              ["Troubleshooting", "Troubleshooting"],
-              ["Data retrieval & health check", "Data retrieval & health check"],
-              ["Preventive maintenance", "Preventive maintenance"],
-              ["Calibration check", "Calibration check"],
-            ]}
-          />
-        </Field>
-        <Field label="Result">
-          <SelectInput
-            value={result}
-            onChange={setResult}
-            options={[
-              ["All functions normal", "All functions normal"],
-              ["Minor issue resolved", "Minor issue resolved"],
-              ["Needs attention", "Needs attention"],
-            ]}
-          />
-        </Field>
-        <Field label="Notes / findings" full>
-          <Input value={notes} onChange={setNotes} placeholder="What was checked, any issues, actions taken" />
-        </Field>
-      </div>
-      <div className="mt-4 flex justify-end">
-        <button
-          onClick={submit}
-          disabled={saving}
-          className="inline-flex items-center gap-2 h-11 px-6 bg-[#45DFB1] rounded-lg text-[#0B2A22] text-sm font-medium uppercase tracking-[0.08em] hover:bg-[#80ED99] transition-colors disabled:opacity-60"
-          style={body}
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          Save inspection
-        </button>
-      </div>
-      {err && <p className="mt-2 text-sm text-[#B42318]" style={body}>{err}</p>}
-    </Panel>
+  const select = (id: string, value: string, set: (v: string) => void, options: string[], name: string) => (
+    <select id={id} name={name} value={value} onChange={(e) => set(e.target.value)} className={inputClass} style={body}>
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
   );
-}
-
-function CheckoutPanel({
-  instrument,
-  userId,
-  onDone,
-}: {
-  instrument: Instrument;
-  userId: string | null;
-  onDone: () => void;
-}) {
-  const [borrowerName, setBorrowerName] = useState("");
-  const [borrowerOrg, setBorrowerOrg] = useState("");
-  const [userType, setUserType] = useState<UserType>("internal");
-  const [operator, setOperator] = useState<Operator>("self");
-  const [technician, setTechnician] = useState("");
-  const [purpose, setPurpose] = useState("");
-  const [expected, setExpected] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [conditionOut, setConditionOut] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  const { rateType, unitRate } = resolveRate(instrument, userType, operator);
-  const qtyNum = quantity ? Number(quantity) : null;
-  const cost = computeCost(qtyNum, unitRate);
-
-  const submit = async () => {
-    if (!supabase) return;
-    if (!borrowerName.trim()) {
-      setErr("Borrower name is required.");
-      return;
-    }
-    setSaving(true);
-    setErr(null);
-    const { error: e1 } = await supabase.from("usage_logs").insert({
-      instrument_id: instrument.id,
-      borrower_name: borrowerName.trim(),
-      borrower_org: borrowerOrg.trim() || null,
-      user_type: userType,
-      operator,
-      technician_name: operator === "technician" ? technician.trim() || null : null,
-      purpose: purpose.trim() || null,
-      checkout_at: new Date().toISOString(),
-      expected_return: expected ? new Date(expected).toISOString() : null,
-      quantity: qtyNum,
-      unit: instrument.unit,
-      rate_type: rateType,
-      unit_rate: unitRate,
-      cost,
-      condition_out: conditionOut.trim() || null,
-      status: "ongoing",
-      created_by: userId,
-    });
-    if (e1) {
-      setErr(e1.message);
-      setSaving(false);
-      return;
-    }
-    await supabase.from("instruments").update({ status: "in_use" }).eq("id", instrument.id);
-    setSaving(false);
-    onDone();
-  };
 
   return (
-    <Panel title="Log a checkout">
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Field label="Borrower name" required>
-          <Input value={borrowerName} onChange={setBorrowerName} placeholder="Full name" />
-        </Field>
-        <Field label="Institution / lab">
-          <Input value={borrowerOrg} onChange={setBorrowerOrg} placeholder="e.g. SmartAgri, external company" />
-        </Field>
-        <Field label="User type">
-          <SelectInput
-            value={userType}
-            onChange={(v) => setUserType(v as UserType)}
-            options={[["internal", "Internal"], ["external", "External"]]}
-          />
-        </Field>
-        <Field label="Operator">
-          <SelectInput
-            value={operator}
-            onChange={(v) => setOperator(v as Operator)}
-            options={[["self", "Self-operated"], ["technician", "With technician"]]}
-            disabled={userType === "external"}
-          />
-        </Field>
-        {operator === "technician" && userType === "internal" && (
-          <Field label="Technician name">
-            <Input value={technician} onChange={setTechnician} placeholder="Technician" />
+    <Panel title="Log an inspection or maintenance check">
+      <form onSubmit={submit} noValidate className="flex flex-col gap-5">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Checked by" required error={nameErr}>
+            {(f) => (
+              <input
+                id={f.id}
+                name="inspector"
+                value={inspector}
+                onChange={(e) => setInspector(e.target.value)}
+                required
+                autoComplete="name"
+                aria-invalid={f.invalid}
+                aria-describedby={f.describedBy}
+                className={inputClass}
+                style={body}
+              />
+            )}
           </Field>
-        )}
-        <Field label={`Quantity (${instrument.unit ?? "unit"})`}>
-          <Input value={quantity} onChange={setQuantity} placeholder="e.g. 2" type="number" />
-        </Field>
-        <Field label="Expected return">
-          <Input value={expected} onChange={setExpected} type="datetime-local" />
-        </Field>
-        <Field label="Purpose / project" full>
-          <Input value={purpose} onChange={setPurpose} placeholder="Short description" />
-        </Field>
-        <Field label="Condition at checkout" full>
-          <Input value={conditionOut} onChange={setConditionOut} placeholder="e.g. complete, good working order" />
-        </Field>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="text-sm text-neutral-600" style={body}>
-          Rate: <b>{rateTypeLabel[rateType]}</b> · {formatIDR(unitRate)} {instrument.unit}
-          {" · "}Estimated cost: <b className="text-[#0B6477]">{cost == null ? "by arrangement" : formatIDR(cost)}</b>
+          <Field label="Date" required error={dateErr}>
+            {(f) => (
+              <input
+                id={f.id}
+                type="date"
+                name="date"
+                value={date}
+                max={today}
+                onChange={(e) => setDate(e.target.value)}
+                required
+                aria-invalid={f.invalid}
+                aria-describedby={f.describedBy}
+                className={inputClass}
+                style={body}
+              />
+            )}
+          </Field>
+          <Field label="Type">{(f) => select(f.id, type, setType, CHECK_TYPES, "type")}</Field>
+          <Field label="Result">{(f) => select(f.id, result, setResult, CHECK_RESULTS, "result")}</Field>
+          <Field label="Notes / findings" full required={result === "Needs attention"} error={notesErr}>
+            {(f) => (
+              <textarea
+                id={f.id}
+                name="notes"
+                rows={3}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="What was checked, any issues, actions taken"
+                aria-invalid={f.invalid}
+                aria-describedby={f.describedBy}
+                className={`${inputClass} h-auto py-3 leading-relaxed`}
+                style={body}
+              />
+            )}
+          </Field>
         </div>
-        <button
-          onClick={submit}
-          disabled={saving}
-          className="inline-flex items-center gap-2 h-11 px-6 bg-[#45DFB1] rounded-lg text-[#0B2A22] text-sm font-medium uppercase tracking-[0.08em] hover:bg-[#80ED99] transition-colors disabled:opacity-60"
-          style={body}
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          Check out
-        </button>
-      </div>
-      {err && <p className="mt-2 text-sm text-[#B42318]" style={body}>{err}</p>}
-    </Panel>
-  );
-}
-
-function ReturnPanel({
-  instrument,
-  log,
-  onDone,
-}: {
-  instrument: Instrument;
-  log: UsageLog;
-  onDone: () => void;
-}) {
-  const [conditionIn, setConditionIn] = useState("");
-  const [quantity, setQuantity] = useState(log.quantity != null ? String(log.quantity) : "");
-  const [notes, setNotes] = useState(log.notes ?? "");
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  const qtyNum = quantity ? Number(quantity) : null;
-  const cost = computeCost(qtyNum, log.unit_rate);
-
-  const submit = async () => {
-    if (!supabase) return;
-    setSaving(true);
-    setErr(null);
-    const { error: e1 } = await supabase
-      .from("usage_logs")
-      .update({
-        returned_at: new Date().toISOString(),
-        status: "returned",
-        quantity: qtyNum,
-        cost,
-        condition_in: conditionIn.trim() || null,
-        notes: notes.trim() || null,
-      })
-      .eq("id", log.id);
-    if (e1) {
-      setErr(e1.message);
-      setSaving(false);
-      return;
-    }
-    await supabase.from("instruments").update({ status: "available" }).eq("id", instrument.id);
-    setSaving(false);
-    onDone();
-  };
-
-  return (
-    <Panel title="Currently checked out" tone="in_use">
-      <div className="text-sm text-neutral-600 mb-4" style={body}>
-        <b>{log.borrower_name}</b>
-        {log.borrower_org ? ` · ${log.borrower_org}` : ""} · out since {fmtDate(log.checkout_at)}
-        {log.expected_return ? ` · due ${fmtDate(log.expected_return)}` : ""}
-        {log.purpose ? ` · ${log.purpose}` : ""}
-      </div>
-      <div className="grid sm:grid-cols-3 gap-4">
-        <Field label={`Final quantity (${instrument.unit ?? "unit"})`}>
-          <Input value={quantity} onChange={setQuantity} type="number" placeholder="e.g. 2" />
-        </Field>
-        <Field label="Condition on return">
-          <Input value={conditionIn} onChange={setConditionIn} placeholder="e.g. complete, no damage" />
-        </Field>
-        <Field label="Notes">
-          <Input value={notes} onChange={setNotes} placeholder="Anything to flag" />
-        </Field>
-      </div>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="text-sm text-neutral-600" style={body}>
-          Final cost: <b className="text-[#0B6477]">{cost == null ? "by arrangement" : formatIDR(cost)}</b>
+        <div className="flex justify-end">
+          <PrimaryButton busy={saving}>Save inspection</PrimaryButton>
         </div>
-        <button
-          onClick={submit}
-          disabled={saving}
-          className="inline-flex items-center gap-2 h-11 px-6 bg-[#08313A] rounded-lg text-white text-sm font-medium uppercase tracking-[0.08em] hover:bg-[#0B6477] transition-colors disabled:opacity-60"
-          style={body}
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          Mark as returned
-        </button>
-      </div>
-      {err && <p className="mt-2 text-sm text-[#B42318]" style={body}>{err}</p>}
+        <FormError message={err} />
+      </form>
     </Panel>
-  );
-}
-
-function StatusControl({
-  instrument,
-  disabled,
-  onDone,
-}: {
-  instrument: Instrument;
-  disabled: boolean;
-  onDone: () => void;
-}) {
-  const [saving, setSaving] = useState(false);
-  // Manual statuses (in_use is driven by checkout/return, not set here).
-  const options = INSTRUMENT_STATUSES.filter((s) => s !== "in_use");
-
-  const change = async (status: InstrumentStatus) => {
-    if (!supabase || status === instrument.status) return;
-    setSaving(true);
-    await supabase.from("instruments").update({ status }).eq("id", instrument.id);
-    setSaving(false);
-    onDone();
-  };
-
-  if (disabled) return null;
-
-  return (
-    <div className="mt-4 flex items-center gap-3 text-sm text-neutral-500" style={body}>
-      <span>Set status:</span>
-      <select
-        value={instrument.status === "in_use" ? "available" : instrument.status}
-        onChange={(e) => change(e.target.value as InstrumentStatus)}
-        disabled={saving}
-        className="h-10 px-3 rounded-xl border border-[#0B6477]/15 bg-white text-sm text-neutral-700 outline-none focus:border-[#14919B]"
-      >
-        {options.map((s) => (
-          <option key={s} value={s}>
-            {statusMeta[s].label}
-          </option>
-        ))}
-      </select>
-      {saving && <Loader2 className="w-4 h-4 animate-spin text-[#0B6477]" />}
-    </div>
   );
 }
 
 /* ---------- small building blocks ---------- */
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <section className="mx-auto max-w-[1360px] px-6 pb-20 pt-10 md:px-12 md:pb-28 md:pt-12">
-      <Link
-        to="/inventory"
-        className={`group mb-10 inline-flex items-center gap-2 text-neutral-600 hover:text-[#0B6477] ${META}`}
-        style={body}
-      >
-        <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
-        Back to inventory
-      </Link>
+      <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
+        <Link
+          to="/inventory"
+          className={`group inline-flex items-center gap-2 text-neutral-600 hover:text-[#0B6477] ${META}`}
+          style={body}
+        >
+          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+          Back to inventory
+        </Link>
+        {action}
+      </div>
       {children}
     </section>
   );
 }
 
-function RateCard({
-  label,
-  value,
-  unit,
-}: {
-  label: string;
-  value: number | null;
-  unit: string | null;
-}) {
+function RateCard({ label, value, unit }: { label: string; value: number | null; unit: string | null }) {
   return (
     <div className="flex flex-col gap-1 bg-white/90 p-4">
       <span className={`text-neutral-400 ${META}`} style={body}>
@@ -750,109 +705,59 @@ function RateCard({
   );
 }
 
-function Panel({
-  title,
-  tone,
-  children,
-}: {
-  title: string;
-  tone?: "in_use";
-  children: React.ReactNode;
-}) {
+// The F-750 sample tiers from the rate letter, by user type.
+function TierTable({ instrument }: { instrument: Instrument }) {
+  const tiers = [...(instrument.rate_tiers ?? [])].sort((a, b) => a.from - b.from);
+  const bands = [
+    { from: 1, self: instrument.rate_internal_self, tech: instrument.rate_internal_tech, ext: instrument.rate_external },
+  ];
+  for (const t of tiers) {
+    const prev = bands[bands.length - 1];
+    bands.push({
+      from: t.from,
+      self: t.internal_self ?? prev.self,
+      tech: t.internal_tech ?? prev.tech,
+      ext: t.external ?? prev.ext,
+    });
+  }
+  const showSelf = bands.some((b) => b.self != null);
+  const showTech = bands.some((b) => b.tech != null);
   return (
-    <div
-      className={`rounded-[24px] border p-6 shadow-[0_14px_40px_-30px_rgba(8,49,58,0.35)] md:p-8 ${
-        tone === "in_use" ? "border-[#14919B]/25 bg-[#14919B]/[0.06]" : "border-[#0B6477]/12 bg-white/90 backdrop-blur"
-      }`}
-    >
-      <h3 className="mb-6 text-xl font-medium tracking-[-0.02em] text-neutral-900 md:text-[22px]" style={display}>
-        {title}
-      </h3>
-      {children}
+    <div className="overflow-hidden rounded-[20px] border border-[#0B6477]/12 bg-white/90">
+      <table className="w-full border-collapse text-left text-sm" style={body}>
+        <caption className={`px-4 pt-4 text-left text-neutral-500 ${META}`}>Tiered rate per request</caption>
+        <thead>
+          <tr className="text-neutral-500">
+            <th className="px-4 py-2 font-medium">Samples</th>
+            {showSelf && <th className="px-4 py-2 text-right font-medium">Internal, self</th>}
+            {showTech && <th className="px-4 py-2 text-right font-medium">Internal</th>}
+            <th className="px-4 py-2 text-right font-medium">External</th>
+          </tr>
+        </thead>
+        <tbody className="tabular-nums">
+          {bands.map((b, i) => {
+            const next = bands[i + 1];
+            return (
+              <tr key={b.from} className="border-t border-[#0B6477]/8">
+                <td className="px-4 py-2 text-neutral-700">{next ? `${b.from}–${next.from - 1}` : `${b.from} and up`}</td>
+                {showSelf && <td className="px-4 py-2 text-right">{formatIDR(b.self)}</td>}
+                {showTech && <td className="px-4 py-2 text-right">{formatIDR(b.tech)}</td>}
+                <td className="px-4 py-2 text-right">{formatIDR(b.ext)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {instrument.min_quantity != null && (
+        <p className="border-t border-[#0B6477]/8 px-4 py-3 text-xs text-neutral-500" style={body}>
+          Minimum {instrument.min_quantity} per request; fewer are charged as {instrument.min_quantity}.
+        </p>
+      )}
     </div>
   );
 }
 
-function Field({
-  label,
-  required,
-  full,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  full?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className={`flex flex-col gap-1.5 ${full ? "sm:col-span-2" : ""}`}>
-      <span className={`text-neutral-500 ${META}`} style={body}>
-        {label}
-        {required && <span className="text-[#E5484D]"> *</span>}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-function Input({
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  type?: string;
-}) {
-  return (
-    <input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      type={type}
-      className="h-11 rounded-xl border border-[#0B6477]/15 bg-white px-3.5 text-sm text-neutral-800 outline-none transition-[border-color,box-shadow] focus:border-[#14919B] focus:shadow-[0_0_0_4px_rgba(69,223,177,0.18)]"
-      style={body}
-    />
-  );
-}
-
-function SelectInput({
-  value,
-  onChange,
-  options,
-  disabled,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: [string, string][];
-  disabled?: boolean;
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-      className="h-11 rounded-xl border border-[#0B6477]/15 bg-white px-3 text-sm text-neutral-700 outline-none transition-[border-color,box-shadow] focus:border-[#14919B] focus:shadow-[0_0_0_4px_rgba(69,223,177,0.18)] disabled:opacity-50"
-      style={body}
-    >
-      {options.map(([v, l]) => (
-        <option key={v} value={v}>
-          {l}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-function Th({
-  children,
-  className = "",
-}: {
-  children?: React.ReactNode;
-  className?: string;
-}) {
+function Th({ children, className = "" }: { children?: ReactNode; className?: string }) {
   return (
     <th className={`px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.1em] ${className}`} style={body}>
       {children}
@@ -860,15 +765,9 @@ function Th({
   );
 }
 
-function Td({
-  children,
-  className = "",
-}: {
-  children?: React.ReactNode;
-  className?: string;
-}) {
+function Td({ children, className = "" }: { children?: ReactNode; className?: string }) {
   return (
-    <td className={`px-4 py-3 text-sm align-top ${className}`} style={body}>
+    <td className={`px-4 py-3 align-top text-sm ${className}`} style={body}>
       {children}
     </td>
   );

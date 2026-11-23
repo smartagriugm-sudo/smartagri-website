@@ -240,17 +240,25 @@ begin
     drop policy if exists "authenticated read instruments" on public.instruments;
     create policy "authenticated read instruments" on public.instruments
       for select to authenticated using (public.is_lab_member());
+    -- After inventory-loans.sql, writes go through its RPCs and admin-only
+    -- policies; do not bring back the open write policy.
     drop policy if exists "authenticated write instruments" on public.instruments;
-    create policy "authenticated write instruments" on public.instruments
-      for all to authenticated using (public.is_lab_member()) with check (public.is_lab_member());
+    if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'instruments'
+                    and policyname = 'inventory admins write instruments') then
+      create policy "authenticated write instruments" on public.instruments
+        for all to authenticated using (public.is_lab_member()) with check (public.is_lab_member());
+    end if;
   end if;
   if to_regclass('public.usage_logs') is not null then
     drop policy if exists "authenticated read logs" on public.usage_logs;
     create policy "authenticated read logs" on public.usage_logs
       for select to authenticated using (public.is_lab_member());
     drop policy if exists "authenticated write logs" on public.usage_logs;
-    create policy "authenticated write logs" on public.usage_logs
-      for all to authenticated using (public.is_lab_member()) with check (public.is_lab_member());
+    if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'usage_logs'
+                    and policyname = 'inventory admins fix logs') then
+      create policy "authenticated write logs" on public.usage_logs
+        for all to authenticated using (public.is_lab_member()) with check (public.is_lab_member());
+    end if;
   end if;
   if to_regclass('public.guestbook_entries') is not null then
     drop policy if exists "authenticated can read guestbook" on public.guestbook_entries;
