@@ -41,6 +41,7 @@ import {
   type RealtimeEvent,
 } from "../components/kanban/useBoardRealtime";
 import { useAuth } from "../lib/auth/auth";
+import { useLang, useT } from "../lib/i18n";
 import {
   BOARD_BACKGROUNDS,
   byPos,
@@ -50,6 +51,7 @@ import {
   filterCount,
   filterToSearch,
   isOwner,
+  kanbanError,
   parseFilter,
   personName,
   positionBetween,
@@ -124,6 +126,8 @@ function BoardContent() {
   const filter = useMemo(() => parseFilter(search), [search]);
   const { user } = useAuth();
   const { toasts, push, dismiss } = useToasts();
+  const t = useT();
+  const lang = useLang();
   const [data, setData] = useState<BoardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [starred, setStarredState] = useState(false);
@@ -332,7 +336,7 @@ function BoardContent() {
         case "kanban_boards":
           if (event === "DELETE") {
             if (old.id === boardId) {
-              push({ text: "This board was deleted.", tone: "error" });
+              push({ text: t({ en: "This board was deleted.", id: "Board ini telah dihapus." }), tone: "error" });
               navigate({ to: "/kanban" });
             }
           } else {
@@ -400,15 +404,18 @@ function BoardContent() {
               className="text-2xl font-semibold tracking-[-0.025em] text-neutral-900"
               style={display}
             >
-              {missing ? "Board not found" : "Could not load this board"}
+              {missing ? t({ en: "Board not found", id: "Board tidak ditemukan" }) : t({ en: "Could not load this board", id: "Gagal memuat board ini" })}
             </h1>
             <p
               className="mt-3 text-sm leading-relaxed text-neutral-600"
               style={body}
             >
               {missing
-                ? "It does not exist, or you are not a member of it. Ask the board owner to add you."
-                : error}
+                ? t({
+                    en: "It does not exist, or you are not a member of it. Ask the board owner to add you.",
+                    id: "Board ini tidak ada, atau Anda bukan anggotanya. Minta pemilik board untuk menambahkan Anda.",
+                  })
+                : kanbanError(error, lang)}
             </p>
             <Link
               to="/kanban"
@@ -416,7 +423,7 @@ function BoardContent() {
               style={body}
             >
               <ArrowLeft className="h-4 w-4" />
-              All boards
+              {t({ en: "All boards", id: "Semua board" })}
             </Link>
           </div>
         </section>
@@ -433,7 +440,7 @@ function BoardContent() {
           style={body}
         >
           <Loader2 className="mr-3 h-5 w-5 animate-spin text-[#0B6477]" />
-          Loading board...
+          {t({ en: "Loading board...", id: "Memuat board..." })}
         </section>
       </>
     );
@@ -443,7 +450,7 @@ function BoardContent() {
   const editable = canEdit(role);
   const bg = BOARD_BACKGROUNDS[board.background] ?? BOARD_BACKGROUNDS.teal;
   const failed = (what: string, message: string) =>
-    push({ text: `${what}: ${message}`, tone: "error" });
+    push({ text: `${what}: ${kanbanError(message, lang)}`, tone: "error" });
 
   // --- Mutations (optimistic, rolled back per row) -------------------------
 
@@ -458,7 +465,7 @@ function BoardContent() {
     const res = await updateCard(id, { list_id: listId, pos: move.pos });
     if (res.error !== null) {
       setCards((cs) => cs.map((c) => (c.id === id ? before : c)));
-      failed("Could not move the card", res.error);
+      failed(t({ en: "Could not move the card", id: "Gagal memindahkan kartu" }), res.error);
       return;
     }
     replaceCard(res.data);
@@ -482,7 +489,7 @@ function BoardContent() {
     const res = await updateList(id, { pos: move.pos });
     if (res.error !== null) {
       setLists((ls) => ls.map((l) => (l.id === id ? before : l)));
-      failed("Could not move the list", res.error);
+      failed(t({ en: "Could not move the list", id: "Gagal memindahkan list" }), res.error);
       return;
     }
     replaceList(res.data);
@@ -525,7 +532,7 @@ function BoardContent() {
     const res = await createCard(draft);
     if (res.error !== null) {
       setCards((cs) => cs.filter((c) => c.id !== draft.id));
-      failed("Could not add the card", res.error);
+      failed(t({ en: "Could not add the card", id: "Gagal menambah kartu" }), res.error);
       return;
     }
     replaceCard(res.data);
@@ -545,7 +552,7 @@ function BoardContent() {
     const res = await createList(draft);
     if (res.error !== null) {
       setLists((ls) => ls.filter((l) => l.id !== draft.id));
-      failed("Could not add the list", res.error);
+      failed(t({ en: "Could not add the list", id: "Gagal menambah list" }), res.error);
       return;
     }
     replaceList(res.data);
@@ -558,7 +565,7 @@ function BoardContent() {
     const res = await updateList(id, { name });
     if (res.error !== null) {
       setLists((ls) => ls.map((l) => (l.id === id ? before : l)));
-      failed("Could not rename the list", res.error);
+      failed(t({ en: "Could not rename the list", id: "Gagal mengganti nama list" }), res.error);
     }
   };
 
@@ -569,17 +576,17 @@ function BoardContent() {
     const res = await updateList(id, { archived_at: new Date().toISOString() });
     if (res.error !== null) {
       setLists((ls) => [...ls, before]);
-      failed("Could not archive the list", res.error);
+      failed(t({ en: "Could not archive the list", id: "Gagal mengarsipkan list" }), res.error);
       return;
     }
     push({
-      text: `Archived list "${before.name}".`,
+      text: t({ en: `Archived list "${before.name}".`, id: `List "${before.name}" diarsipkan.` }),
       action: {
-        label: "Undo",
+        label: t({ en: "Undo", id: "Urungkan" }),
         run: async () => {
           const back = await updateList(id, { archived_at: null });
           if (back.error !== null)
-            failed("Could not restore the list", back.error);
+            failed(t({ en: "Could not restore the list", id: "Gagal memulihkan list" }), back.error);
           else setLists((ls) => [...ls.filter((l) => l.id !== id), back.data]);
         },
       },
@@ -593,17 +600,17 @@ function BoardContent() {
     const res = await updateCard(id, { archived_at: new Date().toISOString() });
     if (res.error !== null) {
       setCards((cs) => [...cs, before]);
-      failed("Could not archive the card", res.error);
+      failed(t({ en: "Could not archive the card", id: "Gagal mengarsipkan kartu" }), res.error);
       return;
     }
     push({
-      text: `Archived "${before.title}".`,
+      text: t({ en: `Archived "${before.title}".`, id: `"${before.title}" diarsipkan.` }),
       action: {
-        label: "Undo",
+        label: t({ en: "Undo", id: "Urungkan" }),
         run: async () => {
           const back = await updateCard(id, { archived_at: null });
           if (back.error !== null)
-            failed("Could not restore the card", back.error);
+            failed(t({ en: "Could not restore the card", id: "Gagal memulihkan kartu" }), back.error);
           else setCards((cs) => [...cs.filter((c) => c.id !== id), back.data]);
         },
       },
@@ -616,7 +623,7 @@ function BoardContent() {
     const res = await updateBoard(board.id, { name });
     if (res.error !== null) {
       setData((d) => (d ? { ...d, board: before } : d));
-      failed("Could not rename the board", res.error);
+      failed(t({ en: "Could not rename the board", id: "Gagal mengganti nama board" }), res.error);
     } else {
       document.title = `${name} | smartagri`;
     }
@@ -629,7 +636,7 @@ function BoardContent() {
     const res = await setStarred(board.id, user.id, next);
     if (res.error !== null) {
       setStarredState(!next);
-      failed("Could not update the star", res.error);
+      failed(t({ en: "Could not update the star", id: "Gagal memperbarui bintang" }), res.error);
     }
   };
 
@@ -642,7 +649,7 @@ function BoardContent() {
     const res = await updateCard(id, patch);
     if (res.error !== null) {
       setCards((cs) => cs.map((c) => (c.id === id ? before : c)));
-      failed("Could not save the card", res.error);
+      failed(t({ en: "Could not save the card", id: "Gagal menyimpan kartu" }), res.error);
       return false;
     }
     replaceCard(res.data);
@@ -663,7 +670,7 @@ function BoardContent() {
     const res = await setWatching(card, user.id, on);
     if (res.error !== null) {
       flip(!on);
-      failed("Could not update watching", res.error);
+      failed(t({ en: "Could not update watching", id: "Gagal memperbarui status pantau" }), res.error);
     }
   };
 
@@ -705,14 +712,14 @@ function BoardContent() {
             }
           : d,
       );
-      failed("Could not change the label", res.error);
+      failed(t({ en: "Could not change the label", id: "Gagal mengubah label" }), res.error);
     }
   };
 
   const createLabel = async (name: string, color: LabelColor) => {
     const res = await createLabelRow(board.id, name, color);
     if (res.error !== null) {
-      failed("Could not create the label", res.error);
+      failed(t({ en: "Could not create the label", id: "Gagal membuat label" }), res.error);
       return null;
     }
     setData((d) => (d ? { ...d, labels: [...d.labels, res.data] } : d));
@@ -748,7 +755,7 @@ function BoardContent() {
             }
           : d,
       );
-      failed("Could not change the members", res.error);
+      failed(t({ en: "Could not change the members", id: "Gagal mengubah anggota" }), res.error);
     }
   };
 
@@ -882,7 +889,7 @@ function BoardContent() {
             <>
               <InlineEdit
                 value={board.name}
-                label="Board name"
+                label={t({ en: "Board name", id: "Nama board" })}
                 disabled={!isOwner(role)}
                 onSave={renameBoard}
                 className="max-w-[42vw] rounded-lg px-2 py-1 text-base font-semibold tracking-[-0.02em] text-white hover:bg-white/10 md:max-w-[420px]"
@@ -892,7 +899,7 @@ function BoardContent() {
                 <button
                   type="button"
                   onClick={toggleStar}
-                  aria-label={starred ? "Unstar board" : "Star board"}
+                  aria-label={starred ? t({ en: "Unstar board", id: "Hapus bintang board" }) : t({ en: "Star board", id: "Beri bintang board" })}
                   aria-pressed={starred}
                   className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-white transition-colors hover:bg-white/10"
                 >
@@ -907,11 +914,11 @@ function BoardContent() {
                 ) : (
                   <Lock className="h-3.5 w-3.5" />
                 )}
-                {board.visibility === "team" ? "Team" : "Private"}
+                {board.visibility === "team" ? t({ en: "Team", id: "Tim" }) : t({ en: "Private", id: "Privat" })}
               </span>
               {!editable && (
                 <span className="hidden h-7 shrink-0 items-center rounded-md bg-white/10 px-2 text-xs text-white/80 sm:inline-flex">
-                  View only
+                  {t({ en: "View only", id: "Hanya lihat" })}
                 </span>
               )}
             </>
@@ -919,11 +926,11 @@ function BoardContent() {
         >
           {visibleIds && (
             <span className="hidden h-9 items-center gap-1 rounded-lg bg-white/10 pl-3 pr-1 text-sm text-white md:inline-flex">
-              {visibleIds.size} of {data.cards.length} cards
+              {t({ en: `${visibleIds.size} of ${data.cards.length} cards`, id: `${visibleIds.size} dari ${data.cards.length} kartu` })}
               <button
                 type="button"
                 onClick={() => setFilter(parseFilter({}))}
-                aria-label="Clear filters"
+                aria-label={t({ en: "Clear filters", id: "Hapus filter" })}
                 className="grid h-7 w-7 place-items-center rounded-md hover:bg-white/15"
               >
                 <X className="h-4 w-4" />
@@ -950,7 +957,7 @@ function BoardContent() {
               }
             >
               <Filter className="h-4 w-4" />
-              <span className="hidden sm:inline">Filter</span>
+              <span className="hidden sm:inline">{t({ en: "Filter", id: "Filter" })}</span>
               {activeFilters > 0 && (
                 <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[#45DFB1] px-1 text-xs font-medium text-[#0B2A22]">
                   {activeFilters}
@@ -970,7 +977,7 @@ function BoardContent() {
               setMenuView("main");
               setMenuOpen(true);
             }}
-            aria-label="Show menu"
+            aria-label={t({ en: "Show menu", id: "Tampilkan menu" })}
             className={`${BAR_BUTTON} w-9 justify-center px-0`}
           >
             <MoreHorizontal className="h-4 w-4" />
@@ -1040,7 +1047,7 @@ function mergeRow<T extends { id: string; archived_at?: string | null }>(
 // nearest list that has cards (keeping roughly the same row).
 function focusCard(dir: "up" | "down" | "left" | "right") {
   const lists = [
-    ...document.querySelectorAll<HTMLElement>('section[aria-label^="List "]'),
+    ...document.querySelectorAll<HTMLElement>("section[data-kanban-list]"),
   ]
     .map((s) => [...s.querySelectorAll<HTMLElement>("[data-card-id]")])
     .filter((cards) => cards.length > 0);

@@ -4,6 +4,7 @@ import { Check, Copy, Download, FileText } from 'lucide-react'
 import type { DocumentType } from '../../lib/ai/types'
 import { DOCUMENT_TYPE_CONFIGS } from '../../lib/ai/prompts'
 import { body } from '../../lib/fonts'
+import { useT } from '../../lib/i18n'
 
 interface GeneratorPreviewProps {
   content: string
@@ -36,6 +37,7 @@ export default function GeneratorPreview({
   docType,
 }: GeneratorPreviewProps) {
   const [copied, setCopied] = useState(false)
+  const t = useT()
 
   const handleCopy = () => {
     navigator.clipboard?.writeText(content)
@@ -76,7 +78,7 @@ export default function GeneratorPreview({
             ) : (
               <Copy className="h-4 w-4" />
             )}
-            {copied ? 'Copied' : 'Copy All'}
+            {copied ? t({ en: 'Copied', id: 'Tersalin' }) : t({ en: 'Copy All', id: 'Salin Semua' })}
           </button>
           <button
             type="button"
@@ -85,7 +87,7 @@ export default function GeneratorPreview({
             style={body}
           >
             <Download className="h-4 w-4" />
-            Download .txt
+            {t({ en: 'Download .txt', id: 'Unduh .txt' })}
           </button>
         </motion.div>
       )}
@@ -97,7 +99,10 @@ export default function GeneratorPreview({
               <FileText className="h-7 w-7 text-[#0B6477]" />
             </div>
             <p className="max-w-[260px] text-sm text-neutral-400" style={body}>
-              Your generated document will appear here
+              {t({
+                en: 'Your generated document will appear here',
+                id: 'Dokumen yang Anda buat akan muncul di sini',
+              })}
             </p>
           </div>
         ) : (

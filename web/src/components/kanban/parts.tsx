@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { body } from "../../lib/fonts";
 import { EASE } from "../NoteParts";
 import { initials, personName, type KanbanPerson } from "../../lib/kanban";
+import { useLang, useT } from "../../lib/i18n";
 
 // Text that turns into an input on click. Enter or blur saves, Esc cancels.
 export function InlineEdit({
@@ -28,6 +29,7 @@ export function InlineEdit({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+  const tr = useT();
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -52,7 +54,7 @@ export function InlineEdit({
         onClick={() => !disabled && setEditing(true)}
         className={`min-w-0 truncate text-left ${disabled ? "cursor-default" : "cursor-text"} ${className}`}
         style={body}
-        aria-label={disabled ? label : `${label}: ${value}. Click to rename`}
+        aria-label={disabled ? label : `${label}: ${value}. ${tr({ en: "Click to rename", id: "Klik untuk mengganti nama" })}`}
       >
         {render ? render(value) : value}
       </button>
@@ -105,6 +107,7 @@ export function Composer({
 }) {
   const [text, setText] = useState("");
   const ref = useRef<HTMLTextAreaElement & HTMLInputElement>(null);
+  const tr = useT();
 
   useEffect(() => {
     if (open) ref.current?.focus();
@@ -172,7 +175,7 @@ export function Composer({
           type="button"
           onClick={() => onOpenChange(false)}
           className="grid h-9 w-9 place-items-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-900/5 hover:text-neutral-800"
-          aria-label="Close"
+          aria-label={tr({ en: "Close", id: "Tutup" })}
         >
           <X className="h-4 w-4" />
         </button>
@@ -187,7 +190,7 @@ export const PROSE =
   "prose prose-sm max-w-none min-w-0 break-words [overflow-wrap:anywhere] text-neutral-700 prose-headings:font-semibold prose-headings:tracking-[-0.02em] prose-a:text-[#0B6477] prose-code:before:content-none prose-code:after:content-none prose-pre:whitespace-pre-wrap prose-pre:break-words prose-img:max-w-full prose-img:rounded-lg prose-table:block prose-table:overflow-x-auto";
 
 export function Avatar({ person, size = 24 }: { person: KanbanPerson | undefined; size?: number }) {
-  const name = personName(person);
+  const name = personName(person, useLang());
   return person?.avatar_url ? (
     <img
       src={person.avatar_url}
@@ -225,6 +228,7 @@ export function useToasts() {
 }
 
 export function Toasts({ toasts, dismiss }: { toasts: ToastMessage[]; dismiss: (id: number) => void }) {
+  const tr = useT();
   return (
     <div className="pointer-events-none fixed inset-x-4 bottom-4 z-[60] flex flex-col items-center gap-2 sm:inset-x-auto sm:right-6 sm:items-end">
       <AnimatePresence>
@@ -253,7 +257,7 @@ export function Toasts({ toasts, dismiss }: { toasts: ToastMessage[]; dismiss: (
                 {t.action.label}
               </button>
             )}
-            <button type="button" onClick={() => dismiss(t.id)} aria-label="Dismiss" className="text-white/50 hover:text-white">
+            <button type="button" onClick={() => dismiss(t.id)} aria-label={tr({ en: "Dismiss", id: "Tutup" })} className="text-white/50 hover:text-white">
               <X className="h-4 w-4" />
             </button>
           </motion.div>

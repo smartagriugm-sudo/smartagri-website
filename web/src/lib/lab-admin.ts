@@ -6,6 +6,8 @@
 import { supabase } from './auth/supabase'
 import type { AccountStatus } from './account'
 import { isStudentRole } from './account'
+import type { Lang } from './i18n-core'
+import { notConfigured } from './profile'
 
 export interface LabAccount {
   id: string
@@ -34,8 +36,8 @@ export interface ReviewBoard {
 
 type Result<T> = { data: T; error: null } | { data: null; error: string }
 
-export async function listLabAccounts(): Promise<Result<LabAccount[]>> {
-  if (!supabase) return { data: null, error: 'Not configured' }
+export async function listLabAccounts(lang: Lang = 'en'): Promise<Result<LabAccount[]>> {
+  if (!supabase) return { data: null, error: notConfigured(lang) }
   const { data, error } = await supabase.rpc('lab_accounts')
   if (error) return { data: null, error: error.message }
   return { data: (data ?? []) as LabAccount[], error: null }
@@ -45,8 +47,9 @@ export async function reviewLabAccount(
   id: string,
   status: AccountStatus,
   boardIds: string[] = [],
+  lang: Lang = 'en',
 ): Promise<{ error: string | null }> {
-  if (!supabase) return { error: 'Not configured' }
+  if (!supabase) return { error: notConfigured(lang) }
   const { error } = await supabase.rpc('lab_review_account', {
     target: id,
     new_status: status,
@@ -55,8 +58,8 @@ export async function reviewLabAccount(
   return { error: error?.message ?? null }
 }
 
-export async function setLabAdmin(id: string, flag: boolean): Promise<{ error: string | null }> {
-  if (!supabase) return { error: 'Not configured' }
+export async function setLabAdmin(id: string, flag: boolean, lang: Lang = 'en'): Promise<{ error: string | null }> {
+  if (!supabase) return { error: notConfigured(lang) }
   const { error } = await supabase.rpc('lab_set_admin', { target: id, flag })
   return { error: error?.message ?? null }
 }

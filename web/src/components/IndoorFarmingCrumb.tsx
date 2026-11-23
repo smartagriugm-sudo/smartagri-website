@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { body } from "../lib/fonts";
+import { useT } from "../lib/i18n";
 
 // Lightweight trail for the Indoor Farming pages. Replaces a second navigation
 // bar: it shows where you are and how to get back up without repeating the
@@ -14,17 +15,18 @@ export default function IndoorFarmingCrumb({
   /** Label for the page you are on. Omit on the Indoor Farming landing page. */
   current?: string;
 }) {
+  const t = useT();
   const linkClass =
     "text-neutral-400 hover:text-[#0B6477] transition-colors whitespace-nowrap";
 
   return (
     <nav
-      aria-label="Breadcrumb"
+      aria-label={t({ en: "Breadcrumb", id: "Jejak navigasi" })}
       className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.1em] overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       style={body}
     >
       <Link to="/research" className={linkClass}>
-        Research
+        {t({ en: "Research", id: "Riset" })}
       </Link>
       <ChevronRight className="w-3.5 h-3.5 shrink-0 text-neutral-300" />
       {current || section ? (

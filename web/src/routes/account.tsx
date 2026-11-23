@@ -52,16 +52,26 @@ import Footer from '../components/Footer'
 import AmbientWash from '../components/AmbientWash'
 import AuthGate from '../components/AuthGate'
 import { EASE, MaskLine, META } from '../components/NoteParts'
+import { headLang, useLang, useT, type Bi, type Lang } from '../lib/i18n'
 
 export const Route = createFileRoute('/account')({
   component: AccountPage,
-  head: () => ({
-    meta: [
-      { title: 'Profile & settings | smartagri' },
-      { name: 'robots', content: 'noindex, nofollow' },
-      { name: 'description', content: 'Research assistant profile and account settings.' },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches)
+    return {
+      meta: [
+        { title: l === 'id' ? 'Profil & pengaturan | smartagri' : 'Profile & settings | smartagri' },
+        { name: 'robots', content: 'noindex, nofollow' },
+        {
+          name: 'description',
+          content:
+            l === 'id'
+              ? 'Profil asisten riset dan pengaturan akun.'
+              : 'Research assistant profile and account settings.',
+        },
+      ],
+    }
+  },
 })
 
 // Profile & settings for signed-in research assistants: a masthead with the
@@ -69,25 +79,27 @@ export const Route = createFileRoute('/account')({
 // card per section. Personalisation and chat history belong to the AI
 // Assistant and only show while it is switched on (lib/features.ts).
 
-const LANGUAGES = [
-  { value: 'auto', label: 'Match my message' },
-  { value: 'English', label: 'English' },
-  { value: 'Indonesian', label: 'Indonesian' },
+// The values are stored on the profile and sent to the AI route; only the
+// labels are translated.
+const LANGUAGES: { value: string; label: Bi }[] = [
+  { value: 'auto', label: { en: 'Match my message', id: 'Ikuti pesan saya' } },
+  { value: 'English', label: { en: 'English', id: 'Inggris' } },
+  { value: 'Indonesian', label: { en: 'Indonesian', id: 'Indonesia' } },
 ]
-const STYLES = [
-  { value: 'balanced', label: 'Balanced' },
-  { value: 'concise', label: 'Concise' },
-  { value: 'detailed', label: 'Detailed' },
+const STYLES: { value: string; label: Bi }[] = [
+  { value: 'balanced', label: { en: 'Balanced', id: 'Seimbang' } },
+  { value: 'concise', label: { en: 'Concise', id: 'Ringkas' } },
+  { value: 'detailed', label: { en: 'Detailed', id: 'Rinci' } },
 ]
 
-const SECTIONS: { id: string; label: string; icon: LucideIcon; ai?: boolean; admin?: boolean }[] = [
-  { id: 'profile', label: 'Profile', icon: UserRound },
-  { id: 'personalization', label: 'Personalization', icon: Sparkles, ai: true },
-  { id: 'account', label: 'Account', icon: Mail },
-  { id: 'security', label: 'Security', icon: Lock },
-  { id: 'history', label: 'Chat history', icon: MessageSquare, ai: true },
+const SECTIONS: { id: string; label: Bi; icon: LucideIcon; ai?: boolean; admin?: boolean }[] = [
+  { id: 'profile', label: { en: 'Profile', id: 'Profil' }, icon: UserRound },
+  { id: 'personalization', label: { en: 'Personalization', id: 'Personalisasi' }, icon: Sparkles, ai: true },
+  { id: 'account', label: { en: 'Account', id: 'Akun' }, icon: Mail },
+  { id: 'security', label: { en: 'Security', id: 'Keamanan' }, icon: Lock },
+  { id: 'history', label: { en: 'Chat history', id: 'Riwayat chat' }, icon: MessageSquare, ai: true },
   // Admins only: review and manage every lab account.
-  { id: 'members', label: 'Lab members', icon: Users, admin: true },
+  { id: 'members', label: { en: 'Lab members', id: 'Anggota lab' }, icon: Users, admin: true },
 ]
 const VISIBLE = SECTIONS.filter((s) => !s.ai || AI_ASSISTANT_ENABLED)
 
@@ -159,7 +171,7 @@ function SaveButton({
   saving,
   saved,
   disabled,
-  label = 'Save changes',
+  label,
 }: {
   onClick: () => void
   saving: boolean
@@ -167,6 +179,7 @@ function SaveButton({
   disabled?: boolean
   label?: string
 }) {
+  const t = useT()
   return (
     <button
       type="button"
@@ -177,14 +190,14 @@ function SaveButton({
     >
       {saving ? (
         <>
-          <Loader2 className="h-4 w-4 animate-spin" /> Saving
+          <Loader2 className="h-4 w-4 animate-spin" /> {t({ en: 'Saving', id: 'Menyimpan' })}
         </>
       ) : saved ? (
         <motion.span initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="inline-flex items-center gap-2">
-          <Check className="h-4 w-4" /> Saved
+          <Check className="h-4 w-4" /> {t({ en: 'Saved', id: 'Tersimpan' })}
         </motion.span>
       ) : (
-        label
+        (label ?? t({ en: 'Save changes', id: 'Simpan perubahan' }))
       )}
     </button>
   )
@@ -218,10 +231,10 @@ function SecondaryButton({
   )
 }
 
-function formatDate(value?: string) {
+function formatDate(value: string | undefined, lang: Lang) {
   if (!value) return '-'
   try {
-    return new Date(value).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
+    return new Date(value).toLocaleString(lang === 'id' ? 'id-ID' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })
   } catch {
     return '-'
   }
@@ -270,6 +283,8 @@ function AccountPage() {
 
 function AccountContent() {
   const { user, isConfigured, account, refreshAccount } = useAuth()
+  const t = useT()
+  const lang = useLang()
   const [tab, selectTab] = useTab(VISIBLE.map((s) => s.id))
   const isAdmin = !!account?.isAdmin
   const tabs = VISIBLE.filter((s) => !s.admin || isAdmin)
@@ -280,7 +295,7 @@ function AccountContent() {
   useEffect(() => {
     if (!isAdmin) return
     let live = true
-    void listLabAccounts().then((r) => {
+    void listLabAccounts(lang).then((r) => {
       if (live && r.data) setPendingCount(r.data.filter((a) => a.status === 'pending').length)
     })
     return () => {
@@ -326,6 +341,7 @@ function AccountContent() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordMsg, setPasswordMsg] = useState<string | null>(null)
   const [passwordBusy, setPasswordBusy] = useState(false)
+  const [passwordOk, setPasswordOk] = useState(false)
 
   // Chat history (AI Assistant)
   const [convCount, setConvCount] = useState(0)
@@ -373,14 +389,18 @@ function AccountContent() {
   const handleSaveProfile = async () => {
     if (!user) return
     setProfileSaving(true)
-    await updateProfile(user.id, {
-      full_name: fullName,
-      preferred_name: preferredName,
-      occupation,
-      division,
-      staff_id: staffId,
-      title,
-    })
+    await updateProfile(
+      user.id,
+      {
+        full_name: fullName,
+        preferred_name: preferredName,
+        occupation,
+        division,
+        staff_id: staffId,
+        title,
+      },
+      lang,
+    )
     setProfileSaving(false)
     flash(setProfileSaved)
     void refreshAccount()
@@ -391,7 +411,7 @@ function AccountContent() {
     if (avatarInputRef.current) avatarInputRef.current.value = ''
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      setAvatarError('Choose an image file (PNG, JPG or WebP).')
+      setAvatarError(t({ en: 'Choose an image file (PNG, JPG or WebP).', id: 'Pilih file gambar (PNG, JPG, atau WebP).' }))
       return
     }
     setAvatarError(null)
@@ -419,9 +439,9 @@ function AccountContent() {
   }
 
   const handleSaveAvatar = async (cropped: Blob, crop: AvatarCrop, original?: File) => {
-    if (!user) return 'Not signed in'
-    const { url, error } = await saveAvatar(user.id, cropped, crop, original)
-    if (error || !url) return error ?? 'Could not save the photo.'
+    if (!user) return t({ en: 'Not signed in', id: 'Belum masuk' })
+    const { url, error } = await saveAvatar(user.id, cropped, crop, original, lang)
+    if (error || !url) return error ?? t({ en: 'Could not save the photo.', id: 'Foto tidak bisa disimpan.' })
     setAvatarUrl(url)
     closeEditor()
     void refreshAccount()
@@ -436,7 +456,7 @@ function AccountContent() {
     }
     setAvatarBusy(true)
     setAvatarError(null)
-    const { error } = await removeAvatar(user.id)
+    const { error } = await removeAvatar(user.id, lang)
     setAvatarBusy(false)
     setConfirmRemove(false)
     if (error) setAvatarError(error)
@@ -449,13 +469,17 @@ function AccountContent() {
   const handleSavePrefs = async () => {
     if (!user) return
     setPrefsSaving(true)
-    await updateProfile(user.id, {
-      about_me: aboutMe,
-      instructions,
-      ai_model: aiModel,
-      ai_language: aiLanguage,
-      ai_style: aiStyle,
-    })
+    await updateProfile(
+      user.id,
+      {
+        about_me: aboutMe,
+        instructions,
+        ai_model: aiModel,
+        ai_language: aiLanguage,
+        ai_style: aiStyle,
+      },
+      lang,
+    )
     setPrefsSaving(false)
     flash(setPrefsSaved)
   }
@@ -464,26 +488,35 @@ function AccountContent() {
     if (!newEmail.trim()) return
     setEmailBusy(true)
     setEmailMsg(null)
-    const { error } = await changeEmail(newEmail.trim())
+    const { error } = await changeEmail(newEmail.trim(), lang)
     setEmailBusy(false)
-    setEmailMsg(error ? error : 'Confirmation sent. Check the new inbox to finish the change.')
+    setEmailMsg(
+      error
+        ? error
+        : t({
+            en: 'Confirmation sent. Check the new inbox to finish the change.',
+            id: 'Konfirmasi terkirim. Cek kotak masuk email baru untuk menyelesaikan perubahan.',
+          }),
+    )
     if (!error) setNewEmail('')
   }
 
   const handleChangePassword = async () => {
     setPasswordMsg(null)
+    setPasswordOk(false)
     if (newPassword.length < 8) {
-      setPasswordMsg('Password must be at least 8 characters.')
+      setPasswordMsg(t({ en: 'Password must be at least 8 characters.', id: 'Kata sandi minimal 8 karakter.' }))
       return
     }
     if (newPassword !== confirmPassword) {
-      setPasswordMsg('Passwords do not match.')
+      setPasswordMsg(t({ en: 'Passwords do not match.', id: 'Kata sandi tidak cocok.' }))
       return
     }
     setPasswordBusy(true)
-    const { error } = await changePassword(newPassword)
+    const { error } = await changePassword(newPassword, lang)
     setPasswordBusy(false)
-    setPasswordMsg(error ?? 'Password updated.')
+    setPasswordOk(!error)
+    setPasswordMsg(error ?? t({ en: 'Password updated.', id: 'Kata sandi diperbarui.' }))
     if (!error) {
       setNewPassword('')
       setConfirmPassword('')
@@ -517,7 +550,7 @@ function AccountContent() {
   }
 
   const initial = (fullName.trim()[0] || user?.email?.[0] || 'S').toUpperCase()
-  const displayName = fullName.trim() || user?.email?.split('@')[0] || 'Research assistant'
+  const displayName = fullName.trim() || user?.email?.split('@')[0] || t({ en: 'Research assistant', id: 'Asisten riset' })
   const strength =
     newPassword.length === 0 ? 0 : newPassword.length < 8 ? 1 : newPassword.length < 10 ? 2 : 3
 
@@ -533,7 +566,7 @@ function AccountContent() {
           style={body}
         >
           <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
-          Account
+          {t({ en: 'Account', id: 'Akun' })}
         </motion.p>
         <motion.h1
           initial="hidden"
@@ -542,7 +575,18 @@ function AccountContent() {
           style={display}
         >
           <MaskLine delay={0}>
-            Profile &amp; <span style={accent}>settings.</span>
+            {t({
+              en: (
+                <>
+                  Profile &amp; <span style={accent}>settings.</span>
+                </>
+              ),
+              id: (
+                <>
+                  Profil &amp; <span style={accent}>pengaturan.</span>
+                </>
+              ),
+            })}
           </MaskLine>
         </motion.h1>
       </section>
@@ -568,7 +612,7 @@ function AccountContent() {
                     type="button"
                     onClick={() => (avatarUrl ? void handleAdjustAvatar() : avatarInputRef.current?.click())}
                     disabled={!user || avatarBusy}
-                    aria-label={avatarUrl ? 'Adjust profile photo' : 'Add profile photo'}
+                    aria-label={avatarUrl ? t({ en: 'Adjust profile photo', id: 'Atur foto profil' }) : t({ en: 'Add profile photo', id: 'Tambah foto profil' })}
                     className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full bg-white text-[#0B6477] shadow-md ring-2 ring-[#08313A] transition-colors hover:bg-[#80ED99] hover:text-[#08313A]"
                   >
                     {avatarBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
@@ -579,7 +623,9 @@ function AccountContent() {
                     {loading ? '...' : displayName}
                   </p>
                   <p className="truncate text-sm text-white/60" style={body}>
-                    {preferredName.trim() && preferredName.trim() !== displayName ? `Goes by ${preferredName.trim()}` : title}
+                    {preferredName.trim() && preferredName.trim() !== displayName
+                      ? t({ en: `Goes by ${preferredName.trim()}`, id: `Dipanggil ${preferredName.trim()}` })
+                      : title}
                   </p>
                 </div>
               </div>
@@ -587,11 +633,13 @@ function AccountContent() {
               <div className="relative mt-4 flex flex-wrap gap-1.5">
                 {account && account.status !== 'active' ? (
                   <span className={`inline-flex items-center gap-1 rounded-full bg-[#F2B84B]/15 px-2.5 py-1 text-[#F2B84B] ${META}`} style={body}>
-                    <Clock className="h-3.5 w-3.5" /> {account.status === 'pending' ? 'Pending approval' : 'Not active'}
+                    <Clock className="h-3.5 w-3.5" /> {account.status === 'pending'
+                      ? t({ en: 'Pending approval', id: 'Menunggu persetujuan' })
+                      : t({ en: 'Not active', id: 'Tidak aktif' })}
                   </span>
                 ) : (
                   <span className={`inline-flex items-center gap-1 rounded-full bg-[#45DFB1]/15 px-2.5 py-1 text-[#45DFB1] ${META}`} style={body}>
-                    <BadgeCheck className="h-3.5 w-3.5" /> Lab member
+                    <BadgeCheck className="h-3.5 w-3.5" /> {t({ en: 'Lab member', id: 'Anggota lab' })}
                   </span>
                 )}
                 {account?.isAdmin && (
@@ -599,23 +647,27 @@ function AccountContent() {
                     <ShieldCheck className="h-3.5 w-3.5 text-[#45DFB1]" /> Admin
                   </span>
                 )}
-                {[labRoleLabel(labRole), division, isStudentRole(labRole) && cohort ? `Cohort ${cohort}` : '']
+                {[
+                  labRoleLabel(labRole, lang),
+                  division,
+                  isStudentRole(labRole) && cohort ? t({ en: `Cohort ${cohort}`, id: `Angkatan ${cohort}` }) : '',
+                ]
                   .filter(Boolean)
-                  .map((t) => (
-                    <span key={t as string} className={`rounded-full border border-white/15 px-2.5 py-1 text-white/85 ${META}`} style={body}>
-                      {t}
+                  .map((tag) => (
+                    <span key={tag as string} className={`rounded-full border border-white/15 px-2.5 py-1 text-white/85 ${META}`} style={body}>
+                      {tag}
                     </span>
                   ))}
               </div>
               {researchTopic && (
                 <p className="relative mt-3 line-clamp-2 text-sm leading-relaxed text-white/70" style={body}>
-                  <span className="text-[#45DFB1]">Research · </span>
+                  <span className="text-[#45DFB1]">{t({ en: 'Research', id: 'Riset' })} · </span>
                   {researchTopic}
                 </p>
               )}
               <p className="relative mt-3 flex min-w-0 items-center gap-1.5 text-[13px] text-white/55" style={body}>
                 <Mail className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{user?.email ?? 'Not signed in'}</span>
+                <span className="truncate">{user?.email ?? t({ en: 'Not signed in', id: 'Belum masuk' })}</span>
               </p>
 
               <div className="relative mt-4 grid grid-cols-2 gap-2 border-t border-white/10 pt-4">
@@ -633,16 +685,16 @@ function AccountContent() {
                   style={body}
                 >
                   <Boxes className="h-3.5 w-3.5" />
-                  Inventory
+                  {t({ en: 'Inventory', id: 'Inventaris' })}
                 </Link>
               </div>
               <p className={`relative mt-3 text-center text-white/40 ${META}`} style={body}>
-                Last sign-in {formatDate(user?.last_sign_in_at)}
+                {t({ en: 'Last sign-in', id: 'Terakhir masuk' })} {formatDate(user?.last_sign_in_at, lang)}
               </p>
             </motion.div>
 
             {/* Section tabs */}
-            <nav aria-label="Settings sections" className="rounded-2xl border border-[#0B6477]/10 bg-white/80 p-1.5 backdrop-blur">
+            <nav aria-label={t({ en: 'Settings sections', id: 'Bagian pengaturan' })} className="rounded-2xl border border-[#0B6477]/10 bg-white/80 p-1.5 backdrop-blur">
               <ul role="tablist" className="flex gap-1 overflow-x-auto [scrollbar-width:none] lg:flex-col [&::-webkit-scrollbar]:hidden">
                 {tabs.map((s) => {
                   const on = s.id === active
@@ -666,7 +718,7 @@ function AccountContent() {
                         style={body}
                       >
                         <s.icon className={`h-4 w-4 ${on ? 'text-[#45DFB1]' : 'text-[#14919B]'}`} />
-                        {s.label}
+                        {t(s.label)}
                         {s.id === 'members' && pendingCount > 0 && (
                           <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[#F2B84B] px-1.5 text-[11px] font-semibold text-[#3A2600]">
                             {pendingCount}
@@ -687,7 +739,10 @@ function AccountContent() {
               className="rounded-2xl border border-dashed border-[#0B6477]/25 bg-white/80 px-5 py-4 text-sm text-neutral-500"
               style={body}
             >
-              Authentication is not configured on this environment, so changes cannot be saved here.
+              {t({
+                en: 'Authentication is not configured on this environment, so changes cannot be saved here.',
+                id: 'Autentikasi belum dikonfigurasi di lingkungan ini, jadi perubahan tidak bisa disimpan di sini.',
+              })}
             </p>
           )}
 
@@ -695,7 +750,7 @@ function AccountContent() {
             <div className="flex items-center gap-2 py-10 text-neutral-500">
               <Loader2 className="h-5 w-5 animate-spin text-[#0B6477]" />
               <span className="text-sm" style={body}>
-                Loading your profile...
+                {t({ en: 'Loading your profile...', id: 'Memuat profil Anda...' })}
               </span>
             </div>
           ) : (
@@ -705,20 +760,29 @@ function AccountContent() {
                   current={active}
                   id="members"
                   icon={Users}
-                  title="Lab members"
-                  desc="Approve new accounts, choose the boards they join, and manage access and admins."
+                  title={t({ en: 'Lab members', id: 'Anggota lab' })}
+                  desc={t({
+                    en: 'Approve new accounts, choose the boards they join, and manage access and admins.',
+                    id: 'Setujui akun baru, pilih board yang mereka ikuti, dan kelola akses serta admin.',
+                  })}
                 >
                   <LabMembers selfId={user?.id ?? null} onPendingCount={setPendingCount} />
                 </Card>
               )}
-              <Card current={active} id="profile" icon={UserRound} title="Profile" desc="Shown to the smartagri research team.">
+              <Card
+                current={active}
+                id="profile"
+                icon={UserRound}
+                title={t({ en: 'Profile', id: 'Profil' })}
+                desc={t({ en: 'Shown to the smartagri research team.', id: 'Ditampilkan kepada tim riset smartagri.' })}
+              >
                 <div className="flex flex-col gap-5 rounded-2xl border border-[#0B6477]/8 bg-[#F7FAF9] p-5 sm:flex-row sm:items-center">
                   <button
                     type="button"
                     onClick={() => (avatarUrl ? void handleAdjustAvatar() : avatarInputRef.current?.click())}
                     disabled={!user || avatarBusy}
                     className="group relative grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-full bg-[#0B6477] text-3xl font-semibold text-[#45DFB1] ring-4 ring-white"
-                    aria-label={avatarUrl ? 'Adjust profile photo' : 'Add profile photo'}
+                    aria-label={avatarUrl ? t({ en: 'Adjust profile photo', id: 'Atur foto profil' }) : t({ en: 'Add profile photo', id: 'Tambah foto profil' })}
                   >
                     {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initial}
                     <span className="absolute inset-0 grid place-items-center bg-[#08313A]/55 text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -728,10 +792,13 @@ function AccountContent() {
                   <div className="flex min-w-0 flex-col gap-3">
                     <div>
                       <p className="text-[15px] font-medium text-neutral-900" style={body}>
-                        Profile photo
+                        {t({ en: 'Profile photo', id: 'Foto profil' })}
                       </p>
                       <p className="mt-0.5 text-sm text-neutral-500" style={body}>
-                        PNG, JPG or WebP up to 10 MB. Drag and zoom to fit it in the circle.
+                        {t({
+                          en: 'PNG, JPG or WebP up to 10 MB. Drag and zoom to fit it in the circle.',
+                          id: 'PNG, JPG, atau WebP hingga 10 MB. Geser dan zoom agar pas di dalam lingkaran.',
+                        })}
                       </p>
                     </div>
                     <input
@@ -744,17 +811,17 @@ function AccountContent() {
                     <div className="flex flex-wrap gap-2">
                       <SecondaryButton onClick={() => avatarInputRef.current?.click()} disabled={avatarBusy || !user}>
                         <Upload className="h-4 w-4" />
-                        {avatarUrl ? 'Upload new' : 'Upload photo'}
+                        {avatarUrl ? t({ en: 'Upload new', id: 'Unggah baru' }) : t({ en: 'Upload photo', id: 'Unggah foto' })}
                       </SecondaryButton>
                       {avatarUrl && (
                         <>
                           <SecondaryButton onClick={() => void handleAdjustAvatar()} disabled={avatarBusy || !user}>
                             {avatarBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crop className="h-4 w-4" />}
-                            Adjust size
+                            {t({ en: 'Adjust size', id: 'Atur ukuran' })}
                           </SecondaryButton>
                           <SecondaryButton danger onClick={() => void handleRemoveAvatar()} disabled={avatarBusy || !user}>
                             <Trash2 className="h-4 w-4" />
-                            {confirmRemove ? 'Click again to remove' : 'Remove'}
+                            {confirmRemove ? t({ en: 'Click again to remove', id: 'Klik lagi untuk menghapus' }) : t({ en: 'Remove', id: 'Hapus' })}
                           </SecondaryButton>
                         </>
                       )}
@@ -768,23 +835,23 @@ function AccountContent() {
                 </div>
 
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="Full name">
-                    <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. Athala Fawwaz" className={inputClass} style={body} />
+                  <Field label={t({ en: 'Full name', id: 'Nama lengkap' })}>
+                    <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t({ en: 'e.g. Athala Fawwaz', id: 'mis. Athala Fawwaz' })} className={inputClass} style={body} />
                   </Field>
-                  <Field label="Preferred name">
-                    <input value={preferredName} onChange={(e) => setPreferredName(e.target.value)} placeholder="e.g. Atha" className={inputClass} style={body} />
+                  <Field label={t({ en: 'Preferred name', id: 'Nama panggilan' })}>
+                    <input value={preferredName} onChange={(e) => setPreferredName(e.target.value)} placeholder={t({ en: 'e.g. Atha', id: 'mis. Atha' })} className={inputClass} style={body} />
                   </Field>
-                  <Field label="Role / title">
-                    <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Research Assistant" className={inputClass} style={body} />
+                  <Field label={t({ en: 'Role / title', id: 'Peran / jabatan' })}>
+                    <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t({ en: 'Research Assistant', id: 'Asisten Riset' })} className={inputClass} style={body} />
                   </Field>
-                  <Field label="Division / lab">
-                    <input value={division} onChange={(e) => setDivision(e.target.value)} placeholder="e.g. Smart Estate" className={inputClass} style={body} />
+                  <Field label={t({ en: 'Division / lab', id: 'Divisi / lab' })}>
+                    <input value={division} onChange={(e) => setDivision(e.target.value)} placeholder={t({ en: 'e.g. Smart Estate', id: 'mis. Smart Estate' })} className={inputClass} style={body} />
                   </Field>
-                  <Field label="Work focus">
-                    <input value={occupation} onChange={(e) => setOccupation(e.target.value)} placeholder="e.g. Precision agriculture, IoT sensing" className={inputClass} style={body} />
+                  <Field label={t({ en: 'Work focus', id: 'Fokus kerja' })}>
+                    <input value={occupation} onChange={(e) => setOccupation(e.target.value)} placeholder={t({ en: 'e.g. Precision agriculture, IoT sensing', id: 'mis. Pertanian presisi, penginderaan IoT' })} className={inputClass} style={body} />
                   </Field>
-                  <Field label="Student / staff ID">
-                    <input value={staffId} onChange={(e) => setStaffId(e.target.value)} placeholder="e.g. 21/123456/TK/00000" className={inputClass} style={body} />
+                  <Field label={t({ en: 'Student / staff ID', id: 'NIM / NIP' })}>
+                    <input value={staffId} onChange={(e) => setStaffId(e.target.value)} placeholder={t({ en: 'e.g. 21/123456/TK/00000', id: 'mis. 21/123456/TK/00000' })} className={inputClass} style={body} />
                   </Field>
                 </div>
                 <SaveButton onClick={() => void handleSaveProfile()} saving={profileSaving} saved={profileSaved} disabled={!user} />
@@ -795,33 +862,42 @@ function AccountContent() {
                   current={active}
                   id="personalization"
                   icon={Sparkles}
-                  title="Personalization"
-                  desc="Help the assistant tailor its replies. Applied across your chats."
+                  title={t({ en: 'Personalization', id: 'Personalisasi' })}
+                  desc={t({
+                    en: 'Help the assistant tailor its replies. Applied across your chats.',
+                    id: 'Bantu asisten menyesuaikan jawabannya. Berlaku di semua chat Anda.',
+                  })}
                 >
-                  <Field label="About you">
+                  <Field label={t({ en: 'About you', id: 'Tentang Anda' })}>
                     <textarea
                       value={aboutMe}
                       onChange={(e) => setAboutMe(e.target.value)}
                       maxLength={1500}
                       rows={3}
-                      placeholder="Your research focus, background, and what you're working on."
+                      placeholder={t({
+                        en: "Your research focus, background, and what you're working on.",
+                        id: 'Fokus riset, latar belakang, dan apa yang sedang Anda kerjakan.',
+                      })}
                       className={`${inputClass} min-h-[96px] resize-y`}
                       style={body}
                     />
                   </Field>
-                  <Field label="Instructions for the assistant">
+                  <Field label={t({ en: 'Instructions for the assistant', id: 'Instruksi untuk asisten' })}>
                     <textarea
                       value={instructions}
                       onChange={(e) => setInstructions(e.target.value)}
                       maxLength={1500}
                       rows={3}
-                      placeholder="e.g. Prefer concise answers. Use Indonesian for summaries."
+                      placeholder={t({
+                        en: 'e.g. Prefer concise answers. Use Indonesian for summaries.',
+                        id: 'mis. Utamakan jawaban ringkas. Pakai bahasa Inggris untuk ringkasan.',
+                      })}
                       className={`${inputClass} min-h-[96px] resize-y`}
                       style={body}
                     />
                   </Field>
                   <div className="grid gap-5 sm:grid-cols-3">
-                    <Field label="Default model">
+                    <Field label={t({ en: 'Default model', id: 'Model bawaan' })}>
                       <select value={aiModel} onChange={(e) => setAiModel(e.target.value)} className={`${inputClass} cursor-pointer`} style={body}>
                         {AI_MODELS.map((m) => (
                           <option key={m.id} value={m.id}>
@@ -830,35 +906,41 @@ function AccountContent() {
                         ))}
                       </select>
                     </Field>
-                    <Field label="Response language">
+                    <Field label={t({ en: 'Response language', id: 'Bahasa jawaban' })}>
                       <select value={aiLanguage} onChange={(e) => setAiLanguage(e.target.value)} className={`${inputClass} cursor-pointer`} style={body}>
                         {LANGUAGES.map((l) => (
                           <option key={l.value} value={l.value}>
-                            {l.label}
+                            {t(l.label)}
                           </option>
                         ))}
                       </select>
                     </Field>
-                    <Field label="Response style">
+                    <Field label={t({ en: 'Response style', id: 'Gaya jawaban' })}>
                       <select value={aiStyle} onChange={(e) => setAiStyle(e.target.value)} className={`${inputClass} cursor-pointer`} style={body}>
                         {STYLES.map((s) => (
                           <option key={s.value} value={s.value}>
-                            {s.label}
+                            {t(s.label)}
                           </option>
                         ))}
                       </select>
                     </Field>
                   </div>
-                  <SaveButton onClick={() => void handleSavePrefs()} saving={prefsSaving} saved={prefsSaved} disabled={!user} label="Save preferences" />
+                  <SaveButton onClick={() => void handleSavePrefs()} saving={prefsSaving} saved={prefsSaved} disabled={!user} label={t({ en: 'Save preferences', id: 'Simpan preferensi' })} />
                 </Card>
               )}
 
-              <Card current={active} id="account" icon={Mail} title="Account" desc="Your sign-in email and account details.">
+              <Card
+                current={active}
+                id="account"
+                icon={Mail}
+                title={t({ en: 'Account', id: 'Akun' })}
+                desc={t({ en: 'Your sign-in email and account details.', id: 'Email masuk dan detail akun Anda.' })}
+              >
                 <div className="grid gap-px overflow-hidden rounded-2xl border border-[#0B6477]/12 bg-[#0B6477]/12 sm:grid-cols-3">
                   {[
-                    { label: 'Current email', value: user?.email ?? '-' },
-                    { label: 'Joined', value: formatDate(user?.created_at) },
-                    { label: 'Last sign-in', value: formatDate(user?.last_sign_in_at) },
+                    { label: t({ en: 'Current email', id: 'Email saat ini' }), value: user?.email ?? '-' },
+                    { label: t({ en: 'Joined', id: 'Bergabung' }), value: formatDate(user?.created_at, lang) },
+                    { label: t({ en: 'Last sign-in', id: 'Terakhir masuk' }), value: formatDate(user?.last_sign_in_at, lang) },
                   ].map((f) => (
                     <div key={f.label} className="flex min-w-0 flex-col gap-1.5 bg-white p-4">
                       <span className={`text-neutral-400 ${META}`} style={body}>
@@ -870,18 +952,21 @@ function AccountContent() {
                     </div>
                   ))}
                 </div>
-                <Field label="Change email" hint="We send a confirmation link to the new address.">
+                <Field
+                  label={t({ en: 'Change email', id: 'Ganti email' })}
+                  hint={t({ en: 'We send a confirmation link to the new address.', id: 'Kami mengirim tautan konfirmasi ke alamat baru.' })}
+                >
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input
                       type="email"
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
-                      placeholder="new.email@ugm.ac.id"
+                      placeholder={t({ en: 'new.email@ugm.ac.id', id: 'email.baru@ugm.ac.id' })}
                       className={inputClass}
                       style={body}
                     />
                     <SecondaryButton onClick={() => void handleChangeEmail()} disabled={emailBusy || !user}>
-                      {emailBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Update email'}
+                      {emailBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : t({ en: 'Update email', id: 'Perbarui email' })}
                     </SecondaryButton>
                   </div>
                 </Field>
@@ -892,25 +977,31 @@ function AccountContent() {
                 )}
               </Card>
 
-              <Card current={active} id="security" icon={Lock} title="Security" desc="Update your password.">
+              <Card
+                current={active}
+                id="security"
+                icon={Lock}
+                title={t({ en: 'Security', id: 'Keamanan' })}
+                desc={t({ en: 'Update your password.', id: 'Perbarui kata sandi Anda.' })}
+              >
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="New password">
+                  <Field label={t({ en: 'New password', id: 'Kata sandi baru' })}>
                     <input
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="At least 8 characters"
+                      placeholder={t({ en: 'At least 8 characters', id: 'Minimal 8 karakter' })}
                       autoComplete="new-password"
                       className={inputClass}
                       style={body}
                     />
                   </Field>
-                  <Field label="Confirm password">
+                  <Field label={t({ en: 'Confirm password', id: 'Ulangi kata sandi' })}>
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Re-enter password"
+                      placeholder={t({ en: 'Re-enter password', id: 'Ketik ulang kata sandi' })}
                       autoComplete="new-password"
                       className={inputClass}
                       style={body}
@@ -932,12 +1023,12 @@ function AccountContent() {
                     ))}
                   </div>
                   <span className={`w-16 text-right text-neutral-400 ${META}`} style={body}>
-                    {['', 'Short', 'Okay', 'Strong'][strength]}
+                    {t({ en: ['', 'Short', 'Okay', 'Strong'], id: ['', 'Pendek', 'Cukup', 'Kuat'] })[strength]}
                   </span>
                 </div>
                 {passwordMsg && (
                   <p
-                    className={`text-sm ${passwordMsg.includes('updated') ? 'text-[#0B6477]' : 'text-[#B91C1C]'}`}
+                    className={`text-sm ${passwordOk ? 'text-[#0B6477]' : 'text-[#B91C1C]'}`}
                     style={body}
                   >
                     {passwordMsg}
@@ -951,7 +1042,7 @@ function AccountContent() {
                   style={body}
                 >
                   {passwordBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4 text-[#45DFB1]" />}
-                  Update password
+                  {t({ en: 'Update password', id: 'Perbarui kata sandi' })}
                 </button>
               </Card>
 
@@ -960,20 +1051,35 @@ function AccountContent() {
                   current={active}
                   id="history"
                   icon={MessageSquare}
-                  title="Chat history"
-                  desc="Your AI Assistant conversations are stored privately to your account."
+                  title={t({ en: 'Chat history', id: 'Riwayat chat' })}
+                  desc={t({
+                    en: 'Your AI Assistant conversations are stored privately to your account.',
+                    id: 'Percakapan Asisten AI Anda disimpan secara privat di akun Anda.',
+                  })}
                 >
                   <p className="text-[15px] text-neutral-600" style={body}>
-                    You have <span className="font-semibold text-neutral-900">{convCount}</span> saved{' '}
-                    {convCount === 1 ? 'conversation' : 'conversations'}.
+                    {t({
+                      en: (
+                        <>
+                          You have <span className="font-semibold text-neutral-900">{convCount}</span> saved{' '}
+                          {convCount === 1 ? 'conversation' : 'conversations'}.
+                        </>
+                      ),
+                      id: (
+                        <>
+                          Anda punya <span className="font-semibold text-neutral-900">{convCount}</span> percakapan
+                          tersimpan.
+                        </>
+                      ),
+                    })}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <SecondaryButton onClick={() => void handleExport()}>
-                      <Download className="h-4 w-4" /> Export JSON
+                      <Download className="h-4 w-4" /> {t({ en: 'Export JSON', id: 'Ekspor JSON' })}
                     </SecondaryButton>
                     <SecondaryButton onClick={() => void handleDeleteAll()} disabled={deleting || !user} danger>
                       {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                      {confirmDelete ? 'Click again to confirm' : 'Delete all chats'}
+                      {confirmDelete ? t({ en: 'Click again to confirm', id: 'Klik lagi untuk konfirmasi' }) : t({ en: 'Delete all chats', id: 'Hapus semua chat' })}
                     </SecondaryButton>
                   </div>
                 </Card>

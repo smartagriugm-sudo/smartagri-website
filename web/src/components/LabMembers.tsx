@@ -26,6 +26,7 @@ import {
 import type { LabAccount, ReviewBoard } from '../lib/lab-admin'
 import { body, display } from '../lib/fonts'
 import { EASE, META } from './NoteParts'
+import { localeOf, useLang, useT, type Bi, type Lang } from '../lib/i18n'
 
 // Admin-only section of /account: every lab account with its onboarding
 // details, filtered by status. Pending accounts open a review panel to approve
@@ -34,32 +35,33 @@ import { EASE, META } from './NoteParts'
 
 type Filter = AccountStatus | 'all'
 
-const STATUS_META: Record<AccountStatus, { label: string; chip: string; dot: string }> = {
-  pending: { label: 'Pending', chip: 'bg-[#F2B84B]/15 text-[#8A5300]', dot: 'bg-[#F2B84B]' },
-  active: { label: 'Active', chip: 'bg-[#45DFB1]/20 text-[#0B6477]', dot: 'bg-[#12B886]' },
-  suspended: { label: 'Suspended', chip: 'bg-neutral-100 text-neutral-500', dot: 'bg-neutral-400' },
-  rejected: { label: 'Rejected', chip: 'bg-[#E5484D]/10 text-[#B42318]', dot: 'bg-[#E5484D]' },
+const STATUS_META: Record<AccountStatus, { label: Bi; chip: string; dot: string }> = {
+  pending: { label: { en: 'Pending', id: 'Menunggu' }, chip: 'bg-[#F2B84B]/15 text-[#8A5300]', dot: 'bg-[#F2B84B]' },
+  active: { label: { en: 'Active', id: 'Aktif' }, chip: 'bg-[#45DFB1]/20 text-[#0B6477]', dot: 'bg-[#12B886]' },
+  suspended: { label: { en: 'Suspended', id: 'Ditangguhkan' }, chip: 'bg-neutral-100 text-neutral-500', dot: 'bg-neutral-400' },
+  rejected: { label: { en: 'Rejected', id: 'Ditolak' }, chip: 'bg-[#E5484D]/10 text-[#B42318]', dot: 'bg-[#E5484D]' },
 }
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'pending', label: 'Pending' },
-  { key: 'active', label: 'Active' },
-  { key: 'suspended', label: 'Suspended' },
-  { key: 'rejected', label: 'Rejected' },
-  { key: 'all', label: 'All' },
+const FILTERS: { key: Filter; label: Bi }[] = [
+  { key: 'pending', label: { en: 'Pending', id: 'Menunggu' } },
+  { key: 'active', label: { en: 'Active', id: 'Aktif' } },
+  { key: 'suspended', label: { en: 'Suspended', id: 'Ditangguhkan' } },
+  { key: 'rejected', label: { en: 'Rejected', id: 'Ditolak' } },
+  { key: 'all', label: { en: 'All', id: 'Semua' } },
 ]
 
 function nameOf(a: LabAccount) {
   return (a.full_name || a.preferred_name || a.email.split('@')[0] || 'Unnamed').trim()
 }
 
-function since(iso: string | null) {
+function since(iso: string | null, lang: Lang) {
   if (!iso) return '-'
+  const id = lang === 'id'
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
-  if (days <= 0) return 'today'
-  if (days === 1) return 'yesterday'
-  if (days < 30) return `${days} days ago`
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  if (days <= 0) return id ? 'hari ini' : 'today'
+  if (days === 1) return id ? 'kemarin' : 'yesterday'
+  if (days < 30) return id ? `${days} hari lalu` : `${days} days ago`
+  return new Date(iso).toLocaleDateString(id ? localeOf(lang) : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function Avatar({ a }: { a: LabAccount }) {
@@ -112,9 +114,11 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
   const [rowError, setRowError] = useState<{ id: string; text: string } | null>(null)
   const [confirm, setConfirm] = useState<string | null>(null)
   const [picked, setPicked] = useState<Record<string, string[]>>({})
+  const t = useT()
+  const lang = useLang()
 
   const load = async () => {
-    const [res, b] = await Promise.all([listLabAccounts(), listReviewBoards()])
+    const [res, b] = await Promise.all([listLabAccounts(lang), listReviewBoards()])
     if (res.error) setError(res.error)
     else {
       setError(null)
@@ -180,14 +184,14 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
   if (error) {
     return (
       <p className="rounded-2xl border border-dashed border-[#E5484D]/30 bg-[#FEF2F2]/60 px-5 py-4 text-sm text-[#B42318]" style={body}>
-        Could not load lab accounts: {error}
+        {t({ en: 'Could not load lab accounts:', id: 'Akun lab tidak bisa dimuat:' })} {error}
       </p>
     )
   }
   if (!accounts) {
     return (
       <div className="flex items-center gap-2 py-6 text-sm text-neutral-500" style={body}>
-        <Loader2 className="h-5 w-5 animate-spin text-[#0B6477]" /> Loading accounts...
+        <Loader2 className="h-5 w-5 animate-spin text-[#0B6477]" /> {t({ en: 'Loading accounts...', id: 'Memuat akun...' })}
       </div>
     )
   }
@@ -196,7 +200,7 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
     <div className="flex flex-col gap-5">
       {/* Filters and search */}
       <div className="flex flex-col gap-3">
-        <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Filter by status">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label={t({ en: 'Filter by status', id: 'Filter menurut status' })}>
           {FILTERS.map((f) => {
             const on = filter === f.key
             return (
@@ -216,7 +220,7 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
                 )}
                 {f.key !== 'all' && <span className={`relative h-1.5 w-1.5 rounded-full ${STATUS_META[f.key].dot}`} />}
                 <span className="relative">
-                  {f.label}
+                  {t(f.label)}
                   <span className={on ? 'text-white/60' : 'text-neutral-400'}> {counts[f.key]}</span>
                 </span>
               </button>
@@ -229,8 +233,8 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name, email, NIM or topic"
-            aria-label="Search accounts"
+            placeholder={t({ en: 'Search name, email, NIM or topic', id: 'Cari nama, email, NIM, atau topik' })}
+            aria-label={t({ en: 'Search accounts', id: 'Cari akun' })}
             className="h-10 w-full rounded-lg border border-[#0B6477]/15 bg-white pl-9 pr-3 text-sm text-neutral-700 outline-none transition-colors focus:border-[#14919B] focus:ring-2 focus:ring-[#14919B]/20"
             style={body}
           />
@@ -239,7 +243,9 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
 
       {shown.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-[#0B6477]/20 bg-[#F7FAF9] px-5 py-8 text-center text-sm text-neutral-500" style={body}>
-          {filter === 'pending' && !query ? 'Nobody is waiting for approval.' : 'No accounts match.'}
+          {filter === 'pending' && !query
+            ? t({ en: 'Nobody is waiting for approval.', id: 'Tidak ada yang menunggu persetujuan.' })
+            : t({ en: 'No accounts match.', id: 'Tidak ada akun yang cocok.' })}
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
@@ -275,7 +281,7 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
                         )}
                         {self && (
                           <span className={`rounded-full bg-[#F3F7F6] px-2 py-0.5 text-neutral-500 ${META}`} style={body}>
-                            You
+                            {t({ en: 'You', id: 'Anda' })}
                           </span>
                         )}
                       </p>
@@ -284,19 +290,19 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {[
-                          labRoleLabel(a.lab_role),
-                          isStudentRole(a.lab_role) && a.cohort ? `Cohort ${a.cohort}` : '',
+                          labRoleLabel(a.lab_role, lang),
+                          isStudentRole(a.lab_role) && a.cohort ? t({ en: `Cohort ${a.cohort}`, id: `Angkatan ${a.cohort}` }) : '',
                           a.staff_id ? `ID ${a.staff_id}` : '',
                         ]
                           .filter(Boolean)
-                          .map((t) => (
-                            <span key={t} className="rounded-full border border-[#0B6477]/12 bg-[#F7FAF9] px-2.5 py-0.5 text-[12px] text-[#0B6477]" style={body}>
-                              {t}
+                          .map((tag) => (
+                            <span key={tag} className="rounded-full border border-[#0B6477]/12 bg-[#F7FAF9] px-2.5 py-0.5 text-[12px] text-[#0B6477]" style={body}>
+                              {tag}
                             </span>
                           ))}
                         {!a.onboarded_at && (
                           <span className="rounded-full bg-[#F2B84B]/15 px-2.5 py-0.5 text-[12px] text-[#8A5300]" style={body}>
-                            Profile not completed
+                            {t({ en: 'Profile not completed', id: 'Profil belum lengkap' })}
                           </span>
                         )}
                       </div>
@@ -304,14 +310,14 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
                         <p className="mt-2 text-[13px] leading-relaxed text-neutral-600" style={body}>
                           {a.research_topic && (
                             <>
-                              <span className="text-[#14919B]">Topic · </span>
+                              <span className="text-[#14919B]">{t({ en: 'Topic', id: 'Topik' })} · </span>
                               {a.research_topic}
                             </>
                           )}
                           {a.research_topic && supervisor && <span className="text-neutral-300"> | </span>}
                           {supervisor && (
                             <>
-                              <span className="text-[#14919B]">Supervisor · </span>
+                              <span className="text-[#14919B]">{t({ en: 'Supervisor', id: 'Pembimbing' })} · </span>
                               {nameOf(supervisor)}
                             </>
                           )}
@@ -324,44 +330,46 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
                     <span className="flex items-center gap-2">
                       <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${meta.chip}`} style={body}>
                         <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
-                        {meta.label}
+                        {t(meta.label)}
                       </span>
                       <span className="flex items-center gap-1 text-xs text-neutral-400" style={body}>
-                        <Clock className="h-3 w-3" /> joined {since(a.created_at)}
+                        <Clock className="h-3 w-3" /> {t({ en: 'joined', id: 'bergabung' })} {since(a.created_at, lang)}
                       </span>
                     </span>
 
                     <div className="flex flex-wrap gap-2">
                       {a.status === 'pending' && (
                         <ActionButton tone="primary" onClick={() => openReview(a)}>
-                          Review
+                          {t({ en: 'Review', id: 'Tinjau' })}
                           <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                         </ActionButton>
                       )}
                       {a.status === 'active' && !self && (
                         <>
-                          <ActionButton busy={busy === a.id && confirm !== `suspend-${a.id}`} onClick={() => void act(a, () => setLabAdmin(a.id, !a.is_admin))}>
+                          <ActionButton busy={busy === a.id && confirm !== `suspend-${a.id}`} onClick={() => void act(a, () => setLabAdmin(a.id, !a.is_admin, lang))}>
                             {a.is_admin ? <ShieldOff className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
-                            {a.is_admin ? 'Remove admin' : 'Make admin'}
+                            {a.is_admin ? t({ en: 'Remove admin', id: 'Cabut admin' }) : t({ en: 'Make admin', id: 'Jadikan admin' })}
                           </ActionButton>
                           <ActionButton
                             tone="danger"
                             busy={busy === a.id && confirm === `suspend-${a.id}`}
                             onClick={() =>
                               confirm === `suspend-${a.id}`
-                                ? void act(a, () => reviewLabAccount(a.id, 'suspended'))
+                                ? void act(a, () => reviewLabAccount(a.id, 'suspended', [], lang))
                                 : setConfirm(`suspend-${a.id}`)
                             }
                           >
                             <Ban className="h-4 w-4" />
-                            {confirm === `suspend-${a.id}` ? 'Click again to suspend' : 'Suspend'}
+                            {confirm === `suspend-${a.id}`
+                              ? t({ en: 'Click again to suspend', id: 'Klik lagi untuk menangguhkan' })
+                              : t({ en: 'Suspend', id: 'Tangguhkan' })}
                           </ActionButton>
                         </>
                       )}
                       {(a.status === 'suspended' || a.status === 'rejected') && (
-                        <ActionButton busy={busy === a.id} onClick={() => void act(a, () => reviewLabAccount(a.id, 'active'))}>
+                        <ActionButton busy={busy === a.id} onClick={() => void act(a, () => reviewLabAccount(a.id, 'active', [], lang))}>
                           <RotateCcw className="h-4 w-4" />
-                          Reactivate
+                          {t({ en: 'Reactivate', id: 'Aktifkan lagi' })}
                         </ActionButton>
                       )}
                     </div>
@@ -388,14 +396,16 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
                       <div className="flex flex-col gap-4 border-t border-[#0B6477]/10 bg-[#F7FAF9] p-4 sm:p-5">
                         {!a.onboarded_at && (
                           <p className="text-sm text-[#8A5300]" style={body}>
-                            This person has not completed the welcome form yet, so role, NIM and topic are missing.
-                            You can still approve them.
+                            {t({
+                              en: 'This person has not completed the welcome form yet, so role, NIM and topic are missing. You can still approve them.',
+                              id: 'Orang ini belum mengisi formulir sambutan, jadi peran, NIM, dan topik belum ada. Anda tetap bisa menyetujuinya.',
+                            })}
                           </p>
                         )}
                         {boards.length > 0 && (
                           <div>
                             <p className={`mb-2 text-neutral-500 ${META}`} style={body}>
-                              Join these Kanban boards as a member
+                              {t({ en: 'Join these Kanban boards as a member', id: 'Gabung ke board Kanban ini sebagai anggota' })}
                             </p>
                             <div className="flex flex-wrap gap-2">
                               {boards.map((b) => {
@@ -427,7 +437,10 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
                               })}
                             </div>
                             <p className="mt-2 text-xs text-neutral-400" style={body}>
-                              Pre-selected from their role. Only boards you can see are listed.
+                              {t({
+                                en: 'Pre-selected from their role. Only boards you can see are listed.',
+                                id: 'Dipilih otomatis sesuai perannya. Hanya board yang bisa Anda lihat yang tercantum.',
+                              })}
                             </p>
                           </div>
                         )}
@@ -435,22 +448,29 @@ export default function LabMembers({ selfId, onPendingCount }: { selfId: string 
                           <ActionButton
                             tone="primary"
                             busy={busy === a.id && confirm !== `reject-${a.id}`}
-                            onClick={() => void act(a, () => reviewLabAccount(a.id, 'active', chosen))}
+                            onClick={() => void act(a, () => reviewLabAccount(a.id, 'active', chosen, lang))}
                           >
                             <UserCheck className="h-4 w-4" />
-                            {chosen.length ? `Approve and join ${chosen.length} board${chosen.length > 1 ? 's' : ''}` : 'Approve'}
+                            {chosen.length
+                              ? t({
+                                  en: `Approve and join ${chosen.length} board${chosen.length > 1 ? 's' : ''}`,
+                                  id: `Setujui dan gabung ${chosen.length} board`,
+                                })
+                              : t({ en: 'Approve', id: 'Setujui' })}
                           </ActionButton>
                           <ActionButton
                             tone="danger"
                             busy={busy === a.id && confirm === `reject-${a.id}`}
                             onClick={() =>
                               confirm === `reject-${a.id}`
-                                ? void act(a, () => reviewLabAccount(a.id, 'rejected'))
+                                ? void act(a, () => reviewLabAccount(a.id, 'rejected', [], lang))
                                 : setConfirm(`reject-${a.id}`)
                             }
                           >
                             <UserX className="h-4 w-4" />
-                            {confirm === `reject-${a.id}` ? 'Click again to reject' : 'Reject'}
+                            {confirm === `reject-${a.id}`
+                              ? t({ en: 'Click again to reject', id: 'Klik lagi untuk menolak' })
+                              : t({ en: 'Reject', id: 'Tolak' })}
                           </ActionButton>
                         </div>
                       </div>

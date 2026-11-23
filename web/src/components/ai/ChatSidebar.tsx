@@ -13,6 +13,7 @@ import {
 import type { Conversation } from '../../lib/ai/types'
 import { useAuth } from '../../lib/auth/auth'
 import { body } from '../../lib/fonts'
+import { useT } from '../../lib/i18n'
 
 interface ChatSidebarProps {
   conversations: Conversation[]
@@ -35,6 +36,7 @@ export default function ChatSidebar({
   onClose,
 }: ChatSidebarProps) {
   const [query, setQuery] = useState('')
+  const t = useT()
   const { user, isConfigured, signOut } = useAuth()
 
   // Incognito chats never appear in the list. A brand-new empty chat only shows
@@ -58,14 +60,14 @@ export default function ChatSidebar({
         <div className="flex items-center gap-2 px-1 text-neutral-800">
           <Sparkles className="h-[18px] w-[18px] text-[#14919B]" />
           <span className="text-sm font-semibold tracking-[-0.01em]" style={body}>
-            AI Assistant
+            {t({ en: 'AI Assistant', id: 'Asisten AI' })}
           </span>
         </div>
         {onClose && (
           <button
             type="button"
             onClick={onClose}
-            aria-label="Collapse sidebar"
+            aria-label={t({ en: 'Collapse sidebar', id: 'Ciutkan sidebar' })}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-white hover:text-neutral-800"
           >
             <PanelLeftClose className="h-5 w-5" />
@@ -82,7 +84,7 @@ export default function ChatSidebar({
           style={body}
         >
           <SquarePen className="h-[18px] w-[18px] text-[#0B6477]" />
-          New chat
+          {t({ en: 'New chat', id: 'Chat baru' })}
         </button>
         <button
           type="button"
@@ -91,14 +93,14 @@ export default function ChatSidebar({
           style={body}
         >
           <VenetianMask className="h-[18px] w-[18px] text-neutral-400" />
-          Incognito chat
+          {t({ en: 'Incognito chat', id: 'Chat penyamaran' })}
         </button>
         <div className="mt-1 flex items-center gap-2 rounded-xl bg-white/60 px-3 py-2 focus-within:bg-white">
           <Search className="h-4 w-4 shrink-0 text-neutral-400" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search chats"
+            placeholder={t({ en: 'Search chats', id: 'Cari chat' })}
             className="w-full bg-transparent text-sm text-neutral-700 outline-none placeholder:text-neutral-400"
             style={body}
           />
@@ -111,13 +113,16 @@ export default function ChatSidebar({
           className="px-2 pb-1 text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-400"
           style={body}
         >
-          Recent
+          {t({ en: 'Recent', id: 'Terbaru' })}
         </div>
         {filtered.length === 0 ? (
           <p className="px-2 py-2 text-xs leading-relaxed text-neutral-400" style={body}>
             {recents.length === 0
-              ? 'No conversations yet. Start a new chat to see it here.'
-              : 'No chats match your search.'}
+              ? t({
+                  en: 'No conversations yet. Start a new chat to see it here.',
+                  id: 'Belum ada percakapan. Mulai chat baru agar muncul di sini.',
+                })
+              : t({ en: 'No chats match your search.', id: 'Tidak ada chat yang cocok dengan pencarian.' })}
           </p>
         ) : (
           <div className="flex flex-col gap-0.5">
@@ -148,7 +153,7 @@ export default function ChatSidebar({
                   <button
                     type="button"
                     onClick={() => onDelete(c.id)}
-                    aria-label="Delete conversation"
+                    aria-label={t({ en: 'Delete conversation', id: 'Hapus percakapan' })}
                     className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-neutral-400 opacity-0 transition-opacity hover:bg-[#0B6477]/10 hover:text-[#B91C1C] focus:opacity-100 group-hover:opacity-100"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -167,7 +172,7 @@ export default function ChatSidebar({
             <Link
               to="/account"
               className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 transition-colors hover:opacity-80"
-              aria-label="Profile and settings"
+              aria-label={t({ en: 'Profile and settings', id: 'Profil dan pengaturan' })}
             >
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6477] text-sm font-semibold text-[#45DFB1]">
                 {initial}
@@ -177,14 +182,14 @@ export default function ChatSidebar({
                   {email}
                 </div>
                 <div className="text-[11px] text-neutral-400" style={body}>
-                  Profile &amp; settings
+                  {t({ en: 'Profile & settings', id: 'Profil & pengaturan' })}
                 </div>
               </div>
             </Link>
             <button
               type="button"
               onClick={() => void signOut()}
-              aria-label="Sign out"
+              aria-label={t({ en: 'Sign out', id: 'Keluar' })}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-white hover:text-[#B91C1C]"
             >
               <LogOut className="h-4 w-4" />

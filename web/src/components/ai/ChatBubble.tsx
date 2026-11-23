@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { ChatMessage } from '../../lib/ai/types'
 import { body } from '../../lib/fonts'
+import { useLang, useT, type Lang } from '../../lib/i18n'
 
 interface ChatBubbleProps {
   message: ChatMessage
@@ -28,8 +29,8 @@ const PROSE =
   'prose-code:before:content-none prose-code:after:content-none ' +
   'prose-pre:rounded-xl prose-pre:bg-[#0B2A22] prose-pre:text-white'
 
-function formatTime(date: Date) {
-  return date.toLocaleTimeString('en-GB', {
+function formatTime(date: Date, lang: Lang) {
+  return date.toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-GB', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
@@ -90,6 +91,8 @@ export default function ChatBubble({
   busy,
 }: ChatBubbleProps) {
   const isUser = message.role === 'user'
+  const t = useT()
+  const lang = useLang()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(message.content)
 
@@ -99,7 +102,7 @@ export default function ChatBubble({
       style={body}
       suppressHydrationWarning
     >
-      {formatTime(message.timestamp)}
+      {formatTime(message.timestamp, lang)}
     </span>
   )
 
@@ -131,7 +134,7 @@ export default function ChatBubble({
                 className="rounded-xl px-3 py-1.5 text-sm text-neutral-500 transition-colors hover:bg-[#F3F7F6]"
                 style={body}
               >
-                Cancel
+                {t({ en: 'Cancel', id: 'Batal' })}
               </button>
               <button
                 type="button"
@@ -144,7 +147,7 @@ export default function ChatBubble({
                 style={body}
               >
                 <Send className="h-3.5 w-3.5" />
-                Send
+                {t({ en: 'Send', id: 'Kirim' })}
               </button>
             </div>
           </div>
@@ -184,13 +187,13 @@ export default function ChatBubble({
         <div className="mt-1 flex items-center gap-0.5">
           {time}
           {onRetry && (
-            <IconButton label="Retry" onClick={() => onRetry(message.id)} disabled={busy}>
+            <IconButton label={t({ en: 'Retry', id: 'Coba lagi' })} onClick={() => onRetry(message.id)} disabled={busy}>
               <RotateCcw className="h-4 w-4" />
             </IconButton>
           )}
           {onEdit && (
             <IconButton
-              label="Edit"
+              label={t({ en: 'Edit', id: 'Ubah' })}
               onClick={() => {
                 setDraft(message.content)
                 setEditing(true)
@@ -200,7 +203,7 @@ export default function ChatBubble({
               <Pencil className="h-4 w-4" />
             </IconButton>
           )}
-          <IconButton label="Copy" onClick={() => onCopy(message.content)}>
+          <IconButton label={t({ en: 'Copy', id: 'Salin' })} onClick={() => onCopy(message.content)}>
             {copied ? (
               <Check className="h-4 w-4 text-[#0B6477]" />
             ) : (
@@ -247,7 +250,7 @@ export default function ChatBubble({
         >
           <summary className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-neutral-500">
             <Brain className="h-3.5 w-3.5 text-[#14919B]" />
-            {thinkingDone ? 'Reasoning' : 'Thinking…'}
+            {thinkingDone ? t({ en: 'Reasoning', id: 'Penalaran' }) : t({ en: 'Thinking…', id: 'Berpikir…' })}
           </summary>
           <div
             className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-neutral-500"
@@ -275,7 +278,7 @@ export default function ChatBubble({
       {!message.isStreaming && message.content && (
         <div className="mt-2 flex items-center gap-0.5">
           {time}
-          <IconButton label="Copy" onClick={() => onCopy(answer || message.content)}>
+          <IconButton label={t({ en: 'Copy', id: 'Salin' })} onClick={() => onCopy(answer || message.content)}>
             {copied ? (
               <Check className="h-4 w-4 text-[#0B6477]" />
             ) : (
@@ -284,7 +287,7 @@ export default function ChatBubble({
           </IconButton>
           {showRegenerate && onRegenerate && (
             <IconButton
-              label="Regenerate response"
+              label={t({ en: 'Regenerate response', id: 'Buat ulang jawaban' })}
               onClick={() => onRegenerate(message.id)}
               disabled={busy}
             >

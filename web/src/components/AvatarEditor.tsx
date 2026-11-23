@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ImagePlus, Loader2, Move, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
 import { body, display } from "../lib/fonts";
+import { useLang, useT } from "../lib/i18n";
 import {
   DEFAULT_CROP,
   MAX_AVATAR_BYTES,
@@ -60,6 +61,8 @@ function Dialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const drag = useRef<{ id: number; x: number; y: number; start: AvatarCrop } | null>(null);
+  const t = useT();
+  const lang = useLang();
 
   const update = useCallback(
     (next: AvatarCrop) => setCrop(natural ? clampCrop(next, natural.w, natural.h) : next),
@@ -92,11 +95,11 @@ function Dialog({
     setSaving(true);
     setError(null);
     try {
-      const blob = await renderAvatar(imgRef.current, crop);
+      const blob = await renderAvatar(imgRef.current, crop, undefined, lang);
       const problem = await onSave(blob, crop, source.file);
       if (problem) setError(problem);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save the photo.");
+      setError(e instanceof Error ? e.message : t({ en: "Could not save the photo.", id: "Foto tidak bisa disimpan." }));
     }
     setSaving(false);
   };
@@ -125,15 +128,20 @@ function Dialog({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="avatar-editor-title" className="text-xl font-semibold tracking-[-0.025em] text-neutral-900" style={display}>
-              Adjust photo
+              {t({ en: "Adjust photo", id: "Atur foto" })}
             </h2>
-            <p className="mt-1 text-sm text-neutral-500">Drag to position, zoom to resize. The circle is what others see.</p>
+            <p className="mt-1 text-sm text-neutral-500">
+              {t({
+                en: "Drag to position, zoom to resize. The circle is what others see.",
+                id: "Geser untuk mengatur posisi, zoom untuk mengubah ukuran. Bagian dalam lingkaran yang dilihat orang lain.",
+              })}
+            </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            aria-label="Close"
+            aria-label={t({ en: "Close", id: "Tutup" })}
             className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-neutral-500 transition-colors hover:bg-[#F3F7F6] hover:text-neutral-900"
           >
             <X className="h-4 w-4" />
@@ -145,7 +153,10 @@ function Dialog({
           className="relative mx-auto mt-5 cursor-grab touch-none select-none overflow-hidden rounded-2xl bg-[#0B2A22] outline-none active:cursor-grabbing focus-visible:ring-4 focus-visible:ring-[#45DFB1]/40"
           style={{ width: "100%", maxWidth: STAGE + 48, aspectRatio: "1" }}
           tabIndex={0}
-          aria-label="Photo position. Use arrow keys to move, plus and minus to zoom."
+          aria-label={t({
+            en: "Photo position. Use arrow keys to move, plus and minus to zoom.",
+            id: "Posisi foto. Pakai tombol panah untuk menggeser, plus dan minus untuk zoom.",
+          })}
           onPointerDown={(e) => {
             if (!natural) return;
             try {
@@ -221,12 +232,15 @@ function Dialog({
           )}
           {failed && (
             <p className="absolute inset-0 grid place-items-center px-8 text-center text-sm text-white/80">
-              This picture could not be opened for editing. Choose the photo again.
+              {t({
+                en: "This picture could not be opened for editing. Choose the photo again.",
+                id: "Gambar ini tidak bisa dibuka untuk diedit. Pilih fotonya lagi.",
+              })}
             </p>
           )}
           {natural && (
             <span className="pointer-events-none absolute bottom-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 text-xs text-white/90">
-              <Move className="h-3 w-3" /> Drag to move
+              <Move className="h-3 w-3" /> {t({ en: "Drag to move", id: "Geser untuk memindahkan" })}
             </span>
           )}
         </div>
@@ -235,7 +249,7 @@ function Dialog({
         <div className="mt-5 flex items-center gap-3">
           <button
             type="button"
-            aria-label="Zoom out"
+            aria-label={t({ en: "Zoom out", id: "Perkecil" })}
             onClick={() => update({ ...crop, zoom: crop.zoom - 0.2 })}
             className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[#0B6477] transition-colors hover:bg-[#F3F7F6]"
           >
@@ -248,12 +262,12 @@ function Dialog({
             step={0.01}
             value={crop.zoom}
             onChange={(e) => update({ ...crop, zoom: Number(e.target.value) })}
-            aria-label="Zoom"
+            aria-label={t({ en: "Zoom", id: "Zoom" })}
             className="h-1.5 w-full cursor-pointer accent-[#14919B]"
           />
           <button
             type="button"
-            aria-label="Zoom in"
+            aria-label={t({ en: "Zoom in", id: "Perbesar" })}
             onClick={() => update({ ...crop, zoom: crop.zoom + 0.2 })}
             className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[#0B6477] transition-colors hover:bg-[#F3F7F6]"
           >
@@ -264,7 +278,9 @@ function Dialog({
 
         {(error || tooBig) && (
           <p className="mt-3 text-sm text-[#B91C1C]" role="alert">
-            {tooBig ? "This file is larger than 10 MB. Choose a smaller photo." : error}
+            {tooBig
+              ? t({ en: "This file is larger than 10 MB. Choose a smaller photo.", id: "File ini lebih dari 10 MB. Pilih foto yang lebih kecil." })
+              : error}
           </p>
         )}
 
@@ -276,7 +292,7 @@ function Dialog({
               disabled={saving}
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-[#0B6477] transition-colors hover:bg-[#F3F7F6]"
             >
-              <ImagePlus className="h-4 w-4" /> Another photo
+              <ImagePlus className="h-4 w-4" /> {t({ en: "Another photo", id: "Foto lain" })}
             </button>
             <button
               type="button"
@@ -284,7 +300,7 @@ function Dialog({
               disabled={saving}
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-[#F3F7F6]"
             >
-              <RotateCcw className="h-4 w-4" /> Reset
+              <RotateCcw className="h-4 w-4" /> {t({ en: "Reset", id: "Atur ulang" })}
             </button>
           </div>
           <div className="flex gap-2">
@@ -294,7 +310,7 @@ function Dialog({
               disabled={saving}
               className="rounded-xl px-4 py-2.5 text-sm font-medium text-neutral-600 transition-colors hover:bg-[#F3F7F6]"
             >
-              Cancel
+              {t({ en: "Cancel", id: "Batal" })}
             </button>
             <button
               type="button"
@@ -303,7 +319,7 @@ function Dialog({
               className="inline-flex items-center gap-2 rounded-xl bg-[#45DFB1] px-4 py-2.5 text-sm font-medium text-[#0B2A22] transition-colors hover:bg-[#80ED99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save photo
+              {t({ en: "Save photo", id: "Simpan foto" })}
             </button>
           </div>
         </div>

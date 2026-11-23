@@ -9,25 +9,34 @@ import { body } from '../../lib/fonts'
 import SiteHeader from '../../components/SiteHeader'
 import GeneratorForm from '../../components/ai/GeneratorForm'
 import GeneratorPreview from '../../components/ai/GeneratorPreview'
+import { headLang, useT } from '../../lib/i18n'
 
-const ERROR_TEXT =
-  'Failed to generate the document. Make sure the Ollama server is running, then try again.'
+const ERROR_TEXT = {
+  en: 'Failed to generate the document. Make sure the Ollama server is running, then try again.',
+  id: 'Gagal membuat dokumen. Pastikan server Ollama berjalan, lalu coba lagi.',
+}
 
 export const Route = createFileRoute('/ai/generate')({
   component: AIGeneratePage,
-  head: () => ({
-    meta: [
-      { title: 'Report Generator | smartagri' },
-      {
-        name: 'description',
-        content:
-          'SmartAgri UGM academic document generator: activity reports, articles, proposals, abstracts, data summaries, and official letters.',
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches)
+    return {
+      meta: [
+        { title: l === 'id' ? 'Pembuat Laporan | smartagri' : 'Report Generator | smartagri' },
+        {
+          name: 'description',
+          content:
+            l === 'id'
+              ? 'Pembuat dokumen akademik SmartAgri UGM: laporan kegiatan, artikel, proposal, abstrak, ringkasan data, dan surat resmi.'
+              : 'SmartAgri UGM academic document generator: activity reports, articles, proposals, abstracts, data summaries, and official letters.',
+        },
+      ],
+    }
+  },
 })
 
 function AIGeneratePage() {
+  const t = useT()
   const [generatedContent, setGeneratedContent] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
@@ -35,7 +44,7 @@ function AIGeneratePage() {
   const [error, setError] = useState<string | null>(null)
 
   const showError = () => {
-    setError(ERROR_TEXT)
+    setError(t(ERROR_TEXT))
     setTimeout(() => setError(null), 5000)
   }
 

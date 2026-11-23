@@ -2,6 +2,12 @@
 // gracefully when Supabase is not configured or the user is signed out.
 import { supabase } from './auth/supabase'
 import type { AvatarCrop } from './avatar'
+import type { Lang } from './i18n-core'
+
+/** Error text when Supabase is not configured. */
+export function notConfigured(lang: Lang = 'en'): string {
+  return lang === 'id' ? 'Belum dikonfigurasi' : 'Not configured'
+}
 
 export interface Profile {
   id: string
@@ -34,8 +40,9 @@ export async function getProfile(): Promise<Profile | null> {
 export async function updateProfile(
   id: string,
   fields: ProfileEdit,
+  lang: Lang = 'en',
 ): Promise<{ error: string | null }> {
-  if (!supabase) return { error: 'Not configured' }
+  if (!supabase) return { error: notConfigured(lang) }
   const { error } = await supabase
     .from('profiles')
     .update({ ...fields, updated_at: new Date().toISOString() })
@@ -43,16 +50,17 @@ export async function updateProfile(
   return { error: error?.message ?? null }
 }
 
-export async function changeEmail(email: string): Promise<{ error: string | null }> {
-  if (!supabase) return { error: 'Not configured' }
+export async function changeEmail(email: string, lang: Lang = 'en'): Promise<{ error: string | null }> {
+  if (!supabase) return { error: notConfigured(lang) }
   const { error } = await supabase.auth.updateUser({ email })
   return { error: error?.message ?? null }
 }
 
 export async function changePassword(
   password: string,
+  lang: Lang = 'en',
 ): Promise<{ error: string | null }> {
-  if (!supabase) return { error: 'Not configured' }
+  if (!supabase) return { error: notConfigured(lang) }
   const { error } = await supabase.auth.updateUser({ password })
   return { error: error?.message ?? null }
 }
@@ -118,8 +126,9 @@ export async function saveAvatar(
   cropped: Blob,
   crop: AvatarCrop,
   original?: File,
+  lang: Lang = 'en',
 ): Promise<{ url: string | null; error: string | null }> {
-  if (!supabase) return { url: null, error: 'Not configured' }
+  if (!supabase) return { url: null, error: notConfigured(lang) }
   const bucket = supabase.storage.from('avatars')
   if (original) {
     const old = (await avatarFiles(userId)).filter((p) => p.split('/').pop()?.startsWith('original.'))
@@ -142,17 +151,17 @@ export async function saveAvatar(
     y: crop.y.toFixed(4),
   })
   const url = `${bucket.getPublicUrl(path).data.publicUrl}?${q}`
-  const saved = await updateProfile(userId, { avatar_url: url })
+  const saved = await updateProfile(userId, { avatar_url: url }, lang)
   return { url: saved.error ? null : url, error: saved.error }
 }
 
 /** Delete every avatar file of the user and clear the profile picture. */
-export async function removeAvatar(userId: string): Promise<{ error: string | null }> {
-  if (!supabase) return { error: 'Not configured' }
+export async function removeAvatar(userId: string, lang: Lang = 'en'): Promise<{ error: string | null }> {
+  if (!supabase) return { error: notConfigured(lang) }
   const files = await avatarFiles(userId)
   if (files.length) {
     const { error } = await supabase.storage.from('avatars').remove(files)
     if (error) return { error: error.message }
   }
-  return updateProfile(userId, { avatar_url: null })
+  return updateProfile(userId, { avatar_url: null }, lang)
 }

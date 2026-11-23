@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "../lib/auth/auth";
 import { body } from "../lib/fonts";
-import { IF_SECTIONS } from "../lib/indoor-farming";
+import { ifSectionsFor } from "../lib/indoor-farming";
+import { useLang, useT } from "../lib/i18n";
 import { EASE } from "./NoteParts";
 import { HeaderThemeContext } from "./SiteHeader";
 
@@ -40,6 +41,8 @@ export default function IndoorFarmingNav() {
   // otherwise only once signed in. The route itself is what enforces access;
   // this is only so visitors are not shown a door they cannot open.
   const { user, isConfigured } = useAuth();
+  const lang = useLang();
+  const t = useT();
   const showDashboard = !isConfigured || !!user;
   const theme = useContext(HeaderThemeContext);
   const tone = TONES[theme];
@@ -51,18 +54,18 @@ export default function IndoorFarmingNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname }).replace(/\/$/, "");
 
   const links = [
-    { key: "overview", label: "Overview", to: "/indoor-farming" as const },
-    ...IF_SECTIONS.map((s) => ({
+    { key: "overview", label: t({ en: "Overview", id: "Ringkasan" }), to: "/indoor-farming" as const },
+    ...ifSectionsFor(lang).map((s) => ({
       key: s.slug,
       label: s.label,
       to: "/indoor-farming/$section" as const,
       params: { section: s.slug },
     })),
-    { key: "instrumentation", label: "Instrumentation", to: "/indoor-farming/instrumentation" as const },
+    { key: "instrumentation", label: t({ en: "Instrumentation", id: "Instrumentasi" }), to: "/indoor-farming/instrumentation" as const },
     ...(showDashboard
       ? [{ key: "dashboard", label: "Dashboard", to: "/indoor-farming/dashboard" as const }]
       : []),
-    { key: "knowledge", label: "Knowledge", to: "/indoor-farming/knowledge" as const },
+    { key: "knowledge", label: t({ en: "Knowledge", id: "Pengetahuan" }), to: "/indoor-farming/knowledge" as const },
   ];
 
   const rest = pathname.replace(/^\/indoor-farming\/?/, "");
@@ -140,8 +143,8 @@ export default function IndoorFarmingNav() {
               type="button"
               onClick={() => toggle(false)}
               aria-expanded="true"
-              aria-label="Hide the Indoor Farming menu"
-              title="Hide menu"
+              aria-label={t({ en: "Hide the Indoor Farming menu", id: "Sembunyikan menu Indoor Farming" })}
+              title={t({ en: "Hide menu", id: "Sembunyikan menu" })}
               className={`grid h-8 w-8 shrink-0 place-items-center rounded-md transition-colors ${tone.button}`}
             >
               <ChevronUp className="h-4 w-4" />
@@ -160,13 +163,13 @@ export default function IndoorFarmingNav() {
               type="button"
               onClick={() => toggle(true)}
               aria-expanded="false"
-              aria-label="Show the Indoor Farming menu"
+              aria-label={t({ en: "Show the Indoor Farming menu", id: "Tampilkan menu Indoor Farming" })}
               className={`group -mt-px inline-flex h-7 items-center gap-1.5 rounded-b-lg border border-t-0 px-3 text-[10px] font-semibold uppercase tracking-[0.1em] backdrop-blur-lg transition-colors duration-300 ${tone.strip} ${tone.label}`}
               style={body}
             >
               <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
               Indoor Farming
-              {activeLabel && activeLabel !== "Overview" && (
+              {activeLabel && active !== "overview" && (
                 <span className="font-medium opacity-60">· {activeLabel}</span>
               )}
               <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:translate-y-0.5" />

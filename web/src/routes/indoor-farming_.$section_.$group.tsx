@@ -4,7 +4,8 @@ import { MotionConfig, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import { indoorFarmingPhoto } from "../lib/assets";
-import { findIFSection, type IFTopic } from "../lib/indoor-farming";
+import { findIFSection, findIFSectionFor, type IFTopic } from "../lib/indoor-farming";
+import { headLang, useLang, useT } from "../lib/i18n";
 import SiteHeader from "../components/SiteHeader";
 import IndoorFarmingNav from "../components/IndoorFarmingNav";
 import IndoorFarmingCrumb from "../components/IndoorFarmingCrumb";
@@ -25,8 +26,8 @@ export const Route = createFileRoute("/indoor-farming_/$section_/$group")({
     if (!section || !group) throw notFound();
     return { section: params.section, group: params.group };
   },
-  head: ({ loaderData }) => {
-    const section = loaderData ? findIFSection(loaderData.section) : undefined;
+  head: ({ loaderData, matches }) => {
+    const section = loaderData ? findIFSectionFor(loaderData.section, headLang(matches)) : undefined;
     const group = section?.groups.find((g) => g.slug === loaderData?.group);
     return {
       meta: [
@@ -49,7 +50,15 @@ export const Route = createFileRoute("/indoor-farming_/$section_/$group")({
 // section, the rest of the section, and the landing call to action.
 
 function GroupNotFound() {
-  return <IFNotFound message="That topic does not exist in the Indoor Farming section." />;
+  const t = useT();
+  return (
+    <IFNotFound
+      message={t({
+        en: "That topic does not exist in the Indoor Farming section.",
+        id: "Topik itu tidak ada di bagian Indoor Farming.",
+      })}
+    />
+  );
 }
 
 // The topic nearest the top of the viewport.
@@ -130,7 +139,9 @@ function TopicArticle({ topic, first }: { topic: IFTopic; first: boolean }) {
 
 function IndoorFarmingGroupPage() {
   const { section: sectionSlug, group: groupSlug } = Route.useLoaderData();
-  const section = findIFSection(sectionSlug);
+  const lang = useLang();
+  const t = useT();
+  const section = findIFSectionFor(sectionSlug, lang);
   const group = section?.groups.find((g) => g.slug === groupSlug);
   const active = useActiveTopic(group?.topics.map((t) => t.slug).join(",") ?? "");
   if (!section || !group) return <GroupNotFound />;
@@ -191,7 +202,7 @@ function IndoorFarmingGroupPage() {
                     className={`mt-6 text-neutral-400 ${META}`}
                     style={body}
                   >
-                    {group.topics.length} topics
+                    {group.topics.length} {t({ en: "topics", id: "topik" })}
                   </motion.p>
                 </div>
                 <div className="lg:col-span-5">
@@ -208,9 +219,9 @@ function IndoorFarmingGroupPage() {
             <section className="border-t border-[#0B6477]/10 bg-[#F3F7F6]/70">
               <div className="mx-auto grid max-w-[1360px] gap-12 px-6 py-20 md:px-12 md:py-28 lg:grid-cols-12 lg:gap-14">
                 <aside className="hidden lg:col-span-4 lg:block">
-                  <nav aria-label="Topics" className="sticky top-[160px]">
+                  <nav aria-label={t({ en: "Topics", id: "Topik" })} className="sticky top-[160px]">
                     <p className={`mb-4 text-neutral-400 ${META}`} style={body}>
-                      In this topic
+                      {t({ en: "In this topic", id: "Dalam topik ini" })}
                     </p>
                     <ul className="flex flex-col border-l border-[#0B6477]/15">
                       {group.topics.map((t) => {
@@ -243,7 +254,7 @@ function IndoorFarmingGroupPage() {
                       className="group mt-10 inline-flex h-12 items-center gap-3 rounded-lg bg-[#45DFB1] px-6 text-sm font-medium uppercase tracking-[0.08em] text-[#0B2A22] transition-colors hover:bg-[#80ED99]"
                       style={body}
                     >
-                      Discuss a project
+                      {t({ en: "Discuss a project", id: "Diskusikan proyek" })}
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </nav>
@@ -260,8 +271,8 @@ function IndoorFarmingGroupPage() {
             <section className="mx-auto max-w-[1360px] px-6 pt-20 md:px-12 md:pt-28">
               <div className="grid gap-px overflow-hidden rounded-[24px] border border-[#0B6477]/12 bg-[#0B6477]/12 sm:grid-cols-2">
                 {[
-                  { g: prev, label: "Previous", dir: -1 },
-                  { g: next, label: "Next", dir: 1 },
+                  { g: prev, label: t({ en: "Previous", id: "Sebelumnya" }), dir: -1 },
+                  { g: next, label: t({ en: "Next", id: "Berikutnya" }), dir: 1 },
                 ].map(({ g, label, dir }) =>
                   g ? (
                     <Link
@@ -301,14 +312,14 @@ function IndoorFarmingGroupPage() {
                         style={body}
                       >
                         {dir === -1 && <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />}
-                        Back to
+                        {t({ en: "Back to", id: "Kembali ke" })}
                         {dir === 1 && <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />}
                       </span>
                       <span
                         className="text-2xl font-medium tracking-[-0.02em] text-neutral-900 transition-colors group-hover:text-white"
                         style={display}
                       >
-                        {section.label} overview
+                        {t({ en: `${section.label} overview`, id: `Ringkasan ${section.label}` })}
                       </span>
                     </Link>
                   ),
@@ -320,7 +331,7 @@ function IndoorFarmingGroupPage() {
             {siblings.length > 0 && (
               <section className="mx-auto max-w-[1360px] px-6 py-20 md:px-12 md:py-28">
                 <div className="mb-12">
-                  <Eyebrow>Keep exploring</Eyebrow>
+                  <Eyebrow>{t({ en: "Keep exploring", id: "Jelajahi lagi" })}</Eyebrow>
                   <motion.h2
                     initial="hidden"
                     whileInView="show"
@@ -328,7 +339,7 @@ function IndoorFarmingGroupPage() {
                     className="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 md:text-5xl"
                     style={display}
                   >
-                    <MaskLine delay={0}>More in</MaskLine>
+                    <MaskLine delay={0}>{t({ en: "More in", id: "Lainnya di" })}</MaskLine>
                     <MaskLine delay={0.1}>
                       <span style={accent}>{section.label}.</span>
                     </MaskLine>

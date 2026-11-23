@@ -1,5 +1,6 @@
 // Profile picture crop maths, kept free of Supabase so it can be tested on its own.
 // Storage and saving live in lib/profile.ts.
+import type { Lang } from './i18n-core'
 
 export interface AvatarCrop {
   /** 1 = the image just covers the circle; up to MAX_AVATAR_ZOOM. */
@@ -43,18 +44,23 @@ export function clampCrop(crop: AvatarCrop, w: number, h: number): AvatarCrop {
 }
 
 /** Draw the cropped square on a canvas; returns a WebP blob. */
-export async function renderAvatar(img: HTMLImageElement, crop: AvatarCrop, size = AVATAR_OUTPUT): Promise<Blob> {
+export async function renderAvatar(
+  img: HTMLImageElement,
+  crop: AvatarCrop,
+  size = AVATAR_OUTPUT,
+  lang: Lang = 'en',
+): Promise<Blob> {
   const canvas = document.createElement('canvas')
   canvas.width = size
   canvas.height = size
   const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Canvas is not available')
+  if (!ctx) throw new Error(lang === 'id' ? 'Canvas tidak tersedia' : 'Canvas is not available')
   const scale = (size / Math.min(img.naturalWidth, img.naturalHeight)) * crop.zoom
   const w = img.naturalWidth * scale
   const h = img.naturalHeight * scale
   ctx.imageSmoothingQuality = 'high'
   ctx.drawImage(img, size / 2 + crop.x * size - w / 2, size / 2 + crop.y * size - h / 2, w, h)
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', 0.9))
-  if (!blob) throw new Error('Could not create the image')
+  if (!blob) throw new Error(lang === 'id' ? 'Gambar tidak bisa dibuat' : 'Could not create the image')
   return blob
 }

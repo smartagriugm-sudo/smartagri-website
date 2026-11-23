@@ -2,6 +2,8 @@
 // logbook. Data lives in Supabase (see web/supabase/inventory.sql); the pages
 // under /inventory are gated behind sign-in.
 
+import { localeOf, type Lang } from "./i18n-core";
+
 export type InstrumentStatus =
   | "available"
   | "in_use"
@@ -97,34 +99,45 @@ export const INSTRUMENT_STATUSES: InstrumentStatus[] = [
 
 export const statusMeta: Record<
   InstrumentStatus,
-  { label: string; chip: string; dot: string }
+  { label: string; labelId: string; chip: string; dot: string }
 > = {
   available: {
     label: "Available",
+    labelId: "Tersedia",
     chip: "bg-[#45DFB1]/20 text-[#0B6477]",
     dot: "bg-[#12B886]",
   },
   in_use: {
     label: "In use",
+    labelId: "Dipakai",
     chip: "bg-[#14919B]/15 text-[#0B6477]",
     dot: "bg-[#14919B]",
   },
   maintenance: {
     label: "Maintenance",
+    labelId: "Pemeliharaan",
     chip: "bg-[#F59E0B]/15 text-[#8A5300]",
     dot: "bg-[#F59E0B]",
   },
   calibration: {
     label: "Calibration",
+    labelId: "Kalibrasi",
     chip: "bg-[#0AD1C8]/15 text-[#0B6477]",
     dot: "bg-[#0AD1C8]",
   },
   broken: {
     label: "Out of service",
+    labelId: "Rusak",
     chip: "bg-[#E5484D]/12 text-[#B42318]",
     dot: "bg-[#E5484D]",
   },
 };
+
+/** Instrument status label in the page language. */
+export function statusLabel(status: InstrumentStatus, lang: Lang = "en"): string {
+  const m = statusMeta[status];
+  return lang === "id" ? m.labelId : m.label;
+}
 
 // Rupiah, no decimals: 5000 -> "Rp 5.000".
 export function formatIDR(value: number | null | undefined): string {
@@ -157,11 +170,22 @@ export const rateTypeLabel: Record<RateType, string> = {
   external: "External (outside UGM)",
 };
 
+const rateTypeLabelId: Record<RateType, string> = {
+  internal_self: "Internal (UGM), dioperasikan sendiri",
+  internal_tech: "Internal (UGM), oleh teknisi",
+  external: "Eksternal (luar UGM)",
+};
+
+export function rateTypeText(rateType: RateType, lang: Lang = "en"): string {
+  return (lang === "id" ? rateTypeLabelId : rateTypeLabel)[rateType];
+}
+
 // The rate letter these rules follow. Internal rates are for UGM users, split
 // by who does the work; external rates are for users from outside UGM.
 export const RATE_LETTER = {
   number: "019/WGFS/1.2/SE/XI/2026",
   date: "1 August 2026",
+  dateId: "1 Agustus 2026",
   title: "Tarif Penggunaan Peralatan PUAPT, WGFS 1.2 Precision Agriculture and Smart Farming",
 } as const;
 
@@ -237,37 +261,48 @@ export const LABS = ["Lab EMP", "Lab TLBP"] as const;
 
 /* ---------- loans, bookings and rentals ---------- */
 
-export const logStatusMeta: Record<LogStatus, { label: string; chip: string }> = {
-  booked: { label: "Booked", chip: "bg-[#0AD1C8]/15 text-[#0B6477]" },
-  ongoing: { label: "Out now", chip: "bg-[#14919B]/15 text-[#0B6477]" },
-  returned: { label: "Returned", chip: "bg-[#45DFB1]/20 text-[#0B6477]" },
-  cancelled: { label: "Cancelled", chip: "bg-neutral-100 text-neutral-500" },
+export const logStatusMeta: Record<LogStatus, { label: string; labelId: string; chip: string }> = {
+  booked: { label: "Booked", labelId: "Dipesan", chip: "bg-[#0AD1C8]/15 text-[#0B6477]" },
+  ongoing: { label: "Out now", labelId: "Sedang dipinjam", chip: "bg-[#14919B]/15 text-[#0B6477]" },
+  returned: { label: "Returned", labelId: "Dikembalikan", chip: "bg-[#45DFB1]/20 text-[#0B6477]" },
+  cancelled: { label: "Cancelled", labelId: "Dibatalkan", chip: "bg-neutral-100 text-neutral-500" },
 };
 
-export const paymentMeta: Record<PaymentStatus, { label: string; chip: string }> = {
-  unpaid: { label: "Unpaid", chip: "bg-[#F59E0B]/15 text-[#8A5300]" },
-  paid: { label: "Paid", chip: "bg-[#45DFB1]/20 text-[#0B6477]" },
-  waived: { label: "Waived", chip: "bg-neutral-100 text-neutral-500" },
+export const paymentMeta: Record<PaymentStatus, { label: string; labelId: string; chip: string }> = {
+  unpaid: { label: "Unpaid", labelId: "Belum bayar", chip: "bg-[#F59E0B]/15 text-[#8A5300]" },
+  paid: { label: "Paid", labelId: "Lunas", chip: "bg-[#45DFB1]/20 text-[#0B6477]" },
+  waived: { label: "Waived", labelId: "Dibebaskan", chip: "bg-neutral-100 text-neutral-500" },
 };
+
+export function logStatusLabel(status: LogStatus, lang: Lang = "en"): string {
+  const m = logStatusMeta[status];
+  return lang === "id" ? m.labelId : m.label;
+}
+
+export function paymentLabel(status: PaymentStatus, lang: Lang = "en"): string {
+  const m = paymentMeta[status];
+  return lang === "id" ? m.labelId : m.label;
+}
 
 export type OperatorChoice = { operator: Operator; label: string; rateType: RateType; unitRate: number | null };
 
 // The ways this instrument can be used by this kind of user. An instrument
 // without a self-operated rate is only lent with a technician, and the other
 // way round; with no rate at all both stay open ("by arrangement").
-export function operatorChoices(instrument: Instrument, userType: UserType): OperatorChoice[] {
+export function operatorChoices(instrument: Instrument, userType: UserType, lang: Lang = "en"): OperatorChoice[] {
+  const id = lang === "id";
   if (userType === "external") {
-    return [{ operator: "self", label: "External rate", rateType: "external", unitRate: instrument.rate_external }];
+    return [{ operator: "self", label: id ? "Tarif eksternal" : "External rate", rateType: "external", unitRate: instrument.rate_external }];
   }
   const self: OperatorChoice = {
     operator: "self",
-    label: "Self-operated",
+    label: id ? "Dioperasikan sendiri" : "Self-operated",
     rateType: "internal_self",
     unitRate: instrument.rate_internal_self,
   };
   const tech: OperatorChoice = {
     operator: "technician",
-    label: "By a technician",
+    label: id ? "Oleh teknisi" : "By a technician",
     rateType: "internal_tech",
     unitRate: instrument.rate_internal_tech,
   };
@@ -295,6 +330,18 @@ export const basisNoun: Record<Basis, string> = {
   hectare: "hectares",
   other: "units",
 };
+
+const basisNounId: Record<Basis, string> = {
+  day: "hari",
+  four_hours: "blok 4 jam",
+  sample: "sampel",
+  hectare: "hektare",
+  other: "unit",
+};
+
+export function basisNounText(basis: Basis, lang: Lang = "en"): string {
+  return (lang === "id" ? basisNounId : basisNoun)[basis];
+}
 
 // "per Ha (Min 1000 Ha)" -> 1000; null when the unit sets no minimum.
 export function minimumQuantity(unit: string | null | undefined): number | null {
@@ -381,9 +428,9 @@ export function toLocalInput(date: Date): string {
   return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}T${p(date.getHours())}:${p(date.getMinutes())}`;
 }
 
-export function fmtDateTime(iso: string | null | undefined): string {
+export function fmtDateTime(iso: string | null | undefined, lang: Lang = "en"): string {
   if (!iso) return "-";
-  return new Date(iso).toLocaleString("en-GB", {
+  return new Date(iso).toLocaleString(lang === "id" ? localeOf(lang) : "en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",

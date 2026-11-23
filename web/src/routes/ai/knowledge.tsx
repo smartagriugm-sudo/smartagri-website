@@ -15,16 +15,23 @@ import { EXTRACT_ACCEPT, extractText } from '../../lib/ai/extract-text'
 import { accent, body, display } from '../../lib/fonts'
 import SiteHeader from '../../components/SiteHeader'
 import Footer from '../../components/Footer'
+import { headLang, useLang, useT, type Lang } from '../../lib/i18n'
 
 export const Route = createFileRoute('/ai/knowledge')({
   component: KnowledgePage,
-  head: () => ({
-    meta: [
-      { title: 'Knowledge base | smartagri' },
-      { name: 'robots', content: 'noindex, nofollow' },
-      { name: 'description', content: 'Manage the AI Assistant knowledge base.' },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches)
+    return {
+      meta: [
+        { title: l === 'id' ? 'Basis pengetahuan | smartagri' : 'Knowledge base | smartagri' },
+        { name: 'robots', content: 'noindex, nofollow' },
+        {
+          name: 'description',
+          content: l === 'id' ? 'Kelola basis pengetahuan Asisten AI.' : 'Manage the AI Assistant knowledge base.',
+        },
+      ],
+    }
+  },
 })
 
 interface KbDoc {
@@ -34,10 +41,10 @@ interface KbDoc {
   count: number
 }
 
-function formatDate(value?: string) {
+function formatDate(value: string | undefined, lang: Lang) {
   if (!value) return ''
   try {
-    return new Date(value).toLocaleDateString('en-GB', { dateStyle: 'medium' })
+    return new Date(value).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-GB', { dateStyle: 'medium' })
   } catch {
     return ''
   }
@@ -45,6 +52,8 @@ function formatDate(value?: string) {
 
 function KnowledgePage() {
   const { user, isConfigured } = useAuth()
+  const t = useT()
+  const lang = useLang()
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -88,20 +97,20 @@ function KnowledgePage() {
     if (!file) return
     setMsg(null)
     if (file.size > 15_000_000) {
-      setMsg({ kind: 'err', text: 'File is too large (max 15 MB).' })
+      setMsg({ kind: 'err', text: t({ en: 'File is too large (max 15 MB).', id: 'File terlalu besar (maks. 15 MB).' }) })
       return
     }
     setExtracting(true)
     try {
       const content = await extractText(file)
       if (!content.trim()) {
-        setMsg({ kind: 'err', text: 'No readable text found in that file.' })
+        setMsg({ kind: 'err', text: t({ en: 'No readable text found in that file.', id: 'Tidak ada teks yang bisa dibaca di file itu.' }) })
       } else {
         setText(content)
         if (!title.trim()) setTitle(file.name.replace(/\.[^.]+$/, ''))
       }
     } catch {
-      setMsg({ kind: 'err', text: 'Could not read that file.' })
+      setMsg({ kind: 'err', text: t({ en: 'Could not read that file.', id: 'File itu tidak bisa dibaca.' }) })
     }
     setExtracting(false)
     if (fileRef.current) fileRef.current.value = ''
@@ -110,7 +119,7 @@ function KnowledgePage() {
   const handleAdd = async () => {
     setMsg(null)
     if (!title.trim() || !text.trim()) {
-      setMsg({ kind: 'err', text: 'Give it a title and some content.' })
+      setMsg({ kind: 'err', text: t({ en: 'Give it a title and some content.', id: 'Isi judul dan kontennya dulu.' }) })
       return
     }
     setBusy(true)
@@ -134,15 +143,18 @@ function KnowledgePage() {
         error?: string
       }
       if (!res.ok) {
-        setMsg({ kind: 'err', text: data.error ?? 'Upload failed.' })
+        setMsg({ kind: 'err', text: data.error ?? t({ en: 'Upload failed.', id: 'Unggahan gagal.' }) })
       } else {
-        setMsg({ kind: 'ok', text: `Added "${title.trim()}" (${data.chunks} chunks).` })
+        setMsg({ kind: 'ok', text: t({
+            en: `Added "${title.trim()}" (${data.chunks} chunks).`,
+            id: `"${title.trim()}" ditambahkan (${data.chunks} potongan).`,
+          }), })
         setTitle('')
         setText('')
         void loadDocs()
       }
     } catch {
-      setMsg({ kind: 'err', text: 'Upload failed.' })
+      setMsg({ kind: 'err', text: t({ en: 'Upload failed.', id: 'Unggahan gagal.' }) })
     }
     setBusy(false)
   }
@@ -164,17 +176,30 @@ function KnowledgePage() {
               className="text-[13px] font-medium tracking-[0.03em] text-[#14919B]"
               style={body}
             >
-              AI Assistant
+              {t({ en: 'AI Assistant', id: 'Asisten AI' })}
             </div>
             <h1
               className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-neutral-900 md:text-4xl"
               style={display}
             >
-              Knowledge <span style={accent}>base</span>
+              {t({
+                en: (
+                  <>
+                    Knowledge <span style={accent}>base</span>
+                  </>
+                ),
+                id: (
+                  <>
+                    Basis <span style={accent}>pengetahuan</span>
+                  </>
+                ),
+              })}
             </h1>
             <p className="mt-2 text-sm text-neutral-500" style={body}>
-              Add documents and notes for the AI Assistant to ground its answers
-              on. Indexed privately to your SmartAgri knowledge base.
+              {t({
+                en: 'Add documents and notes for the AI Assistant to ground its answers on. Indexed privately to your SmartAgri knowledge base.',
+                id: 'Tambahkan dokumen dan catatan sebagai dasar jawaban Asisten AI. Diindeks secara privat ke basis pengetahuan SmartAgri Anda.',
+              })}
             </p>
           </div>
 
@@ -183,8 +208,10 @@ function KnowledgePage() {
               className="mb-6 rounded-2xl border border-[#0B6477]/10 bg-white px-4 py-3 text-sm text-neutral-500"
               style={body}
             >
-              Authentication is not configured, so the knowledge base is
-              unavailable here.
+              {t({
+                en: 'Authentication is not configured, so the knowledge base is unavailable here.',
+                id: 'Autentikasi belum dikonfigurasi, jadi basis pengetahuan tidak tersedia di sini.',
+              })}
             </p>
           )}
 
@@ -194,30 +221,30 @@ function KnowledgePage() {
               className="text-lg font-semibold tracking-[-0.02em] text-neutral-900"
               style={display}
             >
-              Add to knowledge base
+              {t({ en: 'Add to knowledge base', id: 'Tambah ke basis pengetahuan' })}
             </h2>
             <div className="mt-5 flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-neutral-700" style={body}>
-                  Title
+                  {t({ en: 'Title', id: 'Judul' })}
                 </label>
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Fertigation field guide 2026"
+                  placeholder={t({ en: 'e.g. Fertigation field guide 2026', id: 'mis. Panduan lapangan fertigasi 2026' })}
                   className="w-full rounded-xl border border-[#0B6477]/20 bg-white px-3 py-2.5 text-[15px] text-neutral-800 outline-none transition-colors placeholder:text-neutral-400 focus:border-[#0B6477]"
                   style={body}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-neutral-700" style={body}>
-                  Content
+                  {t({ en: 'Content', id: 'Konten' })}
                 </label>
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   rows={8}
-                  placeholder="Paste text here, or load a file below."
+                  placeholder={t({ en: 'Paste text here, or load a file below.', id: 'Tempel teks di sini, atau muat file di bawah.' })}
                   className="w-full resize-y rounded-xl border border-[#0B6477]/20 bg-white px-3 py-2.5 text-[15px] leading-relaxed text-neutral-800 outline-none transition-colors placeholder:text-neutral-400 focus:border-[#0B6477]"
                   style={body}
                 />
@@ -241,7 +268,7 @@ function KnowledgePage() {
                     ) : (
                       <Upload className="h-4 w-4" />
                     )}
-                    {extracting ? 'Reading file...' : 'Load a file'}
+                    {extracting ? t({ en: 'Reading file...', id: 'Membaca file...' }) : t({ en: 'Load a file', id: 'Muat file' })}
                   </button>
                   <span className="ml-2 text-xs text-neutral-400" style={body}>
                     PDF, DOCX, XLSX, TXT, MD, CSV
@@ -272,10 +299,10 @@ function KnowledgePage() {
               >
                 {busy ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Indexing...
+                    <Loader2 className="h-4 w-4 animate-spin" /> {t({ en: 'Indexing...', id: 'Mengindeks...' })}
                   </>
                 ) : (
-                  'Add to knowledge base'
+                  t({ en: 'Add to knowledge base', id: 'Tambah ke basis pengetahuan' })
                 )}
               </button>
             </div>
@@ -287,20 +314,22 @@ function KnowledgePage() {
               className="text-lg font-semibold tracking-[-0.02em] text-neutral-900"
               style={display}
             >
-              Uploaded documents
+              {t({ en: 'Uploaded documents', id: 'Dokumen terunggah' })}
             </h2>
             <div className="mt-4">
               {loadingDocs ? (
                 <div className="flex items-center gap-2 text-neutral-500">
                   <Loader2 className="h-5 w-5 animate-spin text-[#0B6477]" />
                   <span className="text-sm" style={body}>
-                    Loading...
+                    {t({ en: 'Loading...', id: 'Memuat...' })}
                   </span>
                 </div>
               ) : docs.length === 0 ? (
                 <p className="text-sm text-neutral-400" style={body}>
-                  No uploaded documents yet. (Published site content is indexed
-                  separately and isn't listed here.)
+                  {t({
+                    en: "No uploaded documents yet. (Published site content is indexed separately and isn't listed here.)",
+                    id: 'Belum ada dokumen yang diunggah. (Konten situs yang sudah terbit diindeks terpisah dan tidak tercantum di sini.)',
+                  })}
                 </p>
               ) : (
                 <div className="flex flex-col divide-y divide-[#0B6477]/10">
@@ -315,13 +344,13 @@ function KnowledgePage() {
                           {d.title}
                         </div>
                         <div className="text-xs text-neutral-400" style={body}>
-                          {d.count} chunks · {formatDate(d.created_at)}
+                          {d.count} {t({ en: 'chunks', id: 'potongan' })} · {formatDate(d.created_at, lang)}
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => void handleDelete(d.ref)}
-                        aria-label={`Delete ${d.title}`}
+                        aria-label={t({ en: `Delete ${d.title}`, id: `Hapus ${d.title}` })}
                         className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-[#FEF2F2] hover:text-[#B91C1C]"
                       >
                         <Trash2 className="h-4 w-4" />
