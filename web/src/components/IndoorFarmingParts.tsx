@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowUpRight, type LucideIcon } from "lucide-react";
 import { indoorFarmingPhoto } from "../lib/assets";
 import { accent, body, display } from "../lib/fonts";
 import { IF_SECTIONS, type IFGroup } from "../lib/indoor-farming";
+import { useT } from "../lib/i18n";
 import { EASE, META } from "./NoteParts";
 import SiteHeader from "./SiteHeader";
 import Footer from "./Footer";
@@ -168,6 +169,7 @@ export function SectionCard({
   icon: LucideIcon;
 }) {
   const { state, bind } = useHover();
+  const t = useT();
   const section = IF_SECTIONS.find((s) => s.slug === slug);
   const photo = sectionPhoto(slug);
   const groups = section?.groups.length ?? 0;
@@ -196,7 +198,7 @@ export function SectionCard({
             className={`absolute bottom-4 right-4 rounded-full bg-white/90 px-2.5 py-1 text-[#0B6477] backdrop-blur ${META}`}
             style={body}
           >
-            {groups} topics
+            {groups} {t({ en: "topics", id: "topik" })}
           </span>
         )}
       </span>
@@ -224,6 +226,7 @@ export function SectionCard({
 // Card for one group (topic page) inside a section, same treatment.
 export function GroupCard({ section, group }: { section: string; group: IFGroup }) {
   const { state, bind } = useHover();
+  const t = useT();
   return (
     <Link
       to="/indoor-farming/$section/$group"
@@ -246,7 +249,7 @@ export function GroupCard({ section, group }: { section: string; group: IFGroup 
           className={`absolute bottom-4 right-4 rounded-full bg-white/90 px-2.5 py-1 text-[#0B6477] backdrop-blur ${META}`}
           style={body}
         >
-          {group.topics.length} topics
+          {group.topics.length} {t({ en: "topics", id: "topik" })}
         </span>
       </span>
       <span className="flex flex-1 flex-col gap-3 p-6">
@@ -312,6 +315,7 @@ export function FeatureCard({
 // Process steps joined by a line that draws as the row scrolls through the
 // viewport. On small screens the line runs down the left edge instead.
 export function ProcessSteps({ steps }: { steps: { step: string; title: string; body: string }[] }) {
+  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "end 55%"] });
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
@@ -344,7 +348,7 @@ export function ProcessSteps({ steps }: { steps: { step: string; title: string; 
             </span>
             <div className="group flex-1 rounded-[24px] border border-[#0B6477]/10 bg-white/85 p-7 backdrop-blur transition-[background-color,border-color,transform,box-shadow] duration-300 hover:-translate-y-1 hover:border-[#08313A] hover:bg-[#08313A] hover:shadow-xl lg:w-full">
               <span className={`text-[#14919B] transition-colors group-hover:text-[#45DFB1] ${META}`} style={body}>
-                Step {s.step}
+                {t({ en: "Step", id: "Langkah" })} {s.step}
               </span>
               <h3
                 className="mt-4 text-xl font-medium leading-snug tracking-[-0.02em] text-neutral-900 transition-colors duration-300 group-hover:text-white"
@@ -368,6 +372,7 @@ export function ProcessSteps({ steps }: { steps: { step: string; title: string; 
 
 // Not-found page shared by the section and topic routes.
 export function IFNotFound({ message }: { message: string }) {
+  const t = useT();
   return (
     <main>
       <SiteHeader />
@@ -378,7 +383,8 @@ export function IFNotFound({ message }: { message: string }) {
             className="text-4xl font-semibold tracking-[-0.035em] text-neutral-900 md:text-5xl"
             style={display}
           >
-            Page <span style={accent}>not found.</span>
+            {t({ en: "Page", id: "Halaman" })}{" "}
+            <span style={accent}>{t({ en: "not found.", id: "tidak ditemukan." })}</span>
           </h1>
           <p className="text-neutral-500" style={body}>
             {message}
@@ -389,7 +395,7 @@ export function IFNotFound({ message }: { message: string }) {
             style={body}
           >
             <ArrowLeft className="h-4 w-4 text-[#45DFB1] transition-transform group-hover:-translate-x-1" />
-            Back to Indoor Farming
+            {t({ en: "Back to Indoor Farming", id: "Kembali ke Indoor Farming" })}
           </Link>
         </div>
       </section>

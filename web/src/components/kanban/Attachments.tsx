@@ -23,10 +23,11 @@ import {
   X,
 } from "lucide-react";
 import { body, display } from "../../lib/fonts";
-import { LABEL_COLORS, LABEL_COLOR_KEYS, type KanbanAttachment, type KanbanCard } from "../../lib/kanban";
+import { LABEL_COLORS, LABEL_COLOR_KEYS, kanbanError, type KanbanAttachment, type KanbanCard } from "../../lib/kanban";
 import { MAX_ATTACHMENT_BYTES, downloadUrl, signedUrls, updateAttachment } from "../../lib/kanban-data";
 import { useBoard } from "./board-context";
 import { useDismiss } from "./parts";
+import { localeOf, useLang, useT, type Lang } from "../../lib/i18n";
 
 const FIELD =
   "w-full rounded-lg border border-[#0B6477]/15 bg-white px-3 text-sm text-neutral-800 outline-none placeholder:text-neutral-400 focus:border-[#14919B] focus:ring-2 focus:ring-[#14919B]/20";
@@ -56,6 +57,7 @@ export function AttachmentPicker({
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const t = useT();
   return (
     <div style={body}>
       <input
@@ -70,10 +72,13 @@ export function AttachmentPicker({
         }}
       />
       <button type="button" onClick={() => input.current?.click()} className={`${PRIMARY} w-full justify-center`}>
-        <Upload className="h-4 w-4" /> Choose files
+        <Upload className="h-4 w-4" /> {t({ en: "Choose files", id: "Pilih file" })}
       </button>
       <p className="mt-1.5 text-xs text-neutral-500">
-        Up to {MAX_ATTACHMENT_BYTES / 1024 / 1024} MB each. You can also drop files onto the card.
+        {t({
+          en: `Up to ${MAX_ATTACHMENT_BYTES / 1024 / 1024} MB each. You can also drop files onto the card.`,
+          id: `Maksimal ${MAX_ATTACHMENT_BYTES / 1024 / 1024} MB per file. Anda juga bisa menjatuhkan file ke kartu.`,
+        })}
       </p>
       <form
         className="mt-3 border-t border-[#0B6477]/8 pt-3"
@@ -88,31 +93,31 @@ export function AttachmentPicker({
           }
         }}
       >
-        <p className="text-xs font-medium text-neutral-500">Attach a link</p>
+        <p className="text-xs font-medium text-neutral-500">{t({ en: "Attach a link", id: "Lampirkan tautan" })}</p>
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://..."
-          aria-label="Link"
+          aria-label={t({ en: "Link", id: "Tautan" })}
           className={`${FIELD} mt-2 h-9`}
         />
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Display text (optional)"
-          aria-label="Link text"
+          placeholder={t({ en: "Display text (optional)", id: "Teks tampilan (opsional)" })}
+          aria-label={t({ en: "Link text", id: "Teks tautan" })}
           className={`${FIELD} mt-2 h-9`}
         />
         <button type="submit" disabled={busy || !url.trim()} className={`${PRIMARY} mt-2`}>
-          Attach
+          {t({ en: "Attach", id: "Lampirkan" })}
         </button>
       </form>
     </div>
   );
 }
 
-export function attachmentDate(iso: string) {
-  return new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+export function attachmentDate(iso: string, lang: Lang = "en") {
+  return new Date(iso).toLocaleString(lang === "id" ? localeOf(lang) : "en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 // Trello-style list: links and files in their own groups, the first few of
@@ -140,6 +145,8 @@ export function AttachmentList({
   onView: (a: KanbanAttachment) => void;
 }) {
   const { editable } = useBoard();
+  const t = useT();
+  const lang = useLang();
   const [all, setAll] = useState(false);
   if (!attachments.length && !uploading) return null;
   const links = attachments.filter((a) => !a.storage_path);
@@ -152,22 +159,22 @@ export function AttachmentList({
     <section className="mt-8" style={body}>
       <div className="flex items-center gap-2">
         <h3 className="flex flex-1 items-center gap-2 text-sm font-semibold tracking-[-0.01em] text-neutral-900" style={display}>
-          <Paperclip className="h-4 w-4 text-[#14919B]" /> Attachments
+          <Paperclip className="h-4 w-4 text-[#14919B]" /> {t({ en: "Attachments", id: "Lampiran" })}
         </h3>
         {editable && onAdd && (
           <button type="button" onClick={onAdd} className={SMALL}>
-            Add
+            {t({ en: "Add", id: "Tambah" })}
           </button>
         )}
       </div>
       {uploading > 0 && (
         <p className="mt-3 flex items-center gap-2 rounded-xl border border-dashed border-[#14919B]/40 px-3 py-3 text-sm text-neutral-600">
-          <Loader2 className="h-4 w-4 animate-spin text-[#14919B]" /> Uploading {uploading} file{uploading === 1 ? "" : "s"}...
+          <Loader2 className="h-4 w-4 animate-spin text-[#14919B]" /> {t({ en: `Uploading ${uploading} file${uploading === 1 ? "" : "s"}...`, id: `Mengunggah ${uploading} file...` })}
         </p>
       )}
       {shownLinks.length > 0 && (
         <>
-          <p className="mt-4 text-xs font-medium text-neutral-500">Links</p>
+          <p className="mt-4 text-xs font-medium text-neutral-500">{t({ en: "Links", id: "Tautan" })}</p>
           <ul className="mt-1.5 overflow-hidden rounded-xl border border-[#0B6477]/8">
             {shownLinks.map((a) => (
               <li key={a.id} className="group flex items-center gap-2.5 border-b border-[#0B6477]/8 px-3 py-2 last:border-b-0 hover:bg-[#F7FAF9]">
@@ -189,7 +196,7 @@ export function AttachmentList({
       )}
       {shownFiles.length > 0 && (
         <>
-          <p className="mt-4 text-xs font-medium text-neutral-500">Files</p>
+          <p className="mt-4 text-xs font-medium text-neutral-500">{t({ en: "Files", id: "File" })}</p>
           <ul className="mt-1.5 flex flex-col gap-1">
             {shownFiles.map((a) => {
               const thumb = a.storage_path ? thumbs[a.storage_path] : undefined;
@@ -200,7 +207,7 @@ export function AttachmentList({
                     type="button"
                     onClick={() => onView(a)}
                     className="grid h-12 w-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-[#E6EFED] text-[#0B6477]"
-                    aria-label={`Preview ${a.name}`}
+                    aria-label={`${t({ en: "Preview", id: "Pratinjau" })} ${a.name}`}
                   >
                     {thumb ? (
                       <img src={thumb} alt="" className="h-full w-full object-cover" />
@@ -214,15 +221,17 @@ export function AttachmentList({
                   <button type="button" onClick={() => onView(a)} className="min-w-0 flex-1 text-left">
                     <span className="block truncate text-sm font-medium text-neutral-900">{a.name}</span>
                     <span className="block text-xs text-neutral-500">
-                      Added {attachmentDate(a.created_at)}
-                      {isCover && <span className="ml-1.5 rounded bg-[#45DFB1]/25 px-1.5 py-0.5 text-[#0B5E47]">Cover</span>}
+                      {t({ en: "Added", id: "Ditambahkan" })} {attachmentDate(a.created_at, lang)}
+                      {isCover && (
+                        <span className="ml-1.5 rounded bg-[#45DFB1]/25 px-1.5 py-0.5 text-[#0B5E47]">{t({ en: "Cover", id: "Sampul" })}</span>
+                      )}
                     </span>
                   </button>
                   <button
                     type="button"
                     onClick={() => void openAttachment(a)}
-                    aria-label={`Open ${a.name} in a new tab`}
-                    title="Open in a new tab"
+                    aria-label={t({ en: `Open ${a.name} in a new tab`, id: `Buka ${a.name} di tab baru` })}
+                    title={t({ en: "Open in a new tab", id: "Buka di tab baru" })}
                     className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-neutral-500 hover:bg-white hover:text-neutral-900"
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -236,7 +245,9 @@ export function AttachmentList({
       )}
       {(hidden > 0 || all) && links.length + files.length > SHOWN && (
         <button type="button" onClick={() => setAll((x) => !x)} className={`${SMALL} mt-3`}>
-          {all ? "Show fewer attachments" : `View all attachments (${hidden} hidden)`}
+          {all
+            ? t({ en: "Show fewer attachments", id: "Tampilkan lebih sedikit lampiran" })
+            : t({ en: `View all attachments (${hidden} hidden)`, id: `Lihat semua lampiran (${hidden} tersembunyi)` })}
         </button>
       )}
     </section>
@@ -292,6 +303,8 @@ function AttachmentMenu({
   onUpdated: (a: KanbanAttachment) => void;
 }) {
   const { editable, patchCard, push } = useBoard();
+  const t = useT();
+  const lang = useLang();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(a.name);
@@ -315,7 +328,7 @@ function AttachmentMenu({
           setEditing(false);
           setOpen((o) => !o);
         }}
-        aria-label={`Actions for ${a.name}`}
+        aria-label={`${t({ en: "Actions for", id: "Aksi untuk" })} ${a.name}`}
         aria-haspopup="menu"
         aria-expanded={open}
         className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 hover:bg-white hover:text-neutral-900"
@@ -332,40 +345,40 @@ function AttachmentMenu({
                 setBusy(true);
                 const res = await updateAttachment(a.id, a.url ? { name: name.trim() || a.name, url } : { name: name.trim() || a.name });
                 setBusy(false);
-                if (res.error !== null) return push({ text: res.error, tone: "error" });
+                if (res.error !== null) return push({ text: kanbanError(res.error, lang), tone: "error" });
                 onUpdated(res.data);
                 close();
               }}
             >
               <label className="text-xs font-medium text-neutral-500">
-                {a.url ? "Display text" : "File name"}
+                {a.url ? t({ en: "Display text", id: "Teks tampilan" }) : t({ en: "File name", id: "Nama file" })}
                 <input autoFocus value={name} onChange={(e) => setName(e.target.value)} className={`${FIELD} mt-1 h-9`} />
               </label>
               {a.url && (
                 <label className="text-xs font-medium text-neutral-500">
-                  Link
+                  {t({ en: "Link", id: "Tautan" })}
                   <input value={url} onChange={(e) => setUrl(e.target.value)} className={`${FIELD} mt-1 h-9`} />
                 </label>
               )}
               <button type="submit" disabled={busy} className={PRIMARY}>
-                Save
+                {t({ en: "Save", id: "Simpan" })}
               </button>
             </form>
           ) : (
             <>
               {editable && (
                 <button type="button" role="menuitem" className={MENU_ITEM} onClick={() => setEditing(true)}>
-                  <Pencil className="h-4 w-4 text-neutral-500" /> Edit
+                  <Pencil className="h-4 w-4 text-neutral-500" /> {t({ en: "Edit", id: "Ubah" })}
                 </button>
               )}
               {editable && (
                 <button type="button" role="menuitem" className={MENU_ITEM} onClick={() => (close(), onComment(a))}>
-                  <MessageSquare className="h-4 w-4 text-neutral-500" /> Comment
+                  <MessageSquare className="h-4 w-4 text-neutral-500" /> {t({ en: "Comment", id: "Komentari" })}
                 </button>
               )}
               {a.storage_path && (
                 <button type="button" role="menuitem" className={MENU_ITEM} onClick={() => (close(), void downloadAttachment(a))}>
-                  <Download className="h-4 w-4 text-neutral-500" /> Download
+                  <Download className="h-4 w-4 text-neutral-500" /> {t({ en: "Download", id: "Unduh" })}
                 </button>
               )}
               {editable && isImage(a) && (
@@ -378,12 +391,13 @@ function AttachmentMenu({
                     void patchCard(card.id, isCover ? { cover_attachment_id: null } : { cover_attachment_id: a.id, cover_color: null });
                   }}
                 >
-                  <ImageIcon className="h-4 w-4 text-neutral-500" /> {isCover ? "Remove cover" : "Make cover"}
+                  <ImageIcon className="h-4 w-4 text-neutral-500" />{" "}
+                  {isCover ? t({ en: "Remove cover", id: "Hapus sampul" }) : t({ en: "Make cover", id: "Jadikan sampul" })}
                 </button>
               )}
               {editable && (
                 <button type="button" role="menuitem" className={`${MENU_ITEM} text-[#B42323]`} onClick={() => (close(), onDelete(a))}>
-                  <Trash2 className="h-4 w-4" /> Remove
+                  <Trash2 className="h-4 w-4" /> {t({ en: "Remove", id: "Hapus" })}
                 </button>
               )}
             </>
@@ -413,6 +427,8 @@ export function AttachmentViewer({
   onDelete: (a: KanbanAttachment) => void;
 }) {
   const { editable, patchCard } = useBoard();
+  const t = useT();
+  const lang = useLang();
   const a = items[index];
   const [src, setSrc] = useState<string | null>(null);
   const path = a?.storage_path ?? null;
@@ -464,7 +480,7 @@ export function AttachmentViewer({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <button type="button" onClick={onClose} aria-label="Close preview" className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full text-white/80 hover:bg-white/10 hover:text-white">
+      <button type="button" onClick={onClose} aria-label={t({ en: "Close preview", id: "Tutup pratinjau" })} className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full text-white/80 hover:bg-white/10 hover:text-white">
         <X className="h-5 w-5" />
       </button>
       <div className="flex min-h-0 flex-1 items-center justify-center px-14 pt-16" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -477,16 +493,20 @@ export function AttachmentViewer({
         ) : (
           <div className="flex flex-col items-center gap-3 rounded-2xl bg-white/5 px-10 py-12 text-white/80">
             {a.url ? <Link2 className="h-10 w-10" /> : <FileText className="h-10 w-10" />}
-            <p className="text-sm">There is no preview for this {a.url ? "link" : "file"}.</p>
+            <p className="text-sm">
+              {a.url
+                ? t({ en: "There is no preview for this link.", id: "Tidak ada pratinjau untuk tautan ini." })
+                : t({ en: "There is no preview for this file.", id: "Tidak ada pratinjau untuk file ini." })}
+            </p>
           </div>
         )}
       </div>
       {items.length > 1 && (
         <>
-          <button type="button" onClick={() => move(-1)} aria-label="Previous attachment" className="absolute left-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full text-white/80 hover:bg-white/10 hover:text-white">
+          <button type="button" onClick={() => move(-1)} aria-label={t({ en: "Previous attachment", id: "Lampiran sebelumnya" })} className="absolute left-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full text-white/80 hover:bg-white/10 hover:text-white">
             <ChevronLeft className="h-6 w-6" />
           </button>
-          <button type="button" onClick={() => move(1)} aria-label="Next attachment" className="absolute right-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full text-white/80 hover:bg-white/10 hover:text-white">
+          <button type="button" onClick={() => move(1)} aria-label={t({ en: "Next attachment", id: "Lampiran berikutnya" })} className="absolute right-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full text-white/80 hover:bg-white/10 hover:text-white">
             <ChevronRight className="h-6 w-6" />
           </button>
         </>
@@ -496,17 +516,17 @@ export function AttachmentViewer({
           {a.name}
         </p>
         <p className="mt-0.5 text-xs text-white/60">
-          Added {attachmentDate(a.created_at)}
+          {t({ en: "Added", id: "Ditambahkan" })} {attachmentDate(a.created_at, lang)}
           {a.bytes ? ` · ${formatBytes(a.bytes)}` : ""}
-          {items.length > 1 && ` · ${index + 1} of ${items.length}`}
+          {items.length > 1 && ` · ${index + 1} ${t({ en: "of", id: "dari" })} ${items.length}`}
         </p>
         <div className="mt-3 flex flex-wrap justify-center gap-1">
           <button type="button" className={action} onClick={() => void openAttachment(a)}>
-            <ExternalLink className="h-4 w-4" /> Open in new tab
+            <ExternalLink className="h-4 w-4" /> {t({ en: "Open in new tab", id: "Buka di tab baru" })}
           </button>
           {a.storage_path && (
             <button type="button" className={action} onClick={() => void downloadAttachment(a)}>
-              <Download className="h-4 w-4" /> Download
+              <Download className="h-4 w-4" /> {t({ en: "Download", id: "Unduh" })}
             </button>
           )}
           {editable && isImage(a) && (
@@ -515,12 +535,13 @@ export function AttachmentViewer({
               className={action}
               onClick={() => void patchCard(card.id, isCover ? { cover_attachment_id: null } : { cover_attachment_id: a.id, cover_color: null })}
             >
-              <ImageIcon className="h-4 w-4" /> {isCover ? "Remove cover" : "Make cover"}
+              <ImageIcon className="h-4 w-4" />{" "}
+              {isCover ? t({ en: "Remove cover", id: "Hapus sampul" }) : t({ en: "Make cover", id: "Jadikan sampul" })}
             </button>
           )}
           {editable && (
             <button type="button" className={`${action} text-[#FFB4B4] hover:text-[#FFD0D0]`} onClick={() => onDelete(a)}>
-              <Trash2 className="h-4 w-4" /> Delete
+              <Trash2 className="h-4 w-4" /> {t({ en: "Delete", id: "Hapus" })}
             </button>
           )}
         </div>
@@ -543,29 +564,30 @@ export function CoverPicker({
   onDone: () => void;
 }) {
   const { patchCard } = useBoard();
+  const t = useT();
   const set = (patch: Parameters<typeof patchCard>[1]) => {
     onDone();
     void patchCard(card.id, patch);
   };
   return (
     <div style={body}>
-      <p className="text-xs font-medium text-neutral-500">Colour</p>
+      <p className="text-xs font-medium text-neutral-500">{t({ en: "Colour", id: "Warna" })}</p>
       <div className="mt-2 grid grid-cols-5 gap-1.5">
         {LABEL_COLOR_KEYS.map((k) => (
           <button
             key={k}
             type="button"
             onClick={() => set({ cover_color: k, cover_attachment_id: null })}
-            aria-label={`${LABEL_COLORS[k].name} cover`}
+            aria-label={t({ en: `${LABEL_COLORS[k].name} cover`, id: `Sampul ${LABEL_COLORS[k].nameId.toLowerCase()}` })}
             aria-pressed={card.cover_color === k}
             className={`h-9 rounded-md ring-offset-1 ${card.cover_color === k ? "ring-2 ring-[#08313A]" : ""}`}
             style={{ background: LABEL_COLORS[k].hex }}
           />
         ))}
       </div>
-      <p className="mt-4 text-xs font-medium text-neutral-500">Image from attachments</p>
+      <p className="mt-4 text-xs font-medium text-neutral-500">{t({ en: "Image from attachments", id: "Gambar dari lampiran" })}</p>
       {images.length === 0 ? (
-        <p className="mt-1.5 text-xs text-neutral-400">Attach an image to use it as a cover.</p>
+        <p className="mt-1.5 text-xs text-neutral-400">{t({ en: "Attach an image to use it as a cover.", id: "Lampirkan gambar untuk dijadikan sampul." })}</p>
       ) : (
         <div className="mt-2 grid grid-cols-3 gap-1.5">
           {images.map((a) => (
@@ -573,7 +595,7 @@ export function CoverPicker({
               key={a.id}
               type="button"
               onClick={() => set({ cover_attachment_id: a.id, cover_color: null })}
-              aria-label={`Use ${a.name} as cover`}
+              aria-label={t({ en: `Use ${a.name} as cover`, id: `Jadikan ${a.name} sampul` })}
               aria-pressed={card.cover_attachment_id === a.id}
               className={`h-14 overflow-hidden rounded-md bg-[#F3F7F6] ring-offset-1 ${card.cover_attachment_id === a.id ? "ring-2 ring-[#08313A]" : ""}`}
             >
@@ -590,7 +612,7 @@ export function CoverPicker({
           onClick={() => set({ cover_color: null, cover_attachment_id: null })}
           className="mt-4 h-9 w-full rounded-lg bg-[#F3F7F6] text-sm text-neutral-700 hover:bg-[#E6EFED]"
         >
-          Remove cover
+          {t({ en: "Remove cover", id: "Hapus sampul" })}
         </button>
       )}
     </div>

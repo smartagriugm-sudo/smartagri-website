@@ -4,6 +4,7 @@ import { Loader2, Sparkles } from 'lucide-react'
 import type { DocumentType } from '../../lib/ai/types'
 import { DOCUMENT_TYPE_CONFIGS } from '../../lib/ai/prompts'
 import { body, display } from '../../lib/fonts'
+import { useT } from '../../lib/i18n'
 
 interface GeneratorFormProps {
   onGenerate: (docType: DocumentType, fields: Record<string, string>) => void
@@ -34,6 +35,7 @@ export default function GeneratorForm({ onGenerate, isLoading }: GeneratorFormPr
     buildDefaults('activity_report'),
   )
   const [errors, setErrors] = useState<Record<string, boolean>>({})
+  const t = useT()
 
   const config = DOCUMENT_TYPE_CONFIGS[docType]
 
@@ -71,16 +73,19 @@ export default function GeneratorForm({ onGenerate, isLoading }: GeneratorFormPr
           className="text-lg font-semibold tracking-[-0.02em] text-neutral-900 md:text-xl"
           style={display}
         >
-          Report Generator
+          {t({ en: 'Report Generator', id: 'Pembuat Laporan' })}
         </h1>
         <p className="text-xs text-neutral-500 md:text-sm" style={body}>
-          Generate academic document drafts for SmartAgri UGM
+          {t({
+            en: 'Generate academic document drafts for SmartAgri UGM',
+            id: 'Buat draf dokumen akademik untuk SmartAgri UGM',
+          })}
         </p>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-neutral-700" style={body}>
-          Document Type
+          {t({ en: 'Document Type', id: 'Jenis Dokumen' })}
         </label>
         <select
           value={docType}
@@ -153,7 +158,7 @@ export default function GeneratorForm({ onGenerate, isLoading }: GeneratorFormPr
 
               {errors[field.key] && (
                 <span className="text-xs text-red-500" style={body}>
-                  Required
+                  {t({ en: 'Required', id: 'Wajib diisi' })}
                 </span>
               )}
             </div>
@@ -171,12 +176,12 @@ export default function GeneratorForm({ onGenerate, isLoading }: GeneratorFormPr
         {isLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Generating...
+            {t({ en: 'Generating...', id: 'Membuat...' })}
           </>
         ) : (
           <>
             <Sparkles className="h-4 w-4" />
-            Generate Document
+            {t({ en: 'Generate Document', id: 'Buat Dokumen' })}
           </>
         )}
       </button>

@@ -32,6 +32,7 @@ import {
 import { body } from "../../lib/fonts";
 import { continueList, insertBlock, link, prefixLines, wrap, type Edit } from "../../lib/markdown-edit";
 import { PROSE, useDismiss } from "./parts";
+import { useT } from "../../lib/i18n";
 
 // Task lists ("- [ ] item") show their checkbox instead of a bullet.
 const TASKS = "[&_.contains-task-list]:list-none [&_.contains-task-list]:pl-1 [&_.task-list-item_input]:mr-1.5 [&_.task-list-item_input]:accent-[#14919B]";
@@ -135,7 +136,7 @@ const HELP: [string, string][] = [
   ["`code`", "Ctrl+E"],
   ["[link](https://...)", "Ctrl+K"],
   ["# Heading 1 / ## Heading 2", ""],
-  ["- item, 1. item, - [ ] task", "Enter continues"],
+  ["- item, 1. item, - [ ] task", "Enter"],
   ["> quote", ""],
   ["```  code block  ```", ""],
   ["| a | b | table", ""],
@@ -146,7 +147,7 @@ export default function MarkdownEditor({
   initial,
   onSave,
   onCancel,
-  saveLabel = "Save",
+  saveLabel,
   placeholder,
   minHeight = 140,
   onAttach,
@@ -165,6 +166,7 @@ export default function MarkdownEditor({
   insert?: { text: string; nonce: number } | null;
   large?: boolean;
 }) {
+  const tr = useT();
   const [text, setText] = useState(initial);
   const [preview, setPreview] = useState(false);
   const [help, setHelp] = useState(false);
@@ -218,15 +220,15 @@ export default function MarkdownEditor({
 
   return (
     <div className="mt-2 overflow-visible rounded-xl border border-[#0B6477]/15 bg-white focus-within:border-[#14919B] focus-within:ring-2 focus-within:ring-[#14919B]/20" style={body}>
-      <div role="toolbar" aria-label="Formatting" className="flex flex-wrap items-center gap-0.5 border-b border-[#0B6477]/8 px-1.5 py-1">
-        <ToolMenu label="Text styles" icon={<Type className="h-4 w-4" />}>
+      <div role="toolbar" aria-label={tr({ en: "Formatting", id: "Format" })} className="flex flex-wrap items-center gap-0.5 border-b border-[#0B6477]/8 px-1.5 py-1">
+        <ToolMenu label={tr({ en: "Text styles", id: "Gaya teks" })} icon={<Type className="h-4 w-4" />}>
           {(close) =>
             (
               [
-                ["Normal text", ""],
-                ["Heading 1", "# "],
-                ["Heading 2", "## "],
-                ["Heading 3", "### "],
+                [tr({ en: "Normal text", id: "Teks biasa" }), ""],
+                [tr({ en: "Heading 1", id: "Judul 1" }), "# "],
+                [tr({ en: "Heading 2", id: "Judul 2" }), "## "],
+                [tr({ en: "Heading 3", id: "Judul 3" }), "### "],
               ] as const
             ).map(([label, p]) => (
               <button
@@ -246,48 +248,48 @@ export default function MarkdownEditor({
           }
         </ToolMenu>
         <span className="mx-0.5 h-5 w-px bg-[#0B6477]/10" aria-hidden="true" />
-        <Tool label="Bold (Ctrl+B)" onClick={() => apply((t, s, e) => wrap(t, s, e, "**"))}>
+        <Tool label={tr({ en: "Bold (Ctrl+B)", id: "Tebal (Ctrl+B)" })} onClick={() => apply((t, s, e) => wrap(t, s, e, "**"))}>
           <Bold className="h-4 w-4" />
         </Tool>
-        <Tool label="Italic (Ctrl+I)" onClick={() => apply((t, s, e) => wrap(t, s, e, "_"))}>
+        <Tool label={tr({ en: "Italic (Ctrl+I)", id: "Miring (Ctrl+I)" })} onClick={() => apply((t, s, e) => wrap(t, s, e, "_"))}>
           <Italic className="h-4 w-4" />
         </Tool>
-        <Tool label="Strikethrough (Ctrl+Shift+X)" onClick={() => apply((t, s, e) => wrap(t, s, e, "~~"))}>
+        <Tool label={tr({ en: "Strikethrough (Ctrl+Shift+X)", id: "Coret (Ctrl+Shift+X)" })} onClick={() => apply((t, s, e) => wrap(t, s, e, "~~"))}>
           <Strikethrough className="h-4 w-4" />
         </Tool>
-        <Tool label="Inline code (Ctrl+E)" onClick={() => apply((t, s, e) => wrap(t, s, e, "`", "`", "code"))}>
+        <Tool label={tr({ en: "Inline code (Ctrl+E)", id: "Kode sebaris (Ctrl+E)" })} onClick={() => apply((t, s, e) => wrap(t, s, e, "`", "`", "code"))}>
           <Code className="h-4 w-4" />
         </Tool>
-        <ToolMenu label="Lists" icon={<List className="h-4 w-4" />}>
+        <ToolMenu label={tr({ en: "Lists", id: "Daftar" })} icon={<List className="h-4 w-4" />}>
           {(close) => (
             <>
-              <MenuItem icon={<List className="h-4 w-4" />} label="Bulleted list" onClick={() => (close(), apply((t, s, e) => prefixLines(t, s, e, "- ")))} />
-              <MenuItem icon={<ListOrdered className="h-4 w-4" />} label="Numbered list" onClick={() => (close(), apply((t, s, e) => prefixLines(t, s, e, "1. ")))} />
-              <MenuItem icon={<ListChecks className="h-4 w-4" />} label="Task list" onClick={() => (close(), apply((t, s, e) => prefixLines(t, s, e, "- [ ] ")))} />
+              <MenuItem icon={<List className="h-4 w-4" />} label={tr({ en: "Bulleted list", id: "Daftar berbutir" })} onClick={() => (close(), apply((t, s, e) => prefixLines(t, s, e, "- ")))} />
+              <MenuItem icon={<ListOrdered className="h-4 w-4" />} label={tr({ en: "Numbered list", id: "Daftar bernomor" })} onClick={() => (close(), apply((t, s, e) => prefixLines(t, s, e, "1. ")))} />
+              <MenuItem icon={<ListChecks className="h-4 w-4" />} label={tr({ en: "Task list", id: "Daftar tugas" })} onClick={() => (close(), apply((t, s, e) => prefixLines(t, s, e, "- [ ] ")))} />
             </>
           )}
         </ToolMenu>
-        <Tool label="Link (Ctrl+K)" onClick={() => apply((t, s, e) => link(t, s, e))}>
+        <Tool label={tr({ en: "Link (Ctrl+K)", id: "Tautan (Ctrl+K)" })} onClick={() => apply((t, s, e) => link(t, s, e))}>
           <Link2 className="h-4 w-4" />
         </Tool>
-        <Tool label="Image" onClick={() => apply((t, s, e) => link(t, s, e, "https://", true))}>
+        <Tool label={tr({ en: "Image", id: "Gambar" })} onClick={() => apply((t, s, e) => link(t, s, e, "https://", true))}>
           <ImageIcon className="h-4 w-4" />
         </Tool>
-        <ToolMenu label="Insert elements" icon={<Plus className="h-4 w-4" />}>
+        <ToolMenu label={tr({ en: "Insert elements", id: "Sisipkan elemen" })} icon={<Plus className="h-4 w-4" />}>
           {(close) => (
             <>
-              <MenuItem icon={<Quote className="h-4 w-4" />} label="Quote" onClick={() => (close(), apply((t, s, e) => prefixLines(t, s, e, "> ")))} />
+              <MenuItem icon={<Quote className="h-4 w-4" />} label={tr({ en: "Quote", id: "Kutipan" })} onClick={() => (close(), apply((t, s, e) => prefixLines(t, s, e, "> ")))} />
               <MenuItem
                 icon={<SquareCode className="h-4 w-4" />}
-                label="Code block"
+                label={tr({ en: "Code block", id: "Blok kode" })}
                 onClick={() => (close(), apply((t, s, e) => insertBlock(t, s, e, "```\n" + (t.slice(s, e) || "code") + "\n```", 4, (t.slice(s, e) || "code").length)))}
               />
               <MenuItem
                 icon={<Table className="h-4 w-4" />}
-                label="Table"
+                label={tr({ en: "Table", id: "Tabel" })}
                 onClick={() => (close(), apply((t, s, e) => insertBlock(t, s, e, "| Column | Column |\n| --- | --- |\n| Cell | Cell |", 2, 6)))}
               />
-              <MenuItem icon={<Minus className="h-4 w-4" />} label="Divider" onClick={() => (close(), apply((t, s, e) => insertBlock(t, s, e, "---", 3)))} />
+              <MenuItem icon={<Minus className="h-4 w-4" />} label={tr({ en: "Divider", id: "Garis pemisah" })} onClick={() => (close(), apply((t, s, e) => insertBlock(t, s, e, "---", 3)))} />
             </>
           )}
         </ToolMenu>
@@ -305,22 +307,22 @@ export default function MarkdownEditor({
                 void attach(files);
               }}
             />
-            <Tool label="Attach a file and insert its link" onClick={() => fileInput.current?.click()}>
+            <Tool label={tr({ en: "Attach a file and insert its link", id: "Lampirkan file dan sisipkan tautannya" })} onClick={() => fileInput.current?.click()}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
             </Tool>
           </>
         )}
-        <Tool label={preview ? "Back to editing" : "Preview"} pressed={preview} onClick={() => setPreview((p) => !p)}>
+        <Tool label={preview ? tr({ en: "Back to editing", id: "Kembali menyunting" }) : tr({ en: "Preview", id: "Pratinjau" })} pressed={preview} onClick={() => setPreview((p) => !p)}>
           {preview ? <Pencil className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </Tool>
-        <Tool label="Formatting help" pressed={help} onClick={() => setHelp((h) => !h)}>
+        <Tool label={tr({ en: "Formatting help", id: "Bantuan format" })} pressed={help} onClick={() => setHelp((h) => !h)}>
           <HelpCircle className="h-4 w-4" />
         </Tool>
       </div>
 
       {preview ? (
         <div className="kanban-scroll overflow-y-auto px-3 py-2.5" style={{ minHeight, maxHeight: "60vh" }}>
-          {text.trim() ? <MarkdownView large={large}>{text}</MarkdownView> : <p className="text-sm text-neutral-400">Nothing to preview.</p>}
+          {text.trim() ? <MarkdownView large={large}>{text}</MarkdownView> : <p className="text-sm text-neutral-400">{tr({ en: "Nothing to preview.", id: "Tidak ada yang bisa dipratinjau." })}</p>}
         </div>
       ) : (
         <textarea
@@ -390,27 +392,29 @@ export default function MarkdownEditor({
 
       {help && (
         <div className="border-t border-[#0B6477]/8 bg-[#F7FAF9] px-3 py-2.5 text-xs text-neutral-600">
-          <p className="mb-1.5 font-medium text-neutral-800">Markdown formatting</p>
+          <p className="mb-1.5 font-medium text-neutral-800">{tr({ en: "Markdown formatting", id: "Format Markdown" })}</p>
           <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
             {HELP.map(([md, key]) => (
               <li key={md} className="flex justify-between gap-3">
                 <code className="text-[#0B6477]">{md}</code>
-                <span className="shrink-0 text-neutral-400">{key}</span>
+                <span className="shrink-0 text-neutral-400">
+                  {key === "Enter" ? tr({ en: "Enter continues", id: "Enter melanjutkan" }) : key}
+                </span>
               </li>
             ))}
           </ul>
-          {onAttach && <p className="mt-1.5 text-neutral-500">Paste or drop a file to attach it and insert its link.</p>}
+          {onAttach && <p className="mt-1.5 text-neutral-500">{tr({ en: "Paste or drop a file to attach it and insert its link.", id: "Tempel atau jatuhkan file untuk melampirkan dan menyisipkan tautannya." })}</p>}
         </div>
       )}
 
       <div className="flex flex-wrap items-center gap-2 border-t border-[#0B6477]/8 px-2 py-2">
         <button type="button" onClick={save} disabled={busy > 0} className={PRIMARY}>
-          {saveLabel}
+          {saveLabel ?? tr({ en: "Save", id: "Simpan" })}
         </button>
         <button type="button" onClick={onCancel} className={BUTTON}>
-          Cancel
+          {tr({ en: "Cancel", id: "Batal" })}
         </button>
-        <span className="ml-auto hidden text-xs text-neutral-400 sm:inline">Markdown · Ctrl+Enter to save</span>
+        <span className="ml-auto hidden text-xs text-neutral-400 sm:inline">{tr({ en: "Markdown · Ctrl+Enter to save", id: "Markdown · Ctrl+Enter untuk simpan" })}</span>
       </div>
     </div>
   );

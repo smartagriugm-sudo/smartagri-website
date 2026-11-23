@@ -22,6 +22,7 @@ import {
   Wind,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { localizeAll, type Lang } from "./i18n-core";
 
 // Content model for the Indoor Farming section (/indoor-farming).
 //
@@ -1009,3 +1010,868 @@ export const IF_NOTE_TAGS = [
   "Hydroponics",
   "Controlled Environment",
 ];
+
+// ---- Bahasa Indonesia (see lib/i18n.tsx) ----
+// Indonesian overlay keyed by section, group, and topic slug. Slugs, icons, and
+// the English exports above stay untouched; pages read the localized copy
+// through the `xxxFor(lang)` helpers below.
+
+type IFTopicCopy = Pick<IFTopic, "title" | "summary" | "points">;
+type IFGroupCopy = Pick<IFGroup, "title" | "intro" | "linkLabel"> & {
+  lede?: string;
+  topics: Record<string, IFTopicCopy>;
+};
+type IFSectionCopy = Pick<IFSection, "label" | "eyebrow" | "title" | "accent" | "lede"> & {
+  groups: Record<string, IFGroupCopy>;
+};
+
+const IF_SECTIONS_ID: Record<string, IFSectionCopy> = {
+  approach: {
+    label: "Pendekatan",
+    eyebrow: "Pendekatan",
+    title: "Keputusan yang diambil",
+    accent: "sebelum membangun",
+    lede: "Kelayakan dihitung, bukan diasumsikan. Tiga hal menentukan apakah lingkungan terkendali akan balik modal di sini: tanamannya, lokasinya, dan seberapa banyak kendali yang benar-benar Anda butuhkan.",
+    groups: {
+      "crop-and-market": {
+        title: "Kecocokan tanaman dan pasar",
+        intro:
+          "Pilihan tanaman menentukan semua hal sesudahnya: struktur, strategi iklim, desain irigasi, dan apakah hitungannya masuk sama sekali.",
+        linkLabel: "Kelayakan tanaman",
+        topics: {
+          "match-the-market": {
+            title: "Sesuaikan tanaman dengan pasar",
+            summary:
+              "Lingkungan terkendali baru balik modal jika tanamannya laku dengan harga premium. Pertanyaannya bukan apa yang paling mudah tumbuh, tetapi apa yang paling laku di sekitar Anda.",
+            points: [
+              "Sayuran daun dan herba untuk usaha kuliner perkotaan, hotel, dan ritel modern",
+              "Tomat dan stroberi, saat mutu yang konsisten dan pasokan sepanjang tahun dihargai lebih tinggi",
+              "Produksi di luar musim, saat pasokan dari lahan terbuka turun dan harga naik",
+            ],
+          },
+          "match-the-climate": {
+            title: "Sesuaikan tanaman dengan iklim",
+            summary:
+              "Indonesia tidak punya satu iklim. Tanaman yang subur di dataran tinggi mungkin butuh pendinginan aktif dan penurunan kelembapan di dataran rendah, dan itu mengubah seluruh rencana modal.",
+            points: [
+              "Dataran tinggi: malam yang sejuk sudah banyak membantu, sehingga ventilasi pasif lebih efektif",
+              "Dataran rendah: panas dan kelembapan adalah kendala utamanya, bukan dingin",
+              "Tanaman yang menyukai suhu sejuk (selada, stroberi) menanggung biaya iklim tertinggi di dataran rendah",
+            ],
+          },
+          "cycle-time": {
+            title: "Lama siklus dan arus kas",
+            summary:
+              "Tanaman siklus pendek mengembalikan uang, dan yang tak kalah penting, pengetahuan, lebih cepat. Tanaman siklus panjang menguntungkan operator yang protokolnya sudah terkendali.",
+            points: [
+              "Sayuran daun berganti dalam hitungan minggu, jadi satu kesalahan hanya merugikan satu siklus, bukan satu musim",
+              "Tanaman buah berjalan berbulan-bulan dan menuntut kendali iklim dan nutrisi yang lebih stabil",
+              "Banyak usaha mulai dari siklus pendek, lalu naik kelas ke tanaman buah",
+            ],
+          },
+          "trial-first": {
+            title: "Buktikan dulu lewat uji coba",
+            summary:
+              "Kami lebih memilih menjalankan satu musim berinstrumen dalam skala kecil daripada merancang fasilitas besar berdasarkan asumsi. Uji coba mengubah opini menjadi angka.",
+            points: [
+              "Blok uji coba kecil dengan sensor lengkap sebelum menanamkan modal",
+              "Hasil panen, mutu, air, dan energi terukur per satuan produksi",
+              "Brief desain yang ditulis dari data Anda, bukan dari brosur",
+            ],
+          },
+        },
+      },
+      "site-and-climate": {
+        title: "Lokasi dan iklim",
+        intro:
+          "Pemilihan lokasi diam-diam menentukan biaya operasional Anda untuk sepuluh tahun ke depan. Ketinggian, air, listrik, dan jarak ke pasar lebih penting daripada bentuk atap.",
+        linkLabel: "Penilaian lokasi",
+        topics: {
+          altitude: {
+            title: "Ketinggian menentukan strategi iklim",
+            summary:
+              "Elevasi adalah pendinginan gratis paling berguna di daerah tropis. Ketinggian menentukan apakah iklim yang baik cukup dicapai dengan ventilasi atau harus dibayar dengan mengondisikan udara.",
+            points: [
+              "Dataran tinggi: ventilasi alami dan naungan sering kali cukup hampir sepanjang tahun",
+              "Ketinggian menengah: strategi hibrida, dengan pendinginan khusus untuk jam puncak",
+              "Dataran rendah: siapkan pendinginan aktif dan penurunan kelembapan dalam anggaran energi",
+            ],
+          },
+          "market-distance": {
+            title: "Kedekatan dengan pasar",
+            summary:
+              "Nilai produk segar turun dari jam ke jam. Dekat dengan pembeli adalah strategi mutu, sama pentingnya dengan strategi logistik.",
+            points: [
+              "Rantai dingin yang lebih pendek menjaga umur simpan dan mengurangi penolakan saat pengiriman",
+              "Lokasi pinggiran kota menimbang harga lahan terhadap kesegaran dan ongkos angkut",
+              "Plant factory bisa berada paling dekat dengan konsumen karena tidak bergantung pada kualitas lahan",
+            ],
+          },
+          "water-and-power": {
+            title: "Air dan listrik",
+            summary:
+              "Kualitas air membentuk seluruh desain irigasi, dan keandalan listrik menentukan seberapa jauh Anda bisa bergantung pada otomasi dengan aman.",
+            points: [
+              "Air baku diuji lebih dulu: salinitas, kesadahan, zat besi, dan patogen",
+              "Pemanenan air hujan sebagai input paling bersih dan paling murah bila curah hujan memungkinkan",
+              "Keandalan jaringan listrik, daya cadangan, dan potensi surya dinilai sebelum menentukan ukuran sistem kendali",
+            ],
+          },
+          "site-and-orientation": {
+            title: "Lahan, drainase, dan orientasi",
+            summary:
+              "Lahan itu sendiri menetapkan batasan yang tidak bisa diubah oleh pengendali mana pun: ke mana air mengalir keluar, dari mana angin datang, dan apa yang menaungi Anda di sore hari.",
+            points: [
+              "Drainase dan riwayat banjir, terutama di bekas lahan sawah",
+              "Arah angin dominan, yang menentukan kinerja ventilasi alami",
+              "Orientasi dan halangan di sekitar yang memengaruhi cahaya sepanjang hari",
+            ],
+          },
+        },
+      },
+      "level-of-control": {
+        title: "Tingkat kendali",
+        intro:
+          "Ada spektrum antara lahan terbuka dan plant factory yang sepenuhnya tertutup. Titik yang tepat adalah yang benar-benar sanggup dijalankan oleh tanaman, iklim, dan tim Anda.",
+        linkLabel: "Desain sistem",
+        topics: {
+          "level-of-control": {
+            title: "Sesuaikan tingkat kendali dengan tujuan",
+            summary:
+              "Kendali yang lebih besar berarti modal lebih besar dan keterampilan operasional lebih tinggi. Sistem terbaik adalah yang paling sederhana namun andal menghadirkan iklim yang dibutuhkan tanaman Anda.",
+            points: [
+              "Screenhouse: perlindungan dari hujan dan serangga dengan biaya terendah",
+              "Greenhouse berventilasi alami: pengaruh nyata pada iklim dengan pemakaian energi sedang",
+              "Greenhouse semi-tertutup dan plant factory: kendali penuh, modal dan energi tertinggi",
+            ],
+          },
+          "design-for-tropics": {
+            title: "Dirancang untuk tropis sejak awal",
+            summary:
+              "Di sini masalahnya adalah mengeluarkan panas dan uap air, bukan menahannya. Satu perbedaan itu mengubah ventilasi, kasa, dan strategi kendali.",
+            points: [
+              "Pengelolaan kelembapan, bukan pemanasan, adalah tantangan desain utama",
+              "Defisit tekanan uap (VPD) sebagai target kendali, bukan suhu saja",
+              "Kapasitas ventilasi dan kasa dirancang untuk beban radiasi matahari tropis",
+            ],
+          },
+          "instrument-from-day-one": {
+            title: "Pasang instrumen sejak hari pertama",
+            summary:
+              "Anda tidak bisa mengelola iklim yang tidak bisa Anda lihat. Sensor dan pencatatan data bukan tambahan untuk nanti, melainkan cara sistem disetel.",
+            points: [
+              "Iklim, zona akar, dan cahaya dicatat terus-menerus",
+              "Pengukuran tanaman tanpa merusak untuk mendeteksi stres sebelum terlihat",
+              "Dashboard yang mengubah bacaan menjadi keputusan, bukan sekadar grafik",
+            ],
+          },
+          "operating-capability": {
+            title: "Bangun kemampuan operasional",
+            summary:
+              "Greenhouse adalah keterampilan, bukan barang yang dibeli. Fasilitas yang berhasil adalah yang timnya paham mengapa setpoint-nya ditetapkan seperti itu.",
+            points: [
+              "Protokol tertulis untuk iklim, irigasi, kebersihan, dan pengamatan hama",
+              "Pelatihan dan operasi bersama selama siklus-siklus pertama",
+              "Evaluasi di mana data, bukan kebiasaan, yang menentukan rencana musim berikutnya",
+            ],
+          },
+        },
+      },
+    },
+  },
+
+  cultivation: {
+    label: "Budidaya",
+    eyebrow: "Budidaya",
+    title: "Tanamannya, dan cara kami",
+    accent: "menjaganya tetap sehat",
+    lede: "Apa yang layak ditanam di bawah naungan di sini, bagaimana tiap tanaman dibudidayakan, dan disiplin kesehatan tanaman yang menjadikan bahan kimia sebagai pilihan terakhir, bukan rutinitas.",
+    groups: {
+      "fruiting-crops": {
+        title: "Tanaman buah",
+        intro:
+          "Sayuran buah membalas kendali iklim dan nutrisi yang ketat. Tanaman ini menuntut, dan justru di sinilah nilai budidaya lingkungan terkendali paling terlihat.",
+        linkLabel: "Budidaya tomat",
+        topics: {
+          tomatoes: {
+            title: "Tomat",
+            summary:
+              "Tanaman acuan greenhouse. Tomat merespons jelas terhadap defisit tekanan uap, strategi irigasi, dan cahaya, sehingga menjadi guru yang sangat baik bagi fasilitas baru.",
+            points: [
+              "Budidaya high-wire dengan beban tandan dan keseimbangan tanaman yang dikelola",
+              "Irigasi yang diatur berdasarkan kelembapan zona akar dan persentase drain",
+              "Iklim disetel agar transpirasi tetap stabil melewati siang hari tropis",
+              "Mutu buah dipantau tanpa merusak untuk kekerasan dan kadar gula",
+            ],
+          },
+        },
+      },
+      "salad-herbs-berries": {
+        title: "Selada, herba, dan beri",
+        intro:
+          "Tanaman siklus pendek yang ditanam di greenhouse dan plant factory, tempat resep cahaya, kendali zona akar, dan kebersihan melakukan sebagian besar pekerjaan.",
+        linkLabel: "Tanaman siklus pendek",
+        topics: {
+          "indoor-lettuce": {
+            title: "Selada indoor",
+            summary:
+              "Cepat, dapat diprediksi, dan sangat responsif terhadap cahaya dan suhu zona akar. Selada adalah tanaman andalan plant factory dan jalan tercepat menuju protokol yang bisa diulang.",
+            points: [
+              "Sistem deep flow dan NFT dengan suhu larutan terkendali",
+              "Resep cahaya yang disetel untuk bobot, warna, dan bentuk daun",
+              "Protokol siklus yang menjaga mutu sepanjang tahun apa pun cuacanya",
+            ],
+          },
+          "indoor-herbs": {
+            title: "Herba indoor",
+            summary:
+              "Nilai per meter persegi tinggi dan permintaan kuat dari usaha kuliner. Herba peka terhadap spektrum cahaya dan aliran udara, sehingga menjadi ujian yang baik untuk presisi sebuah fasilitas.",
+            points: [
+              "Penyetelan spektrum untuk senyawa aroma dan kerapatan daun",
+              "Pengelolaan aliran udara agar kanopi tetap kering dan kompak",
+              "Penanaman bertahap untuk pasokan mingguan yang berkelanjutan",
+            ],
+          },
+          "indoor-spinach": {
+            title: "Bayam indoor",
+            summary:
+              "Sulit dibudidayakan di lahan terbuka tropis karena panas dan tekanan penyakit, sehingga jelas menjadi kandidat untuk lingkungan terkendali.",
+            points: [
+              "Pendinginan zona akar agar tanaman terhindar dari stres panas",
+              "Kendali kelembapan yang ketat untuk menekan penyakit daun",
+              "Budidaya hidroponik yang bersih untuk menghindari patogen tular tanah",
+            ],
+          },
+          "indoor-strawberries": {
+            title: "Stroberi indoor",
+            summary:
+              "Tanaman premium yang biasanya menuntut kondisi dataran tinggi. Di bawah naungan, iklimnya yang dibawa ke tanaman, bukan tanamannya yang dibawa ke gunung.",
+            points: [
+              "Budidaya table-top setinggi kerja di atas substrat terkendali",
+              "Strategi suhu siang dan malam untuk memicu pembungaan dan pembentukan buah",
+              "Penyerbukan terkelola di dalam struktur tertutup",
+            ],
+          },
+        },
+      },
+      "plant-health": {
+        title: "Kesehatan tanaman",
+        intro:
+          "Struktur yang rapat adalah garis pertahanan pertama. Setelah itu semuanya soal disiplin: amati dengan cermat, bertindak lebih awal, dan jaga rumah tanam tetap bersih.",
+        linkLabel: "Strategi perlindungan",
+        topics: {
+          "integrated-pest-management": {
+            title: "Pengendalian hama terpadu",
+            summary:
+              "Cegah masuk lebih dulu, pengendalian hayati kedua, bahan kimia hanya sebagai pilihan terakhir. Dalam sistem tertutup, mencegah jauh lebih murah daripada mengobati.",
+            points: [
+              "Pencegahan fisik lewat jaring, protokol masuk, dan kasa",
+              "Agen pengendali hayati dilepas sebelum tekanan hama meningkat",
+              "Ambang intervensi yang terarah, bukan penyemprotan terjadwal",
+            ],
+          },
+          "scouting-and-monitoring": {
+            title: "Pengamatan dan pemantauan",
+            summary:
+              "Masalah murah diatasi selagi masih kecil dan setempat. Pengamatan terstruktur, didukung pencitraan, menemukannya pada tahap itu.",
+            points: [
+              "Rute pengamatan tetap dengan hitungan tercatat, bukan sekadar kesan",
+              "Perangkap lekat yang dipetakan untuk menemukan tekanan hama per zona",
+              "Pencitraan dan sensor hiperspektral untuk menandai stres sebelum gejala terlihat",
+            ],
+          },
+          "hygiene-protocol": {
+            title: "Protokol kebersihan",
+            summary:
+              "Sebagian besar wabah masuk lewat sepatu, tangan, dan alat. Protokol kebersihan adalah bagian perlindungan tanaman yang paling tidak menarik, tetapi paling menguntungkan.",
+            points: [
+              "Pintu masuk terkendali dengan celup kaki, pakaian khusus, dan kebersihan tangan",
+              "Disinfeksi alat antarbaris dan antarblok",
+              "Pembersihan dan disinfeksi menyeluruh di antara siklus tanam",
+            ],
+          },
+          pollination: {
+            title: "Penyerbukan",
+            summary:
+              "Menutup tanaman berarti juga menutup jalan bagi penyerbuknya. Pembentukan buah lalu menjadi sesuatu yang harus direncanakan petani dengan sengaja.",
+            points: [
+              "Koloni bumblebee atau lebah tanpa sengat yang dikelola di dalam struktur",
+              "Penyerbukan mekanis dan berbantuan aliran udara bila koloni tidak praktis",
+              "Iklim dijaga dalam rentang yang membuat serbuk sari tetap viabel",
+            ],
+          },
+        },
+      },
+    },
+  },
+
+  technology: {
+    label: "Teknologi",
+    eyebrow: "Teknologi",
+    title: "Sistem di balik",
+    accent: "lingkungan terkendali",
+    lede: "Struktur, iklim, air, dan kendali. Masing-masing adalah disiplin tersendiri, dan semuanya hanya bekerja bila dirancang sebagai satu sistem.",
+    groups: {
+      "structure-and-envelope": {
+        title: "Struktur dan selubung",
+        intro:
+          "Bangunan adalah instrumen iklim. Tinggi, ventilasi, dan penutupnya menentukan seberapa berat kerja mesin sesudahnya.",
+        linkLabel: "Desain bangunan",
+        topics: {
+          foundation: {
+            title: "Fondasi",
+            summary:
+              "Lokasi tropis membawa tanah lunak, hujan lebat, dan bekas lahan sawah. Fondasi harus menangani penurunan tanah dan air jauh sebelum menangani angin.",
+            points: [
+              "Penilaian daya dukung tanah dan risiko penurunan di lahan alih fungsi",
+              "Lantai yang ditinggikan dan drainase yang menjauh dari area tanam",
+              "Angkur yang dirancang untuk gaya angkat saat badai",
+            ],
+          },
+          "steel-structure": {
+            title: "Struktur baja",
+            summary:
+              "Tinggi talang adalah angka paling menentukan dalam desain. Rumah tanam yang lebih tinggi menampung penyangga udara yang lebih besar dan stabil, persis yang dibutuhkan iklim panas.",
+            points: [
+              "Tinggi talang yang lega untuk penyangga termal dan sebaran cahaya",
+              "Bentang dan beban disesuaikan dengan angin dan peralatan yang digantung di rangka",
+              "Perlindungan korosi untuk kondisi lembap dan pesisir",
+            ],
+          },
+          "aluminium-system": {
+            title: "Sistem aluminium",
+            summary:
+              "Sistem penutup adalah tempat greenhouse membocorkan udara, air, dan uang. Profil dan karet perapat menentukan apakah struktur mampu menahan iklim yang sudah Anda bayar.",
+            points: [
+              "Profil untuk plastik film, polikarbonat, atau kaca sesuai anggaran dan kebutuhan cahaya",
+              "Perapatan dan saluran embun yang dirancang untuk kelembapan tinggi",
+              "Komponen yang mudah diganti tanpa membongkar bentang",
+            ],
+          },
+          ventilation: {
+            title: "Ventilasi",
+            summary:
+              "Di daerah tropis, ventilasi adalah sistem pendingin utama. Selebihnya hanyalah pelengkap.",
+            points: [
+              "Ventilasi atap dan samping dirancang untuk beban matahari puncak, bukan kondisi rata-rata",
+              "Tata letak yang memanfaatkan angin dominan dan efek cerobong sekaligus",
+              "Kendali ventilasi otomatis yang merespons suhu, kelembapan, dan hujan",
+            ],
+          },
+          "insect-netting": {
+            title: "Jaring serangga",
+            summary:
+              "Jaring adalah perlindungan tanaman termurah yang ada, dan selalu mengorbankan aliran udara. Tugas desainnya adalah mencari keseimbangan yang melindungi tanpa membuat tanaman kepanasan.",
+            points: [
+              "Ukuran mata jaring dipilih sesuai hama sasaran, mulai dari thrips",
+              "Luas ventilasi diperbesar untuk mengimbangi hambatan dari jaring",
+              "Rutinitas inspeksi dan perbaikan, karena satu sobekan meruntuhkan seluruh penghalang",
+            ],
+          },
+          "service-building": {
+            title: "Bangunan servis",
+            summary:
+              "Sortasi, pengemasan, penyimpanan, dan kendali kebersihan berada di luar area tanam. Memisahkannya melindungi tanaman sekaligus produk.",
+            points: [
+              "Penanganan pascapanen dan cold storage di samping area tanam",
+              "Ruang irigasi untuk tangki, dosing, dan filtrasi",
+              "Satu titik untuk pintu masuk, ganti pakaian, dan kendali kebersihan",
+            ],
+          },
+          "rainwater-collection": {
+            title: "Penampungan air hujan",
+            summary:
+              "Atap greenhouse adalah daerah tangkapan yang luas dan bersih. Di negara bercurah hujan tinggi, itulah air irigasi terbaik yang ada, dan datang gratis.",
+            points: [
+              "Kapasitas talang dan penampungan yang cukup untuk melewati musim kemarau",
+              "Pembuangan air hujan pertama (first flush) dan filtrasi sebelum disimpan",
+              "Strategi pencampuran dengan air tanah saat cadangan menipis",
+            ],
+          },
+        },
+      },
+      "heat-humidity-air": {
+        title: "Panas, kelembapan, dan udara",
+        intro:
+          "Tujuannya bukan greenhouse yang sejuk, tetapi tanaman yang bertranspirasi stabil sepanjang hari. Artinya panas, kelembapan, dan karbon dioksida dikelola bersama.",
+        linkLabel: "Strategi iklim",
+        topics: {
+          cooling: {
+            title: "Pendinginan",
+            summary:
+              "Beban radiasi matahari adalah tantangan utama. Pendinginan termurah adalah panas yang tidak pernah dibiarkan masuk, jadi naungan dan ventilasi didahulukan sebelum mesin.",
+            points: [
+              "Paranet dan screen difus untuk memangkas beban radiasi puncak",
+              "Pendinginan evaporatif bila udara yang masuk cukup kering untuk memberi manfaat",
+              "Pendinginan mekanis khusus untuk jam-jam yang benar-benar membutuhkannya",
+            ],
+          },
+          "humidity-control": {
+            title: "Kendali kelembapan",
+            summary:
+              "Kelembapan tinggi menghambat transpirasi, dan tanaman yang tidak bisa bertranspirasi tidak bisa menyerap kalsium atau membuang panas. Inilah masalah khas greenhouse tropis.",
+            points: [
+              "Defisit tekanan uap (VPD) sebagai target kendali yang sebenarnya",
+              "Pergerakan udara untuk memecah lapisan batas di sekitar daun",
+              "Dehumidifikasi dan pertukaran udara terkendali bila ventilasi tidak cukup",
+            ],
+          },
+          horticoolers: {
+            title: "Horticooler dan pengolahan udara",
+            summary:
+              "Unit pengolah udara mengondisikan dan menyebarkan udara saat strategi pasif sudah tidak cukup, terutama di rumah tanam semi-tertutup dan plant factory.",
+            points: [
+              "Udara terkondisi dialirkan merata ke kanopi, bukan ke ruang atap",
+              "Pendinginan dan dehumidifikasi dalam satu tahap pengolahan",
+              "Operasi tertutup yang menahan serangga dan patogen di luar sambil mengelola iklim",
+            ],
+          },
+          "co2-enrichment": {
+            title: "Pengayaan CO2",
+            summary:
+              "Di rumah tanam yang rapat, karbon dioksida menjadi faktor pembatas fotosintesis jauh sebelum cahaya. Pengayaan baru masuk akal bila rumah tanam mampu menahannya.",
+            points: [
+              "Ukur dulu untuk memastikan apakah kadar CO2 memang turun",
+              "Dosis yang diseimbangkan dengan ventilasi yang dibutuhkan iklim",
+              "Paling layak di struktur semi-tertutup dan plant factory",
+            ],
+          },
+        },
+      },
+      "water-and-nutrition": {
+        title: "Air dan nutrisi",
+        intro:
+          "Air masuk berkualitas, nutrisi disetel tepat, air drain dipulihkan. Strategi air tertutup adalah pilihan yang berkelanjutan sekaligus ekonomis.",
+        linkLabel: "Strategi air",
+        topics: {
+          "pre-treatment": {
+            title: "Pra-pengolahan",
+            summary:
+              "Air baku menentukan seluruh desain. Zat besi, kesadahan, salinitas, dan patogen harus ditangani dulu sebelum resep nutrisi ada artinya.",
+            points: [
+              "Analisis lengkap air baku sebagai titik awal",
+              "Filtrasi, penghilangan zat besi, dan pelunakan sesuai kebutuhan",
+              "Disinfeksi agar patogen tidak masuk ke jalur irigasi",
+            ],
+          },
+          fertilization: {
+            title: "Pemupukan",
+            summary:
+              "Resep nutrisi ditulis untuk tanaman, fase, dan iklim tertentu. Resep itu berubah seiring perubahan tanaman dan cuaca.",
+            points: [
+              "Resep diformulasikan dari analisis air baku, bukan dari tabel umum",
+              "Penyesuaian menurut fase tanaman dan musim",
+              "Verifikasi melalui analisis larutan dan air drain",
+            ],
+          },
+          dosing: {
+            title: "Dosing",
+            summary:
+              "Unit dosing adalah tempat resep menjadi kenyataan. Akurasi dan keandalannya langsung terlihat pada keseragaman tanaman.",
+            points: [
+              "Dosing otomatis yang dikendalikan ke target EC dan pH",
+              "Injeksi multi-kanal agar tiap unsur bisa diatur terpisah",
+              "Alarm dan pengaman, karena gangguan dosing berarti kerugian tanaman yang cepat",
+            ],
+          },
+          "post-treatment": {
+            title: "Pasca-pengolahan",
+            summary:
+              "Air yang sudah melewati zona akar membawa nutrisi dan mungkin juga patogen. Mengolahnya adalah yang membuat resirkulasi aman.",
+            points: [
+              "Filtrasi untuk menyaring bahan organik dan partikel",
+              "Disinfeksi dengan ultraviolet, panas, atau filtrasi pasir lambat",
+              "Verifikasi sebelum air kembali ke pasokan",
+            ],
+          },
+          "drainwater-recycling": {
+            title: "Daur ulang air drain",
+            summary:
+              "Resirkulasi adalah alasan budidaya lingkungan terkendali dikenal hemat air. Resirkulasi juga mencegah pupuk keluar dari lokasi sebagai pencemaran.",
+            points: [
+              "Air drain ditampung, diukur, dan dianalisis, bukan dibuang",
+              "Nutrisi dipulihkan dan diseimbangkan kembali ke pasokan",
+              "Pemakaian air dan pupuk per satuan produksi turun tajam",
+            ],
+          },
+          hydroponics: {
+            title: "Hidroponik dan substrat",
+            summary:
+              "Bertanam tanpa tanah memberi kendali langsung atas zona akar, dan menghapus satu kategori penuh penyakit tular tanah dari persoalan.",
+            points: [
+              "Budidaya substrat dengan cocopeat atau rockwool untuk tanaman buah",
+              "Sistem deep flow dan NFT untuk tanaman daun",
+              "Kelembapan, suhu, dan oksigen zona akar dikelola sebagai variabel kendali",
+            ],
+          },
+        },
+      },
+      "control-and-closed-systems": {
+        title: "Kendali dan sistem tertutup",
+        intro:
+          "Lapisan yang menyatukan semuanya: perangkat lunak kendali, strategi energi dan air, serta produksi yang sepenuhnya tertutup.",
+        linkLabel: "Sistem kendali",
+        topics: {
+          automation: {
+            title: "Otomasi dan kendali",
+            summary:
+              "Sensor, pengendali, dan dashboard yang menjalankan rumah tanam sesuai strategi, bukan lewat serangkaian reaksi manual.",
+            points: [
+              "Iklim, irigasi, dan pencahayaan di bawah kendali yang terkoordinasi",
+              "Pencatatan terus-menerus agar setiap keputusan bisa ditinjau terhadap hasilnya",
+              "Pemantauan jarak jauh dan alarm untuk kondisi di luar rentang",
+              "Perangkat keras terbuka dan terjangkau di mana pun ia mampu menjalankan tugasnya",
+            ],
+          },
+          sustainability: {
+            title: "Keberlanjutan",
+            summary:
+              "Efisiensi sumber daya bukan fitur terpisah. Dalam sistem tertutup, itulah wujud rekayasa yang baik.",
+            points: [
+              "Air diresirkulasi, bukan dibuang",
+              "Pupuk tetap di dalam siklus dan tidak masuk ke perairan",
+              "Kebutuhan energi dikurangi lewat desain sebelum dipenuhi oleh pasokan",
+              "Pembangkit surya disesuaikan dengan beban siang hari fasilitas",
+            ],
+          },
+          "plant-factories": {
+            title: "Plant factory",
+            summary:
+              "Produksi bertingkat yang sepenuhnya tertutup dengan cahaya buatan. Iklim sepenuhnya lepas dari cuaca di luar, dengan konsekuensi tagihan energi.",
+            points: [
+              "Budidaya bertingkat dengan resep cahaya yang disetel per tanaman",
+              "Sepenuhnya lepas dari musim, cuaca, dan kualitas lahan",
+              "Hasil per meter persegi tertinggi sekaligus intensitas energi tertinggi",
+              "Paling cocok untuk tanaman siklus pendek bernilai tinggi yang dekat dengan konsumen",
+            ],
+          },
+        },
+      },
+    },
+  },
+
+  greenhouses: {
+    label: "Greenhouse",
+    eyebrow: "Greenhouse",
+    title: "Struktur untuk",
+    accent: "hortikultura tropis",
+    lede: "Dari screenhouse berbiaya rendah hingga plant factory yang sepenuhnya tertutup. Setiap langkah memberi kendali lebih besar, dan sebagai gantinya menuntut modal dan keterampilan lebih banyak.",
+    groups: {
+      "permanent-structures": {
+        title: "Struktur baja permanen",
+        intro:
+          "Standar yang tahan lama: rangka baja galvanis yang membawa plastik film, polikarbonat, atau kaca. Dibangun untuk puluhan tahun pemakaian dan untuk peralatan yang dibutuhkan iklim terkendali.",
+        linkLabel: "Dibangun untuk bertahan",
+        lede: "Greenhouse baja adalah pilihan jangka panjang. Biaya awalnya lebih besar, dan sebagai gantinya Anda mendapat struktur yang menjaga bentuknya, mampu membawa screen dan irigasi, serta bisa ditingkatkan alih-alih diganti.",
+        topics: {
+          "frame-and-lifespan": {
+            title: "Rangka dan umur pakai",
+            summary:
+              "Baja galvanis celup panas dipilih untuk kondisi lembap, kadang pesisir, tempat korosi, bukan beban, yang mengakhiri umur sebuah struktur.",
+            points: [
+              "Puluhan tahun pemakaian dengan perawatan struktur yang rendah",
+              "Perlindungan korosi untuk kelembapan dan udara bergaram",
+              "Komponen dapat diganti tanpa membongkar seluruh bentang",
+            ],
+          },
+          "gutter-height": {
+            title: "Tinggi talang dan iklim",
+            summary:
+              "Ketinggian adalah kendali iklim termurah yang ada. Rumah tanam yang lebih tinggi menampung penyangga udara lebih besar, yang meredam puncak siang hari sebelum mesin apa pun menyala.",
+            points: [
+              "Volume udara besar yang meredam fluktuasi suhu",
+              "Sebaran cahaya yang lebih baik di seluruh kanopi",
+              "Ruang untuk screen, talang, dan tanaman high-wire",
+            ],
+          },
+          "covering-choice": {
+            title: "Pilihan penutup",
+            summary:
+              "Plastik film, polikarbonat, dan kaca berbeda dalam transmisi cahaya, umur pakai, dan biaya. Pilihan yang tepat bergantung pada tanaman dan berapa lama fasilitas harus bertahan.",
+            points: [
+              "Plastik film: biaya terendah, diganti berkala",
+              "Polikarbonat: awet, difusi baik, biaya menengah",
+              "Kaca: transmisi tertinggi dan umur terpanjang, biaya tertinggi",
+            ],
+          },
+          "upgrade-path": {
+            title: "Ruang untuk ditingkatkan",
+            summary:
+              "Rangka baja layak dipilih bila Anda memperkirakan usaha akan berkembang menuju kendali yang lebih besar daripada saat memulai.",
+            points: [
+              "Screen, pendinginan, dan CO2 ditambahkan kemudian tanpa membangun ulang",
+              "Beban untuk irigasi, pencahayaan, dan sensor diperhitungkan sejak awal",
+              "Investasi bertahap seiring usaha membuktikan diri",
+            ],
+          },
+        },
+      },
+      "local-material-structures": {
+        title: "Struktur bahan lokal",
+        intro:
+          "Struktur dari bahan lokal memangkas biaya modal secara drastis dan membuat budidaya terlindung terjangkau bagi petani kecil dan kelompok tani.",
+        linkLabel: "Bangunan terjangkau",
+        lede: "Tidak semua petani membutuhkan, atau mampu membiayai, greenhouse baja. Struktur bambu atau kayu yang dibangun dengan baik memberikan dua perlindungan yang paling penting, dari hujan dan dari serangga, dengan sebagian kecil biayanya.",
+        topics: {
+          "local-materials": {
+            title: "Bahan lokal, perbaikan lokal",
+            summary:
+              "Struktur dari bahan yang tersedia di sekitar bisa dirawat oleh penggunanya sendiri, tanpa menunggu pemasok.",
+            points: [
+              "Bambu dan kayu yang didapat dan dikerjakan secara lokal",
+              "Perbaikan murah dan cepat setelah kerusakan akibat badai",
+              "Keterampilan konstruksi yang tetap tinggal di masyarakat",
+            ],
+          },
+          "highest-return-protections": {
+            title: "Dua perlindungan paling menguntungkan",
+            summary:
+              "Sebagian besar kenaikan hasil dan mutu dari budidaya terlindung berasal dari menjaga tanaman dari hujan dan serangga. Keduanya bisa dicapai dengan murah.",
+            points: [
+              "Naungan dari hujan, yang menekan penyakit daun secara tajam",
+              "Jaring serangga, yang mengurangi tekanan hama dan penyemprotan",
+              "Pengelolaan naungan pada jam-jam terpanas",
+            ],
+          },
+          "honest-limits": {
+            title: "Batasan yang jujur",
+            summary:
+              "Struktur berbiaya rendah adalah langkah pertama, bukan greenhouse versi kecil. Penting untuk jelas tentang apa yang tidak bisa dilakukannya.",
+            points: [
+              "Umur pakai lebih pendek daripada baja, dengan pembangunan ulang berkala",
+              "Kendali iklim terbatas selain ventilasi dan naungan",
+              "Talang lebih rendah, sehingga penyangga termal lebih kecil",
+            ],
+          },
+          "first-step": {
+            title: "Langkah pertama yang realistis",
+            summary:
+              "Bagi banyak kelompok tani, urutan yang tepat adalah belajar budidaya terlindung dengan murah, membuktikan pasarnya, lalu berinvestasi ulang ke struktur yang lebih mumpuni.",
+            points: [
+              "Risiko modal lebih rendah selama usaha masih belajar",
+              "Protokol dan kebiasaan yang bisa dibawa ke fasilitas lebih besar nanti",
+              "Bukti untuk pembiayaan tahap berikutnya",
+            ],
+          },
+        },
+      },
+      "fully-managed-environments": {
+        title: "Lingkungan terkelola penuh",
+        intro:
+          "Disiplin yang utuh: struktur, iklim, irigasi, dan kendali dirancang bersama, sehingga lingkungan tumbuh menjadi serangkaian keputusan, bukan ramalan.",
+        linkLabel: "Disiplin yang utuh",
+        lede: "Pertanian lingkungan terkendali bukan jenis bangunan, melainkan cara kerja. Struktur, sistem iklim, irigasi, dan data semuanya melayani satu tujuan: menempatkan petani sebagai pengendali lingkungan, bukan sekadar bereaksi terhadapnya.",
+        topics: {
+          "designed-as-one-system": {
+            title: "Dirancang sebagai satu sistem",
+            summary:
+              "Struktur, iklim, dan irigasi saling membatasi. Merancangnya secara terpisah membuat fasilitas akhirnya melawan dirinya sendiri.",
+            points: [
+              "Kapasitas ventilasi disesuaikan dengan penutup dan beban matahari",
+              "Strategi irigasi disesuaikan dengan iklim yang benar-benar bisa dijaga rumah tanam",
+              "Sistem kendali ditentukan bersama perangkat keras, bukan sesudahnya",
+            ],
+          },
+          "steer-to-a-target": {
+            title: "Arahkan ke target tanaman",
+            summary:
+              "Setpoint bukan angka yang terasa nyaman, melainkan kondisi yang dibutuhkan tanaman agar bertranspirasi dan tumbuh stabil sepanjang hari.",
+            points: [
+              "VPD dijaga dalam rentang kerja tanaman",
+              "Zona akar dan kanopi dikelola bersama, tidak terpisah",
+              "Strategi disesuaikan menurut fase tanaman, bukan dibiarkan tetap",
+            ],
+          },
+          "data-at-the-centre": {
+            title: "Data sebagai pusat",
+            summary:
+              "Pengukuran terus-menerus adalah yang mengubah satu musim tanam menjadi sesuatu yang bisa ditinjau, dijelaskan, dan diperbaiki.",
+            points: [
+              "Iklim, zona akar, dan cahaya dicatat terus-menerus",
+              "Pengukuran tanaman tanpa merusak untuk mendeteksi stres lebih awal",
+              "Evaluasi musim tempat data menentukan rencana berikutnya",
+            ],
+          },
+          "predictable-output": {
+            title: "Hasil yang dapat diprediksi",
+            summary:
+              "Nilai komersial dari kendali bukan hanya hasil panen yang lebih tinggi, tetapi kemampuan menjanjikan volume dan mutu kepada pembeli pada tanggal tertentu.",
+            points: [
+              "Produksi sepanjang tahun tanpa bergantung musim",
+              "Mutu yang konsisten sehingga kontrak tetap terjaga",
+              "Perencanaan yang bisa diandalkan rantai dingin dan pembeli",
+            ],
+          },
+        },
+      },
+      "closed-plant-factories": {
+        title: "Plant factory tertutup",
+        intro:
+          "Produksi tertutup, bertingkat, dan bercahaya buatan tanpa ketergantungan pada sinar matahari atau lahan. Pilihan paling terkendali yang ada, sekaligus paling boros energi.",
+        linkLabel: "Produksi bertingkat",
+        lede: "Plant factory menghapus cuaca dari persoalan sepenuhnya. Setiap input dipilih: spektrum dan durasi cahaya, suhu, kelembapan, karbon dioksida, dan nutrisi. Apa yang Anda dapat dalam kendali, Anda bayar dengan energi.",
+        topics: {
+          "stacked-production": {
+            title: "Produksi bertingkat",
+            summary:
+              "Bertanam secara bertingkat melipatgandakan hasil dari satu tapak, dan itulah yang membuat produksi layak di lahan mahal yang dekat dengan konsumen.",
+            points: [
+              "Beberapa tingkat tanam dalam satu bangunan",
+              "Hasil per meter persegi tertinggi dari sistem mana pun",
+              "Tidak bergantung pada kualitas lahan atau drainase",
+            ],
+          },
+          "light-recipes": {
+            title: "Resep cahaya",
+            summary:
+              "Dengan cahaya buatan, spektrum dan fotoperiode menjadi input yang bisa diatur untuk membentuk hasil, warna, tekstur, dan rasa.",
+            points: [
+              "Spektrum disetel per tanaman dan per fase pertumbuhan",
+              "Fotoperiode diatur untuk mendorong perkembangan sesuai jadwal",
+              "Cahaya merata di setiap tingkat",
+            ],
+          },
+          "energy-strategy": {
+            title: "Strategi energi",
+            summary:
+              "Energi adalah faktor ekonomi penentu. Plant factory hanya berhasil bila nilai tanaman dan rencana energi dipertimbangkan bersama sejak hari pertama.",
+            points: [
+              "Pencahayaan dan pendinginan sebagai beban terbesar",
+              "Panas dari lampu dipulihkan, bukan sekadar dibuang",
+              "Pembangkit surya disesuaikan dengan beban siang hari",
+            ],
+          },
+          "best-fit-crops": {
+            title: "Paling cocok untuk apa",
+            summary:
+              "Plant factory menguntungkan untuk tanaman siklus pendek, bernilai tinggi, dan kompak. Plant factory juga instrumen riset yang sangat baik.",
+            points: [
+              "Sayuran daun, herba, dan microgreen",
+              "Produksi bibit dan bahan pindah tanam dengan mutu konsisten",
+              "Riset yang menuntut setiap variabel dijaga stabil",
+            ],
+          },
+        },
+      },
+    },
+  },
+};
+
+function localizeSection(section: IFSection): IFSection {
+  const s = IF_SECTIONS_ID[section.slug];
+  if (!s) return section;
+  const { groups: groupCopy, ...sectionCopy } = s;
+  return {
+    ...section,
+    ...sectionCopy,
+    groups: section.groups.map((group) => {
+      const g = groupCopy[group.slug];
+      if (!g) return group;
+      const { topics: topicCopy, ...rest } = g;
+      return {
+        ...group,
+        ...rest,
+        topics: group.topics.map((topic) => ({ ...topic, ...topicCopy[topic.slug] })),
+      };
+    }),
+  };
+}
+
+const IF_SECTIONS_LOCAL_ID: IFSection[] = IF_SECTIONS.map(localizeSection);
+
+/** Sections, groups, and topics in the visitor's language (same slugs and icons). */
+export function ifSectionsFor(lang: Lang): IFSection[] {
+  return lang === "id" ? IF_SECTIONS_LOCAL_ID : IF_SECTIONS;
+}
+
+/** `findIFSection` in the visitor's language. */
+export function findIFSectionFor(slug: string, lang: Lang): IFSection | undefined {
+  return ifSectionsFor(lang).find((s) => s.slug === slug);
+}
+
+const IF_PILLARS_ID: Record<string, { label: string; blurb: string }> = {
+  approach: {
+    label: "Pendekatan",
+    blurb:
+      "Tanaman apa, lokasi mana, dan seberapa banyak kendali yang benar-benar sepadan bagi tanaman dan hitungan bisnisnya.",
+  },
+  cultivation: {
+    label: "Budidaya",
+    blurb:
+      "Tanaman di bawah naungan, dari tomat hingga selada, herba, dan beri, ditambah disiplin kesehatan tanaman yang menjaganya tetap bersih.",
+  },
+  technology: {
+    label: "Teknologi",
+    blurb: "Bangunan, udara, air, dan lapisan kendali, dirancang sebagai satu sistem untuk kondisi tropis.",
+  },
+  greenhouses: {
+    label: "Greenhouse",
+    blurb:
+      "Dari bangunan bahan lokal yang terjangkau hingga struktur baja permanen dan plant factory yang sepenuhnya tertutup.",
+  },
+};
+
+export function ifPillarsFor(lang: Lang): typeof IF_PILLARS {
+  return localizeAll(IF_PILLARS, IF_PILLARS_ID, (p) => p.slug, lang);
+}
+
+const IF_TROPICAL_POINTS_ID: Record<string, { title: string; body: string }> = {
+  "Humidity, not cold, is the constraint": {
+    title: "Kendalanya kelembapan, bukan dingin",
+    body: "Tugas di sini adalah mengeluarkan panas dan uap air, bukan menahannya, sehingga defisit tekanan uap (VPD), bukan suhu saja, menjadi target kendali.",
+  },
+  "Light is abundant, heat comes with it": {
+    title: "Cahaya melimpah, panas ikut datang",
+    body: "Di dekat khatulistiwa, sinar matahari jarang menjadi pembatas. Mengelola panas yang datang bersamanya adalah pembeda antara struktur yang bekerja dan sebuah oven.",
+  },
+  "Pest pressure never pauses": {
+    title: "Tekanan hama tidak pernah berhenti",
+    body: "Tanpa musim dingin yang memutus siklus hidup hama, pencegahan masuk dan kebersihan harus bekerja sepanjang tahun, bukan musiman.",
+  },
+  "Rain is a resource, not a nuisance": {
+    title: "Hujan adalah sumber daya, bukan gangguan",
+    body: "Curah hujan tinggi menjadikan tangkapan atap sumber irigasi paling bersih dan murah, asalkan penampungan dan pembuangan air hujan pertama dirancang sejak awal.",
+  },
+};
+
+export function ifTropicalPointsFor(lang: Lang): typeof IF_TROPICAL_POINTS {
+  return localizeAll(IF_TROPICAL_POINTS, IF_TROPICAL_POINTS_ID, (p) => p.title, lang);
+}
+
+const IF_CAPABILITIES_ID: Record<string, { label: string }> = {
+  "Climate control systems": { label: "Sistem kendali iklim" },
+  "Hyperspectral plant sensing": { label: "Sensor tanaman hiperspektral" },
+  "IoT sensor networks": { label: "Jaringan sensor IoT" },
+  "Hydroponics and fertigation": { label: "Hidroponik dan fertigasi" },
+  "Plant factory systems": { label: "Sistem plant factory" },
+  "Automation and dashboards": { label: "Otomasi dan dashboard" },
+  "Water recirculation": { label: "Resirkulasi air" },
+  "Pollination and IPM": { label: "Penyerbukan dan PHT" },
+};
+
+export function ifCapabilitiesFor(lang: Lang): typeof IF_CAPABILITIES {
+  return localizeAll(IF_CAPABILITIES, IF_CAPABILITIES_ID, (c) => c.label, lang);
+}
+
+const IF_PROCESS_ID: Record<string, { title: string; body: string }> = {
+  "01": {
+    title: "Lingkup dan lokasi",
+    body: "Kami melihat tanaman, pasar, lokasi, serta air dan listrik yang tersedia, lalu menyampaikan terus terang apakah lingkungan terkendali memang jawaban yang tepat.",
+  },
+  "02": {
+    title: "Desain dan uji coba",
+    body: "Brief desain dan, bila perlu, blok uji coba berinstrumen agar angka di balik rencana berasal dari lokasi Anda, bukan dari katalog.",
+  },
+  "03": {
+    title: "Bangun dan pasang instrumen",
+    body: "Struktur, iklim, dan irigasi diterapkan bersama, dengan sensor dan kendali dipasang sejak awal, bukan ditambahkan belakangan.",
+  },
+  "04": {
+    title: "Operasikan dan tingkatkan",
+    body: "Protokol, pelatihan, dan operasi bersama selama siklus-siklus pertama, lalu evaluasi rutin tempat data yang tercatat menentukan target musim berikutnya.",
+  },
+};
+
+export function ifProcessFor(lang: Lang): typeof IF_PROCESS {
+  return localizeAll(IF_PROCESS, IF_PROCESS_ID, (p) => p.step, lang);
+}

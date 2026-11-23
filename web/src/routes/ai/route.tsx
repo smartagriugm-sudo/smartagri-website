@@ -5,6 +5,7 @@ import { useAuth } from '../../lib/auth/auth'
 import { body } from '../../lib/fonts'
 import { AI_ASSISTANT_ENABLED } from '../../lib/features'
 import SiteHeader from '../../components/SiteHeader'
+import { useT } from '../../lib/i18n'
 
 export const Route = createFileRoute('/ai')({
   component: AILayout,
@@ -27,6 +28,7 @@ export const Route = createFileRoute('/ai')({
 function AILayout() {
   const { user, loading, isConfigured } = useAuth()
   const router = useRouter()
+  const t = useT()
 
   const blocked = isConfigured && !loading && !user
 
@@ -45,7 +47,9 @@ function AILayout() {
           <div className="flex flex-col items-center gap-3 text-neutral-500">
             <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
             <p className="text-sm" style={body}>
-              {loading ? 'Checking access...' : 'Redirecting to sign in...'}
+              {loading
+                ? t({ en: 'Checking access...', id: 'Memeriksa akses...' })
+                : t({ en: 'Redirecting to sign in...', id: 'Mengalihkan ke halaman masuk...' })}
             </p>
           </div>
         </section>

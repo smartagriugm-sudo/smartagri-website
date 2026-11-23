@@ -25,6 +25,7 @@ import {
   relativeTime,
 } from "../lib/inventory-stats";
 import { EASE, META } from "./NoteParts";
+import { localeOf, useLang, useT } from "../lib/i18n";
 
 /* ---------------- shared primitives ---------------- */
 
@@ -54,6 +55,7 @@ function InstrumentLink({
 function CountUp({ value, decimals = 0 }: { value: number; decimals?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.6 });
+  const lang = useLang();
   const [shown, setShown] = useState(0);
   useEffect(() => {
     if (!inView) return;
@@ -73,7 +75,7 @@ function CountUp({ value, decimals = 0 }: { value: number; decimals?: number }) 
   }, [inView, value]);
   return (
     <span ref={ref} className="tabular-nums">
-      {shown.toFixed(decimals)}
+      {shown.toLocaleString(localeOf(lang), { minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: false })}
     </span>
   );
 }
@@ -135,6 +137,8 @@ function Skeleton({ className = "", dark = false }: { className?: string; dark?:
 }
 
 function Empty({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
+  const t = useT();
+  if (children == null) children = t({ en: "No data.", id: "Belum ada data." });
   return (
     <p className={`py-6 text-center text-sm ${dark ? "text-white/50" : "text-neutral-400"}`} style={body}>
       {children}
@@ -188,6 +192,7 @@ export function KpiCard({
 }
 
 function DeltaBadge({ delta }: { delta: Delta }) {
+  const t = useT();
   if (delta.dir === "flat" && delta.current === 0 && delta.previous === 0) return null;
   const isUp = delta.dir === "up";
   const isDown = delta.dir === "down";
@@ -197,12 +202,15 @@ function DeltaBadge({ delta }: { delta: Delta }) {
       ? "bg-[#E5484D]/12 text-[#B42318]"
       : "bg-neutral-100 text-neutral-500";
   const Icon = isUp ? TrendingUp : isDown ? TrendingDown : Minus;
-  const text = delta.pct == null ? "new" : `${Math.abs(Math.round(delta.pct))}%`;
+  const text = delta.pct == null ? t({ en: "new", id: "baru" }) : `${Math.abs(Math.round(delta.pct))}%`;
   return (
     <span
       className={`mb-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${tone}`}
       style={body}
-      title={`${delta.current} this month vs ${delta.previous} last month`}
+      title={t({
+        en: `${delta.current} this month vs ${delta.previous} last month`,
+        id: `${delta.current} bulan ini vs ${delta.previous} bulan lalu`,
+      })}
     >
       <Icon className="h-3.5 w-3.5" />
       {text}
@@ -227,12 +235,13 @@ export function GaugeCard({
   loading?: boolean;
   empty?: string;
 }) {
+  const t = useT();
   return (
-    <Card title={title} eyebrow="Rate" className="h-full">
+    <Card title={title} eyebrow={t({ en: "Rate", id: "Tingkat" })} className="h-full">
       {loading ? (
         <Skeleton className="mx-auto h-28 w-28 rounded-full" />
       ) : pct == null ? (
-        <Empty>{empty ?? "Not enough data."}</Empty>
+        <Empty>{empty ?? t({ en: "Not enough data.", id: "Data belum cukup." })}</Empty>
       ) : (
         <div className="flex items-center gap-5">
           <Donut pct={pct} tone={tone} />
@@ -264,12 +273,13 @@ export function BigStatCard({
 }) {
   const num = value == null ? NaN : Number(value);
   const decimals = value?.includes(".") ? value.split(".")[1]!.length : 0;
+  const t = useT();
   return (
-    <Card title={title} eyebrow="Average" className="h-full">
+    <Card title={title} eyebrow={t({ en: "Average", id: "Rata-rata" })} className="h-full">
       {loading ? (
         <Skeleton className="h-12 w-28" />
       ) : value == null ? (
-        <Empty>{empty ?? "Not enough data."}</Empty>
+        <Empty>{empty ?? t({ en: "Not enough data.", id: "Data belum cukup." })}</Empty>
       ) : (
         <>
           <div className="text-5xl font-semibold tracking-[-0.035em] text-neutral-900" style={display}>
@@ -330,19 +340,21 @@ export function CurrentlyOutPanel({
   overdueCount: number;
   loading?: boolean;
 }) {
+  const t = useT();
+  const lang = useLang();
   return (
     <Card
-      title="Currently out and overdue"
-      eyebrow="Right now"
+      title={t({ en: "Currently out and overdue", id: "Sedang dipinjam dan terlambat" })}
+      eyebrow={t({ en: "Right now", id: "Saat ini" })}
       action={
         overdueCount > 0 ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F59E0B]/15 px-3 py-1.5 text-xs font-medium text-[#8A5300]" style={body}>
             <AlertTriangle className="h-3.5 w-3.5" />
-            {overdueCount} overdue
+            {t({ en: `${overdueCount} overdue`, id: `${overdueCount} terlambat` })}
           </span>
         ) : (
           <span className={`rounded-full bg-[#F3F7F6] px-3 py-1.5 text-neutral-500 ${META}`} style={body}>
-            {rows.length} out
+            {t({ en: `${rows.length} out`, id: `${rows.length} dipinjam` })}
           </span>
         )
       }
@@ -353,13 +365,19 @@ export function CurrentlyOutPanel({
           <Skeleton className="h-10 w-full" />
         </div>
       ) : rows.length === 0 ? (
-        <Empty>Nothing is checked out right now.</Empty>
+        <Empty>{t({ en: "Nothing is checked out right now.", id: "Tidak ada yang sedang dipinjam." })}</Empty>
       ) : (
         <div className="-mx-6 overflow-x-auto md:-mx-7">
           <table className="w-full min-w-[620px] border-collapse text-left">
             <thead>
               <tr className="border-y border-[#0B6477]/10 bg-[#F3F7F6]/70 text-neutral-400">
-                {["Instrument", "Borrower", "Out", "Due", "Status"].map((h) => (
+                {[
+                  t({ en: "Instrument", id: "Instrumen" }),
+                  t({ en: "Borrower", id: "Peminjam" }),
+                  t({ en: "Out", id: "Keluar" }),
+                  t({ en: "Due", id: "Batas" }),
+                  t({ en: "Status", id: "Status" }),
+                ].map((h) => (
                   <th key={h} className="px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.1em] first:pl-6 md:first:pl-7" style={body}>
                     {h}
                   </th>
@@ -387,21 +405,21 @@ export function CurrentlyOutPanel({
                     {r.borrower}
                   </td>
                   <td className="whitespace-nowrap px-6 py-3 text-neutral-600" style={body}>
-                    {fmt(r.checkoutAt)}
+                    {fmt(r.checkoutAt, lang)}
                   </td>
                   <td className="whitespace-nowrap px-6 py-3 text-neutral-600" style={body}>
-                    {r.due ? fmt(r.due) : "-"}
+                    {r.due ? fmt(r.due, lang) : "-"}
                   </td>
                   <td className="px-6 py-3" style={body}>
                     {r.overdueDays ? (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E5484D]/12 px-2.5 py-1 text-xs font-medium text-[#B42318]">
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#E5484D]" />
-                        {r.overdueDays}d overdue
+                        {t({ en: `${r.overdueDays}d overdue`, id: `terlambat ${r.overdueDays} hr` })}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-[#14919B]/15 px-2.5 py-1 text-xs font-medium text-[#0B6477]">
                         <span className="h-1.5 w-1.5 rounded-full bg-[#14919B]" />
-                        Out
+                        {t({ en: "Out", id: "Dipinjam" })}
                       </span>
                     )}
                   </td>
@@ -426,13 +444,15 @@ export function ActivityFeed({
   now: Date;
   loading?: boolean;
 }) {
+  const t = useT();
+  const lang = useLang();
   const meta = {
-    borrow: { Icon: ArrowUpRight, tone: "#14919B", bg: "bg-[#14919B]/12", verb: "took out" },
-    return: { Icon: ArrowDownLeft, tone: "#12B886", bg: "bg-[#12B886]/12", verb: "returned" },
-    check: { Icon: Wrench, tone: "#8A5300", bg: "bg-[#F59E0B]/15", verb: "inspected" },
+    borrow: { Icon: ArrowUpRight, tone: "#14919B", bg: "bg-[#14919B]/12", verb: t({ en: "took out", id: "meminjam" }) },
+    return: { Icon: ArrowDownLeft, tone: "#12B886", bg: "bg-[#12B886]/12", verb: t({ en: "returned", id: "mengembalikan" }) },
+    check: { Icon: Wrench, tone: "#8A5300", bg: "bg-[#F59E0B]/15", verb: t({ en: "inspected", id: "memeriksa" }) },
   } as const;
   return (
-    <Card title="Recent activity" eyebrow="Logbook" className="h-full">
+    <Card title={t({ en: "Recent activity", id: "Aktivitas terbaru" })} eyebrow="Logbook" className="h-full">
       {loading ? (
         <div className="space-y-3">
           {[0, 1, 2, 3].map((i) => (
@@ -443,7 +463,7 @@ export function ActivityFeed({
           ))}
         </div>
       ) : events.length === 0 ? (
-        <Empty>No activity yet.</Empty>
+        <Empty>{t({ en: "No activity yet.", id: "Belum ada aktivitas." })}</Empty>
       ) : (
         <ul className="relative flex flex-col gap-4">
           {/* Timeline spine behind the icons */}
@@ -471,7 +491,7 @@ export function ActivityFeed({
                     </InstrumentLink>
                   </p>
                   <p className={`mt-1 text-neutral-400 ${META}`} style={body}>
-                    {relativeTime(e.at, now)}
+                    {relativeTime(e.at, now, lang)}
                   </p>
                 </div>
               </motion.li>
@@ -492,9 +512,14 @@ export function StatusBreakdown({
   rows: StatusRow[];
   loading?: boolean;
 }) {
+  const t = useT();
   const shown = rows.filter((r) => r.available && r.value > 0);
   return (
-    <Card title="Loan status breakdown" eyebrow="All loans" className="h-full">
+    <Card
+      title={t({ en: "Loan status breakdown", id: "Rincian status pinjaman" })}
+      eyebrow={t({ en: "All loans", id: "Semua pinjaman" })}
+      className="h-full"
+    >
       {loading ? (
         <div className="space-y-2">
           {[0, 1, 2, 3].map((i) => (
@@ -531,7 +556,9 @@ export function StatusBreakdown({
                 <span className="flex-1 text-[15px] text-neutral-700" style={body}>
                   {r.label}
                   {!r.available && (
-                    <span className="ml-1.5 text-xs text-neutral-400">· needs a due-date / status field</span>
+                    <span className="ml-1.5 text-xs text-neutral-400">
+                      · {t({ en: "needs a due-date / status field", id: "butuh kolom batas kembali / status" })}
+                    </span>
                   )}
                 </span>
                 <span className="text-[15px] font-medium tabular-nums text-neutral-900" style={body}>
@@ -573,7 +600,7 @@ export function BarList({
       </div>
     );
   }
-  if (rows.length === 0) return <Empty>{empty ?? "No data."}</Empty>;
+  if (rows.length === 0) return <Empty>{empty}</Empty>;
   const max = Math.max(1, ...rows.map((r) => r.value));
   return (
     // The list triggers the reveal: a bar at scale 0 has no area, so it could
@@ -632,9 +659,10 @@ export function MonthlyChart({
   loading?: boolean;
   dark?: boolean;
 }) {
+  const t = useT();
   const [hover, setHover] = useState<string | null>(null);
   if (loading) return <Skeleton className="h-64 w-full" dark={dark} />;
-  if (data.length === 0) return <Empty dark={dark}>No activity yet.</Empty>;
+  if (data.length === 0) return <Empty dark={dark}>{t({ en: "No activity yet.", id: "Belum ada aktivitas." })}</Empty>;
   const max = Math.max(1, ...data.map((d) => d.value));
   const last = data[data.length - 1]!.key;
   return (
@@ -702,8 +730,8 @@ export function MonthlyChart({
   );
 }
 
-function fmt(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
+function fmt(iso: string, lang: "en" | "id"): string {
+  return new Date(iso).toLocaleDateString(localeOf(lang), {
     year: "numeric",
     month: "short",
     day: "numeric",

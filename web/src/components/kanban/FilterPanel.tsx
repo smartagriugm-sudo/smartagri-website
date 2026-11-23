@@ -13,20 +13,21 @@ import {
 } from "../../lib/kanban";
 import { useBoard } from "./board-context";
 import { Avatar, useDismiss } from "./parts";
+import { useLang, useT, type Bi } from "../../lib/i18n";
 
-const DUE_OPTIONS: { key: DueFilter; label: string }[] = [
-  { key: "none", label: "No dates" },
-  { key: "overdue", label: "Overdue" },
-  { key: "day", label: "Due in the next day" },
-  { key: "week", label: "Due in the next week" },
-  { key: "month", label: "Due in the next month" },
+const DUE_OPTIONS: { key: DueFilter; label: Bi }[] = [
+  { key: "none", label: { en: "No dates", id: "Tanpa tanggal" } },
+  { key: "overdue", label: { en: "Overdue", id: "Terlambat" } },
+  { key: "day", label: { en: "Due in the next day", id: "Tenggat dalam sehari" } },
+  { key: "week", label: { en: "Due in the next week", id: "Tenggat dalam seminggu" } },
+  { key: "month", label: { en: "Due in the next month", id: "Tenggat dalam sebulan" } },
 ];
 
-const ACTIVITY_OPTIONS: { key: ActivityFilter; label: string }[] = [
-  { key: "1w", label: "Active in the last week" },
-  { key: "2w", label: "Active in the last two weeks" },
-  { key: "4w", label: "Active in the last four weeks" },
-  { key: "stale", label: "No activity in the last four weeks" },
+const ACTIVITY_OPTIONS: { key: ActivityFilter; label: Bi }[] = [
+  { key: "1w", label: { en: "Active in the last week", id: "Aktif dalam seminggu terakhir" } },
+  { key: "2w", label: { en: "Active in the last two weeks", id: "Aktif dalam dua minggu terakhir" } },
+  { key: "4w", label: { en: "Active in the last four weeks", id: "Aktif dalam empat minggu terakhir" } },
+  { key: "stale", label: { en: "No activity in the last four weeks", id: "Tanpa aktivitas dalam empat minggu terakhir" } },
 ];
 
 function toggle<T>(list: T[], value: T): T[] {
@@ -73,6 +74,8 @@ export default function FilterPanel({
   onChange: (f: CardFilter) => void;
 }) {
   const { data, userId } = useBoard();
+  const t = useT();
+  const lang = useLang();
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(ref, open, onClose);
   if (!open) return null;
@@ -82,7 +85,7 @@ export default function FilterPanel({
     <div
       ref={ref}
       role="dialog"
-      aria-label="Filter cards"
+      aria-label={t({ en: "Filter cards", id: "Filter kartu" })}
       className="absolute right-0 top-full z-40 mt-2 max-h-[calc(100dvh-180px)] w-[340px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-[#0B6477]/10 bg-white p-4 text-neutral-800 shadow-2xl"
       style={body}
     >
@@ -93,7 +96,7 @@ export default function FilterPanel({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close filter"
+          aria-label={t({ en: "Close filter", id: "Tutup filter" })}
           className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 hover:bg-neutral-900/5"
         >
           <X className="h-4 w-4" />
@@ -101,23 +104,23 @@ export default function FilterPanel({
       </div>
 
       <label className="mt-3 block px-2 text-xs font-medium text-neutral-500">
-        Keyword
+        {t({ en: "Keyword", id: "Kata kunci" })}
         <input
           autoFocus
           value={filter.q}
           onChange={(e) => set({ q: e.target.value })}
-          placeholder="Search titles, descriptions, labels, members"
+          placeholder={t({ en: "Search titles, descriptions, labels, members", id: "Cari judul, deskripsi, label, anggota" })}
           className="mt-1.5 h-10 w-full rounded-lg border border-[#0B6477]/15 px-3 text-sm text-neutral-800 outline-none placeholder:text-neutral-400 focus:border-[#14919B] focus:ring-2 focus:ring-[#14919B]/20"
         />
       </label>
 
-      <Group title="Members">
+      <Group title={t({ en: "Members", id: "Anggota" })}>
         <Option on={filter.members.includes("none")} onClick={() => set({ members: toggle(filter.members, "none") })}>
-          No members
+          {t({ en: "No members", id: "Tanpa anggota" })}
         </Option>
         {userId && (
           <Option on={filter.members.includes("me")} onClick={() => set({ members: toggle(filter.members, "me") })}>
-            Cards assigned to me
+            {t({ en: "Cards assigned to me", id: "Kartu untuk saya" })}
           </Option>
         )}
         {data.people
@@ -129,34 +132,34 @@ export default function FilterPanel({
               onClick={() => set({ members: toggle(filter.members, p.user_id) })}
             >
               <Avatar person={p} size={22} />
-              <span className="truncate">{personName(p)}</span>
+              <span className="truncate">{personName(p, lang)}</span>
             </Option>
           ))}
       </Group>
 
-      <Group title="Card status">
+      <Group title={t({ en: "Card status", id: "Status kartu" })}>
         <Option on={filter.status === "complete"} onClick={() => set({ status: filter.status === "complete" ? "" : "complete" })}>
-          Marked as complete
+          {t({ en: "Marked as complete", id: "Ditandai selesai" })}
         </Option>
         <Option
           on={filter.status === "incomplete"}
           onClick={() => set({ status: filter.status === "incomplete" ? "" : "incomplete" })}
         >
-          Not marked as complete
+          {t({ en: "Not marked as complete", id: "Belum ditandai selesai" })}
         </Option>
       </Group>
 
-      <Group title="Due date">
+      <Group title={t({ en: "Due date", id: "Tenggat" })}>
         {DUE_OPTIONS.map((o) => (
           <Option key={o.key} on={filter.due.includes(o.key)} onClick={() => set({ due: toggle(filter.due, o.key) })}>
-            {o.label}
+            {t(o.label)}
           </Option>
         ))}
       </Group>
 
-      <Group title="Labels">
+      <Group title={t({ en: "Labels", id: "Label" })}>
         <Option on={filter.labels.includes("none")} onClick={() => set({ labels: toggle(filter.labels, "none") })}>
-          No labels
+          {t({ en: "No labels", id: "Tanpa label" })}
         </Option>
         {data.labels.map((l) => {
           const c = LABEL_COLORS[l.color] ?? LABEL_COLORS.slate;
@@ -166,31 +169,31 @@ export default function FilterPanel({
                 className="flex h-7 flex-1 items-center rounded-md px-2.5 text-xs font-medium"
                 style={{ background: c.hex, color: c.ink }}
               >
-                {l.name || <span className="opacity-80">{c.name}</span>}
+                {l.name || <span className="opacity-80">{lang === "id" ? c.nameId : c.name}</span>}
               </span>
             </Option>
           );
         })}
       </Group>
 
-      <Group title="Activity">
+      <Group title={t({ en: "Activity", id: "Aktivitas" })}>
         {ACTIVITY_OPTIONS.map((o) => (
           <Option key={o.key} on={filter.activity === o.key} onClick={() => set({ activity: filter.activity === o.key ? "" : o.key })}>
-            {o.label}
+            {t(o.label)}
           </Option>
         ))}
       </Group>
 
       <div className="mt-4 flex items-center gap-2 border-t border-[#0B6477]/8 px-2 pt-4">
         <label className="flex items-center gap-2 text-sm text-neutral-600">
-          Match
+          {t({ en: "Match", id: "Cocokkan" })}
           <select
             value={filter.mode}
             onChange={(e) => set({ mode: e.target.value === "all" ? "all" : "any" })}
             className="h-9 rounded-lg border border-[#0B6477]/15 bg-white px-2 text-sm outline-none focus:border-[#14919B]"
           >
-            <option value="any">Any of the filters</option>
-            <option value="all">All of the filters</option>
+            <option value="any">{t({ en: "Any of the filters", id: "Salah satu filter" })}</option>
+            <option value="all">{t({ en: "All of the filters", id: "Semua filter" })}</option>
           </select>
         </label>
         <button
@@ -198,7 +201,7 @@ export default function FilterPanel({
           onClick={() => onChange(EMPTY_FILTER)}
           className="ml-auto h-9 rounded-lg px-3 text-sm text-neutral-600 hover:bg-neutral-900/5"
         >
-          Clear all
+          {t({ en: "Clear all", id: "Hapus semua" })}
         </button>
       </div>
     </div>

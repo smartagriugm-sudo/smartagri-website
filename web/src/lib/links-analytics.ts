@@ -1,4 +1,5 @@
 import { supabase } from "./auth/supabase";
+import type { Lang } from "./i18n-core";
 
 // Analytics for the public /links page. Events are written by anonymous
 // visitors (RLS allows anon INSERT) and read back only by signed-in team
@@ -33,6 +34,14 @@ export function trackClick(link: string) {
 }
 
 // ---- Aggregation (dashboard side) -----------------------------------------
+
+/** Bucket for click rows without a link name (the key stays English). */
+export const UNKNOWN_LINK = "Unknown";
+
+/** Display name for a per-link key; only the "Unknown" bucket is translated. */
+export function linkLabel(link: string, lang: Lang = "en"): string {
+  return link === UNKNOWN_LINK && lang === "id" ? "Tidak diketahui" : link;
+}
 
 export interface DayBucket {
   /** ISO date, e.g. "2026-07-23" */
@@ -87,7 +96,7 @@ export function aggregate(rows: LinkEventRow[], days: string[]): LinkStats {
     } else {
       totalClicks++;
       if (bucket) bucket.clicks++;
-      const label = row.link ?? "Unknown";
+      const label = row.link ?? UNKNOWN_LINK;
       perLink.set(label, (perLink.get(label) ?? 0) + 1);
     }
   }

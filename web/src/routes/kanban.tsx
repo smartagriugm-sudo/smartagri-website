@@ -12,9 +12,12 @@ import { Toasts, useToasts } from "../components/kanban/parts";
 import { useAuth } from "../lib/auth/auth";
 import {
   BOARD_BACKGROUNDS,
+  kanbanError,
+  roleLabel,
   type BoardBackground,
   type BoardVisibility,
 } from "../lib/kanban";
+import { useLang, useT } from "../lib/i18n";
 import { createBoard, listBoards, setStarred, updateBoard, type BoardSummary } from "../lib/kanban-data";
 
 export const Route = createFileRoute("/kanban")({
@@ -57,6 +60,8 @@ function KanbanContent() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toasts, push, dismiss } = useToasts();
+  const t = useT();
+  const lang = useLang();
   const [boards, setBoards] = useState<BoardSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -81,22 +86,22 @@ function KanbanContent() {
   const groups = useMemo(() => {
     const all = (boards ?? []).filter((b) => !b.archived_at);
     return [
-      { key: "starred", title: "Starred", rows: all.filter((b) => b.starred) },
-      { key: "mine", title: "Your boards", rows: all.filter((b) => b.role) },
-      { key: "team", title: "Team boards", rows: all.filter((b) => !b.role) },
+      { key: "starred", title: t({ en: "Starred", id: "Berbintang" }), rows: all.filter((b) => b.starred) },
+      { key: "mine", title: t({ en: "Your boards", id: "Board Anda" }), rows: all.filter((b) => b.role) },
+      { key: "team", title: t({ en: "Team boards", id: "Board tim" }), rows: all.filter((b) => !b.role) },
     ].filter((g) => g.rows.length > 0 || g.key === "mine");
-  }, [boards]);
+  }, [boards, t]);
 
   const archived = (boards ?? []).filter((b) => b.archived_at && b.role === "owner");
 
   const reopen = async (b: BoardSummary) => {
     const res = await updateBoard(b.id, { archived_at: null });
     if (res.error !== null) {
-      push({ text: res.error, tone: "error" });
+      push({ text: kanbanError(res.error, lang), tone: "error" });
       return;
     }
     setBoards((rows) => rows?.map((r) => (r.id === b.id ? { ...r, archived_at: null } : r)) ?? rows);
-    push({ text: `Reopened "${b.name}".` });
+    push({ text: t({ en: `Reopened "${b.name}".`, id: `"${b.name}" dibuka kembali.` }) });
   };
 
   const toggleStar = async (b: BoardSummary) => {
@@ -106,7 +111,7 @@ function KanbanContent() {
     const res = await setStarred(b.id, user.id, next);
     if (res.error !== null) {
       setBoards((rows) => rows?.map((r) => (r.id === b.id ? { ...r, starred: b.starred } : r)) ?? rows);
-      push({ text: res.error, tone: "error" });
+      push({ text: kanbanError(res.error, lang), tone: "error" });
     }
   };
 
@@ -114,7 +119,7 @@ function KanbanContent() {
     if (!user) return false;
     const res = await createBoard({ ...input, userId: user.id });
     if (res.error !== null) {
-      push({ text: res.error, tone: "error" });
+      push({ text: kanbanError(res.error, lang), tone: "error" });
       return false;
     }
     navigate({ to: "/kanban/$board", params: { board: res.data.slug } });
@@ -134,7 +139,7 @@ function KanbanContent() {
               style={body}
             >
               <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
-              Team workspace
+              {t({ en: "Team workspace", id: "Ruang kerja tim" })}
             </motion.p>
             <motion.h1
               initial="hidden"
@@ -142,9 +147,9 @@ function KanbanContent() {
               className="mt-5 text-[44px] font-semibold leading-[1.0] tracking-[-0.035em] text-neutral-900 sm:text-6xl md:text-[72px]"
               style={display}
             >
-              <MaskLine delay={0}>Kanban boards</MaskLine>
+              <MaskLine delay={0}>{t({ en: "Kanban boards", id: "Board Kanban" })}</MaskLine>
               <MaskLine delay={0.12}>
-                <span style={accent}>for every project.</span>
+                <span style={accent}>{t({ en: "for every project.", id: "untuk setiap proyek." })}</span>
               </MaskLine>
             </motion.h1>
           </div>
@@ -156,8 +161,10 @@ function KanbanContent() {
               className="text-base leading-relaxed text-neutral-600 md:text-lg"
               style={body}
             >
-              Plan research, publications and lab work as lists of cards. Drag cards between lists as
-              work moves forward.
+              {t({
+                en: "Plan research, publications and lab work as lists of cards. Drag cards between lists as work moves forward.",
+                id: "Rencanakan riset, publikasi, dan pekerjaan lab sebagai list kartu. Geser kartu antar-list seiring pekerjaan berjalan.",
+              })}
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -172,7 +179,7 @@ function KanbanContent() {
                 style={body}
               >
                 <Plus className="h-4 w-4" />
-                New board
+                {t({ en: "New board", id: "Board baru" })}
               </button>
             </motion.div>
           </div>
@@ -186,12 +193,12 @@ function KanbanContent() {
       <section className="mx-auto max-w-[1360px] px-6 pb-24 pt-12 md:px-12">
         {error ? (
           <p className="rounded-[24px] border border-[#E25555]/20 bg-[#E25555]/5 p-6 text-sm text-[#9B2C2C]" style={body}>
-            {error}
+            {kanbanError(error, lang)}
           </p>
         ) : !boards ? (
           <div className="flex items-center gap-3 py-16 text-neutral-500" style={body}>
             <Loader2 className="h-5 w-5 animate-spin text-[#0B6477]" />
-            Loading boards...
+            {t({ en: "Loading boards...", id: "Memuat board..." })}
           </div>
         ) : (
           <div className="flex flex-col gap-12">
@@ -207,7 +214,7 @@ function KanbanContent() {
                 </h2>
                 {g.rows.length === 0 ? (
                   <p className="mt-4 text-sm text-neutral-500" style={body}>
-                    No boards yet. Create one to get started.
+                    {t({ en: "No boards yet. Create one to get started.", id: "Belum ada board. Buat satu untuk memulai." })}
                   </p>
                 ) : (
                   <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -221,7 +228,7 @@ function KanbanContent() {
             {archived.length > 0 && (
               <details className="group">
                 <summary className="flex cursor-pointer list-none items-center gap-2 text-base font-semibold tracking-[-0.02em] text-neutral-500 hover:text-neutral-800" style={display}>
-                  Archived boards
+                  {t({ en: "Archived boards", id: "Board yang diarsipkan" })}
                   <span className="text-sm font-normal text-neutral-400">{archived.length}</span>
                 </summary>
                 <ul className="mt-4 flex flex-col gap-2">
@@ -246,7 +253,7 @@ function KanbanContent() {
                         className="h-9 rounded-lg bg-[#F3F7F6] px-3 text-sm text-neutral-700 hover:bg-[#E6EFED]"
                         style={body}
                       >
-                        Reopen
+                        {t({ en: "Reopen", id: "Buka kembali" })}
                       </button>
                     </li>
                   ))}
@@ -264,6 +271,8 @@ function KanbanContent() {
 function BoardTile({ board, index, onToggleStar }: { board: BoardSummary; index: number; onToggleStar: () => void }) {
   const bg = BOARD_BACKGROUNDS[board.background] ?? BOARD_BACKGROUNDS.teal;
   const dark = board.background !== "mint";
+  const t = useT();
+  const lang = useLang();
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -276,7 +285,7 @@ function BoardTile({ board, index, onToggleStar }: { board: BoardSummary; index:
         params={{ board: board.slug }}
         className="flex h-32 flex-col justify-between rounded-[24px] p-5 shadow-[0_14px_40px_-30px_rgba(8,49,58,0.5)] transition-transform duration-300 hover:-translate-y-0.5"
         style={{ background: `linear-gradient(135deg, ${bg.from}, ${bg.to})` }}
-        aria-label={`Open board ${board.name}`}
+        aria-label={`${t({ en: "Open board", id: "Buka board" })} ${board.name}`}
       >
         <span
           className={`line-clamp-2 pr-8 text-lg font-medium leading-snug tracking-[-0.02em] ${dark ? "text-white" : "text-[#0B2A22]"}`}
@@ -286,15 +295,15 @@ function BoardTile({ board, index, onToggleStar }: { board: BoardSummary; index:
         </span>
         <span className={`flex items-center gap-1.5 text-xs ${dark ? "text-white/70" : "text-[#0B2A22]/70"}`} style={body}>
           {board.visibility === "team" ? <Globe2 className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
-          {board.visibility === "team" ? "Team" : "Private"}
-          {board.role && <span className="capitalize"> · {board.role}</span>}
+          {board.visibility === "team" ? t({ en: "Team", id: "Tim" }) : t({ en: "Private", id: "Privat" })}
+          {board.role && <span> · {roleLabel(board.role, lang)}</span>}
         </span>
       </Link>
       {board.role && (
         <button
           type="button"
           onClick={onToggleStar}
-          aria-label={board.starred ? "Unstar board" : "Star board"}
+          aria-label={board.starred ? t({ en: "Unstar board", id: "Hapus bintang board" }) : t({ en: "Star board", id: "Beri bintang board" })}
           aria-pressed={board.starred}
           className={`absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-lg transition-opacity ${
             board.starred ? "opacity-100" : "opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
@@ -319,6 +328,8 @@ function NewBoardForm({
   const [background, setBackground] = useState<BoardBackground>("teal");
   const [busy, setBusy] = useState(false);
   const bg = BOARD_BACKGROUNDS[background];
+  const t = useT();
+  const lang = useLang();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -346,44 +357,44 @@ function NewBoardForm({
           className={`line-clamp-2 text-base font-medium ${background === "mint" ? "text-[#0B2A22]" : "text-white"}`}
           style={display}
         >
-          {name.trim() || "Board name"}
+          {name.trim() || t({ en: "Board name", id: "Nama board" })}
         </span>
       </div>
       <div className="flex flex-col gap-5">
         <div className="flex items-start justify-between gap-4">
           <h2 className="text-xl font-semibold tracking-[-0.025em] text-neutral-900" style={display}>
-            New board
+            {t({ en: "New board", id: "Board baru" })}
           </h2>
           <button
             type="button"
             onClick={onCancel}
-            aria-label="Close"
+            aria-label={t({ en: "Close", id: "Tutup" })}
             className="grid h-9 w-9 place-items-center rounded-lg text-neutral-500 hover:bg-neutral-900/5"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
         <label className="flex flex-col gap-1.5 text-sm text-neutral-700" style={body}>
-          Board name
+          {t({ en: "Board name", id: "Nama board" })}
           <input
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={120}
-            placeholder="e.g. Hyperspectral calibration study"
+            placeholder={t({ en: "e.g. Hyperspectral calibration study", id: "mis. Studi kalibrasi hyperspectral" })}
             className="h-11 rounded-lg border border-[#0B6477]/15 bg-white px-3 text-sm text-neutral-800 outline-none focus:border-[#14919B] focus:ring-2 focus:ring-[#14919B]/20"
           />
         </label>
         <div className="flex flex-wrap gap-8">
           <fieldset className="flex flex-col gap-2" style={body}>
-            <legend className="mb-2 text-sm text-neutral-700">Background</legend>
+            <legend className="mb-2 text-sm text-neutral-700">{t({ en: "Background", id: "Latar" })}</legend>
             <div className="flex gap-2">
               {BACKGROUND_KEYS.map((k) => (
                 <button
                   key={k}
                   type="button"
                   onClick={() => setBackground(k)}
-                  aria-label={BOARD_BACKGROUNDS[k].name}
+                  aria-label={lang === "id" ? BOARD_BACKGROUNDS[k].nameId : BOARD_BACKGROUNDS[k].name}
                   aria-pressed={background === k}
                   className={`h-9 w-12 rounded-lg ring-offset-2 transition-shadow ${background === k ? "ring-2 ring-[#14919B]" : ""}`}
                   style={{ background: `linear-gradient(135deg, ${BOARD_BACKGROUNDS[k].from}, ${BOARD_BACKGROUNDS[k].to})` }}
@@ -392,12 +403,12 @@ function NewBoardForm({
             </div>
           </fieldset>
           <fieldset className="flex flex-col gap-2" style={body}>
-            <legend className="mb-2 text-sm text-neutral-700">Visibility</legend>
+            <legend className="mb-2 text-sm text-neutral-700">{t({ en: "Visibility", id: "Visibilitas" })}</legend>
             <div className="flex rounded-lg border border-[#0B6477]/15 p-1">
               {(
                 [
-                  { key: "private", label: "Private", icon: Lock },
-                  { key: "team", label: "Team", icon: Globe2 },
+                  { key: "private", label: t({ en: "Private", id: "Privat" }), icon: Lock },
+                  { key: "team", label: t({ en: "Team", id: "Tim" }), icon: Globe2 },
                 ] as const
               ).map(({ key, label, icon: Icon }) => (
                 <button
@@ -418,8 +429,11 @@ function NewBoardForm({
         </div>
         <p className="text-sm text-neutral-500" style={body}>
           {visibility === "team"
-            ? "Everyone signed in can view this board. Only members you add can edit it."
-            : "Only members you add can see this board."}
+            ? t({
+                en: "Everyone signed in can view this board. Only members you add can edit it.",
+                id: "Semua yang sudah masuk bisa melihat board ini. Hanya anggota yang Anda tambahkan yang bisa mengubahnya.",
+              })
+            : t({ en: "Only members you add can see this board.", id: "Hanya anggota yang Anda tambahkan yang bisa melihat board ini." })}
         </p>
         <div>
           <button
@@ -429,7 +443,7 @@ function NewBoardForm({
             style={body}
           >
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-            Create board
+            {t({ en: "Create board", id: "Buat board" })}
           </button>
         </div>
       </div>

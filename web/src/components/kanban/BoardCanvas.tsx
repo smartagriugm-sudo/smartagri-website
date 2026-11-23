@@ -58,6 +58,7 @@ import {
   dueState,
   positionAt,
   statusInfo,
+  statusLabel,
   type KanbanCard,
   type KanbanLabel,
   type KanbanList,
@@ -65,6 +66,7 @@ import {
 } from "../../lib/kanban";
 import type { CardBadge } from "../../lib/kanban-data";
 import { Avatar, Composer, InlineEdit } from "./parts";
+import { localeOf, useLang, useT, type Lang } from "../../lib/i18n";
 
 export type Move = { pos: number; rebalance: boolean };
 
@@ -347,6 +349,7 @@ function ListColumn({
   onOpenCard: (c: KanbanCard) => void;
   dnd: boolean;
 }) {
+  const t = useT();
   const {
     setNodeRef,
     attributes,
@@ -370,7 +373,8 @@ function ListColumn({
     <section
       ref={setNodeRef}
       style={style}
-      aria-label={`List ${list.name}`}
+      data-kanban-list=""
+      aria-label={`${t({ en: "List", id: "List" })} ${list.name}`}
       className={`flex max-h-full w-[272px] shrink-0 flex-col rounded-2xl bg-[#F3F7F6] shadow-[0_10px_30px_-24px_rgba(8,49,58,0.6)] ${
         isDragging ? "opacity-40" : ""
       }`}
@@ -379,11 +383,11 @@ function ListColumn({
         className={`relative flex items-center gap-2 px-3 pb-1 pt-3 ${dnd ? "cursor-grab active:cursor-grabbing" : ""}`}
         {...attributes}
         {...listeners}
-        aria-roledescription={dnd ? "sortable list" : undefined}
+        aria-roledescription={dnd ? t({ en: "sortable list", id: "list yang bisa diurutkan" }) : undefined}
       >
         <InlineEdit
           value={list.name}
-          label="List name"
+          label={t({ en: "List name", id: "Nama list" })}
           disabled={!editable}
           onSave={(name) => onRenameList(list.id, name)}
           className="flex-1 px-1 py-1 text-sm font-semibold tracking-[-0.01em] text-neutral-800"
@@ -401,7 +405,7 @@ function ListColumn({
             <button
               type="button"
               onClick={() => setMenu((m) => !m)}
-              aria-label={`More actions on ${list.name}`}
+              aria-label={`${t({ en: "More actions on", id: "Aksi lain untuk" })} ${list.name}`}
               aria-expanded={menu}
               className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-900/5 hover:text-neutral-800"
             >
@@ -422,7 +426,7 @@ function ListColumn({
                   style={body}
                 >
                   <Plus className="h-4 w-4" />
-                  Add card
+                  {t({ en: "Add card", id: "Tambah kartu" })}
                 </button>
                 <button
                   type="button"
@@ -434,7 +438,7 @@ function ListColumn({
                   style={body}
                 >
                   <Archive className="h-4 w-4" />
-                  Archive list
+                  {t({ en: "Archive list", id: "Arsipkan list" })}
                 </button>
               </div>
             )}
@@ -478,19 +482,19 @@ function ListColumn({
             open={composing}
             onOpenChange={setComposing}
             onSubmit={(title) => onCreateCard(list.id, title)}
-            placeholder="Enter a title for this card"
-            submitLabel="Add card"
+            placeholder={t({ en: "Enter a title for this card", id: "Masukkan judul kartu ini" })}
+            submitLabel={t({ en: "Add card", id: "Tambah kartu" })}
             multiline
             trigger={
               <button
                 type="button"
                 onClick={() => setComposing(true)}
-                aria-label={`Add a card in ${list.name}`}
+                aria-label={`${t({ en: "Add a card in", id: "Tambah kartu di" })} ${list.name}`}
                 className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-sm text-neutral-600 transition-colors hover:bg-neutral-900/5 hover:text-neutral-900"
                 style={body}
               >
                 <Plus className="h-4 w-4" />
-                Add a card
+                {t({ en: "Add a card", id: "Tambah kartu" })}
               </button>
             }
           />
@@ -523,6 +527,7 @@ const SortableCard = memo(function SortableCard({
   onArchive: () => void;
   onOpen: () => void;
 }) {
+  const t = useT();
   const {
     setNodeRef,
     attributes,
@@ -565,7 +570,7 @@ const SortableCard = memo(function SortableCard({
             if (e.key === "Enter") onOpen();
             else listeners?.onKeyDown?.(e);
           }}
-          aria-label={`Card ${card.title}`}
+          aria-label={`${t({ en: "Card", id: "Kartu" })} ${card.title}`}
           data-card-id={card.id}
           className={`block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[#14919B] ${dnd ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
         >
@@ -587,8 +592,8 @@ const SortableCard = memo(function SortableCard({
             e.stopPropagation();
             onArchive();
           }}
-          aria-label={`Archive ${card.title}`}
-          title="Archive"
+          aria-label={`${t({ en: "Archive", id: "Arsipkan" })} ${card.title}`}
+          title={t({ en: "Archive", id: "Arsipkan" })}
           className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-lg bg-white/90 text-neutral-500 opacity-0 shadow-sm transition-opacity hover:text-neutral-900 focus-visible:opacity-100 group-hover:opacity-100"
         >
           <Archive className="h-3.5 w-3.5" />
@@ -605,8 +610,8 @@ const DUE_STYLE = {
   later: "bg-neutral-900/5 text-neutral-600",
 } as const;
 
-function formatDue(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
+function formatDue(iso: string, lang: Lang) {
+  return new Date(iso).toLocaleDateString(localeOf(lang), {
     day: "numeric",
     month: "short",
   });
@@ -629,6 +634,8 @@ export function CardFace({
   watching?: boolean;
   lifted?: boolean;
 }) {
+  const t = useT();
+  const lang = useLang();
   const status = statusInfo(card.status);
   const due = dueState(card);
   const checks = badge && badge.checkItems > 0 ? badge : null;
@@ -677,7 +684,7 @@ export function CardFace({
                   key={l.id}
                   className="h-2 w-10 rounded-full"
                   style={{ background: c.hex }}
-                  title={c.name}
+                  title={lang === "id" ? c.nameId : c.name}
                 />
               );
             })}
@@ -708,7 +715,7 @@ export function CardFace({
                 ) : (
                   <CalendarClock className="h-3 w-3" />
                 )}
-                {formatDue(card.due_at)}
+                {formatDue(card.due_at, lang)}
               </span>
             )}
             {status && (
@@ -717,23 +724,23 @@ export function CardFace({
                 style={{ background: status.bg, color: status.ink, ...body }}
               >
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: status.dot }} />
-                {status.label}
+                {statusLabel(status, lang)}
               </span>
             )}
             {watching && (
-              <Eye className="h-3.5 w-3.5 text-neutral-400" aria-label="You are watching this card" />
+              <Eye className="h-3.5 w-3.5 text-neutral-400" aria-label={t({ en: "You are watching this card", id: "Anda memantau kartu ini" })} />
             )}
             {card.description && (
               <TextQuote
                 className="h-3.5 w-3.5 text-neutral-400"
-                aria-label="Has description"
+                aria-label={t({ en: "Has description", id: "Ada deskripsi" })}
               />
             )}
             {comments > 0 && (
               <span
                 className="inline-flex items-center gap-1 text-[11px] text-neutral-500"
                 style={body}
-                title="Comments"
+                title={t({ en: "Comments", id: "Komentar" })}
               >
                 <MessageSquare className="h-3.5 w-3.5" />
                 {comments}
@@ -743,7 +750,7 @@ export function CardFace({
               <span
                 className="inline-flex items-center gap-1 text-[11px] text-neutral-500"
                 style={body}
-                title="Attachments"
+                title={t({ en: "Attachments", id: "Lampiran" })}
               >
                 <Paperclip className="h-3.5 w-3.5" />
                 {files}
@@ -757,7 +764,7 @@ export function CardFace({
                     : "text-neutral-500"
                 }`}
                 style={body}
-                title="Checklist items"
+                title={t({ en: "Checklist items", id: "Item checklist" })}
               >
                 <CheckSquare className="h-3.5 w-3.5" />
                 {checks.checkDone}/{checks.checkItems}
@@ -779,14 +786,15 @@ export function CardFace({
 
 function AddList({ onCreate }: { onCreate: (name: string) => void }) {
   const [open, setOpen] = useState(false);
+  const t = useT();
   return (
     <div className="w-[272px] shrink-0">
       <Composer
         open={open}
         onOpenChange={setOpen}
         onSubmit={onCreate}
-        placeholder="Enter list name"
-        submitLabel="Add list"
+        placeholder={t({ en: "Enter list name", id: "Masukkan nama list" })}
+        submitLabel={t({ en: "Add list", id: "Tambah list" })}
         className="rounded-2xl bg-[#F3F7F6] p-2"
         trigger={
           <button
@@ -796,7 +804,7 @@ function AddList({ onCreate }: { onCreate: (name: string) => void }) {
             style={body}
           >
             <Plus className="h-4 w-4" />
-            Add another list
+            {t({ en: "Add another list", id: "Tambah list lain" })}
           </button>
         }
       />

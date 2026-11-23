@@ -10,20 +10,22 @@ import {
 } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import SiteHeader from "../components/SiteHeader";
+import { headLang, localeOf, useLang, useT, type Lang } from "../lib/i18n";
 import { supabase } from "../lib/auth/supabase";
 import { useAuth } from "../lib/auth/auth";
 import {
   aggregate,
   lastNDays,
+  linkLabel,
   type LinkEventRow,
   type LinkStats,
 } from "../lib/links-analytics";
 
 export const Route = createFileRoute("/links_/insights")({
   component: InsightsPage,
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Links Insights | smartagri" },
+      { title: headLang(matches) === "id" ? "Insight Tautan | smartagri" : "Links Insights | smartagri" },
       // Private, gated dashboard: keep it out of search engines.
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -36,6 +38,7 @@ type Range = (typeof RANGES)[number];
 function InsightsPage() {
   const { user, loading: authLoading, isConfigured } = useAuth();
   const router = useRouter();
+  const t = useT();
 
   // Gate the page behind sign-in, mirroring the /ai area.
   const blocked = isConfigured && !authLoading && !user;
@@ -54,7 +57,9 @@ function InsightsPage() {
           <div className="flex flex-col items-center gap-3 text-neutral-500">
             <Loader2 className="h-6 w-6 animate-spin text-[#0B6477]" />
             <p className="text-sm" style={body}>
-              {authLoading ? "Checking access..." : "Redirecting to sign in..."}
+              {authLoading
+                ? t({ en: "Checking access...", id: "Memeriksa akses..." })
+                : t({ en: "Redirecting to sign in...", id: "Mengalihkan ke halaman masuk..." })}
             </p>
           </div>
         </section>
@@ -75,6 +80,7 @@ function InsightsContent() {
   const [rows, setRows] = useState<LinkEventRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const t = useT();
 
   useEffect(() => {
     let active = true;
@@ -82,7 +88,7 @@ function InsightsContent() {
     setError(null);
 
     if (!supabase) {
-      setError("Analytics storage is not configured.");
+      setError(t({ en: "Analytics storage is not configured.", id: "Penyimpanan analitik belum dikonfigurasi." }));
       setLoading(false);
       return;
     }
@@ -129,16 +135,30 @@ function InsightsContent() {
               className="mb-3 inline-flex items-center gap-1.5 text-sm text-[#0B6477] hover:text-[#14919B]"
               style={body}
             >
-              <ArrowLeft size={15} /> Back to links page
+              <ArrowLeft size={15} /> {t({ en: "Back to links page", id: "Kembali ke halaman tautan" })}
             </a>
             <h1
               style={display}
               className="text-[30px] font-semibold tracking-[-0.03em] text-neutral-900 md:text-[38px]"
             >
-              Links <span style={accent}>insights</span>
+              {t({
+                en: (
+                  <>
+                    Links <span style={accent}>insights</span>
+                  </>
+                ),
+                id: (
+                  <>
+                    Insight <span style={accent}>tautan</span>
+                  </>
+                ),
+              })}
             </h1>
             <p className="mt-1.5 text-[15px] text-neutral-500" style={body}>
-              How your link-in-bio page is performing.
+              {t({
+                en: "How your link-in-bio page is performing.",
+                id: "Performa halaman link-in-bio Anda.",
+              })}
             </p>
           </div>
 
@@ -156,7 +176,7 @@ function InsightsContent() {
                     : "text-neutral-600 hover:bg-[#0B6477]/5"
                 }`}
               >
-                {r} days
+                {r} {t({ en: "days", id: "hari" })}
               </button>
             ))}
           </div>
@@ -167,7 +187,7 @@ function InsightsContent() {
           <div className="mt-12 flex items-center justify-center gap-3 text-neutral-500">
             <Loader2 className="h-5 w-5 animate-spin text-[#0B6477]" />
             <span className="text-sm" style={body}>
-              Loading insights...
+              {t({ en: "Loading insights...", id: "Memuat insight..." })}
             </span>
           </div>
         ) : error ? (
@@ -175,7 +195,7 @@ function InsightsContent() {
             className="mt-10 rounded-2xl border border-amber-300/60 bg-amber-50 px-5 py-4 text-sm text-amber-800"
             style={body}
           >
-            Could not load insights: {error}
+            {t({ en: "Could not load insights:", id: "Insight tidak bisa dimuat:" })} {error}
           </div>
         ) : stats ? (
           <Dashboard stats={stats} range={range} />
@@ -186,16 +206,21 @@ function InsightsContent() {
 }
 
 function Dashboard({ stats, range }: { stats: LinkStats; range: Range }) {
+  const t = useT();
+  const lang = useLang();
+  const num = (n: number) => (lang === "id" ? n.toLocaleString(localeOf(lang)) : n.toLocaleString());
   const cards = [
-    { icon: Eye, label: "Views", value: stats.totalViews.toLocaleString() },
+    { key: "views", icon: Eye, label: t({ en: "Views", id: "Kunjungan" }), value: num(stats.totalViews) },
     {
+      key: "clicks",
       icon: MousePointerClick,
-      label: "Clicks",
-      value: stats.totalClicks.toLocaleString(),
+      label: t({ en: "Clicks", id: "Klik" }),
+      value: num(stats.totalClicks),
     },
     {
+      key: "rate",
       icon: Percent,
-      label: "Click rate",
+      label: t({ en: "Click rate", id: "Rasio klik" }),
       value: `${Math.round(stats.clickRate * 100)}%`,
     },
   ];
@@ -206,7 +231,7 @@ function Dashboard({ stats, range }: { stats: LinkStats; range: Range }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {cards.map((c, i) => (
           <motion.div
-            key={c.label}
+            key={c.key}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: i * 0.06 }}
@@ -235,11 +260,11 @@ function Dashboard({ stats, range }: { stats: LinkStats; range: Range }) {
             className="text-[15px] font-semibold text-neutral-900"
             style={display}
           >
-            Activity, last {range} days
+            {t({ en: `Activity, last ${range} days`, id: `Aktivitas, ${range} hari terakhir` })}
           </h2>
           <Legend />
         </div>
-        <ActivityChart stats={stats} />
+        <ActivityChart stats={stats} lang={lang} />
       </div>
 
       {/* Per-link breakdown */}
@@ -248,7 +273,7 @@ function Dashboard({ stats, range }: { stats: LinkStats; range: Range }) {
           className="text-[15px] font-semibold text-neutral-900"
           style={display}
         >
-          Clicks by button
+          {t({ en: "Clicks by button", id: "Klik per tombol" })}
         </h2>
         <PerLink stats={stats} />
       </div>
@@ -257,19 +282,21 @@ function Dashboard({ stats, range }: { stats: LinkStats; range: Range }) {
 }
 
 function Legend() {
+  const t = useT();
   return (
     <div className="flex items-center gap-4 text-[12.5px] text-neutral-500" style={body}>
       <span className="flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-[#14919B]" /> Views
+        <span className="h-2.5 w-2.5 rounded-full bg-[#14919B]" /> {t({ en: "Views", id: "Kunjungan" })}
       </span>
       <span className="flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-[#45DFB1]" /> Clicks
+        <span className="h-2.5 w-2.5 rounded-full bg-[#45DFB1]" /> {t({ en: "Clicks", id: "Klik" })}
       </span>
     </div>
   );
 }
 
-function ActivityChart({ stats }: { stats: LinkStats }) {
+function ActivityChart({ stats, lang }: { stats: LinkStats; lang: Lang }) {
+  const t = useT();
   const max = Math.max(1, ...stats.days.map((d) => Math.max(d.views, d.clicks)));
   // A few evenly spaced gridline values from 0..max.
   const ticks = 4;
@@ -301,8 +328,8 @@ function ActivityChart({ stats }: { stats: LinkStats }) {
                 className="flex flex-1 flex-col items-center justify-end gap-1"
               >
                 <div className="flex h-full w-full items-end justify-center gap-1">
-                  <Bar value={d.views} max={max} color="#14919B" title={`${d.views} views`} />
-                  <Bar value={d.clicks} max={max} color="#45DFB1" title={`${d.clicks} clicks`} />
+                  <Bar value={d.views} max={max} color="#14919B" title={t({ en: `${d.views} views`, id: `${d.views} kunjungan` })} />
+                  <Bar value={d.clicks} max={max} color="#45DFB1" title={t({ en: `${d.clicks} clicks`, id: `${d.clicks} klik` })} />
                 </div>
               </div>
             ))}
@@ -315,7 +342,7 @@ function ActivityChart({ stats }: { stats: LinkStats }) {
                 key={d.date}
                 className="flex-1 pt-2 text-center text-[11px] text-neutral-400"
               >
-                {formatDay(d.date)}
+                {formatDay(d.date, lang)}
               </div>
             ))}
           </div>
@@ -350,10 +377,12 @@ function Bar({
 }
 
 function PerLink({ stats }: { stats: LinkStats }) {
+  const t = useT();
+  const lang = useLang();
   if (stats.perLink.length === 0) {
     return (
       <p className="mt-3 text-sm text-neutral-400" style={body}>
-        No clicks recorded yet in this period.
+        {t({ en: "No clicks recorded yet in this period.", id: "Belum ada klik tercatat pada periode ini." })}
       </p>
     );
   }
@@ -367,7 +396,7 @@ function PerLink({ stats }: { stats: LinkStats }) {
             className="w-28 shrink-0 truncate text-sm text-neutral-700"
             style={body}
           >
-            {l.link}
+            {linkLabel(l.link, lang)}
           </span>
           <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#0B6477]/8">
             <motion.div
@@ -389,10 +418,10 @@ function PerLink({ stats }: { stats: LinkStats }) {
   );
 }
 
-/** "Jul 23" from an ISO date, in the viewer's locale. */
-function formatDay(iso: string): string {
+/** "Jul 23" from an ISO date, in the viewer's locale (Indonesian when the site is). */
+function formatDay(iso: string, lang: Lang): string {
   const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+  return new Date(y, m - 1, d).toLocaleDateString(lang === "id" ? localeOf(lang) : undefined, {
     month: "short",
     day: "numeric",
   });

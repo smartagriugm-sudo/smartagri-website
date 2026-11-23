@@ -4,6 +4,7 @@
 
 import { supabase } from "./auth/supabase";
 import type { Instrument, InstrumentStatus, Operator, PaymentStatus, UserType } from "./inventory";
+import type { Lang } from "./i18n-core";
 
 function db() {
   if (!supabase) throw new Error("Inventory storage is not configured on this environment.");
@@ -136,4 +137,29 @@ export async function labMemberNames(): Promise<string[]> {
         .filter(Boolean),
     ),
   ].sort((a, b) => a.localeCompare(b));
+}
+
+// Indonesian for the messages this file throws itself; anything else (a
+// database message) is shown as it came.
+const ERRORS_ID: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
+  [/^Inventory storage is not configured on this environment\.$/, "Penyimpanan inventaris belum dikonfigurasi di lingkungan ini."],
+  [
+    /^The inventory database is not up to date\. Ask a lab admin to run supabase\/inventory-loans\.sql\.$/,
+    "Database inventaris belum diperbarui. Minta admin lab menjalankan supabase/inventory-loans.sql.",
+  ],
+  [/^The photo could not be processed\.$/, "Foto tidak dapat diproses."],
+  [
+    /^The photo could not be uploaded: (.*)\. Has inventory-loans\.sql been run\?$/,
+    (m) => `Foto tidak dapat diunggah: ${m[1]}. Apakah inventory-loans.sql sudah dijalankan?`,
+  ],
+];
+
+/** An error message from this file in the page language. */
+export function inventoryErrorText(message: string, lang: Lang = "en"): string {
+  if (lang !== "id") return message;
+  for (const [re, out] of ERRORS_ID) {
+    const m = message.match(re);
+    if (m) return typeof out === "string" ? out : out(m);
+  }
+  return message;
 }

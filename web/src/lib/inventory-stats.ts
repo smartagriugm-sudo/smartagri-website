@@ -5,6 +5,7 @@
 // false` so the UI can show an honest empty state instead of a made-up number.
 
 import type { Instrument, UsageLog } from "./inventory";
+import { localeOf, type Lang } from "./i18n-core";
 
 export type Delta = {
   current: number;
@@ -68,9 +69,9 @@ const monthOf = (iso: string | null): string | null => {
   const t = ms(iso);
   return isNaN(t) ? null : monthKey(new Date(t));
 };
-const monthLabel = (key: string) => {
+const monthLabel = (key: string, lang: Lang) => {
   const [y, m] = key.split("-");
-  return new Date(+y, +m - 1, 1).toLocaleDateString("en-US", {
+  return new Date(+y, +m - 1, 1).toLocaleDateString(localeOf(lang), {
     month: "short",
     year: "2-digit",
   });
@@ -95,11 +96,13 @@ export function computeInventoryStats(
   instruments: Instrument[],
   allLogs: UsageLog[],
   now: Date,
+  lang: Lang = "en",
 ): InventoryStats {
+  const id = lang === "id";
   // Bookings that have not started and cancelled ones are plans, not use.
   const logs = allLogs.filter((l) => l.status !== "booked" && l.status !== "cancelled");
   const byId = new Map(instruments.map((i) => [i.id, i]));
-  const nameOf = (id: string) => byId.get(id)?.name ?? "Unknown instrument";
+  const nameOf = (id: string) => byId.get(id)?.name ?? (id ? "Instrumen tidak dikenal" : "Unknown instrument");
   const slugOf = (id: string) => byId.get(id)?.slug ?? "";
   const borrow = logs.filter(isBorrow);
   const checks = logs.filter((l) => l.log_type === "check");
@@ -131,7 +134,7 @@ export function computeInventoryStats(
   }
   const byMonth: MonthPoint[] = [...mMap.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([key, value]) => ({ key, label: monthLabel(key), value }));
+    .map(([key, value]) => ({ key, label: monthLabel(key, lang), value }));
 
   // ---- utilisation over borrowable (portable) instruments ----
   const portable = instruments.filter((i) => i.kind !== "installed");
@@ -224,10 +227,10 @@ export function computeInventoryStats(
   const brokenAssets = instruments.filter((i) => i.status === "broken").length;
   const loanTotal = returned + currentlyOut;
   const statusBreakdown: StatusRow[] = [
-    { label: "Returned", value: returned, pct: pct(returned, loanTotal), tone: "#12B886", available: true },
-    { label: "Currently out", value: outNotOverdue, pct: pct(outNotOverdue, loanTotal), tone: "#14919B", available: true },
-    { label: "Overdue", value: overdueCount, pct: pct(overdueCount, loanTotal), tone: "#F59E0B", available: onTime.hasData || overdueCount > 0 },
-    { label: "Damaged / lost", value: brokenAssets, pct: 0, tone: "#E5484D", available: false },
+    { label: id ? "Dikembalikan" : "Returned", value: returned, pct: pct(returned, loanTotal), tone: "#12B886", available: true },
+    { label: id ? "Sedang dipinjam" : "Currently out", value: outNotOverdue, pct: pct(outNotOverdue, loanTotal), tone: "#14919B", available: true },
+    { label: id ? "Terlambat" : "Overdue", value: overdueCount, pct: pct(overdueCount, loanTotal), tone: "#F59E0B", available: onTime.hasData || overdueCount > 0 },
+    { label: id ? "Rusak / hilang" : "Damaged / lost", value: brokenAssets, pct: 0, tone: "#E5484D", available: false },
   ];
 
   // ---- most-used / underused (portable, by borrow count) ----
@@ -253,8 +256,8 @@ export function computeInventoryStats(
       .map(([label, value]) => ({ label, value }))
       .sort((a, b) => b.value - a.value);
   };
-  const byLab = tally((l) => byId.get(l.instrument_id)?.lab || "Unknown");
-  const byCategory = tally((l) => byId.get(l.instrument_id)?.category || "Uncategorized");
+  const byLab = tally((l) => byId.get(l.instrument_id)?.lab || (id ? "Tidak diketahui" : "Unknown"));
+  const byCategory = tally((l) => byId.get(l.instrument_id)?.category || (id ? "Tanpa kategori" : "Uncategorized"));
   const topPeople = tally((l) => norm(l.borrower_name)).slice(0, 10);
 
   return {
@@ -279,18 +282,19 @@ export function computeInventoryStats(
 }
 
 /** "just now" / "3 hours ago" / "2 days ago" / a date for anything older. */
-export function relativeTime(iso: string, now: Date): string {
+export function relativeTime(iso: string, now: Date, lang: Lang = "en"): string {
+  const id = lang === "id";
   const diff = now.getTime() - ms(iso);
   if (isNaN(diff)) return "";
-  if (diff < 0) return "just now";
+  if (diff < 0) return id ? "baru saja" : "just now";
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins} min ago`;
+  if (mins < 1) return id ? "baru saja" : "just now";
+  if (mins < 60) return id ? `${mins} menit lalu` : `${mins} min ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} hour${hrs > 1 ? "s" : ""} ago`;
+  if (hrs < 24) return id ? `${hrs} jam lalu` : `${hrs} hour${hrs > 1 ? "s" : ""} ago`;
   const days = Math.floor(hrs / 24);
-  if (days < 30) return `${days} day${days > 1 ? "s" : ""} ago`;
-  return new Date(ms(iso)).toLocaleDateString("en-US", {
+  if (days < 30) return id ? `${days} hari lalu` : `${days} day${days > 1 ? "s" : ""} ago`;
+  return new Date(ms(iso)).toLocaleDateString(localeOf(lang), {
     month: "short",
     day: "numeric",
     year: "numeric",

@@ -23,6 +23,7 @@ import AuthGate from "../components/AuthGate";
 import { EASE, MaskLine, META } from "../components/NoteParts";
 import { supabase } from "../lib/auth/supabase";
 import { useAuth } from "../lib/auth/auth";
+import { headLang, localeOf, useLang, useT, type Bi } from "../lib/i18n";
 import InstrumentForm from "../components/inventory/InstrumentForm";
 import Supporters from "../components/inventory/Supporters";
 import {
@@ -32,6 +33,7 @@ import {
   type UsageLog,
   formatIDR,
   overdueDays,
+  statusLabel,
   statusMeta,
 } from "../lib/inventory";
 
@@ -40,6 +42,8 @@ type OpenLog = Pick<UsageLog, "instrument_id" | "status" | "expected_return" | "
 // Who has it and until when, or how many bookings are waiting, under the
 // status chip.
 function LoanNote({ logs, now }: { logs: OpenLog[] | undefined; now: Date }) {
+  const t = useT();
+  const lang = useLang();
   if (!logs?.length) return null;
   const out = logs.find((l) => l.status === "ongoing");
   const booked = logs.filter((l) => l.status === "booked").length;
@@ -49,19 +53,19 @@ function LoanNote({ logs, now }: { logs: OpenLog[] | undefined; now: Date }) {
     parts.push(
       late ? (
         <span key="out" className="font-medium text-[#B42318]">
-          {late} d overdue · {out.borrower_name}
+          {t({ en: `${late} d overdue`, id: `terlambat ${late} hr` })} · {out.borrower_name}
         </span>
       ) : (
         <span key="out">
           {out.expected_return
-            ? `Due ${new Date(out.expected_return).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
-            : "Out"}{" "}
+            ? `${t({ en: "Due", id: "Kembali" })} ${new Date(out.expected_return).toLocaleDateString(lang === "id" ? localeOf(lang) : "en-GB", { day: "numeric", month: "short" })}`
+            : t({ en: "Out", id: "Dipinjam" })}{" "}
           · {out.borrower_name}
         </span>
       ),
     );
   }
-  if (booked) parts.push(<span key="booked">{booked} booked</span>);
+  if (booked) parts.push(<span key="booked">{t({ en: `${booked} booked`, id: `${booked} dipesan` })}</span>);
   return (
     <span className="mt-1 flex flex-col gap-0.5 text-[12px] leading-snug text-neutral-500" style={body}>
       {parts}
@@ -71,9 +75,9 @@ function LoanNote({ logs, now }: { logs: OpenLog[] | undefined; now: Date }) {
 
 export const Route = createFileRoute("/inventory")({
   component: InventoryPage,
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Instrument Inventory | smartagri" },
+      { title: headLang(matches) === "id" ? "Inventaris Instrumen | smartagri" : "Instrument Inventory | smartagri" },
       // Private, gated internal tool: keep it out of search engines.
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -98,12 +102,12 @@ const controlClass =
 const GRID =
   "md:grid md:grid-cols-[96px_minmax(0,1fr)_minmax(0,0.45fr)_150px_150px_32px] md:items-center md:gap-5";
 
-const COLUMNS: { key: SortKey; label: string; align?: "right" }[] = [
-  { key: "code", label: "Code" },
-  { key: "name", label: "Instrument" },
-  { key: "lab", label: "Lab" },
-  { key: "status", label: "Status" },
-  { key: "rate", label: "Rate", align: "right" },
+const COLUMNS: { key: SortKey; label: Bi; align?: "right" }[] = [
+  { key: "code", label: { en: "Code", id: "Kode" } },
+  { key: "name", label: { en: "Instrument", id: "Instrumen" } },
+  { key: "lab", label: { en: "Lab", id: "Lab" } },
+  { key: "status", label: { en: "Status", id: "Status" } },
+  { key: "rate", label: { en: "Rate", id: "Tarif" }, align: "right" },
 ];
 
 const STATUS_ORDER: Record<string, number> = {
@@ -172,11 +176,13 @@ function SortIcon({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
 }
 
 function StatusChip({ r }: { r: Instrument }) {
+  const t = useT();
+  const lang = useLang();
   if (r.kind === "installed") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0B6477]/10 px-2.5 py-1 text-xs font-medium text-[#0B6477]">
         <span className="h-1.5 w-1.5 rounded-full bg-[#0B6477]" />
-        Installed
+        {t({ en: "Installed", id: "Terpasang" })}
       </span>
     );
   }
@@ -188,7 +194,7 @@ function StatusChip({ r }: { r: Instrument }) {
           <span className={`absolute inset-0 animate-ping rounded-full ${meta.dot} opacity-70`} />
         )}
       </span>
-      {meta.label}
+      {statusLabel(r.status as InstrumentStatus, lang)}
     </span>
   );
 }
@@ -245,6 +251,8 @@ function InventoryPage() {
 }
 
 function InventoryContent() {
+  const t = useT();
+  const lang = useLang();
   const { account } = useAuth();
   const isAdmin = !!account?.isAdmin;
   const navigate = useNavigate();
@@ -269,7 +277,7 @@ function InventoryContent() {
     setLoading(true);
     setError(null);
     if (!supabase) {
-      setError("Inventory storage is not configured on this environment.");
+      setError(t({ en: "Inventory storage is not configured on this environment.", id: "Penyimpanan inventaris belum dikonfigurasi di lingkungan ini." }));
       setLoading(false);
       return;
     }
@@ -363,9 +371,9 @@ function InventoryContent() {
   }, [rows]);
 
   const pills: { key: StatusFilter; label: string; dot?: string }[] = [
-    { key: "All", label: "All" },
-    ...INSTRUMENT_STATUSES.map((s) => ({ key: s as StatusFilter, label: statusMeta[s].label, dot: statusMeta[s].dot })),
-    { key: "installed", label: "Installed", dot: "bg-[#0B6477]" },
+    { key: "All", label: t({ en: "All", id: "Semua" }) },
+    ...INSTRUMENT_STATUSES.map((s) => ({ key: s as StatusFilter, label: statusLabel(s, lang), dot: statusMeta[s].dot })),
+    { key: "installed", label: t({ en: "Installed", id: "Terpasang" }), dot: "bg-[#0B6477]" },
   ];
 
   const filtersOn = query || lab !== "All" || category !== "All" || rate !== "All" || status !== "All";
@@ -381,10 +389,10 @@ function InventoryContent() {
     setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
 
   const figures: { label: string; value: number; tone: string; filter: StatusFilter }[] = [
-    { label: "Instruments", value: counts.total, tone: "#0B6477", filter: "All" },
-    { label: "Available", value: counts.available, tone: "#12B886", filter: "available" },
-    { label: "In use", value: counts.in_use, tone: "#14919B", filter: "in_use" },
-    { label: "Maintenance and other", value: counts.other, tone: "#F59E0B", filter: "other" },
+    { label: t({ en: "Instruments", id: "Instrumen" }), value: counts.total, tone: "#0B6477", filter: "All" },
+    { label: t({ en: "Available", id: "Tersedia" }), value: counts.available, tone: "#12B886", filter: "available" },
+    { label: t({ en: "In use", id: "Dipakai" }), value: counts.in_use, tone: "#14919B", filter: "in_use" },
+    { label: t({ en: "Maintenance and other", id: "Pemeliharaan dan lainnya" }), value: counts.other, tone: "#F59E0B", filter: "other" },
   ];
 
   return (
@@ -421,9 +429,9 @@ function InventoryContent() {
               className="mt-5 text-[44px] font-semibold leading-[1.0] tracking-[-0.04em] text-neutral-900 sm:text-6xl md:text-[72px]"
               style={display}
             >
-              <MaskLine delay={0}>Instrument inventory</MaskLine>
+              <MaskLine delay={0}>{t({ en: "Instrument inventory", id: "Inventaris instrumen" })}</MaskLine>
               <MaskLine delay={0.12}>
-                <span style={accent}>and logbook.</span>
+                <span style={accent}>{t({ en: "and logbook.", id: "dan logbook." })}</span>
               </MaskLine>
             </motion.h1>
           </div>
@@ -435,8 +443,10 @@ function InventoryContent() {
               className="text-base leading-relaxed text-neutral-600 md:text-lg"
               style={body}
             >
-              Every PUAPT UGM research instrument run by WGFS 1.2 Precision Agriculture and Smart Farming,
-              with its status and rates. Open one to book it, check it out, return it, or log an inspection.
+              {t({
+                en: "Every PUAPT UGM research instrument run by WGFS 1.2 Precision Agriculture and Smart Farming, with its status and rates. Open one to book it, check it out, return it, or log an inspection.",
+                id: "Semua instrumen riset PUAPT UGM yang dikelola WGFS 1.2 Precision Agriculture and Smart Farming, lengkap dengan status dan tarifnya. Buka salah satu untuk memesan, meminjam, mengembalikan, atau mencatat inspeksi.",
+              })}
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -452,7 +462,7 @@ function InventoryContent() {
                   style={body}
                 >
                   <Plus className="h-4 w-4" />
-                  Add instrument
+                  {t({ en: "Add instrument", id: "Tambah instrumen" })}
                 </button>
               )}
               <Link
@@ -461,7 +471,7 @@ function InventoryContent() {
                 style={body}
               >
                 <BarChart3 className="h-4 w-4 text-[#45DFB1]" />
-                View statistics
+                {t({ en: "View statistics", id: "Lihat statistik" })}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </motion.div>
@@ -526,7 +536,7 @@ function InventoryContent() {
         >
           <div className="flex flex-col gap-4 border-b border-[#0B6477]/10 p-4 md:p-5">
             {/* Status pills */}
-            <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Filter by status">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label={t({ en: "Filter by status", id: "Filter menurut status" })}>
               {pills.map((p) => {
                 const on = status === p.key;
                 const n = base.filter((r) => matchesStatus(r, p.key)).length;
@@ -566,20 +576,20 @@ function InventoryContent() {
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by code, name, or brand"
-                  aria-label="Search instruments"
+                  placeholder={t({ en: "Search by code, name, or brand", id: "Cari kode, nama, atau merek" })}
+                  aria-label={t({ en: "Search instruments", id: "Cari instrumen" })}
                   className={`${controlClass} w-full pl-9`}
                   style={body}
                 />
               </div>
               <div className="grid grid-cols-3 gap-2 lg:flex">
                 {[
-                  { value: lab, set: setLab, options: labs, all: "All labs", label: "Filter by lab" },
-                  { value: category, set: setCategory, options: categories, all: "All categories", label: "Filter by category" },
-                  { value: rate, set: setRate, options: ["All", "With rate", "No rate"], all: "Any rate", label: "Filter by rate" },
+                  { key: "lab", value: lab, set: setLab, options: labs, all: t({ en: "All labs", id: "Semua lab" }), label: t({ en: "Filter by lab", id: "Filter menurut lab" }) },
+                  { key: "category", value: category, set: setCategory, options: categories, all: t({ en: "All categories", id: "Semua kategori" }), label: t({ en: "Filter by category", id: "Filter menurut kategori" }) },
+                  { key: "rate", value: rate, set: setRate, options: ["All", "With rate", "No rate"], all: t({ en: "Any rate", id: "Semua tarif" }), label: t({ en: "Filter by rate", id: "Filter menurut tarif" }) },
                 ].map((s) => (
                   <select
-                    key={s.label}
+                    key={s.key}
                     value={s.value}
                     onChange={(e) => s.set(e.target.value)}
                     aria-label={s.label}
@@ -588,18 +598,24 @@ function InventoryContent() {
                   >
                     {s.options.map((o) => (
                       <option key={o} value={o}>
-                        {o === "All" ? s.all : o}
+                        {o === "All"
+                          ? s.all
+                          : o === "With rate"
+                            ? t({ en: "With rate", id: "Bertarif" })
+                            : o === "No rate"
+                              ? t({ en: "No rate", id: "Tanpa tarif" })
+                              : o}
                       </option>
                     ))}
                   </select>
                 ))}
               </div>
               {/* View toggle */}
-              <div className="hidden rounded-lg border border-[#0B6477]/15 bg-[#F3F7F6] p-1 md:flex" role="group" aria-label="View">
+              <div className="hidden rounded-lg border border-[#0B6477]/15 bg-[#F3F7F6] p-1 md:flex" role="group" aria-label={t({ en: "View", id: "Tampilan" })}>
                 {(
                   [
-                    { key: "table", icon: Rows3, label: "Table view" },
-                    { key: "grid", icon: LayoutGrid, label: "Grid view" },
+                    { key: "table", icon: Rows3, label: t({ en: "Table view", id: "Tampilan tabel" }) },
+                    { key: "grid", icon: LayoutGrid, label: t({ en: "Grid view", id: "Tampilan grid" }) },
                   ] as const
                 ).map((v) => (
                   <button
@@ -627,7 +643,9 @@ function InventoryContent() {
 
             <div className="flex items-center justify-between gap-3">
               <p className={`text-neutral-400 ${META}`} style={body}>
-                {loading ? "Loading" : `${filtered.length} of ${counts.total} instruments`}
+                {loading
+                  ? t({ en: "Loading", id: "Memuat" })
+                  : t({ en: `${filtered.length} of ${counts.total} instruments`, id: `${filtered.length} dari ${counts.total} instrumen` })}
               </p>
               <AnimatePresence>
                 {filtersOn && (
@@ -641,7 +659,7 @@ function InventoryContent() {
                     style={body}
                   >
                     <RotateCcw className="h-3.5 w-3.5 transition-transform duration-500 group-hover:-rotate-180" />
-                    Reset filters
+                    {t({ en: "Reset filters", id: "Atur ulang filter" })}
                   </motion.button>
                 )}
               </AnimatePresence>
@@ -659,7 +677,7 @@ function InventoryContent() {
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center gap-4 px-6 py-16 text-center">
               <p className="text-neutral-500" style={body}>
-                No instruments match these filters.
+                {t({ en: "No instruments match these filters.", id: "Tidak ada instrumen yang cocok dengan filter ini." })}
               </p>
               <button
                 type="button"
@@ -667,7 +685,7 @@ function InventoryContent() {
                 className={`inline-flex items-center gap-1.5 border-b border-[#0B6477]/30 pb-1 text-[#0B6477] ${META}`}
                 style={body}
               >
-                <RotateCcw className="h-3.5 w-3.5" /> Reset filters
+                <RotateCcw className="h-3.5 w-3.5" /> {t({ en: "Reset filters", id: "Atur ulang filter" })}
               </button>
             </div>
           ) : view === "grid" ? (
@@ -758,7 +776,7 @@ function InventoryContent() {
                       } ${active ? "text-[#0B6477]" : "text-neutral-400 hover:text-neutral-700"}`}
                       style={body}
                     >
-                      {c.label}
+                      {t(c.label)}
                       <SortIcon active={active} dir={sort.dir} />
                     </button>
                   );

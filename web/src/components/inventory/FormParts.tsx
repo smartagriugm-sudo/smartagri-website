@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, type ReactNode } from "react";
 import { AlertCircle, Loader2, X } from "lucide-react";
 import { body, display } from "../../lib/fonts";
 import { META } from "../NoteParts";
+import { useT } from "../../lib/i18n";
 
 // Form building blocks shared by the inventory pages: labelled fields with
 // hints and errors linked for screen readers, radio groups for 2–4 choices,
@@ -25,6 +26,7 @@ export function Field({
   full?: boolean;
   children: (ids: { id: string; describedBy: string | undefined; invalid: boolean }) => ReactNode;
 }) {
+  const t = useT();
   const id = useId();
   const hintId = hint && !error ? `${id}-hint` : "";
   const errId = error ? `${id}-err` : "";
@@ -48,7 +50,7 @@ export function Field({
       )}
       {error && (
         <span id={errId} className="flex items-start gap-1.5 text-xs leading-snug text-[#B42318]" style={body}>
-          <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-label="Error" />
+          <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-label={t({ en: "Error", id: "Galat" })} />
           {error}
         </span>
       )}
@@ -175,11 +177,12 @@ export function GhostButton({
 }
 
 export function FormError({ message }: { message: string | null }) {
+  const t = useT();
   return (
     <p role="alert" aria-live="assertive" className="min-h-0 text-sm text-[#B42318] empty:hidden" style={body}>
       {message && (
         <span className="flex items-start gap-2 rounded-xl bg-[#E5484D]/[0.07] px-3.5 py-2.5">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-label="Error" />
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-label={t({ en: "Error", id: "Galat" })} />
           {message}
         </span>
       )}
@@ -200,6 +203,7 @@ export function Dialog({
   title: string;
   children: ReactNode;
 }) {
+  const t = useT();
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
@@ -232,7 +236,7 @@ export function Dialog({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t({ en: "Close", id: "Tutup" })}
               className="grid h-9 w-9 place-items-center rounded-lg text-neutral-500 transition-colors hover:bg-[#F3F7F6] hover:text-neutral-900"
             >
               <X className="h-4 w-4" />

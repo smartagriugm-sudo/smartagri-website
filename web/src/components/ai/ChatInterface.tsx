@@ -29,6 +29,7 @@ import { getProfile } from '../../lib/profile'
 import { DEFAULT_MODEL_ID, getModel } from '../../lib/ai/models'
 import { EXTRACT_ACCEPT, extractText } from '../../lib/ai/extract-text'
 import { accent, body, display } from '../../lib/fonts'
+import { useT, type Bi } from '../../lib/i18n'
 import ChatBubble from './ChatBubble'
 import ChatSidebar from './ChatSidebar'
 import ModelMenu from './ModelMenu'
@@ -39,25 +40,32 @@ interface PendingAttachment {
   content: string
 }
 
-const ERROR_TEXT =
-  'Sorry, something went wrong while contacting the AI. Make sure the Ollama server is running, then try again.'
+const ERROR_TEXT: Bi = {
+  en: 'Sorry, something went wrong while contacting the AI. Make sure the Ollama server is running, then try again.',
+  id: 'Maaf, terjadi kesalahan saat menghubungi AI. Pastikan server Ollama berjalan, lalu coba lagi.',
+}
 
 // Files we extract text from client-side and feed to the model as context.
 const MAX_FILE_BYTES = 15_000_000
 const MAX_FILE_CHARS = 20_000
 
 // Warm, comforting subtitles shown under the greeting (one picked per session).
-const WARM_LINES = [
-  'How can I help with your research today?',
-  'What would you like to explore?',
-  "Ready when you are, let's dig in.",
-  'What are we working on today?',
+const WARM_LINES: Bi[] = [
+  { en: 'How can I help with your research today?', id: 'Ada yang bisa saya bantu untuk riset Anda hari ini?' },
+  { en: 'What would you like to explore?', id: 'Apa yang ingin Anda telusuri?' },
+  { en: "Ready when you are, let's dig in.", id: 'Siap kapan pun Anda siap, ayo mulai.' },
+  { en: 'What are we working on today?', id: 'Apa yang kita kerjakan hari ini?' },
 ]
 
-function greetingForHour(hour: number): string {
-  if (hour < 12) return 'Good morning'
-  if (hour < 17) return 'Good afternoon'
-  return 'Good evening'
+const GREETING_HELLO: Bi = { en: 'Hello', id: 'Halo' }
+
+function greetingForHour(hour: number): Bi {
+  if (hour < 11) return { en: 'Good morning', id: 'Selamat pagi' }
+  if (hour < 12) return { en: 'Good morning', id: 'Selamat siang' }
+  if (hour < 15) return { en: 'Good afternoon', id: 'Selamat siang' }
+  if (hour < 17) return { en: 'Good afternoon', id: 'Selamat sore' }
+  if (hour < 18) return { en: 'Good evening', id: 'Selamat sore' }
+  return { en: 'Good evening', id: 'Selamat malam' }
 }
 
 function newConversation(incognito = false): Conversation {
@@ -88,6 +96,7 @@ function toHistory(msgs: ChatMessage[]): { role: string; content: string }[] {
 }
 
 export default function ChatInterface() {
+  const t = useT()
   const [conversations, setConversations] = useState<Conversation[]>(() => [
     newConversation(),
   ])
@@ -101,7 +110,7 @@ export default function ChatInterface() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // desktop
   const [menuOpen, setMenuOpen] = useState(false)
   const [loadingConvId, setLoadingConvId] = useState<string | null>(null)
-  const [greeting, setGreeting] = useState('Hello')
+  const [greeting, setGreeting] = useState<Bi>(GREETING_HELLO)
   const [warmLine, setWarmLine] = useState(WARM_LINES[0])
   const [thinking, setThinking] = useState(true)
   const [attaching, setAttaching] = useState(false)
@@ -354,7 +363,7 @@ export default function ChatInterface() {
           m.id === aiId
             ? aborted
               ? { ...m, isStreaming: false }
-              : { ...m, isStreaming: false, isError: true, content: ERROR_TEXT }
+              : { ...m, isStreaming: false, isError: true, content: t(ERROR_TEXT) }
             : m,
         ),
       )
@@ -525,7 +534,7 @@ export default function ChatInterface() {
                 <button
                   type="button"
                   onClick={() => removeAttachment(a.name)}
-                  aria-label={`Remove ${a.name}`}
+                  aria-label={t({ en: `Remove ${a.name}`, id: `Hapus ${a.name}` })}
                   className="text-neutral-400 hover:text-[#B91C1C]"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -548,7 +557,9 @@ export default function ChatInterface() {
             }
           }}
           placeholder={
-            isIncognito ? 'Ask anything (incognito, not saved)…' : 'Ask anything…'
+            isIncognito
+              ? t({ en: 'Ask anything (incognito, not saved)…', id: 'Tanyakan apa saja (penyamaran, tidak disimpan)…' })
+              : t({ en: 'Ask anything…', id: 'Tanyakan apa saja…' })
           }
           className="block max-h-52 w-full resize-none bg-transparent px-1.5 py-1 text-[15px] leading-relaxed text-neutral-800 outline-none placeholder:text-neutral-400"
           style={body}
@@ -568,8 +579,8 @@ export default function ChatInterface() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={attaching}
-              aria-label="Attach a document (PDF, DOCX, XLSX, or text)"
-              title="Attach PDF, DOCX, XLSX, or text"
+              aria-label={t({ en: 'Attach a document (PDF, DOCX, XLSX, or text)', id: 'Lampirkan dokumen (PDF, DOCX, XLSX, atau teks)' })}
+              title={t({ en: 'Attach PDF, DOCX, XLSX, or text', id: 'Lampirkan PDF, DOCX, XLSX, atau teks' })}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#0B6477]/20 text-neutral-500 transition-colors hover:border-[#0B6477] hover:text-[#0B6477] disabled:opacity-60"
             >
               {attaching ? (
@@ -581,9 +592,9 @@ export default function ChatInterface() {
             {reasoningModel && (
               <button
                 type="button"
-                onClick={() => setThinking((t) => !t)}
+                onClick={() => setThinking((on) => !on)}
                 aria-pressed={thinking}
-                title="Let the model reason step by step before answering"
+                title={t({ en: 'Let the model reason step by step before answering', id: 'Biarkan model bernalar langkah demi langkah sebelum menjawab' })}
                 className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors ${
                   thinking
                     ? 'border-[#0B6477]/30 bg-[#0B6477]/10 text-[#0B6477]'
@@ -592,7 +603,7 @@ export default function ChatInterface() {
                 style={body}
               >
                 <Brain className="h-4 w-4" />
-                Thinking
+                {t({ en: 'Thinking', id: 'Berpikir' })}
               </button>
             )}
           </div>
@@ -603,7 +614,7 @@ export default function ChatInterface() {
               <button
                 type="button"
                 onClick={handleStop}
-                aria-label="Stop"
+                aria-label={t({ en: 'Stop', id: 'Hentikan' })}
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0B6477] text-white transition-colors hover:bg-[#14919B]"
               >
                 <Square className="h-4 w-4" fill="currentColor" />
@@ -613,7 +624,7 @@ export default function ChatInterface() {
                 type="button"
                 onClick={handleSend}
                 disabled={!canSend}
-                aria-label="Send"
+                aria-label={t({ en: 'Send', id: 'Kirim' })}
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#45DFB1] text-[#0B2A22] transition-colors hover:bg-[#80ED99] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Send className="h-4 w-4" />
@@ -671,7 +682,7 @@ export default function ChatInterface() {
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              aria-label="Open conversations"
+              aria-label={t({ en: 'Open conversations', id: 'Buka percakapan' })}
               className="flex h-9 w-9 items-center justify-center rounded-xl text-neutral-500 hover:bg-[#F3F7F6] hover:text-[#0B6477] md:hidden"
             >
               <Menu className="h-5 w-5" />
@@ -680,7 +691,7 @@ export default function ChatInterface() {
               <button
                 type="button"
                 onClick={() => setSidebarCollapsed(false)}
-                aria-label="Expand sidebar"
+                aria-label={t({ en: 'Expand sidebar', id: 'Bentangkan sidebar' })}
                 className="hidden h-9 w-9 items-center justify-center rounded-xl text-neutral-500 hover:bg-[#F3F7F6] hover:text-[#0B6477] md:flex"
               >
                 <PanelLeft className="h-5 w-5" />
@@ -692,7 +703,7 @@ export default function ChatInterface() {
                 style={body}
               >
                 <VenetianMask className="h-3.5 w-3.5" />
-                Incognito
+                {t({ en: 'Incognito', id: 'Penyamaran' })}
               </span>
             )}
           </div>
@@ -701,7 +712,7 @@ export default function ChatInterface() {
             <button
               type="button"
               onClick={() => setMenuOpen((o) => !o)}
-              aria-label="Conversation options"
+              aria-label={t({ en: 'Conversation options', id: 'Opsi percakapan' })}
               className="flex h-9 w-9 items-center justify-center rounded-xl text-neutral-500 hover:bg-[#F3F7F6] hover:text-[#0B6477]"
             >
               <MoreVertical className="h-5 w-5" />
@@ -718,7 +729,7 @@ export default function ChatInterface() {
                   style={body}
                 >
                   <Plus className="h-4 w-4 text-neutral-400" />
-                  New chat
+                  {t({ en: 'New chat', id: 'Chat baru' })}
                 </button>
                 <button
                   type="button"
@@ -730,7 +741,7 @@ export default function ChatInterface() {
                   style={body}
                 >
                   <VenetianMask className="h-4 w-4 text-neutral-400" />
-                  Incognito chat
+                  {t({ en: 'Incognito chat', id: 'Chat penyamaran' })}
                 </button>
                 <button
                   type="button"
@@ -740,7 +751,7 @@ export default function ChatInterface() {
                   style={body}
                 >
                   <Trash2 className="h-4 w-4 text-neutral-400" />
-                  Clear conversation
+                  {t({ en: 'Clear conversation', id: 'Bersihkan percakapan' })}
                 </button>
               </div>
             )}
@@ -769,12 +780,21 @@ export default function ChatInterface() {
                   style={display}
                 >
                   {isIncognito ? (
-                    <>
-                      <span style={accent}>Incognito</span> chat
-                    </>
+                    t({
+                      en: (
+                        <>
+                          <span style={accent}>Incognito</span> chat
+                        </>
+                      ),
+                      id: (
+                        <>
+                          Chat <span style={accent}>penyamaran</span>
+                        </>
+                      ),
+                    })
                   ) : (
                     <>
-                      {greeting}
+                      {t(greeting)}
                       {firstName && (
                         <>
                           , <span style={accent}>{firstName}</span>
@@ -788,8 +808,11 @@ export default function ChatInterface() {
                   style={body}
                 >
                   {isIncognito
-                    ? "This chat won't appear in your history or be saved."
-                    : warmLine}
+                    ? t({
+                        en: "This chat won't appear in your history or be saved.",
+                        id: 'Chat ini tidak akan muncul di riwayat dan tidak disimpan.',
+                      })
+                    : t(warmLine)}
                 </p>
               </div>
 

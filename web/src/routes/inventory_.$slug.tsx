@@ -10,6 +10,7 @@ import AuthGate from "../components/AuthGate";
 import { EASE, MaskLine, META } from "../components/NoteParts";
 import { supabase } from "../lib/auth/supabase";
 import { useAuth } from "../lib/auth/auth";
+import { headLang, localeOf, useLang, useT, type Lang } from "../lib/i18n";
 import {
   type Instrument,
   type InstrumentStatus,
@@ -17,12 +18,15 @@ import {
   type UsageLog,
   formatIDR,
   fmtDateTime,
+  logStatusLabel,
   logStatusMeta,
   overdueDays,
+  paymentLabel,
   paymentMeta,
+  statusLabel,
   statusMeta,
 } from "../lib/inventory";
-import { labMemberNames, setPayment } from "../lib/inventory-data";
+import { inventoryErrorText, labMemberNames, setPayment } from "../lib/inventory-data";
 import InstrumentForm from "../components/inventory/InstrumentForm";
 import Supporters from "../components/inventory/Supporters";
 import { Field, FormError, PrimaryButton, inputClass } from "../components/inventory/FormParts";
@@ -37,9 +41,9 @@ import {
 
 export const Route = createFileRoute("/inventory_/$slug")({
   component: InstrumentPage,
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Instrument | smartagri" },
+      { title: headLang(matches) === "id" ? "Instrumen | smartagri" : "Instrument | smartagri" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -81,6 +85,8 @@ function InstrumentPageInner() {
 }
 
 function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null; userName: string; isAdmin: boolean }) {
+  const t = useT();
+  const lang = useLang();
   const { slug } = Route.useParams();
   const navigate = useNavigate();
   const [instrument, setInstrument] = useState<Instrument | null>(null);
@@ -107,7 +113,7 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
     if (reloadKey === 0) setLoading(true);
     setError(null);
     if (!supabase) {
-      setError("Inventory storage is not configured on this environment.");
+      setError(inventoryErrorText("Inventory storage is not configured on this environment.", lang));
       setLoading(false);
       return;
     }
@@ -164,7 +170,7 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
     return (
       <Shell>
         <p className="text-neutral-600" style={body}>
-          Instrument not found.
+          {t({ en: "Instrument not found.", id: "Instrumen tidak ditemukan." })}
         </p>
       </Shell>
     );
@@ -187,7 +193,7 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
             className={`inline-flex items-center gap-2 rounded-lg border border-[#0B6477]/20 px-3.5 py-2 text-[#0B6477] transition-colors hover:bg-[#F3F7F6] ${META}`}
             style={body}
           >
-            <Pencil className="h-3.5 w-3.5" /> Edit instrument
+            <Pencil className="h-3.5 w-3.5" /> {t({ en: "Edit instrument", id: "Ubah instrumen" })}
           </button>
         ) : null
       }
@@ -236,24 +242,26 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
 
             {!installed && (
               <div className="grid gap-px overflow-hidden rounded-[20px] border border-[#0B6477]/12 bg-[#0B6477]/12 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-                <RateCard label="Internal, self-operated" value={instrument.rate_internal_self} unit={instrument.unit} />
-                <RateCard label="Internal, technician" value={instrument.rate_internal_tech} unit={instrument.unit} />
-                <RateCard label="External" value={instrument.rate_external} unit={instrument.unit} />
+                <RateCard label={t({ en: "Internal, self-operated", id: "Internal, mandiri" })} value={instrument.rate_internal_self} unit={instrument.unit} />
+                <RateCard label={t({ en: "Internal, technician", id: "Internal, teknisi" })} value={instrument.rate_internal_tech} unit={instrument.unit} />
+                <RateCard label={t({ en: "External", id: "Eksternal" })} value={instrument.rate_external} unit={instrument.unit} />
               </div>
             )}
             {!installed && instrument.rate_tiers && instrument.rate_tiers.length > 0 && <TierTable instrument={instrument} />}
             {instrument.terms && (
               <div className="rounded-[20px] border border-[#0B6477]/12 bg-white/90 p-5" style={body}>
                 <p className={`mb-3 text-neutral-500 ${META}`}>
-                  {/sampel|sample/i.test(instrument.unit ?? "") ? "What counts as one sample" : "Terms from the rate letter"}
+                  {/sampel|sample/i.test(instrument.unit ?? "")
+                    ? t({ en: "What counts as one sample", id: "Yang dihitung satu sampel" })
+                    : t({ en: "Terms from the rate letter", id: "Ketentuan dari surat tarif" })}
                 </p>
                 <ul className="flex list-disc flex-col gap-2 pl-4 text-sm leading-relaxed text-neutral-700 marker:text-[#14919B]">
                   {instrument.terms
                     .split("\n")
-                    .map((t) => t.trim())
+                    .map((line) => line.trim())
                     .filter(Boolean)
-                    .map((t) => (
-                      <li key={t}>{t}</li>
+                    .map((line) => (
+                      <li key={line}>{line}</li>
                     ))}
                 </ul>
               </div>
@@ -262,7 +270,7 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
               <div className="rounded-[20px] border border-[#0B6477]/12 bg-white/90 p-5 text-sm text-neutral-700" style={body}>
                 {instrument.pic && (
                   <p>
-                    <span className="text-neutral-500">Person in charge: </span>
+                    <span className="text-neutral-500">{t({ en: "Person in charge: ", id: "Penanggung jawab: " })}</span>
                     <b className="font-medium text-neutral-900">{instrument.pic}</b>
                   </p>
                 )}
@@ -303,16 +311,19 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
           >
             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${meta.chip}`} style={body}>
               <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
-              {meta.label}
+              {statusLabel(instrument.status as InstrumentStatus, lang)}
             </span>
             {installed && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0B6477]/10 px-3 py-1.5 text-sm font-medium text-[#0B6477]" style={body}>
-                Permanently installed
+                {t({ en: "Permanently installed", id: "Terpasang permanen" })}
               </span>
             )}
             {bookings.length > 0 && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0AD1C8]/15 px-3 py-1.5 text-sm font-medium text-[#0B6477]" style={body}>
-                {bookings.length} upcoming {bookings.length === 1 ? "booking" : "bookings"}
+                {t({
+                  en: `${bookings.length} upcoming ${bookings.length === 1 ? "booking" : "bookings"}`,
+                  id: `${bookings.length} reservasi mendatang`,
+                })}
               </span>
             )}
             <span className="text-[15px] text-neutral-500" style={body}>
@@ -370,42 +381,44 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
       <div className="mt-16 border-t border-[#0B6477]/10 pt-12">
         <p className={`mb-3 flex items-center gap-2 text-[#14919B] ${META}`} style={body}>
           <span className="h-1.5 w-1.5 bg-[#45DFB1]" aria-hidden="true" />
-          {logs.length} {logs.length === 1 ? "entry" : "entries"}
+          {t({ en: `${logs.length} ${logs.length === 1 ? "entry" : "entries"}`, id: `${logs.length} catatan` })}
         </p>
         <h2 className="mb-6 text-3xl font-semibold tracking-[-0.03em] text-neutral-900 md:text-4xl" style={display}>
           {installed ? (
             <>
-              Inspection <span style={accent}>log</span>
+              {t({ en: "Inspection", id: "Log" })} <span style={accent}>{t({ en: "log", id: "inspeksi" })}</span>
             </>
           ) : (
             <>
-              Usage <span style={accent}>history</span>
+              {t({ en: "Usage", id: "Riwayat" })} <span style={accent}>{t({ en: "history", id: "pemakaian" })}</span>
             </>
           )}
         </h2>
         {logs.length === 0 ? (
           <div className="rounded-[20px] border border-dashed border-[#0B6477]/25 bg-white/70 p-8 text-center text-sm text-neutral-500" style={body}>
-            {installed ? "No inspections logged yet." : "No usage logged yet."}
+            {installed
+              ? t({ en: "No inspections logged yet.", id: "Belum ada inspeksi yang dicatat." })
+              : t({ en: "No usage logged yet.", id: "Belum ada pemakaian yang dicatat." })}
           </div>
         ) : installed ? (
           <div className="overflow-x-auto rounded-[20px] border border-[#0B6477]/12 bg-white/90">
             <table className="w-full min-w-[680px] border-collapse text-left">
               <thead>
                 <tr className="bg-[#F3F7F6]/80 text-neutral-400">
-                  <Th>Date</Th>
-                  <Th>Checked by</Th>
-                  <Th>Type</Th>
-                  <Th>Result</Th>
-                  <Th>Notes</Th>
+                  <Th>{t({ en: "Date", id: "Tanggal" })}</Th>
+                  <Th>{t({ en: "Checked by", id: "Diperiksa oleh" })}</Th>
+                  <Th>{t({ en: "Type", id: "Jenis" })}</Th>
+                  <Th>{t({ en: "Result", id: "Hasil" })}</Th>
+                  <Th>{t({ en: "Notes", id: "Catatan" })}</Th>
                 </tr>
               </thead>
               <tbody>
                 {logs.map((l) => (
                   <tr key={l.id} className="border-t border-[#0B6477]/8 align-top transition-colors hover:bg-[#F3F7F6]/70">
-                    <Td className="whitespace-nowrap text-neutral-600">{fmtDate(l.checkout_at)}</Td>
+                    <Td className="whitespace-nowrap text-neutral-600">{fmtDate(l.checkout_at, lang)}</Td>
                     <Td className="font-medium text-neutral-800">{l.borrower_name}</Td>
-                    <Td className="text-neutral-600">{l.purpose || "-"}</Td>
-                    <Td className="text-neutral-600">{l.condition_in || l.condition_out || "-"}</Td>
+                    <Td className="text-neutral-600">{checkText(l.purpose, lang) || "-"}</Td>
+                    <Td className="text-neutral-600">{checkText(l.condition_in || l.condition_out, lang) || "-"}</Td>
                     <Td className="text-neutral-600">{l.notes || "-"}</Td>
                   </tr>
                 ))}
@@ -417,12 +430,12 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
             <table className="w-full min-w-[860px] border-collapse text-left">
               <thead>
                 <tr className="bg-[#F3F7F6]/80 text-neutral-400">
-                  <Th>Borrower</Th>
-                  <Th>From</Th>
-                  <Th>Due / returned</Th>
-                  <Th>Purpose</Th>
-                  <Th className="text-right">Cost</Th>
-                  <Th>Status</Th>
+                  <Th>{t({ en: "Borrower", id: "Peminjam" })}</Th>
+                  <Th>{t({ en: "From", id: "Mulai" })}</Th>
+                  <Th>{t({ en: "Due / returned", id: "Batas / kembali" })}</Th>
+                  <Th>{t({ en: "Purpose", id: "Keperluan" })}</Th>
+                  <Th className="text-right">{t({ en: "Cost", id: "Biaya" })}</Th>
+                  <Th>{t({ en: "Status", id: "Status" })}</Th>
                 </tr>
               </thead>
               <tbody>
@@ -439,8 +452,8 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
                       <Td>
                         <div className="font-medium text-neutral-800">{l.borrower_name}</div>
                         <div className="text-xs text-neutral-500">
-                          {l.borrower_org || "-"} · {l.user_type === "external" ? "rental" : "internal"}
-                          {l.operator === "technician" ? ` · technician${l.technician_name ? ` ${l.technician_name}` : ""}` : ""}
+                          {l.borrower_org || "-"} · {l.user_type === "external" ? t({ en: "rental", id: "sewa" }) : t({ en: "internal", id: "internal" })}
+                          {l.operator === "technician" ? ` · ${t({ en: "technician", id: "teknisi" })}${l.technician_name ? ` ${l.technician_name}` : ""}` : ""}
                         </div>
                         {l.borrower_contact && (
                           <div className="text-xs">
@@ -448,14 +461,14 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
                           </div>
                         )}
                       </Td>
-                      <Td className="whitespace-nowrap text-neutral-600">{fmtDateTime(l.checkout_at)}</Td>
+                      <Td className="whitespace-nowrap text-neutral-600">{fmtDateTime(l.checkout_at, lang)}</Td>
                       <Td className="whitespace-nowrap text-neutral-600">
                         {l.returned_at ? (
-                          fmtDateTime(l.returned_at)
+                          fmtDateTime(l.returned_at, lang)
                         ) : l.expected_return ? (
                           <span className={late ? "font-medium text-[#B42318]" : ""}>
-                            due {fmtDateTime(l.expected_return)}
-                            {late ? ` (${late} d late)` : ""}
+                            {t({ en: "due", id: "batas" })} {fmtDateTime(l.expected_return, lang)}
+                            {late ? t({ en: ` (${late} d late)`, id: ` (terlambat ${late} hr)` }) : ""}
                           </span>
                         ) : (
                           "-"
@@ -472,7 +485,7 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
                             late ? "bg-[#E5484D]/12 text-[#B42318]" : st.chip
                           }`}
                         >
-                          {late ? "Overdue" : st.label}
+                          {late ? t({ en: "Overdue", id: "Terlambat" }) : logStatusLabel(logStatusMeta[l.status] ? l.status : "returned", lang)}
                         </span>
                       </Td>
                     </tr>
@@ -488,17 +501,20 @@ function InstrumentDetail({ userId, userName, isAdmin }: { userId: string | null
 }
 
 function PaymentCell({ log, isAdmin, onDone }: { log: UsageLog; isAdmin: boolean; onDone: () => void }) {
+  const t = useT();
+  const lang = useLang();
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const status = log.payment_status as PaymentStatus;
   const m = paymentMeta[status] ?? paymentMeta.unpaid;
+  const mLabel = paymentLabel(paymentMeta[status] ? status : "unpaid", lang);
   if (!isAdmin) {
-    return <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${m.chip}`}>{m.label}</span>;
+    return <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${m.chip}`}>{mLabel}</span>;
   }
   return (
     <div className="mt-1 flex flex-col items-end gap-1">
       <select
-        aria-label={`Payment by ${log.borrower_name}`}
+        aria-label={t({ en: `Payment by ${log.borrower_name}`, id: `Pembayaran oleh ${log.borrower_name}` })}
         value={status}
         disabled={saving}
         onChange={async (e) => {
@@ -508,7 +524,7 @@ function PaymentCell({ log, isAdmin, onDone }: { log: UsageLog; isAdmin: boolean
             await setPayment(log.id, e.target.value as PaymentStatus);
             onDone();
           } catch (e2) {
-            setErr(e2 instanceof Error ? e2.message : String(e2));
+            setErr(e2 instanceof Error ? inventoryErrorText(e2.message, lang) : String(e2));
           }
           setSaving(false);
         }}
@@ -516,7 +532,7 @@ function PaymentCell({ log, isAdmin, onDone }: { log: UsageLog; isAdmin: boolean
       >
         {(Object.keys(paymentMeta) as PaymentStatus[]).map((p) => (
           <option key={p} value={p}>
-            {paymentMeta[p].label}
+            {paymentLabel(p, lang)}
           </option>
         ))}
       </select>
@@ -535,6 +551,24 @@ const CHECK_TYPES = [
 ];
 const CHECK_RESULTS = ["All functions normal", "Minor issue resolved", "Needs attention"];
 
+// The values above are what the logbook stores; these are only what the page shows.
+const CHECK_TEXT_ID: Record<string, string> = {
+  "Routine functional check": "Pemeriksaan fungsi rutin",
+  "Periodic inspection": "Inspeksi berkala",
+  Troubleshooting: "Penanganan masalah",
+  "Data retrieval & health check": "Pengambilan data & cek kondisi",
+  "Preventive maintenance": "Pemeliharaan preventif",
+  "Calibration check": "Pemeriksaan kalibrasi",
+  "All functions normal": "Semua fungsi normal",
+  "Minor issue resolved": "Masalah kecil teratasi",
+  "Needs attention": "Perlu penanganan",
+};
+
+function checkText(value: string | null | undefined, lang: Lang): string {
+  if (!value) return "";
+  return lang === "id" ? (CHECK_TEXT_ID[value] ?? value) : value;
+}
+
 function InspectionPanel({
   instrument,
   userId,
@@ -546,6 +580,8 @@ function InspectionPanel({
   defaultName: string;
   onDone: () => void;
 }) {
+  const t = useT();
+  const lang = useLang();
   const today = new Date().toISOString().slice(0, 10);
   const [inspector, setInspector] = useState(defaultName);
   const [date, setDate] = useState(today);
@@ -556,9 +592,14 @@ function InspectionPanel({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const nameErr = tried && !inspector.trim() ? "Enter who carried out the check." : null;
-  const dateErr = tried && (!date || date > today) ? "Pick today or an earlier date." : null;
-  const notesErr = tried && result === "Needs attention" && !notes.trim() ? "Describe what needs attention." : null;
+  const nameErr =
+    tried && !inspector.trim() ? t({ en: "Enter who carried out the check.", id: "Isi siapa yang melakukan pemeriksaan." }) : null;
+  const dateErr =
+    tried && (!date || date > today) ? t({ en: "Pick today or an earlier date.", id: "Pilih hari ini atau tanggal sebelumnya." }) : null;
+  const notesErr =
+    tried && result === "Needs attention" && !notes.trim()
+      ? t({ en: "Describe what needs attention.", id: "Jelaskan apa yang perlu ditangani." })
+      : null;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -597,17 +638,17 @@ function InspectionPanel({
     <select id={id} name={name} value={value} onChange={(e) => set(e.target.value)} className={inputClass} style={body}>
       {options.map((o) => (
         <option key={o} value={o}>
-          {o}
+          {checkText(o, lang)}
         </option>
       ))}
     </select>
   );
 
   return (
-    <Panel title="Log an inspection or maintenance check">
+    <Panel title={t({ en: "Log an inspection or maintenance check", id: "Catat inspeksi atau pemeliharaan" })}>
       <form onSubmit={submit} noValidate className="flex flex-col gap-5">
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Checked by" required error={nameErr}>
+          <Field label={t({ en: "Checked by", id: "Diperiksa oleh" })} required error={nameErr}>
             {(f) => (
               <input
                 id={f.id}
@@ -623,7 +664,7 @@ function InspectionPanel({
               />
             )}
           </Field>
-          <Field label="Date" required error={dateErr}>
+          <Field label={t({ en: "Date", id: "Tanggal" })} required error={dateErr}>
             {(f) => (
               <input
                 id={f.id}
@@ -640,9 +681,9 @@ function InspectionPanel({
               />
             )}
           </Field>
-          <Field label="Type">{(f) => select(f.id, type, setType, CHECK_TYPES, "type")}</Field>
-          <Field label="Result">{(f) => select(f.id, result, setResult, CHECK_RESULTS, "result")}</Field>
-          <Field label="Notes / findings" full required={result === "Needs attention"} error={notesErr}>
+          <Field label={t({ en: "Type", id: "Jenis" })}>{(f) => select(f.id, type, setType, CHECK_TYPES, "type")}</Field>
+          <Field label={t({ en: "Result", id: "Hasil" })}>{(f) => select(f.id, result, setResult, CHECK_RESULTS, "result")}</Field>
+          <Field label={t({ en: "Notes / findings", id: "Catatan / temuan" })} full required={result === "Needs attention"} error={notesErr}>
             {(f) => (
               <textarea
                 id={f.id}
@@ -650,7 +691,7 @@ function InspectionPanel({
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="What was checked, any issues, actions taken"
+                placeholder={t({ en: "What was checked, any issues, actions taken", id: "Apa yang diperiksa, masalah yang ditemukan, tindakan yang diambil" })}
                 aria-invalid={f.invalid}
                 aria-describedby={f.describedBy}
                 className={`${inputClass} h-auto py-3 leading-relaxed`}
@@ -660,7 +701,7 @@ function InspectionPanel({
           </Field>
         </div>
         <div className="flex justify-end">
-          <PrimaryButton busy={saving}>Save inspection</PrimaryButton>
+          <PrimaryButton busy={saving}>{t({ en: "Save inspection", id: "Simpan inspeksi" })}</PrimaryButton>
         </div>
         <FormError message={err} />
       </form>
@@ -671,6 +712,7 @@ function InspectionPanel({
 /* ---------- small building blocks ---------- */
 
 function Shell({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  const t = useT();
   return (
     <section className="mx-auto max-w-[1360px] px-6 pb-20 pt-10 md:px-12 md:pb-28 md:pt-12">
       <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
@@ -680,7 +722,7 @@ function Shell({ children, action }: { children: ReactNode; action?: ReactNode }
           style={body}
         >
           <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
-          Back to inventory
+          {t({ en: "Back to inventory", id: "Kembali ke inventaris" })}
         </Link>
         {action}
       </div>
@@ -707,17 +749,18 @@ function RateCard({ label, value, unit }: { label: string; value: number | null;
 
 // The F-750 sample tiers from the rate letter, by user type.
 function TierTable({ instrument }: { instrument: Instrument }) {
+  const t = useT();
   const tiers = [...(instrument.rate_tiers ?? [])].sort((a, b) => a.from - b.from);
   const bands = [
     { from: 1, self: instrument.rate_internal_self, tech: instrument.rate_internal_tech, ext: instrument.rate_external },
   ];
-  for (const t of tiers) {
+  for (const tier of tiers) {
     const prev = bands[bands.length - 1];
     bands.push({
-      from: t.from,
-      self: t.internal_self ?? prev.self,
-      tech: t.internal_tech ?? prev.tech,
-      ext: t.external ?? prev.ext,
+      from: tier.from,
+      self: tier.internal_self ?? prev.self,
+      tech: tier.internal_tech ?? prev.tech,
+      ext: tier.external ?? prev.ext,
     });
   }
   const showSelf = bands.some((b) => b.self != null);
@@ -725,13 +768,13 @@ function TierTable({ instrument }: { instrument: Instrument }) {
   return (
     <div className="overflow-hidden rounded-[20px] border border-[#0B6477]/12 bg-white/90">
       <table className="w-full border-collapse text-left text-sm" style={body}>
-        <caption className={`px-4 pt-4 text-left text-neutral-500 ${META}`}>Tiered rate per request</caption>
+        <caption className={`px-4 pt-4 text-left text-neutral-500 ${META}`}>{t({ en: "Tiered rate per request", id: "Tarif berjenjang per permintaan" })}</caption>
         <thead>
           <tr className="text-neutral-500">
-            <th className="px-4 py-2 font-medium">Samples</th>
-            {showSelf && <th className="px-4 py-2 text-right font-medium">Internal, self</th>}
+            <th className="px-4 py-2 font-medium">{t({ en: "Samples", id: "Sampel" })}</th>
+            {showSelf && <th className="px-4 py-2 text-right font-medium">{t({ en: "Internal, self", id: "Internal, mandiri" })}</th>}
             {showTech && <th className="px-4 py-2 text-right font-medium">Internal</th>}
-            <th className="px-4 py-2 text-right font-medium">External</th>
+            <th className="px-4 py-2 text-right font-medium">{t({ en: "External", id: "Eksternal" })}</th>
           </tr>
         </thead>
         <tbody className="tabular-nums">
@@ -739,7 +782,7 @@ function TierTable({ instrument }: { instrument: Instrument }) {
             const next = bands[i + 1];
             return (
               <tr key={b.from} className="border-t border-[#0B6477]/8">
-                <td className="px-4 py-2 text-neutral-700">{next ? `${b.from}–${next.from - 1}` : `${b.from} and up`}</td>
+                <td className="px-4 py-2 text-neutral-700">{next ? `${b.from}–${next.from - 1}` : t({ en: `${b.from} and up`, id: `${b.from} ke atas` })}</td>
                 {showSelf && <td className="px-4 py-2 text-right">{formatIDR(b.self)}</td>}
                 {showTech && <td className="px-4 py-2 text-right">{formatIDR(b.tech)}</td>}
                 <td className="px-4 py-2 text-right">{formatIDR(b.ext)}</td>
@@ -750,7 +793,10 @@ function TierTable({ instrument }: { instrument: Instrument }) {
       </table>
       {instrument.min_quantity != null && (
         <p className="border-t border-[#0B6477]/8 px-4 py-3 text-xs text-neutral-500" style={body}>
-          Minimum {instrument.min_quantity} per request; fewer are charged as {instrument.min_quantity}.
+          {t({
+            en: `Minimum ${instrument.min_quantity} per request; fewer are charged as ${instrument.min_quantity}.`,
+            id: `Minimum ${instrument.min_quantity} per permintaan; jumlah di bawahnya ditagih sebagai ${instrument.min_quantity}.`,
+          })}
         </p>
       )}
     </div>
@@ -773,8 +819,8 @@ function Td({ children, className = "" }: { children?: ReactNode; className?: st
   );
 }
 
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
+function fmtDate(iso: string, lang: Lang): string {
+  return new Date(iso).toLocaleDateString(localeOf(lang), {
     year: "numeric",
     month: "short",
     day: "numeric",

@@ -41,10 +41,12 @@ import {
   checklistProgress,
   describeActivity,
   dueState,
+  kanbanError,
   parseImportedComment,
   personName,
   positionBetween,
   statusInfo,
+  statusLabel,
   timeAgo,
   type CardStatus,
   type KanbanActivity,
@@ -82,6 +84,7 @@ import { useBoard } from "./board-context";
 import { isHelpKey, isTyping } from "./ShortcutsDialog";
 import MarkdownEditor, { AttachmentLinkContext, InlineMarkdown, MarkdownView, attachmentHref } from "./MarkdownEditor";
 import { Avatar, Composer, InlineEdit, useDismiss } from "./parts";
+import { localeOf, useLang, useT, type Bi, type Lang } from "../../lib/i18n";
 
 const SECTION_TITLE = "flex items-center gap-2 text-sm font-semibold tracking-[-0.01em] text-neutral-900";
 const BUTTON =
@@ -112,6 +115,7 @@ function Popover({
   width?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const tr = useT();
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
@@ -146,7 +150,7 @@ function Popover({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={tr({ en: "Close", id: "Tutup" })}
           className="grid h-7 w-7 place-items-center rounded-md text-neutral-500 hover:bg-neutral-900/5"
         >
           <X className="h-4 w-4" />
@@ -164,8 +168,8 @@ function toLocalInput(iso: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("en-US", {
+function formatDateTime(iso: string, lang: Lang) {
+  return new Date(iso).toLocaleString(localeOf(lang), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -183,6 +187,7 @@ const DUE_TONE = {
 
 export default function CardModal({ number }: { number: number }) {
   const { data, closeCard } = useBoard();
+  const tr = useT();
   const card = data.cards.find((c) => c.number === number);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -235,12 +240,15 @@ export default function CardModal({ number }: { number: number }) {
           <div className="p-8">
             <div className="flex items-start justify-between gap-4">
               <h2 id="card-modal-title" className="text-xl font-semibold tracking-[-0.025em]" style={display}>
-                Card not found
+                {tr({ en: "Card not found", id: "Kartu tidak ditemukan" })}
               </h2>
               <CloseButton />
             </div>
             <p className="mt-3 text-sm text-neutral-600" style={body}>
-              This card may have been archived or moved to another board.
+              {tr({
+                en: "This card may have been archived or moved to another board.",
+                id: "Kartu ini mungkin sudah diarsipkan atau dipindah ke board lain.",
+              })}
             </p>
           </div>
         )}
@@ -251,11 +259,12 @@ export default function CardModal({ number }: { number: number }) {
 
 function CloseButton({ onCover = false }: { onCover?: boolean }) {
   const { closeCard } = useBoard();
+  const tr = useT();
   return (
     <button
       type="button"
       onClick={closeCard}
-      aria-label="Close card"
+      aria-label={tr({ en: "Close card", id: "Tutup kartu" })}
       className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-colors ${
         onCover ? OVER_COVER : "text-neutral-500 hover:bg-neutral-900/5 hover:text-neutral-900"
       }`}
@@ -275,28 +284,33 @@ type SetDetail = (fn: (d: CardDetail | null) => CardDetail | null) => void;
 
 function usePeople() {
   const { data } = useBoard();
+  const lang = useLang();
   return useMemo(() => {
     const byId = new Map(data.people.map((p) => [p.user_id, p]));
-    const nameOf = (id: string | null) => (id && byId.get(id) ? personName(byId.get(id)) : "Former member");
+    const former = lang === "id" ? "Mantan anggota" : "Former member";
+    const nameOf = (id: string | null) => (id && byId.get(id) ? personName(byId.get(id), lang) : former);
     return { byId, nameOf };
-  }, [data.people]);
+  }, [data.people, lang]);
 }
 
-const POPOVER_TITLE: Record<PopoverKey, string> = {
-  add: "Add to card",
-  labels: "Labels",
-  members: "Members",
-  dates: "Dates",
-  checklist: "Add checklist",
-  attachment: "Attach",
-  cover: "Cover",
-  status: "Status",
-  list: "Move to list",
-  actions: "Card actions",
+const POPOVER_TITLE: Record<PopoverKey, Bi> = {
+  add: { en: "Add to card", id: "Tambah ke kartu" },
+  labels: { en: "Labels", id: "Label" },
+  members: { en: "Members", id: "Anggota" },
+  dates: { en: "Dates", id: "Tanggal" },
+  checklist: { en: "Add checklist", id: "Tambah checklist" },
+  attachment: { en: "Attach", id: "Lampirkan" },
+  cover: { en: "Cover", id: "Sampul" },
+  status: { en: "Status", id: "Status" },
+  list: { en: "Move to list", id: "Pindah ke list" },
+  actions: { en: "Card actions", id: "Aksi kartu" },
 };
 
 function CardBody({ card: c }: { card: KanbanCard }) {
   const ctx = useBoard();
+  const tr = useT();
+  const lang = useLang();
+  const err = (what: Bi, message: string) => `${tr(what)}: ${kanbanError(message, lang)}`;
   const { data, editable, closeCard } = ctx;
   const { byId: peopleById } = usePeople();
   const listsSorted = useMemo(() => [...data.lists].sort(byPos), [data.lists]);
@@ -363,7 +377,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || isTyping(e) || popoverRef.current || viewerRef.current !== null) return;
-      if (document.querySelector('[aria-label="Keyboard shortcuts"]')) return;
+      if (document.querySelector("[data-kanban-shortcuts]")) return;
       keys.current(e);
     };
     window.addEventListener("keydown", onKey);
@@ -451,7 +465,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
     const res = await createChecklist(row);
     if (res.error !== null) {
       setDetail((d) => (d ? { ...d, checklists: d.checklists.filter((x) => x.id !== row.id) } : d));
-      ctx.push({ text: `Could not add the checklist: ${res.error}`, tone: "error" });
+      ctx.push({ text: err({ en: "Could not add the checklist", id: "Gagal menambah checklist" }, res.error), tone: "error" });
     } else touched();
   };
 
@@ -470,7 +484,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
     const res = await createComment(row);
     if (res.error !== null) {
       setDetail((d) => (d ? { ...d, comments: d.comments.filter((x) => x.id !== row.id) } : d));
-      ctx.push({ text: `Could not post the comment: ${res.error}`, tone: "error" });
+      ctx.push({ text: err({ en: "Could not post the comment", id: "Gagal mengirim komentar" }, res.error), tone: "error" });
     } else {
       setDetail((d) => (d ? { ...d, comments: d.comments.map((x) => (x.id === row.id ? res.data : x)) } : d));
     }
@@ -509,7 +523,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
     const res = await uploadAttachment(c, file, ctx.userId);
     setUploading((n) => n - 1);
     if (res.error !== null) {
-      ctx.push({ text: `Could not upload ${file.name}: ${res.error}`, tone: "error" });
+      ctx.push({ text: err({ en: `Could not upload ${file.name}`, id: `Gagal mengunggah ${file.name}` }, res.error), tone: "error" });
       return null;
     }
     addAttachment(res.data);
@@ -540,7 +554,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
     if (!ctx.userId) return false;
     const res = await addLinkAttachment(c, url, name, ctx.userId);
     if (res.error !== null) {
-      ctx.push({ text: res.error, tone: "error" });
+      ctx.push({ text: kanbanError(res.error, lang), tone: "error" });
       return false;
     }
     setPopover(null);
@@ -550,13 +564,13 @@ function CardBody({ card: c }: { card: KanbanCard }) {
   };
 
   const removeAttachment = async (a: KanbanAttachment) => {
-    if (!window.confirm(`Delete ${a.name}? This cannot be undone.`)) return;
+    if (!window.confirm(tr({ en: `Delete ${a.name}? This cannot be undone.`, id: `Hapus ${a.name}? Tindakan ini tidak bisa dibatalkan.` }))) return;
     setViewer(null);
     setDetail((d) => (d ? { ...d, attachments: d.attachments.filter((x) => x.id !== a.id) } : d));
     const res = await deleteAttachment(a);
     if (res.error !== null) {
       addAttachment(a);
-      ctx.push({ text: `Could not delete the attachment: ${res.error}`, tone: "error" });
+      ctx.push({ text: err({ en: "Could not delete the attachment", id: "Gagal menghapus lampiran" }, res.error), tone: "error" });
       return;
     }
     if (c.cover_attachment_id === a.id) void ctx.patchCard(c.id, { cover_attachment_id: null });
@@ -569,7 +583,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
   const viewAttachment = (id: string) => {
     const i = attachments.findIndex((a) => a.id === id);
     if (i >= 0) setViewer(i);
-    else ctx.push({ text: "That attachment is no longer on this card.", tone: "info" });
+    else ctx.push({ text: tr({ en: "That attachment is no longer on this card.", id: "Lampiran itu sudah tidak ada di kartu ini." }), tone: "info" });
   };
 
   // --- Card actions ---------------------------------------------------------------
@@ -578,16 +592,24 @@ function CardBody({ card: c }: { card: KanbanCard }) {
     const url = `${window.location.origin}${window.location.pathname}`;
     try {
       await navigator.clipboard.writeText(url);
-      ctx.push({ text: "Link to this card copied." });
+      ctx.push({ text: tr({ en: "Link to this card copied.", id: "Tautan ke kartu ini disalin." }) });
     } catch {
       ctx.push({ text: url });
     }
   };
   const deleteForever = async () => {
     setPopover(null);
-    if (!window.confirm(`Delete "${c.title}" permanently? Its checklists, comments and files are removed too. This cannot be undone.`)) return;
+    if (
+      !window.confirm(
+        tr({
+          en: `Delete "${c.title}" permanently? Its checklists, comments and files are removed too. This cannot be undone.`,
+          id: `Hapus "${c.title}" secara permanen? Checklist, komentar, dan file-nya ikut terhapus. Tindakan ini tidak bisa dibatalkan.`,
+        }),
+      )
+    )
+      return;
     const res = await deleteCardForever(c.id, c.board_id);
-    if (res.error !== null) return ctx.push({ text: `Could not delete the card: ${res.error}`, tone: "error" });
+    if (res.error !== null) return ctx.push({ text: err({ en: "Could not delete the card", id: "Gagal menghapus kartu" }, res.error), tone: "error" });
     closeCard();
     ctx.updateData((d) => ({ ...d, cards: d.cards.filter((x) => x.id !== c.id) }));
   };
@@ -675,13 +697,13 @@ function CardBody({ card: c }: { card: KanbanCard }) {
             {editable && (
               <>
                 <button type="button" className={MENU_ITEM} onClick={() => setPopover({ key: "add", at: "header-actions" })}>
-                  <Plus className="h-4 w-4 text-neutral-500" /> Add to card
+                  <Plus className="h-4 w-4 text-neutral-500" /> {tr(POPOVER_TITLE.add)}
                 </button>
                 <button type="button" className={MENU_ITEM} onClick={() => setPopover({ key: "list", at: "header-actions" })}>
-                  <CircleDot className="h-4 w-4 text-neutral-500" /> Move to list
+                  <CircleDot className="h-4 w-4 text-neutral-500" /> {tr(POPOVER_TITLE.list)}
                 </button>
                 <button type="button" className={MENU_ITEM} onClick={() => setPopover({ key: "cover", at: "header-actions" })}>
-                  <ImageIcon className="h-4 w-4 text-neutral-500" /> Cover
+                  <ImageIcon className="h-4 w-4 text-neutral-500" /> {tr(POPOVER_TITLE.cover)}
                 </button>
               </>
             )}
@@ -695,11 +717,11 @@ function CardBody({ card: c }: { card: KanbanCard }) {
                 }}
               >
                 {watching ? <EyeOff className="h-4 w-4 text-neutral-500" /> : <Eye className="h-4 w-4 text-neutral-500" />}
-                {watching ? "Stop watching" : "Watch"}
+                {watching ? tr({ en: "Stop watching", id: "Berhenti memantau" }) : tr({ en: "Watch", id: "Pantau" })}
               </button>
             )}
             <button type="button" className={MENU_ITEM} onClick={() => void copyLink()}>
-              <LinkIcon className="h-4 w-4 text-neutral-500" /> Copy link
+              <LinkIcon className="h-4 w-4 text-neutral-500" /> {tr({ en: "Copy link", id: "Salin tautan" })}
             </button>
             {editable && (
               <>
@@ -713,13 +735,13 @@ function CardBody({ card: c }: { card: KanbanCard }) {
                     await ctx.archiveCard(c.id);
                   }}
                 >
-                  <Archive className="h-4 w-4 text-neutral-500" /> Archive
+                  <Archive className="h-4 w-4 text-neutral-500" /> {tr({ en: "Archive", id: "Arsipkan" })}
                 </button>
               </>
             )}
             {ctx.owner && (
               <button type="button" className={`${MENU_ITEM} text-[#B42323]`} onClick={() => void deleteForever()}>
-                <Trash2 className="h-4 w-4" /> Delete permanently
+                <Trash2 className="h-4 w-4" /> {tr({ en: "Delete permanently", id: "Hapus permanen" })}
               </button>
             )}
           </div>
@@ -729,7 +751,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
 
   const anchored = (at: Anchor, align: "left" | "right" = "left") =>
     popover && popover.at === at ? (
-      <Popover open onClose={closePopover} title={POPOVER_TITLE[popover.key]} align={align} width={popover.key === "actions" || popover.key === "add" ? "w-64" : "w-72"}>
+      <Popover open onClose={closePopover} title={tr(POPOVER_TITLE[popover.key])} align={align} width={popover.key === "actions" || popover.key === "add" ? "w-64" : "w-72"}>
         {popoverBody(popover.key)}
       </Popover>
     ) : null;
@@ -757,7 +779,10 @@ function CardBody({ card: c }: { card: KanbanCard }) {
               type="button"
               disabled={!editable}
               onClick={() => open("list", "header-list")}
-              aria-label={`Change list for this card, currently in ${list?.name ?? "no list"}`}
+              aria-label={tr({
+                en: `Change list for this card, currently in ${list?.name ?? "no list"}`,
+                id: `Ganti list kartu ini, sekarang di ${list?.name ?? "tanpa list"}`,
+              })}
               className={`inline-flex h-8 max-w-[52vw] items-center gap-1 rounded-lg px-2.5 text-xs font-semibold uppercase tracking-[0.04em] transition-colors disabled:cursor-default ${
                 hasCover ? OVER_COVER : "bg-[#F3F7F6] text-neutral-700 hover:bg-[#E6EFED]"
               }`}
@@ -773,7 +798,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
           <div className="ml-auto flex items-center gap-1.5">
             {editable && (
               <div className="relative">
-                <HeaderButton onCover={hasCover} label="Cover" onClick={() => open("cover", "header-cover")}>
+                <HeaderButton onCover={hasCover} label={tr(POPOVER_TITLE.cover)} onClick={() => open("cover", "header-cover")}>
                   <ImageIcon className="h-4 w-4" />
                 </HeaderButton>
                 {anchored("header-cover", "right")}
@@ -782,7 +807,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
             {watching !== null && (
               <HeaderButton
                 onCover={hasCover}
-                label={watching ? "Watching (S to stop)" : "Watch (S)"}
+                label={watching ? tr({ en: "Watching (S to stop)", id: "Dipantau (S untuk berhenti)" }) : tr({ en: "Watch (S)", id: "Pantau (S)" })}
                 pressed={watching}
                 onClick={() => void ctx.setWatch(c.id, !watching)}
               >
@@ -790,7 +815,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
               </HeaderButton>
             )}
             <div className="relative">
-              <HeaderButton onCover={hasCover} label="Actions" onClick={() => open("actions", "header-actions")}>
+              <HeaderButton onCover={hasCover} label={tr({ en: "Actions", id: "Aksi" })} onClick={() => open("actions", "header-actions")}>
                 <MoreHorizontal className="h-4 w-4" />
               </HeaderButton>
               {anchored("header-actions", "right")}
@@ -820,7 +845,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
       >
         {dropping && (
           <div className="pointer-events-none absolute inset-3 z-20 grid place-items-center rounded-[18px] border-2 border-dashed border-[#14919B] bg-[#14919B]/10 text-sm font-medium text-[#0B6477]" style={body}>
-            Drop files to attach them to this card
+            {tr({ en: "Drop files to attach them to this card", id: "Jatuhkan file untuk melampirkannya ke kartu ini" })}
           </div>
         )}
         <div ref={columnRef} className="kanban-scroll relative min-w-0 px-5 pb-8 sm:px-8 md:overflow-y-auto">
@@ -840,7 +865,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
                 {editable && (
                   <div className="relative">
                     <button type="button" onClick={() => open("add", "sticky")} className={SMALL}>
-                      <Plus className="h-4 w-4" /> Add
+                      <Plus className="h-4 w-4" /> {tr({ en: "Add", id: "Tambah" })}
                     </button>
                     {anchored("sticky", "right")}
                   </div>
@@ -854,7 +879,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
               type="button"
               disabled={!editable}
               onClick={() => ctx.patchCard(c.id, { due_complete: !c.due_complete })}
-              aria-label={c.due_complete ? "Mark this card incomplete" : "Mark this card complete"}
+              aria-label={c.due_complete ? tr({ en: "Mark this card incomplete", id: "Tandai kartu ini belum selesai" }) : tr({ en: "Mark this card complete", id: "Tandai kartu ini selesai" })}
               aria-pressed={c.due_complete}
               className="mt-1.5 shrink-0 text-neutral-400 transition-colors hover:text-[#14919B] disabled:cursor-default"
             >
@@ -866,16 +891,16 @@ function CardBody({ card: c }: { card: KanbanCard }) {
           {editable && (
             <div className="relative mt-5 flex flex-wrap gap-2" style={body}>
               <button type="button" onClick={() => open("add", "row")} aria-expanded={popover?.at === "row" && popover.key === "add"} className={BUTTON}>
-                <Plus className="h-4 w-4" /> Add
+                <Plus className="h-4 w-4" /> {tr({ en: "Add", id: "Tambah" })}
               </button>
               <button type="button" onClick={() => open("dates", "row")} className={BUTTON}>
-                <CalendarClock className="h-4 w-4" /> Dates
+                <CalendarClock className="h-4 w-4" /> {tr(POPOVER_TITLE.dates)}
               </button>
               <button type="button" onClick={() => open("checklist", "row")} className={BUTTON}>
-                <CheckSquare className="h-4 w-4" /> Checklist
+                <CheckSquare className="h-4 w-4" /> {tr({ en: "Checklist", id: "Checklist" })}
               </button>
               <button type="button" onClick={() => open("attachment", "row")} className={BUTTON}>
-                <Paperclip className="h-4 w-4" /> Attachment
+                <Paperclip className="h-4 w-4" /> {tr({ en: "Attachment", id: "Lampiran" })}
               </button>
               {anchored("row")}
             </div>
@@ -884,10 +909,10 @@ function CardBody({ card: c }: { card: KanbanCard }) {
           {/* Fields: members, labels, status and dates, each with its own picker. */}
           <div className="mt-6 flex flex-wrap gap-x-8 gap-y-4" style={body}>
             {(cardMembers.length > 0 || editable) && (
-              <Meta title="Members">
+              <Meta title={tr(POPOVER_TITLE.members)}>
                 <div className="relative flex flex-wrap items-center gap-1.5">
                   {cardMembers.map((m) => (
-                    <button key={m.user_id} type="button" disabled={!editable} onClick={() => open("members", "members")} title={personName(m)} className="rounded-full">
+                    <button key={m.user_id} type="button" disabled={!editable} onClick={() => open("members", "members")} title={personName(m, lang)} className="rounded-full">
                       <Avatar person={m} size={32} />
                     </button>
                   ))}
@@ -895,7 +920,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
                     <button
                       type="button"
                       onClick={() => open("members", "members")}
-                      aria-label="Add members to card"
+                      aria-label={tr({ en: "Add members to card", id: "Tambah anggota ke kartu" })}
                       className="grid h-8 w-8 place-items-center rounded-full bg-[#F3F7F6] text-neutral-600 hover:bg-[#E6EFED]"
                     >
                       <Plus className="h-4 w-4" />
@@ -906,7 +931,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
               </Meta>
             )}
             {(cardLabels.length > 0 || editable) && (
-              <Meta title="Labels">
+              <Meta title={tr(POPOVER_TITLE.labels)}>
                 <div className="relative flex flex-wrap gap-1.5">
                   {cardLabels.map((l) => {
                     const col = LABEL_COLORS[l.color] ?? LABEL_COLORS.slate;
@@ -927,7 +952,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
                     <button
                       type="button"
                       onClick={() => open("labels", "labels")}
-                      aria-label="Add a label"
+                      aria-label={tr({ en: "Add a label", id: "Tambah label" })}
                       className="grid h-8 w-8 place-items-center rounded-lg bg-[#F3F7F6] text-neutral-600 hover:bg-[#E6EFED]"
                     >
                       <Plus className="h-4 w-4" />
@@ -938,7 +963,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
               </Meta>
             )}
             {hasStatus && (status || editable) && (
-              <Meta title="Status">
+              <Meta title={tr(POPOVER_TITLE.status)}>
                 <div className="relative">
                   <button
                     type="button"
@@ -948,7 +973,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
                     style={status ? { background: status.bg, color: status.ink } : { background: "#F3F7F6", color: "#525252" }}
                   >
                     {status && <span className="h-2 w-2 rounded-full" style={{ background: status.dot }} />}
-                    {status ? status.label : "No status"}
+                    {status ? statusLabel(status, lang) : tr({ en: "No status", id: "Tanpa status" })}
                     {editable && <ChevronDown className="h-3.5 w-3.5" />}
                   </button>
                   {anchored("status")}
@@ -956,14 +981,14 @@ function CardBody({ card: c }: { card: KanbanCard }) {
               </Meta>
             )}
             {(c.due_at || c.start_at) && (
-              <Meta title={c.due_at ? "Due date" : "Start date"}>
+              <Meta title={c.due_at ? tr({ en: "Due date", id: "Tenggat" }) : tr({ en: "Start date", id: "Tanggal mulai" })}>
                 <div className="relative flex items-center gap-1.5">
                   {c.due_at && (
                     <button
                       type="button"
                       role="checkbox"
                       aria-checked={c.due_complete}
-                      aria-label="Due date complete"
+                      aria-label={tr({ en: "Due date complete", id: "Tenggat selesai" })}
                       disabled={!editable}
                       onClick={() => ctx.patchCard(c.id, { due_complete: !c.due_complete })}
                       className={`grid h-[18px] w-[18px] place-items-center rounded border ${c.due_complete ? "border-[#14919B] bg-[#14919B] text-white" : "border-neutral-300 bg-white"}`}
@@ -978,11 +1003,14 @@ function CardBody({ card: c }: { card: KanbanCard }) {
                     className={`inline-flex h-8 items-center gap-2 rounded-lg px-3 text-sm disabled:cursor-default ${due ? DUE_TONE[due] : DUE_TONE.later}`}
                   >
                     {c.start_at && c.due_at && (
-                      <span>{new Date(c.start_at).toLocaleDateString("en-US", { day: "numeric", month: "short" })} to</span>
+                      <span>
+                        {new Date(c.start_at).toLocaleDateString(localeOf(lang), { day: "numeric", month: "short" })}{" "}
+                        {tr({ en: "to", id: "sampai" })}
+                      </span>
                     )}
-                    {formatDateTime((c.due_at ?? c.start_at)!)}
-                    {due === "overdue" && <span className="font-medium">Overdue</span>}
-                    {due === "complete" && <span className="font-medium">Complete</span>}
+                    {formatDateTime((c.due_at ?? c.start_at)!, lang)}
+                    {due === "overdue" && <span className="font-medium">{tr({ en: "Overdue", id: "Terlambat" })}</span>}
+                    {due === "complete" && <span className="font-medium">{tr({ en: "Complete", id: "Selesai" })}</span>}
                     {editable && <ChevronDown className="h-3.5 w-3.5" />}
                   </button>
                   {anchored("dates")}
@@ -1017,11 +1045,11 @@ function CardBody({ card: c }: { card: KanbanCard }) {
 
           {loadError ? (
             <p className="mt-8 text-sm text-[#B42323]" style={body}>
-              {loadError}
+              {kanbanError(loadError, lang)}
             </p>
           ) : !detail ? (
             <p className="mt-8 flex items-center gap-2 text-sm text-neutral-500" style={body}>
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading checklists and comments...
+              <Loader2 className="h-4 w-4 animate-spin" /> {tr({ en: "Loading checklists and comments...", id: "Memuat checklist dan komentar..." })}
             </p>
           ) : (
             [...detail.checklists]
@@ -1041,7 +1069,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
         <aside className="kanban-scroll min-w-0 border-t border-[#0B6477]/8 bg-[#F7FAF9] px-5 pb-8 pt-6 sm:px-8 md:overflow-y-auto md:border-l md:border-t-0">
           <div className="flex items-center justify-between gap-2">
             <h3 className={SECTION_TITLE} style={display}>
-              Comments and activity
+              {tr({ en: "Comments and activity", id: "Komentar dan aktivitas" })}
             </h3>
             <button
               type="button"
@@ -1049,7 +1077,7 @@ function CardBody({ card: c }: { card: KanbanCard }) {
               className="rounded-md px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-900/5"
               style={body}
             >
-              {showDetails ? "Hide details" : "Show details"}
+              {showDetails ? tr({ en: "Hide details", id: "Sembunyikan detail" }) : tr({ en: "Show details", id: "Tampilkan detail" })}
             </button>
           </div>
           {editable && ctx.userId && <CommentComposer onSubmit={addComment} seed={composerSeed} onAttach={attachForEditor} />}
@@ -1120,15 +1148,16 @@ function highlightComment(id: string) {
 
 // "+ Add" menu: everything that can be put on a card.
 function AddMenu({ hasStatus, onPick }: { hasStatus: boolean; onPick: (key: PopoverKey) => void }) {
+  const tr = useT();
   const rows: { key: PopoverKey; icon: typeof Tag; label: string; hint: string }[] = [
-    { key: "labels", icon: Tag, label: "Labels", hint: "Organize, categorize and prioritize" },
-    { key: "dates", icon: CalendarClock, label: "Dates", hint: "Start dates, due dates and reminders" },
-    { key: "checklist", icon: CheckSquare, label: "Checklist", hint: "Add subtasks" },
-    { key: "members", icon: Users, label: "Members", hint: "Assign people" },
-    { key: "attachment", icon: Paperclip, label: "Attachment", hint: "Add links, pages, files and more" },
-    { key: "cover", icon: ImageIcon, label: "Cover", hint: "A colour or picture on the card" },
+    { key: "labels", icon: Tag, label: tr(POPOVER_TITLE.labels), hint: tr({ en: "Organize, categorize and prioritize", id: "Atur, kelompokkan, dan prioritaskan" }) },
+    { key: "dates", icon: CalendarClock, label: tr(POPOVER_TITLE.dates), hint: tr({ en: "Start dates, due dates and reminders", id: "Tanggal mulai, tenggat, dan pengingat" }) },
+    { key: "checklist", icon: CheckSquare, label: "Checklist", hint: tr({ en: "Add subtasks", id: "Tambah subtugas" }) },
+    { key: "members", icon: Users, label: tr(POPOVER_TITLE.members), hint: tr({ en: "Assign people", id: "Tugaskan orang" }) },
+    { key: "attachment", icon: Paperclip, label: tr({ en: "Attachment", id: "Lampiran" }), hint: tr({ en: "Add links, pages, files and more", id: "Tambah tautan, halaman, file, dan lainnya" }) },
+    { key: "cover", icon: ImageIcon, label: tr(POPOVER_TITLE.cover), hint: tr({ en: "A colour or picture on the card", id: "Warna atau gambar di kartu" }) },
   ];
-  if (hasStatus) rows.splice(4, 0, { key: "status", icon: CircleDot, label: "Status", hint: "Where the work stands" });
+  if (hasStatus) rows.splice(4, 0, { key: "status", icon: CircleDot, label: "Status", hint: tr({ en: "Where the work stands", id: "Posisi pekerjaan saat ini" }) });
   return (
     <ul className="flex flex-col">
       {rows.map(({ key, icon: Icon, label, hint }) => (
@@ -1147,12 +1176,14 @@ function AddMenu({ hasStatus, onPick }: { hasStatus: boolean; onPick: (key: Popo
 }
 
 function StatusPicker({ value, onPick }: { value: CardStatus | null; onPick: (s: CardStatus | null) => void }) {
+  const tr = useT();
+  const lang = useLang();
   return (
     <ul className="flex flex-col gap-0.5">
       <li>
         <button type="button" className={MENU_ITEM} onClick={() => onPick(null)}>
           <span className="h-2.5 w-2.5 rounded-full border border-neutral-300" />
-          <span className="flex-1">No status</span>
+          <span className="flex-1">{tr({ en: "No status", id: "Tanpa status" })}</span>
           {!value && <Check className="h-4 w-4 text-[#14919B]" />}
         </button>
       </li>
@@ -1160,7 +1191,7 @@ function StatusPicker({ value, onPick }: { value: CardStatus | null; onPick: (s:
         <li key={s.value}>
           <button type="button" className={MENU_ITEM} onClick={() => onPick(s.value)}>
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.dot }} />
-            <span className="flex-1">{s.label}</span>
+            <span className="flex-1">{statusLabel(s, lang)}</span>
             {value === s.value && <Check className="h-4 w-4 text-[#14919B]" />}
           </button>
         </li>
@@ -1184,6 +1215,7 @@ function DescriptionSection({
   onSave: (v: string) => void;
   onAttach?: (file: File) => Promise<string | null>;
 }) {
+  const tr = useT();
   const [editing, setEditing] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [tall, setTall] = useState(false);
@@ -1200,18 +1232,18 @@ function DescriptionSection({
     <section className="mt-8" style={body}>
       <div className="flex items-center gap-2">
         <h3 className={`${SECTION_TITLE} flex-1`} style={display}>
-          <TextQuote className="h-4 w-4 text-[#14919B]" /> Description
+          <TextQuote className="h-4 w-4 text-[#14919B]" /> {tr({ en: "Description", id: "Deskripsi" })}
         </h3>
         {editable && value && !editing && (
           <button type="button" onClick={() => setEditing(true)} className={SMALL}>
-            Edit
+            {tr({ en: "Edit", id: "Ubah" })}
           </button>
         )}
       </div>
       {editing ? (
         <MarkdownEditor
           initial={value}
-          placeholder="Add a more detailed description..."
+          placeholder={tr({ en: "Add a more detailed description...", id: "Tambahkan deskripsi yang lebih rinci..." })}
           minHeight={180}
           onAttach={onAttach}
           onCancel={() => setEditing(false)}
@@ -1227,10 +1259,10 @@ function DescriptionSection({
             onClick={() => setEditing(true)}
             className="mt-2 flex min-h-[64px] w-full items-start rounded-xl bg-[#F3F7F6] px-3 py-2.5 text-left text-sm text-neutral-500 transition-colors hover:bg-[#E6EFED]"
           >
-            Add a more detailed description...
+            {tr({ en: "Add a more detailed description...", id: "Tambahkan deskripsi yang lebih rinci..." })}
           </button>
         ) : (
-          <p className="mt-2 text-sm text-neutral-400">No description.</p>
+          <p className="mt-2 text-sm text-neutral-400">{tr({ en: "No description.", id: "Tanpa deskripsi." })}</p>
         )
       ) : (
         <>
@@ -1253,7 +1285,7 @@ function DescriptionSection({
               className="mt-2 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-[#F3F7F6] text-sm text-neutral-700 hover:bg-[#E6EFED]"
             >
               <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
-              {expanded ? "Show less" : "Show more"}
+              {expanded ? tr({ en: "Show less", id: "Tampilkan lebih sedikit" }) : tr({ en: "Show more", id: "Tampilkan lebih banyak" })}
             </button>
           )}
         </>
@@ -1276,10 +1308,12 @@ function ChecklistBlock({
   touched: () => void;
 }) {
   const { editable, push } = useBoard();
+  const tr = useT();
+  const lang = useLang();
   const progress = checklistProgress(items);
   const [adding, setAdding] = useState(false);
   const [hideChecked, setHideChecked] = useState(false);
-  const fail = (what: string, msg: string) => push({ text: `${what}: ${msg}`, tone: "error" });
+  const fail = (what: string, msg: string) => push({ text: `${what}: ${kanbanError(msg, lang)}`, tone: "error" });
   const setItems = (fn: (all: KanbanChecklistItem[]) => KanbanChecklistItem[]) =>
     setDetail((d) => (d ? { ...d, items: fn(d.items) } : d));
   const setChecklist = (row: KanbanChecklist) =>
@@ -1290,11 +1324,19 @@ function ChecklistBlock({
     const res = await updateChecklist(checklist.id, { title });
     if (res.error !== null) {
       setChecklist(checklist);
-      fail("Could not rename the checklist", res.error);
+      fail(tr({ en: "Could not rename the checklist", id: "Gagal mengganti nama checklist" }), res.error);
     }
   };
   const remove = async () => {
-    if (!window.confirm(`Delete checklist "${checklist.title}"? This cannot be undone.`)) return;
+    if (
+      !window.confirm(
+        tr({
+          en: `Delete checklist "${checklist.title}"? This cannot be undone.`,
+          id: `Hapus checklist "${checklist.title}"? Tindakan ini tidak bisa dibatalkan.`,
+        }),
+      )
+    )
+      return;
     const restore = (d: CardDetail | null) => (d ? { ...d, checklists: [...d.checklists, checklist], items: [...d.items, ...items] } : d);
     setDetail((d) =>
       d
@@ -1308,7 +1350,7 @@ function ChecklistBlock({
     const res = await deleteChecklist(checklist.id);
     if (res.error !== null) {
       setDetail(restore);
-      fail("Could not delete the checklist", res.error);
+      fail(tr({ en: "Could not delete the checklist", id: "Gagal menghapus checklist" }), res.error);
     } else touched();
   };
   const addItem = async (text: string) => {
@@ -1326,7 +1368,7 @@ function ChecklistBlock({
     const res = await createItem(row);
     if (res.error !== null) {
       setItems((all) => all.filter((i) => i.id !== row.id));
-      fail("Could not add the item", res.error);
+      fail(tr({ en: "Could not add the item", id: "Gagal menambah item" }), res.error);
     }
   };
   const patchItem = async (item: KanbanChecklistItem, patch: Partial<KanbanChecklistItem>) => {
@@ -1334,7 +1376,7 @@ function ChecklistBlock({
     const res = await updateItem(item.id, patch);
     if (res.error !== null) {
       setItems((all) => all.map((i) => (i.id === item.id ? item : i)));
-      fail("Could not update the item", res.error);
+      fail(tr({ en: "Could not update the item", id: "Gagal memperbarui item" }), res.error);
     } else if ("done" in patch) touched();
   };
   const removeItem = async (item: KanbanChecklistItem) => {
@@ -1342,7 +1384,7 @@ function ChecklistBlock({
     const res = await deleteItem(item.id);
     if (res.error !== null) {
       setItems((all) => [...all, item]);
-      fail("Could not delete the item", res.error);
+      fail(tr({ en: "Could not delete the item", id: "Gagal menghapus item" }), res.error);
     }
   };
 
@@ -1355,7 +1397,7 @@ function ChecklistBlock({
         <CheckSquare className="h-4 w-4 shrink-0 text-[#14919B]" />
         <InlineEdit
           value={checklist.title}
-          label="Checklist title"
+          label={tr({ en: "Checklist title", id: "Judul checklist" })}
           disabled={!editable}
           onSave={rename}
           className="min-w-0 flex-1 whitespace-normal text-sm font-semibold tracking-[-0.01em] text-neutral-900"
@@ -1363,12 +1405,14 @@ function ChecklistBlock({
         />
         {doneCount > 0 && (
           <button type="button" onClick={() => setHideChecked((h) => !h)} className={SMALL}>
-            {hideChecked ? `Show checked items (${doneCount})` : "Hide checked items"}
+            {hideChecked
+              ? tr({ en: `Show checked items (${doneCount})`, id: `Tampilkan item yang dicentang (${doneCount})` })
+              : tr({ en: "Hide checked items", id: "Sembunyikan item yang dicentang" })}
           </button>
         )}
         {editable && (
           <button type="button" onClick={remove} className={SMALL}>
-            Delete
+            {tr({ en: "Delete", id: "Hapus" })}
           </button>
         )}
       </div>
@@ -1380,7 +1424,7 @@ function ChecklistBlock({
           aria-valuenow={progress.percent}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label={`${checklist.title} progress`}
+          aria-label={`${tr({ en: "Progress of", id: "Progres" })} ${checklist.title}`}
         >
           <motion.div
             className={`h-full rounded-full ${progress.percent === 100 ? "bg-[#45DFB1]" : "bg-[#14919B]"}`}
@@ -1391,7 +1435,7 @@ function ChecklistBlock({
         </div>
       </div>
       {hideChecked && shown.length === 0 && items.length > 0 && (
-        <p className="ml-12 mt-2 text-sm text-neutral-500">Everything in this checklist is complete.</p>
+        <p className="ml-12 mt-2 text-sm text-neutral-500">{tr({ en: "Everything in this checklist is complete.", id: "Semua item di checklist ini sudah selesai." })}</p>
       )}
       <ul className="mt-2 flex flex-col">
         {shown.map((item) => (
@@ -1411,7 +1455,7 @@ function ChecklistBlock({
             </button>
             <InlineEdit
               value={item.text}
-              label="Checklist item"
+              label={tr({ en: "Checklist item", id: "Item checklist" })}
               disabled={!editable}
               onSave={(text) => patchItem(item, { text })}
               render={(v) => <InlineMarkdown>{v}</InlineMarkdown>}
@@ -1422,7 +1466,7 @@ function ChecklistBlock({
               <button
                 type="button"
                 onClick={() => removeItem(item)}
-                aria-label={`Delete ${item.text}`}
+                aria-label={`${tr({ en: "Delete", id: "Hapus" })} ${item.text}`}
                 className="grid h-6 w-6 place-items-center rounded text-neutral-400 opacity-0 transition-opacity hover:text-[#B42323] focus-visible:opacity-100 group-hover:opacity-100"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -1437,11 +1481,11 @@ function ChecklistBlock({
             open={adding}
             onOpenChange={setAdding}
             onSubmit={addItem}
-            placeholder="Add an item (markdown works: **bold**, `code`, [link](https://...))"
-            submitLabel="Add"
+            placeholder={tr({ en: "Add an item (markdown works: **bold**, `code`, [link](https://...))", id: "Tambah item (markdown bisa: **tebal**, `kode`, [tautan](https://...))" })}
+            submitLabel={tr({ en: "Add", id: "Tambah" })}
             trigger={
               <button type="button" onClick={() => setAdding(true)} className={SMALL}>
-                <Plus className="h-4 w-4" /> Add an item
+                <Plus className="h-4 w-4" /> {tr({ en: "Add an item", id: "Tambah item" })}
               </button>
             }
           />
@@ -1467,6 +1511,8 @@ function Feed({
   onAddLinks: (urls: string[]) => Promise<void>;
 }) {
   const { byId, nameOf } = usePeople();
+  const tr = useT();
+  const lang = useLang();
   type Entry = { kind: "comment"; at: string; c: KanbanComment } | { kind: "activity"; at: string; a: KanbanActivity };
   const entries: Entry[] = [
     ...detail.comments.map((x) => ({ kind: "comment" as const, at: x.created_at, c: x })),
@@ -1476,7 +1522,7 @@ function Feed({
   if (entries.length === 0) {
     return (
       <p className="mt-6 text-sm text-neutral-500" style={body}>
-        No comments yet.
+        {tr({ en: "No comments yet.", id: "Belum ada komentar." })}
       </p>
     );
   }
@@ -1489,8 +1535,8 @@ function Feed({
           <li key={`a-${e.a.id}`} className="flex gap-3 text-sm text-neutral-600" style={body}>
             <Avatar person={e.a.actor_id ? byId.get(e.a.actor_id) : undefined} size={28} />
             <p className="min-w-0 pt-1 leading-snug [overflow-wrap:anywhere]">
-              <span className="font-medium text-neutral-900">{nameOf(e.a.actor_id)}</span> {describeActivity(e.a, nameOf)}
-              <span className="mt-0.5 block text-xs text-neutral-400">{timeAgo(e.a.created_at)}</span>
+              <span className="font-medium text-neutral-900">{nameOf(e.a.actor_id)}</span> {describeActivity(e.a, nameOf, lang)}
+              <span className="mt-0.5 block text-xs text-neutral-400">{timeAgo(e.a.created_at, undefined, lang)}</span>
             </p>
           </li>
         ),
@@ -1522,6 +1568,8 @@ function CommentItem({
 }) {
   const { data, editable, userId, push } = useBoard();
   const { byId, nameOf } = usePeople();
+  const tr = useT();
+  const lang = useLang();
   const [editing, setEditing] = useState(false);
   const [picking, setPicking] = useState(false);
   const pickRef = useRef<HTMLDivElement>(null);
@@ -1538,16 +1586,16 @@ function CommentItem({
     const res = await updateComment(comment.id, text);
     if (res.error !== null) {
       setComment(comment);
-      push({ text: `Could not save the comment: ${res.error}`, tone: "error" });
+      push({ text: `${tr({ en: "Could not save the comment", id: "Gagal menyimpan komentar" })}: ${kanbanError(res.error, lang)}`, tone: "error" });
     } else setComment(res.data);
   };
   const remove = async () => {
-    if (!window.confirm("Delete this comment? This cannot be undone.")) return;
+    if (!window.confirm(tr({ en: "Delete this comment? This cannot be undone.", id: "Hapus komentar ini? Tindakan ini tidak bisa dibatalkan." }))) return;
     setDetail((d) => (d ? { ...d, comments: d.comments.filter((x) => x.id !== comment.id) } : d));
     const res = await deleteComment(comment.id);
     if (res.error !== null) {
       setDetail((d) => (d ? { ...d, comments: [comment, ...d.comments] } : d));
-      push({ text: `Could not delete the comment: ${res.error}`, tone: "error" });
+      push({ text: `${tr({ en: "Could not delete the comment", id: "Gagal menghapus komentar" })}: ${kanbanError(res.error, lang)}`, tone: "error" });
     }
   };
 
@@ -1576,7 +1624,7 @@ function CommentItem({
     const res = await toggleReaction(row, userId, on);
     if (res.error !== null) {
       apply(!on);
-      push({ text: `Could not react: ${res.error}`, tone: "error" });
+      push({ text: `${tr({ en: "Could not react", id: "Gagal memberi reaksi" })}: ${kanbanError(res.error, lang)}`, tone: "error" });
     }
   };
 
@@ -1597,7 +1645,7 @@ function CommentItem({
     highlightComment(comment.id);
     try {
       await navigator.clipboard.writeText(url);
-      push({ text: "Link to this comment copied." });
+      push({ text: tr({ en: "Link to this comment copied.", id: "Tautan ke komentar ini disalin." }) });
     } catch {
       // the address bar shows the link
     }
@@ -1609,12 +1657,12 @@ function CommentItem({
       <div className="min-w-0 flex-1">
         <p className="text-sm">
           <span className="font-medium text-neutral-900">{authorName}</span>{" "}
-          <a href={`#comment-${comment.id}`} onClick={permalink} className="text-xs text-neutral-400 hover:text-[#0B6477] hover:underline" title={formatDateTime(comment.created_at)}>
-            {timeAgo(comment.created_at)}
+          <a href={`#comment-${comment.id}`} onClick={permalink} className="text-xs text-neutral-400 hover:text-[#0B6477] hover:underline" title={formatDateTime(comment.created_at, lang)}>
+            {timeAgo(comment.created_at, undefined, lang)}
           </a>
           <span className="text-xs text-neutral-400">
-            {imported && " · imported"}
-            {comment.edited_at && " (edited)"}
+            {imported && ` · ${tr({ en: "imported", id: "diimpor" })}`}
+            {comment.edited_at && ` (${tr({ en: "edited", id: "diubah" })})`}
           </span>
         </p>
         {editing ? (
@@ -1646,13 +1694,13 @@ function CommentItem({
             })}
             {detail.reactions && userId && (
               <div ref={pickRef} className="relative">
-                <button type="button" onClick={() => setPicking((p) => !p)} aria-label="Add reaction" className="grid h-6 w-6 place-items-center rounded-full hover:bg-neutral-900/5 hover:text-neutral-900">
+                <button type="button" onClick={() => setPicking((p) => !p)} aria-label={tr({ en: "Add reaction", id: "Tambah reaksi" })} className="grid h-6 w-6 place-items-center rounded-full hover:bg-neutral-900/5 hover:text-neutral-900">
                   <SmilePlus className="h-4 w-4" />
                 </button>
                 {picking && (
                   <div className="absolute left-0 top-full z-30 mt-1 flex gap-0.5 rounded-xl border border-[#0B6477]/10 bg-white p-1 shadow-xl">
                     {REACTION_EMOJI.map((e) => (
-                      <button key={e} type="button" onClick={() => void react(e)} className="grid h-8 w-8 place-items-center rounded-lg text-lg hover:bg-[#F3F7F6]" aria-label={`React with ${e}`}>
+                      <button key={e} type="button" onClick={() => void react(e)} className="grid h-8 w-8 place-items-center rounded-lg text-lg hover:bg-[#F3F7F6]" aria-label={`${tr({ en: "React with", id: "Beri reaksi" })} ${e}`}>
                         {e}
                       </button>
                     ))}
@@ -1662,22 +1710,25 @@ function CommentItem({
             )}
             {editable && !mine && (
               <button type="button" onClick={() => onReply(authorName)} className={`inline-flex items-center gap-1 ${action}`}>
-                <Reply className="h-3.5 w-3.5" /> Reply
+                <Reply className="h-3.5 w-3.5" /> {tr({ en: "Reply", id: "Balas" })}
               </button>
             )}
             {mine && editable && (
               <button type="button" onClick={() => setEditing(true)} className={action}>
-                Edit
+                {tr({ en: "Edit", id: "Ubah" })}
               </button>
             )}
             {links.length > 0 && (
               <button type="button" onClick={() => void onAddLinks(links)} className={action}>
-                Add link{links.length > 1 ? "s" : ""} as attachment
+                {tr({
+                  en: `Add link${links.length > 1 ? "s" : ""} as attachment`,
+                  id: "Tambahkan tautan sebagai lampiran",
+                })}
               </button>
             )}
             {canDelete && (
               <button type="button" onClick={remove} className="hover:text-[#B42323] hover:underline">
-                Delete
+                {tr({ en: "Delete", id: "Hapus" })}
               </button>
             )}
           </div>
@@ -1691,6 +1742,8 @@ function CommentItem({
 
 function LabelPicker({ cardId }: { cardId: string }) {
   const { data, toggleLabel, createLabel } = useBoard();
+  const tr = useT();
+  const lang = useLang();
   const [name, setName] = useState("");
   const [query, setQuery] = useState("");
   const [color, setColor] = useState<LabelColor>("teal");
@@ -1700,7 +1753,7 @@ function LabelPicker({ cardId }: { cardId: string }) {
   const labels = q ? data.labels.filter((l) => l.name.toLowerCase().includes(q)) : data.labels;
   return (
     <div>
-      <SearchField value={query} onChange={setQuery} placeholder="Search labels..." />
+      <SearchField value={query} onChange={setQuery} placeholder={tr({ en: "Search labels...", id: "Cari label..." })} />
       <ul className="mt-2 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
         {labels.map((l) => {
           const col = LABEL_COLORS[l.color] ?? LABEL_COLORS.slate;
@@ -1711,7 +1764,7 @@ function LabelPicker({ cardId }: { cardId: string }) {
                 type="button"
                 role="checkbox"
                 aria-checked={on}
-                aria-label={l.name || `${col.name} label`}
+                aria-label={l.name || (lang === "id" ? `Label ${col.nameId.toLowerCase()}` : `${col.name} label`)}
                 onClick={() => toggleLabel(cardId, l.id)}
                 className="flex w-full items-center gap-2"
               >
@@ -1741,12 +1794,12 @@ function LabelPicker({ cardId }: { cardId: string }) {
           }
         }}
       >
-        <p className="text-xs font-medium text-neutral-500">Create a label</p>
+        <p className="text-xs font-medium text-neutral-500">{tr({ en: "Create a label", id: "Buat label" })}</p>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Label name (optional)"
-          aria-label="New label name"
+          placeholder={tr({ en: "Label name (optional)", id: "Nama label (opsional)" })}
+          aria-label={tr({ en: "New label name", id: "Nama label baru" })}
           maxLength={40}
           className={`${FIELD} mt-2 h-9`}
         />
@@ -1756,7 +1809,7 @@ function LabelPicker({ cardId }: { cardId: string }) {
               key={k}
               type="button"
               onClick={() => setColor(k)}
-              aria-label={LABEL_COLORS[k].name}
+              aria-label={lang === "id" ? LABEL_COLORS[k].nameId : LABEL_COLORS[k].name}
               aria-pressed={color === k}
               className={`h-7 w-9 rounded-md ring-offset-1 ${color === k ? "ring-2 ring-[#08313A]" : ""}`}
               style={{ background: LABEL_COLORS[k].hex }}
@@ -1764,7 +1817,7 @@ function LabelPicker({ cardId }: { cardId: string }) {
           ))}
         </div>
         <button type="submit" disabled={busy} className={`${PRIMARY} mt-3`}>
-          Create
+          {tr({ en: "Create", id: "Buat" })}
         </button>
       </form>
     </div>
@@ -1783,10 +1836,12 @@ function SearchField({ value, onChange, placeholder }: { value: string; onChange
 // Card members first (with remove), then the rest of the board to add.
 function MemberPicker({ cardId }: { cardId: string }) {
   const { data, userId, toggleMember } = useBoard();
+  const tr = useT();
+  const lang = useLang();
   const [query, setQuery] = useState("");
   const active = new Set(data.cardMembers.filter((cm) => cm.card_id === cardId).map((cm) => cm.user_id));
   const q = query.trim().toLowerCase();
-  const match = (p: KanbanPerson) => !q || personName(p).toLowerCase().includes(q) || p.full_name.toLowerCase().includes(q);
+  const match = (p: KanbanPerson) => !q || personName(p, lang).toLowerCase().includes(q) || p.full_name.toLowerCase().includes(q);
   const onCard = data.people.filter((p) => active.has(p.user_id) && match(p));
   const others = data.people.filter((p) => !active.has(p.user_id) && match(p));
   const row = (p: KanbanPerson, on: boolean) => (
@@ -1794,12 +1849,12 @@ function MemberPicker({ cardId }: { cardId: string }) {
       <button type="button" onClick={() => toggleMember(cardId, p.user_id)} className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm text-neutral-800">
         <Avatar person={p} size={26} />
         <span className="min-w-0 flex-1 truncate">
-          {personName(p)}
-          {p.user_id === userId && <span className="text-neutral-400"> (you)</span>}
+          {personName(p, lang)}
+          {p.user_id === userId && <span className="text-neutral-400"> ({tr({ en: "you", id: "Anda" })})</span>}
         </span>
       </button>
       {on && (
-        <button type="button" onClick={() => toggleMember(cardId, p.user_id)} aria-label={`Remove ${personName(p)} from card`} className="grid h-6 w-6 place-items-center rounded text-neutral-400 hover:text-[#B42323]">
+        <button type="button" onClick={() => toggleMember(cardId, p.user_id)} aria-label={tr({ en: `Remove ${personName(p, lang)} from card`, id: `Keluarkan ${personName(p, lang)} dari kartu` })} className="grid h-6 w-6 place-items-center rounded text-neutral-400 hover:text-[#B42323]">
           <X className="h-4 w-4" />
         </button>
       )}
@@ -1807,21 +1862,21 @@ function MemberPicker({ cardId }: { cardId: string }) {
   );
   return (
     <div>
-      <SearchField value={query} onChange={setQuery} placeholder="Search members" />
+      <SearchField value={query} onChange={setQuery} placeholder={tr({ en: "Search members", id: "Cari anggota" })} />
       <div className="mt-2 max-h-72 overflow-y-auto">
         {onCard.length > 0 && (
           <>
-            <p className="px-2 pb-1 pt-1 text-xs font-medium text-neutral-500">Card members</p>
+            <p className="px-2 pb-1 pt-1 text-xs font-medium text-neutral-500">{tr({ en: "Card members", id: "Anggota kartu" })}</p>
             <ul className="flex flex-col">{onCard.map((p) => row(p, true))}</ul>
           </>
         )}
         {others.length > 0 && (
           <>
-            <p className="px-2 pb-1 pt-2 text-xs font-medium text-neutral-500">Board members</p>
+            <p className="px-2 pb-1 pt-2 text-xs font-medium text-neutral-500">{tr({ en: "Board members", id: "Anggota board" })}</p>
             <ul className="flex flex-col">{others.map((p) => row(p, false))}</ul>
           </>
         )}
-        {onCard.length + others.length === 0 && <p className="px-2 py-2 text-sm text-neutral-500">No members match.</p>}
+        {onCard.length + others.length === 0 && <p className="px-2 py-2 text-sm text-neutral-500">{tr({ en: "No members match.", id: "Tidak ada anggota yang cocok." })}</p>}
       </div>
     </div>
   );
@@ -1829,6 +1884,7 @@ function MemberPicker({ cardId }: { cardId: string }) {
 
 function DatesEditor({ card, onDone }: { card: KanbanCard; onDone: () => void }) {
   const { patchCard } = useBoard();
+  const tr = useT();
   const [start, setStart] = useState(toLocalInput(card.start_at));
   const [dueAt, setDueAt] = useState(toLocalInput(card.due_at));
   const toIso = (v: string) => (v ? new Date(v).toISOString() : null);
@@ -1842,16 +1898,16 @@ function DatesEditor({ card, onDone }: { card: KanbanCard; onDone: () => void })
       }}
     >
       <label className="flex flex-col gap-1 text-xs font-medium text-neutral-500">
-        Start date
+        {tr({ en: "Start date", id: "Tanggal mulai" })}
         <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} className={`${FIELD} h-9`} />
       </label>
       <label className="flex flex-col gap-1 text-xs font-medium text-neutral-500">
-        Due date
+        {tr({ en: "Due date", id: "Tenggat" })}
         <input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className={`${FIELD} h-9`} />
       </label>
       <div className="flex gap-2">
         <button type="submit" className={PRIMARY}>
-          Save
+          {tr({ en: "Save", id: "Simpan" })}
         </button>
         <button
           type="button"
@@ -1861,7 +1917,7 @@ function DatesEditor({ card, onDone }: { card: KanbanCard; onDone: () => void })
             await patchCard(card.id, { start_at: null, due_at: null, due_complete: false });
           }}
         >
-          Remove
+          {tr({ en: "Remove", id: "Hapus" })}
         </button>
       </div>
     </form>
@@ -1879,6 +1935,7 @@ function Meta({ title, children }: { title: string; children: ReactNode }) {
 
 function TitleEditor({ value, editable, onSave }: { value: string; editable: boolean; onSave: (v: string) => void }) {
   const [draft, setDraft] = useState(value);
+  const tr = useT();
   useEffect(() => setDraft(value), [value]);
   const commit = () => {
     const next = draft.replace(/\s+/g, " ").trim();
@@ -1897,7 +1954,7 @@ function TitleEditor({ value, editable, onSave }: { value: string; editable: boo
       id="card-modal-title"
       value={draft}
       rows={1}
-      aria-label="Card title"
+      aria-label={tr({ en: "Card title", id: "Judul kartu" })}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {
@@ -1919,6 +1976,7 @@ function TitleEditor({ value, editable, onSave }: { value: string; editable: boo
 
 function NewChecklist({ onCreate }: { onCreate: (title: string) => void }) {
   const [title, setTitle] = useState("Checklist");
+  const tr = useT();
   return (
     <form
       onSubmit={(e) => {
@@ -1926,9 +1984,9 @@ function NewChecklist({ onCreate }: { onCreate: (title: string) => void }) {
         if (title.trim()) onCreate(title.trim());
       }}
     >
-      <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Checklist title" className={`${FIELD} h-9`} />
+      <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} aria-label={tr({ en: "Checklist title", id: "Judul checklist" })} className={`${FIELD} h-9`} />
       <button type="submit" className={`${PRIMARY} mt-2`}>
-        Add
+        {tr({ en: "Add", id: "Tambah" })}
       </button>
     </form>
   );
@@ -1944,6 +2002,7 @@ function CommentComposer({
   onAttach: (file: File) => Promise<string | null>;
 }) {
   const [open, setOpen] = useState(false);
+  const tr = useT();
   // Reply or "Comment" on an attachment opens the composer with text in it.
   useEffect(() => {
     if (seed) setOpen(true);
@@ -1956,7 +2015,7 @@ function CommentComposer({
         className="mt-4 w-full rounded-xl border border-[#0B6477]/12 bg-white px-3 py-2.5 text-left text-sm text-neutral-400 shadow-[0_1px_2px_rgba(8,49,58,0.06)] hover:border-[#14919B]/40"
         style={body}
       >
-        Write a comment...
+        {tr({ en: "Write a comment...", id: "Tulis komentar..." })}
       </button>
     );
   }
@@ -1964,7 +2023,7 @@ function CommentComposer({
     <MarkdownEditor
       initial=""
       insert={seed}
-      placeholder="Write a comment... (markdown supported)"
+      placeholder={tr({ en: "Write a comment... (markdown supported)", id: "Tulis komentar... (mendukung markdown)" })}
       large
       onAttach={onAttach}
       onCancel={() => setOpen(false)}

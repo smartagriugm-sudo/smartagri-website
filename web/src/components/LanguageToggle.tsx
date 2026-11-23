@@ -104,7 +104,7 @@ export default function LanguageMenu({
   );
 }
 
-// Footer control: both languages spelled out, the active one highlighted.
+// Footer control: a small EN | ID switch sized like the footer's fine print.
 export function LanguageSwitch({ className = "" }: { className?: string }) {
   const lang = useLang();
   const setLang = useSetLang();
@@ -112,10 +112,10 @@ export function LanguageSwitch({ className = "" }: { className?: string }) {
     <div
       role="group"
       aria-label={lang === "id" ? "Pilih bahasa" : "Choose language"}
-      className={`inline-flex items-center gap-1 rounded-lg border border-white/12 bg-white/5 p-1 ${className}`}
+      className={`inline-flex items-center gap-0.5 rounded-md border border-white/12 p-0.5 ${className}`}
       style={body}
     >
-      <Globe aria-hidden="true" className="mx-1.5 h-3.5 w-3.5 text-white/45" />
+      <Globe aria-hidden="true" className="mx-1 h-3 w-3 text-white/40" />
       {LANGS.map((code) => {
         const active = code === lang;
         return (
@@ -123,15 +123,15 @@ export function LanguageSwitch({ className = "" }: { className?: string }) {
             key={code}
             type="button"
             lang={code}
+            title={NAMES[code]}
+            aria-label={NAMES[code]}
             aria-pressed={active}
             onClick={() => !active && setLang(code)}
-            className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-              active
-                ? "bg-[#45DFB1] text-[#0B2A22] font-medium"
-                : "text-white/60 hover:text-white"
+            className={`rounded px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-[0.06em] transition-colors ${
+              active ? "bg-white/12 text-white" : "text-white/45 hover:text-white/80"
             }`}
           >
-            {NAMES[code]}
+            {code}
           </button>
         );
       })}

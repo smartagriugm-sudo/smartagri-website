@@ -2,6 +2,8 @@
 // Supabase (see web/supabase/kanban.sql); behaviour notes and the design are in
 // docs/kanban/. Every row type mirrors its table one to one.
 
+import { localeOf, type Lang } from "./i18n-core";
+
 export type KanbanRole = "owner" | "member" | "viewer";
 export type BoardVisibility = "private" | "team";
 
@@ -90,16 +92,21 @@ export type KanbanCard = {
 export type CardStatus = "todo" | "in_progress" | "review" | "blocked" | "done";
 
 // Card status field (kanban-card-extras.sql), shown under the title.
-export const CARD_STATUSES: { value: CardStatus; label: string; dot: string; bg: string; ink: string }[] = [
-  { value: "todo", label: "To do", dot: "#5B6B78", bg: "#EEF2F4", ink: "#33414B" },
-  { value: "in_progress", label: "In progress", dot: "#14919B", bg: "#14919B1F", ink: "#0B6477" },
-  { value: "review", label: "In review", dot: "#7C6BD6", bg: "#7C6BD61F", ink: "#4B3DA6" },
-  { value: "blocked", label: "Blocked", dot: "#E25555", bg: "#E255551A", ink: "#B42323" },
-  { value: "done", label: "Done", dot: "#3E9B5B", bg: "#45DFB140", ink: "#0B5E47" },
+export const CARD_STATUSES: { value: CardStatus; label: string; labelId: string; dot: string; bg: string; ink: string }[] = [
+  { value: "todo", label: "To do", labelId: "Akan dikerjakan", dot: "#5B6B78", bg: "#EEF2F4", ink: "#33414B" },
+  { value: "in_progress", label: "In progress", labelId: "Dikerjakan", dot: "#14919B", bg: "#14919B1F", ink: "#0B6477" },
+  { value: "review", label: "In review", labelId: "Ditinjau", dot: "#7C6BD6", bg: "#7C6BD61F", ink: "#4B3DA6" },
+  { value: "blocked", label: "Blocked", labelId: "Terhambat", dot: "#E25555", bg: "#E255551A", ink: "#B42323" },
+  { value: "done", label: "Done", labelId: "Selesai", dot: "#3E9B5B", bg: "#45DFB140", ink: "#0B5E47" },
 ];
 
 export function statusInfo(value: string | null | undefined) {
   return CARD_STATUSES.find((s) => s.value === value) ?? null;
+}
+
+/** Display label of a status option in the given language. */
+export function statusLabel(s: { label: string; labelId: string }, lang: Lang = "en"): string {
+  return lang === "id" ? s.labelId : s.label;
 }
 
 export type KanbanReaction = { comment_id: string; user_id: string; emoji: string; card_id: string; board_id: string };
@@ -195,30 +202,41 @@ export const STORAGE_BUCKET = "kanban";
 
 // Label palette, built around the brand teals. `ink` is the text colour that
 // reads on top of the swatch.
-export const LABEL_COLORS: Record<LabelColor, { name: string; hex: string; ink: string }> = {
-  teal: { name: "Teal", hex: "#0B6477", ink: "#FFFFFF" },
-  cyan: { name: "Cyan", hex: "#0AD1C8", ink: "#08313A" },
-  mint: { name: "Mint", hex: "#45DFB1", ink: "#0B2A22" },
-  green: { name: "Green", hex: "#3E9B5B", ink: "#FFFFFF" },
-  lime: { name: "Lime", hex: "#80ED99", ink: "#0B2A22" },
-  amber: { name: "Amber", hex: "#F2B84B", ink: "#3A2A05" },
-  orange: { name: "Orange", hex: "#EE8A4A", ink: "#3A1A05" },
-  red: { name: "Red", hex: "#E25555", ink: "#FFFFFF" },
-  violet: { name: "Violet", hex: "#7C6BD6", ink: "#FFFFFF" },
-  slate: { name: "Slate", hex: "#5B6B78", ink: "#FFFFFF" },
+export const LABEL_COLORS: Record<LabelColor, { name: string; nameId: string; hex: string; ink: string }> = {
+  teal: { name: "Teal", nameId: "Teal", hex: "#0B6477", ink: "#FFFFFF" },
+  cyan: { name: "Cyan", nameId: "Sian", hex: "#0AD1C8", ink: "#08313A" },
+  mint: { name: "Mint", nameId: "Mint", hex: "#45DFB1", ink: "#0B2A22" },
+  green: { name: "Green", nameId: "Hijau", hex: "#3E9B5B", ink: "#FFFFFF" },
+  lime: { name: "Lime", nameId: "Limau", hex: "#80ED99", ink: "#0B2A22" },
+  amber: { name: "Amber", nameId: "Amber", hex: "#F2B84B", ink: "#3A2A05" },
+  orange: { name: "Orange", nameId: "Oranye", hex: "#EE8A4A", ink: "#3A1A05" },
+  red: { name: "Red", nameId: "Merah", hex: "#E25555", ink: "#FFFFFF" },
+  violet: { name: "Violet", nameId: "Ungu", hex: "#7C6BD6", ink: "#FFFFFF" },
+  slate: { name: "Slate", nameId: "Abu-abu", hex: "#5B6B78", ink: "#FFFFFF" },
 };
 
 export const LABEL_COLOR_KEYS = Object.keys(LABEL_COLORS) as LabelColor[];
 
-export const BOARD_BACKGROUNDS: Record<BoardBackground, { name: string; from: string; to: string }> = {
-  teal: { name: "Teal", from: "#0B6477", to: "#14919B" },
-  deep: { name: "Deep", from: "#08313A", to: "#0B6477" },
-  cyan: { name: "Cyan", from: "#14919B", to: "#0AD1C8" },
-  mint: { name: "Mint", from: "#45DFB1", to: "#80ED99" },
-  slate: { name: "Slate", from: "#33414B", to: "#5B6B78" },
+export const BOARD_BACKGROUNDS: Record<BoardBackground, { name: string; nameId: string; from: string; to: string }> = {
+  teal: { name: "Teal", nameId: "Teal", from: "#0B6477", to: "#14919B" },
+  deep: { name: "Deep", nameId: "Gelap", from: "#08313A", to: "#0B6477" },
+  cyan: { name: "Cyan", nameId: "Sian", from: "#14919B", to: "#0AD1C8" },
+  mint: { name: "Mint", nameId: "Mint", from: "#45DFB1", to: "#80ED99" },
+  slate: { name: "Slate", nameId: "Abu-abu", from: "#33414B", to: "#5B6B78" },
 };
 
 // --- Roles -------------------------------------------------------------------
+
+const ROLE_LABELS: Record<KanbanRole, { en: string; id: string }> = {
+  owner: { en: "Owner", id: "Pemilik" },
+  member: { en: "Member", id: "Anggota" },
+  viewer: { en: "Viewer", id: "Pengamat" },
+};
+
+/** Display name of a board role ("Owner", "Pemilik"). */
+export function roleLabel(role: KanbanRole, lang: Lang = "en"): string {
+  return ROLE_LABELS[role]?.[lang] ?? role;
+}
 
 export function canEdit(role: KanbanRole | null | undefined): boolean {
   return role === "owner" || role === "member";
@@ -303,9 +321,12 @@ export function dueState(
   return "later";
 }
 
-export function personName(p: Pick<KanbanPerson, "preferred_name" | "full_name"> | undefined): string {
-  if (!p) return "Unknown member";
-  return p.preferred_name || p.full_name || "Unnamed member";
+export function personName(
+  p: Pick<KanbanPerson, "preferred_name" | "full_name"> | undefined,
+  lang: Lang = "en",
+): string {
+  if (!p) return lang === "id" ? "Anggota tidak dikenal" : "Unknown member";
+  return p.preferred_name || p.full_name || (lang === "id" ? "Anggota tanpa nama" : "Unnamed member");
 }
 
 export function initials(name: string): string {
@@ -321,8 +342,8 @@ function str(data: Record<string, unknown>, key: string): string {
   return typeof v === "string" ? v : "";
 }
 
-function shortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+function shortDate(iso: string, lang: Lang = "en"): string {
+  return new Date(iso).toLocaleDateString(localeOf(lang), { day: "numeric", month: "short", year: "numeric" });
 }
 
 // One line describing an activity row, written to follow the actor's name
@@ -330,7 +351,9 @@ function shortDate(iso: string): string {
 export function describeActivity(
   a: Pick<KanbanActivity, "type" | "data">,
   nameOf: (userId: string) => string = () => "a member",
+  lang: Lang = "en",
 ): string {
+  if (lang === "id") return describeActivityId(a, nameOf);
   const d = a.data ?? {};
   const label = str(d, "label") || (str(d, "color") ? `${str(d, "color")} label` : "a label");
   switch (a.type) {
@@ -395,9 +418,85 @@ export function describeActivity(
   }
 }
 
+// Indonesian version of describeActivity; names, lists and titles stay as entered.
+function describeActivityId(a: Pick<KanbanActivity, "type" | "data">, nameOf: (userId: string) => string): string {
+  const d = a.data ?? {};
+  const label = str(d, "label") || (str(d, "color") ? `label ${str(d, "color")}` : "sebuah label");
+  switch (a.type) {
+    case "card.created":
+      return str(d, "list") ? `menambahkan kartu ini ke ${str(d, "list")}` : "menambahkan kartu ini";
+    case "card.deleted":
+      return `menghapus kartu ${str(d, "title")}`.trim();
+    case "card.moved":
+      return d.from_board
+        ? `memindahkan kartu ini dari board lain ke ${str(d, "to_list")}`
+        : `memindahkan kartu ini dari ${str(d, "from_list")} ke ${str(d, "to_list")}`;
+    case "card.archived":
+      return "mengarsipkan kartu ini";
+    case "card.restored":
+      return "memulihkan kartu ini";
+    case "card.renamed":
+      return `mengganti nama kartu ini (sebelumnya "${str(d, "old_title")}")`;
+    case "card.description_changed":
+      return "mengubah deskripsi";
+    case "card.dates_changed":
+      if (str(d, "due_at")) return `mengatur tenggat ke ${shortDate(str(d, "due_at"), "id")}`;
+      if (str(d, "start_at")) return `mengatur tanggal mulai ke ${shortDate(str(d, "start_at"), "id")}`;
+      return "menghapus tanggal";
+    case "card.completed":
+      return "menandai kartu ini selesai";
+    case "card.reopened":
+      return "menandai kartu ini belum selesai";
+    case "card.status_changed": {
+      const st = statusInfo(str(d, "status"));
+      return str(d, "status") ? `mengatur status ke ${st ? st.labelId : str(d, "status")}` : "mengosongkan status";
+    }
+    case "list.created":
+      return `menambahkan list ${str(d, "list")}`;
+    case "list.renamed":
+      return `mengganti nama list ${str(d, "old_list")} menjadi ${str(d, "list")}`;
+    case "list.archived":
+      return `mengarsipkan list ${str(d, "list")}`;
+    case "list.restored":
+      return `memulihkan list ${str(d, "list")}`;
+    case "label.added":
+      return `menambahkan ${label}`;
+    case "label.removed":
+      return `menghapus ${label}`;
+    case "member.added":
+      return `menambahkan ${nameOf(str(d, "user_id"))} ke kartu ini`;
+    case "member.removed":
+      return `mengeluarkan ${nameOf(str(d, "user_id"))} dari kartu ini`;
+    case "checklist.added":
+      return `menambahkan checklist ${str(d, "checklist")}`;
+    case "checklist.removed":
+      return `menghapus checklist ${str(d, "checklist")}`;
+    case "item.completed":
+      return `menyelesaikan ${str(d, "item")}`;
+    case "item.reopened":
+      return `menandai ${str(d, "item")} belum selesai`;
+    case "attachment.added":
+      return `melampirkan ${str(d, "attachment")}`;
+    case "attachment.removed":
+      return `menghapus lampiran ${str(d, "attachment")}`;
+    default:
+      return "memperbarui kartu ini";
+  }
+}
+
 // "just now", "5 minutes ago", "3 hours ago", then a date.
-export function timeAgo(iso: string, now: Date = new Date()): string {
+export function timeAgo(iso: string, now: Date = new Date(), lang: Lang = "en"): string {
   const s = Math.round((now.getTime() - new Date(iso).getTime()) / 1000);
+  if (lang === "id") {
+    if (s < 45) return "baru saja";
+    const m = Math.round(s / 60);
+    if (m < 60) return `${m} menit lalu`;
+    const h = Math.round(m / 60);
+    if (h < 24) return `${h} jam lalu`;
+    const days = Math.round(h / 24);
+    if (days < 7) return `${days} hari lalu`;
+    return shortDate(iso, lang);
+  }
   if (s < 45) return "just now";
   const m = Math.round(s / 60);
   if (m < 60) return `${m} minute${m === 1 ? "" : "s"} ago`;
@@ -546,4 +645,42 @@ export function parseImportedComment(body: string): { author: string; date: stri
   const m = IMPORTED.exec(body);
   if (!m) return null;
   return { author: m[1], date: m[2] ?? null, text: body.slice(m[0].length) };
+}
+
+// --- Error messages ------------------------------------------------------------------
+// lib/kanban-data.ts returns its own English messages; the UI shows them through
+// this map. Anything else (database or network errors) passes through as is.
+
+const ERRORS_ID: Record<string, string> = {
+  "Kanban storage is not configured on this environment.": "Penyimpanan Kanban belum dikonfigurasi di lingkungan ini.",
+  "Only board members can star a board.": "Hanya anggota board yang bisa memberi bintang pada board.",
+  "Only a board owner can change the board.": "Hanya pemilik board yang bisa mengubah board.",
+  "You do not have permission to change this list.": "Anda tidak punya izin mengubah list ini.",
+  "You do not have permission to change this card.": "Anda tidak punya izin mengubah kartu ini.",
+  "You do not have permission to change labels.": "Anda tidak punya izin mengubah label.",
+  "You do not have permission to change members.": "Anda tidak punya izin mengubah anggota.",
+  "You do not have permission to change this checklist.": "Anda tidak punya izin mengubah checklist ini.",
+  "You do not have permission to delete this checklist.": "Anda tidak punya izin menghapus checklist ini.",
+  "You do not have permission to change this item.": "Anda tidak punya izin mengubah item ini.",
+  "You do not have permission to delete this item.": "Anda tidak punya izin menghapus item ini.",
+  "Only the author can edit this comment.": "Hanya penulis yang bisa mengubah komentar ini.",
+  "Only the author or a board owner can delete this comment.":
+    "Hanya penulis atau pemilik board yang bisa menghapus komentar ini.",
+  "You do not have permission to delete labels.": "Anda tidak punya izin menghapus label.",
+  "Only a board owner can change roles.": "Hanya pemilik board yang bisa mengubah peran.",
+  "Only a board owner can remove members.": "Hanya pemilik board yang bisa mengeluarkan anggota.",
+  "You do not have permission to delete this card.": "Anda tidak punya izin menghapus kartu ini.",
+  "Only a board owner can delete the board.": "Hanya pemilik board yang bisa menghapus board.",
+  "That does not look like a full link (https://...).": "Itu bukan tautan lengkap (https://...).",
+  "Only http and https links can be attached.": "Hanya tautan http dan https yang bisa dilampirkan.",
+  "Only the uploader or a board owner can delete this attachment.":
+    "Hanya pengunggah atau pemilik board yang bisa menghapus lampiran ini.",
+};
+
+/** An error message from lib/kanban-data.ts in the given language. */
+export function kanbanError(message: string, lang: Lang = "en"): string {
+  if (lang !== "id") return message;
+  const big = /^(.+) is larger than 10 MB\.$/.exec(message);
+  if (big) return `${big[1]} lebih besar dari 10 MB.`;
+  return ERRORS_ID[message] ?? message;
 }

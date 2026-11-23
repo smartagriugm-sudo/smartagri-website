@@ -3,12 +3,15 @@ import { body } from "../../lib/fonts";
 import { partnerLogo, rateLetterPdf } from "../../lib/assets";
 import { RATE_LETTER } from "../../lib/inventory";
 import { META } from "../NoteParts";
+import { useLang, useT } from "../../lib/i18n";
 
 // The instruments are funded and run under PUAPT UGM and its Working Group
 // Food Security 1.2 (Precision Agriculture and Smart Farming). Their logos sit
 // side by side on the inventory pages, with the rate letter the rates come
 // from, which users can open as a PDF.
 export default function Supporters({ compact = false }: { compact?: boolean }) {
+  const t = useT();
+  const lang = useLang();
   return (
     <div
       className={`flex flex-col gap-5 rounded-[20px] border border-[#0B6477]/12 bg-white/90 ${
@@ -17,7 +20,7 @@ export default function Supporters({ compact = false }: { compact?: boolean }) {
     >
       <div className={`flex min-w-0 flex-col gap-3 ${compact ? "" : "md:w-[min(560px,55%)]"}`}>
         <span className={`text-neutral-500 ${META}`} style={body}>
-          Instruments supported by
+          {t({ en: "Instruments supported by", id: "Instrumen didukung oleh" })}
         </span>
         {/* One line at every width: the two logos share the row in proportion
             to their shapes (PUAPT 422×69, WGFS 406×35 shown a little shorter),
@@ -40,8 +43,10 @@ export default function Supporters({ compact = false }: { compact?: boolean }) {
       </div>
       <div className={`flex flex-col gap-3 ${compact ? "" : "md:max-w-[340px] md:items-end md:text-right"}`}>
         <p className="text-[13px] leading-snug text-neutral-500" style={body}>
-          Rates follow letter No. {RATE_LETTER.number}, {RATE_LETTER.date}. Internal rates are for UGM users; external
-          rates are for users outside UGM.
+          {t({
+            en: `Rates follow letter No. ${RATE_LETTER.number}, ${RATE_LETTER.date}. Internal rates are for UGM users; external rates are for users outside UGM.`,
+            id: `Tarif mengikuti surat No. ${RATE_LETTER.number}, ${lang === "id" ? RATE_LETTER.dateId : RATE_LETTER.date}. Tarif internal untuk pengguna UGM; tarif eksternal untuk pengguna dari luar UGM.`,
+          })}
         </p>
         <a
           href={rateLetterPdf}
@@ -53,7 +58,7 @@ export default function Supporters({ compact = false }: { compact?: boolean }) {
           style={body}
         >
           <FileText className="h-4 w-4" aria-hidden="true" />
-          Read the rate letter
+          {t({ en: "Read the rate letter", id: "Baca surat tarif" })}
           <span className="font-normal text-neutral-500">PDF</span>
         </a>
       </div>

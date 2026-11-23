@@ -2,6 +2,23 @@ import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, Cpu } from 'lucide-react'
 import { AI_MODELS, getModel } from '../../lib/ai/models'
 import { body } from '../../lib/fonts'
+import { useT, type Lang } from '../../lib/i18n'
+
+// Indonesian for the English model notes in lib/ai/models.ts (keyed by the
+// English text, so a model added there shows its English note until added here).
+const DETAIL_ID: Record<string, string> = {
+  'Recommended · balanced': 'Disarankan · seimbang',
+  'Highest quality': 'Kualitas tertinggi',
+  'Reasoning · deeper thinking': 'Penalaran · berpikir lebih dalam',
+  'Fast · lightweight': 'Cepat · ringan',
+  'Fast · multilingual': 'Cepat · multibahasa',
+  'Multilingual · long context': 'Multibahasa · konteks panjang',
+  'Strong reasoning & writing': 'Penalaran & penulisan kuat',
+}
+
+export function modelDetail(detail: string, lang: Lang): string {
+  return lang === 'id' ? (DETAIL_ID[detail] ?? detail) : detail
+}
 
 interface ModelMenuProps {
   modelId: string
@@ -14,6 +31,7 @@ export default function ModelMenu({ modelId, onChange }: ModelMenuProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const active = getModel(modelId)
+  const t = useT()
 
   useEffect(() => {
     if (!open) return
@@ -62,7 +80,7 @@ export default function ModelMenu({ modelId, onChange }: ModelMenuProps) {
                     {m.label}
                   </span>
                   <span className="text-xs text-neutral-400" style={body}>
-                    {m.detail}
+                    {t({ en: m.detail, id: modelDetail(m.detail, 'id') })}
                   </span>
                 </span>
                 {selected && <Check className="ml-auto mt-0.5 h-4 w-4 text-[#0B6477]" />}

@@ -4,6 +4,8 @@ import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import { IF_NOTES, IF_PUBLICATIONS } from "../lib/indoor-farming-knowledge";
+import { localizeNote, noteCategoryLabel } from "../lib/notes";
+import { headLang, useLang, useT } from "../lib/i18n";
 import SiteHeader from "../components/SiteHeader";
 import IndoorFarmingNav from "../components/IndoorFarmingNav";
 import IndoorFarmingCrumb from "../components/IndoorFarmingCrumb";
@@ -15,16 +17,26 @@ import { Eyebrow, fadeUp } from "../components/IndoorFarmingParts";
 
 export const Route = createFileRoute("/indoor-farming_/knowledge")({
   component: IndoorFarmingKnowledge,
-  head: () => ({
-    meta: [
-      { title: "Knowledge · Indoor Farming | smartagri" },
-      {
-        name: "description",
-        content:
-          "Field notes, trials, and publications on controlled-environment agriculture in the tropics from the Smart Agriculture Research Center, Universitas Gadjah Mada.",
-      },
-    ],
-  }),
+  head: ({ matches }) => {
+    const l = headLang(matches);
+    return {
+      meta: [
+        {
+          title:
+            l === "id"
+              ? "Pengetahuan · Indoor Farming | smartagri"
+              : "Knowledge · Indoor Farming | smartagri",
+        },
+        {
+          name: "description",
+          content:
+            l === "id"
+              ? "Catatan lapangan, uji coba, dan publikasi tentang pertanian lingkungan terkendali di daerah tropis dari Smart Agriculture Research Center, Universitas Gadjah Mada."
+              : "Field notes, trials, and publications on controlled-environment agriculture in the tropics from the Smart Agriculture Research Center, Universitas Gadjah Mada.",
+        },
+      ],
+    };
+  },
 });
 
 // Knowledge on controlled-environment growing: the related field notes
@@ -40,16 +52,18 @@ const CATEGORIES = [
 ];
 
 function IndoorFarmingKnowledge() {
+  const lang = useLang();
+  const t = useT();
   const [category, setCategory] = useState("All");
   const [limit, setLimit] = useState(PAGE);
   const [allPapers, setAllPapers] = useState(false);
   const filtered = category === "All" ? IF_NOTES : IF_NOTES.filter((n) => n.category === category);
-  const shown = filtered.slice(0, limit);
+  const shown = filtered.slice(0, limit).map((note) => localizeNote(note, lang));
   const papers = allPapers ? IF_PUBLICATIONS : IF_PUBLICATIONS.slice(0, PAPERS_SHOWN);
 
   const figures = [
-    { value: IF_NOTES.length, label: "Field notes" },
-    { value: IF_PUBLICATIONS.length, label: "Papers" },
+    { value: IF_NOTES.length, label: t({ en: "Field notes", id: "Catatan lapangan" }) },
+    { value: IF_PUBLICATIONS.length, label: t({ en: "Papers", id: "Makalah" }) },
   ].filter((f) => f.value > 0);
 
   return (
@@ -62,7 +76,7 @@ function IndoorFarmingKnowledge() {
             {/* Masthead */}
             <section className="mx-auto max-w-[1360px] px-6 pb-14 pt-12 md:px-12 md:pb-16 md:pt-16">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-                <IndoorFarmingCrumb current="Knowledge" />
+                <IndoorFarmingCrumb current={t({ en: "Knowledge", id: "Pengetahuan" })} />
               </motion.div>
               <div className="mt-8 grid gap-10 lg:grid-cols-12 lg:items-end">
                 <motion.h1
@@ -71,9 +85,12 @@ function IndoorFarmingKnowledge() {
                   className="text-[44px] font-semibold leading-[1.0] tracking-[-0.04em] text-neutral-900 sm:text-6xl md:text-[72px] lg:col-span-8"
                   style={display}
                 >
-                  <MaskLine delay={0}>What we are learning,</MaskLine>
+                  <MaskLine delay={0}>
+                    {t({ en: "What we are learning,", id: "Apa yang sedang kami pelajari," })}
+                  </MaskLine>
                   <MaskLine delay={0.12}>
-                    as we <span style={accent}>learn it.</span>
+                    {t({ en: "as we", id: "saat kami" })}{" "}
+                    <span style={accent}>{t({ en: "learn it.", id: "mempelajarinya." })}</span>
                   </MaskLine>
                 </motion.h1>
                 <div className="lg:col-span-4">
@@ -84,8 +101,10 @@ function IndoorFarmingKnowledge() {
                     className="text-base leading-relaxed text-neutral-600 md:text-lg"
                     style={body}
                   >
-                    Trials, installations, and training from our greenhouses and plant factory,
-                    written up as they happen, alongside the papers behind them.
+                    {t({
+                      en: "Trials, installations, and training from our greenhouses and plant factory, written up as they happen, alongside the papers behind them.",
+                      id: "Uji coba, instalasi, dan pelatihan dari greenhouse dan plant factory kami, ditulis saat berlangsung, bersama makalah yang mendasarinya.",
+                    })}
                   </motion.p>
                   {figures.length > 0 && (
                     <div className="mt-6 flex gap-8">
@@ -119,15 +138,17 @@ function IndoorFarmingKnowledge() {
                 {IF_NOTES.length === 0 ? (
                   <div className="rounded-[24px] border border-dashed border-[#0B6477]/25 bg-white p-10 text-center">
                     <p className="mx-auto max-w-[520px] text-base text-neutral-500" style={body}>
-                      Articles on controlled-environment growing will appear here as they are
-                      published. In the meantime, browse all of our field notes.
+                      {t({
+                        en: "Articles on controlled-environment growing will appear here as they are published. In the meantime, browse all of our field notes.",
+                        id: "Artikel tentang budidaya lingkungan terkendali akan muncul di sini setelah terbit. Sementara itu, jelajahi semua catatan lapangan kami.",
+                      })}
                     </p>
                     <Link
                       to="/field-notes"
                       className="group mt-6 inline-flex h-12 items-center gap-3 rounded-lg bg-[#45DFB1] px-6 text-sm font-medium uppercase tracking-[0.08em] text-[#0B2A22] transition-colors hover:bg-[#80ED99]"
                       style={body}
                     >
-                      All field notes
+                      {t({ en: "All field notes", id: "Semua catatan lapangan" })}
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </div>
@@ -135,7 +156,7 @@ function IndoorFarmingKnowledge() {
                   <>
                     <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                       <div>
-                        <Eyebrow>Field notes</Eyebrow>
+                        <Eyebrow>{t({ en: "Field notes", id: "Catatan lapangan" })}</Eyebrow>
                         <motion.h2
                           initial="hidden"
                           whileInView="show"
@@ -143,9 +164,13 @@ function IndoorFarmingKnowledge() {
                           className="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 md:text-5xl"
                           style={display}
                         >
-                          <MaskLine delay={0}>From the greenhouse</MaskLine>
+                          <MaskLine delay={0}>
+                            {t({ en: "From the greenhouse", id: "Dari greenhouse" })}
+                          </MaskLine>
                           <MaskLine delay={0.1}>
-                            <span style={accent}>and the plant factory.</span>
+                            <span style={accent}>
+                              {t({ en: "and the plant factory.", id: "dan plant factory." })}
+                            </span>
                           </MaskLine>
                         </motion.h2>
                       </div>
@@ -155,14 +180,14 @@ function IndoorFarmingKnowledge() {
                           className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                           style={body}
                         >
-                          All field notes
+                          {t({ en: "All field notes", id: "Semua catatan lapangan" })}
                           <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                         </Link>
                       </motion.div>
                     </div>
 
                     {CATEGORIES.length > 2 && (
-                      <div className="mb-10 flex flex-wrap gap-2" role="tablist" aria-label="Filter by category">
+                      <div className="mb-10 flex flex-wrap gap-2" role="tablist" aria-label={t({ en: "Filter by category", id: "Filter menurut kategori" })}>
                         {CATEGORIES.map((c) => {
                           const on = c === category;
                           const count = c === "All" ? IF_NOTES.length : IF_NOTES.filter((n) => n.category === c).length;
@@ -191,7 +216,7 @@ function IndoorFarmingKnowledge() {
                                 />
                               )}
                               <span className="relative">
-                                {c}
+                                {noteCategoryLabel(c, lang)}
                                 <span className={on ? "text-white/60" : "text-neutral-400"}> {count}</span>
                               </span>
                             </button>
@@ -231,7 +256,7 @@ function IndoorFarmingKnowledge() {
                           className="group inline-flex h-12 items-center gap-3 rounded-lg bg-[#08313A] px-6 text-sm font-medium uppercase tracking-[0.08em] text-white transition-colors hover:bg-[#0B6477]"
                           style={body}
                         >
-                          Load more
+                          {t({ en: "Load more", id: "Muat lagi" })}
                           <span className="text-white/50">{filtered.length - limit}</span>
                         </button>
                       </div>
@@ -246,7 +271,7 @@ function IndoorFarmingKnowledge() {
               <section className="mx-auto max-w-[1360px] px-6 py-20 md:px-12 md:py-28">
                 <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                   <div>
-                    <Eyebrow>Publications</Eyebrow>
+                    <Eyebrow>{t({ en: "Publications", id: "Publikasi" })}</Eyebrow>
                     <motion.h2
                       initial="hidden"
                       whileInView="show"
@@ -254,9 +279,9 @@ function IndoorFarmingKnowledge() {
                       className="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 md:text-5xl"
                       style={display}
                     >
-                      <MaskLine delay={0}>The science</MaskLine>
+                      <MaskLine delay={0}>{t({ en: "The science", id: "Sains" })}</MaskLine>
                       <MaskLine delay={0.1}>
-                        <span style={accent}>underneath.</span>
+                        <span style={accent}>{t({ en: "underneath.", id: "di baliknya." })}</span>
                       </MaskLine>
                     </motion.h2>
                   </div>
@@ -265,8 +290,10 @@ function IndoorFarmingKnowledge() {
                     className="max-w-[460px] text-base leading-relaxed text-neutral-500 md:text-lg"
                     style={body}
                   >
-                    Our papers on greenhouses, hydroponics, plant factories, and climate control,
-                    newest first.
+                    {t({
+                      en: "Our papers on greenhouses, hydroponics, plant factories, and climate control, newest first.",
+                      id: "Makalah kami tentang greenhouse, hidroponik, plant factory, dan kendali iklim, terbaru lebih dulu.",
+                    })}
                   </motion.p>
                 </div>
 
@@ -275,10 +302,10 @@ function IndoorFarmingKnowledge() {
                     className={`hidden grid-cols-[72px_minmax(0,1fr)_minmax(0,0.45fr)_80px] gap-6 border-b border-[#0B6477]/10 px-6 py-4 text-neutral-400 md:grid ${META}`}
                     style={body}
                   >
-                    <span>Year</span>
-                    <span>Title</span>
-                    <span>Journal</span>
-                    <span className="text-right">Cited by</span>
+                    <span>{t({ en: "Year", id: "Tahun" })}</span>
+                    <span>{t({ en: "Title", id: "Judul" })}</span>
+                    <span>{t({ en: "Journal", id: "Jurnal" })}</span>
+                    <span className="text-right">{t({ en: "Cited by", id: "Sitasi" })}</span>
                   </div>
                   <ul>
                     {papers.map((pub, i) => (
@@ -309,7 +336,7 @@ function IndoorFarmingKnowledge() {
                             {pub.venue}
                           </span>
                           <span className="text-sm tabular-nums text-neutral-500 md:text-right" style={body}>
-                            <span className="md:hidden">Cited by </span>
+                            <span className="md:hidden">{t({ en: "Cited by ", id: "Sitasi: " })}</span>
                             {pub.citations ?? 0}
                           </span>
                         </Link>
@@ -326,7 +353,12 @@ function IndoorFarmingKnowledge() {
                       className="group inline-flex h-12 items-center gap-3 rounded-lg bg-[#08313A] px-6 text-sm font-medium uppercase tracking-[0.08em] text-white transition-colors hover:bg-[#0B6477]"
                       style={body}
                     >
-                      {allPapers ? "Show fewer" : `Show all ${IF_PUBLICATIONS.length}`}
+                      {allPapers
+                        ? t({ en: "Show fewer", id: "Tampilkan lebih sedikit" })
+                        : t({
+                            en: `Show all ${IF_PUBLICATIONS.length}`,
+                            id: `Tampilkan semua ${IF_PUBLICATIONS.length}`,
+                          })}
                     </button>
                   )}
                   <Link
@@ -334,7 +366,7 @@ function IndoorFarmingKnowledge() {
                     className="group inline-flex items-center gap-2 border-b border-[#0B6477]/30 pb-1.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0B6477] transition-colors hover:border-[#0B6477]"
                     style={body}
                   >
-                    All publications
+                    {t({ en: "All publications", id: "Semua publikasi" })}
                     <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                   </Link>
                 </div>

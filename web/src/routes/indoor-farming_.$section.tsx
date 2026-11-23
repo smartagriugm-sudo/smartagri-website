@@ -3,7 +3,14 @@ import { MotionConfig, motion } from "framer-motion";
 import { ArrowDownRight, ArrowRight } from "lucide-react";
 import { accent, body, display } from "../lib/fonts";
 import { indoorFarmingPhoto } from "../lib/assets";
-import { IF_PILLARS, findIFSection, type IFGroup, type IFSection } from "../lib/indoor-farming";
+import {
+  findIFSection,
+  findIFSectionFor,
+  ifPillarsFor,
+  type IFGroup,
+  type IFSection,
+} from "../lib/indoor-farming";
+import { headLang, useLang, useT } from "../lib/i18n";
 import SiteHeader from "../components/SiteHeader";
 import IndoorFarmingNav from "../components/IndoorFarmingNav";
 import IndoorFarmingCrumb from "../components/IndoorFarmingCrumb";
@@ -23,8 +30,8 @@ export const Route = createFileRoute("/indoor-farming_/$section")({
     if (!findIFSection(params.section)) throw notFound();
     return { section: params.section };
   },
-  head: ({ loaderData }) => {
-    const section = loaderData ? findIFSection(loaderData.section) : undefined;
+  head: ({ loaderData, matches }) => {
+    const section = loaderData ? findIFSectionFor(loaderData.section, headLang(matches)) : undefined;
     return {
       meta: [
         {
@@ -46,7 +53,15 @@ export const Route = createFileRoute("/indoor-farming_/$section")({
 // topics it covers), the other sections, and the landing call to action.
 
 function SectionNotFound() {
-  return <IFNotFound message="That part of the Indoor Farming section does not exist." />;
+  const t = useT();
+  return (
+    <IFNotFound
+      message={t({
+        en: "That part of the Indoor Farming section does not exist.",
+        id: "Bagian Indoor Farming itu tidak ada.",
+      })}
+    />
+  );
 }
 
 function GroupChip({ section, group, i }: { section: string; group: IFGroup; i: number }) {
@@ -94,6 +109,7 @@ const item = {
 };
 
 function GroupRow({ section, group, i }: { section: IFSection; group: IFGroup; i: number }) {
+  const t = useT();
   const photoLeft = i % 2 === 0;
   return (
     <section
@@ -113,7 +129,7 @@ function GroupRow({ section, group, i }: { section: IFSection; group: IFGroup; i
           <motion.div {...fadeUp(0)}>
             <Eyebrow>
               <group.icon className="h-3.5 w-3.5" aria-hidden="true" />
-              {section.label} · {group.topics.length} topics
+              {section.label} · {group.topics.length} {t({ en: "topics", id: "topik" })}
             </Eyebrow>
           </motion.div>
           <motion.h2
@@ -135,7 +151,7 @@ function GroupRow({ section, group, i }: { section: IFSection; group: IFGroup; i
 
           <div className="mt-10 border-t border-[#0B6477]/12 pt-8">
             <p className={`mb-4 text-neutral-400 ${META}`} style={body}>
-              What it covers
+              {t({ en: "What it covers", id: "Yang dibahas" })}
             </p>
             <motion.ul
               variants={list}
@@ -180,9 +196,11 @@ function GroupRow({ section, group, i }: { section: IFSection; group: IFGroup; i
 
 function IndoorFarmingSectionPage() {
   const { section: slug } = Route.useLoaderData();
-  const section = findIFSection(slug);
+  const lang = useLang();
+  const t = useT();
+  const section = findIFSectionFor(slug, lang);
   if (!section) return <SectionNotFound />;
-  const others = IF_PILLARS.filter((p) => p.slug !== section.slug);
+  const others = ifPillarsFor(lang).filter((p) => p.slug !== section.slug);
   const topics = section.groups.reduce((n, g) => n + g.topics.length, 0);
 
   return (
@@ -230,7 +248,8 @@ function IndoorFarmingSectionPage() {
                     className={`mt-5 text-neutral-400 ${META}`}
                     style={body}
                   >
-                    {section.groups.length} groups · {topics} topics
+                    {section.groups.length} {t({ en: "groups", id: "kelompok" })} · {topics}{" "}
+                    {t({ en: "topics", id: "topik" })}
                   </motion.p>
                 </div>
               </div>
@@ -254,7 +273,7 @@ function IndoorFarmingSectionPage() {
             <section className="border-t border-[#0B6477]/10">
               <div className="mx-auto max-w-[1360px] px-6 py-20 md:px-12 md:py-28">
                 <div className="mb-12">
-                  <Eyebrow>Keep exploring</Eyebrow>
+                  <Eyebrow>{t({ en: "Keep exploring", id: "Jelajahi lagi" })}</Eyebrow>
                   <motion.h2
                     initial="hidden"
                     whileInView="show"
@@ -262,7 +281,7 @@ function IndoorFarmingSectionPage() {
                     className="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-neutral-900 md:text-5xl"
                     style={display}
                   >
-                    <MaskLine delay={0}>Elsewhere in</MaskLine>
+                    <MaskLine delay={0}>{t({ en: "Elsewhere in", id: "Bagian lain dari" })}</MaskLine>
                     <MaskLine delay={0.1}>
                       <span style={accent}>Indoor Farming.</span>
                     </MaskLine>
